@@ -1,0 +1,365 @@
+external inner function boolean MATVARINSClassOnOKWindow(integer);
+remote inner function Boolean ReadFirstItem(string,var record INVc,Boolean,Boolean);
+
+global
+procedure TouchMATVARPlusButton() begin
+  string 255 tag;
+  integer wn,rwc;
+  record VarMatrxEntryVc VarMatrxEntryr;
+  row VarMatrxEntryVc VarMatrxEntryrw;
+  val t;
+  
+  tag = PushButtonTag;
+  wn = CurWindow;
+  DeselectWindow(wn,false); // EVS
+  GetWindowRecord(wn,VarMatrxEntryr);
+  rwc = MatRowCnt(VarMatrxEntryr);
+  if rwc>0 then begin
+    MatRowGet(VarMatrxEntryr,0,VarMatrxEntryrw);
+  end;
+  
+  Switch(tag) begin
+    case  "1": VarMatrxEntryrw.A = 1;
+    case  "2": VarMatrxEntryrw.B = 1;
+    case  "3": VarMatrxEntryrw.C = 1;
+    case  "4": VarMatrxEntryrw.D = 1;
+    case  "5": VarMatrxEntryrw.E = 1;
+    case  "6": VarMatrxEntryrw.F = 1;
+    case  "7": VarMatrxEntryrw.G = 1;
+    case  "8": VarMatrxEntryrw.H = 1;
+    case  "9": VarMatrxEntryrw.I = 1;
+    case "10": VarMatrxEntryrw.J = 1;
+    case "11": VarMatrxEntryrw.K = 1;
+    case "12": VarMatrxEntryrw.L = 1;
+    case "13": VarMatrxEntryrw.M = 1;
+    case "14": VarMatrxEntryrw.N = 1;
+    case "15": VarMatrxEntryrw.O = 1;
+    case "16": VarMatrxEntryrw.P = 1;
+    case "17": VarMatrxEntryrw.Q = 1;
+    case "18": VarMatrxEntryrw.R = 1;
+    case "19": VarMatrxEntryrw.S = 1;
+    case "20": VarMatrxEntryrw.T = 1;
+    case "21": VarMatrxEntryrw.U = 1;
+    case "22": VarMatrxEntryrw.V = 1;
+    case "23": VarMatrxEntryrw.W = 1;
+    case "24": VarMatrxEntryrw.X = 1;
+    case "25": VarMatrxEntryrw.Y = 1;
+    case "26": VarMatrxEntryrw.Z = 1;
+  end;
+  
+  MatRowPut(VarMatrxEntryr,0,VarMatrxEntryrw);
+  PutWindowRecord(wn,VarMatrxEntryr);
+  MATVARINSClassOnOKWindow(wn);
+  
+return;
+end;
+
+// EVS: DOL-1
+function val GetItemLastCostPriceNoExtras(string itemcode)
+begin
+  val res;
+  record INVc INr;
+  
+  if (ReadFirstItem(itemcode,INr,false,false)) then begin
+    res = INr.LastPurchPrice2;
+  end;
+  
+  GetItemLastCostPriceNoExtras = res;
+return;
+end;
+// :EVS
+
+// EVS: DOL-57
+global
+procedure DOLMATVARINSClassPage2()
+begin
+  integer wn,nwn,mwn;
+  record VarMatrxEntryVc VarMatrxEntryr;
+  string 150 itemcode,location;
+  
+  wn = CurWindow;
+  DeselectWindow(wn,false);
+  GetWindowRecord(wn,VarMatrxEntryr);
+  mwn = MotherWindow(wn);
+  CloseWindow(wn);
+  itemcode = VarMatrxEntryr.ItemCode;
+  
+  nwn = OpenWindow("MATVARINSClass",0,mwn,itemcode,"",VarMatrxEntryr);
+  // EVS: DOL-57
+  PutWindowString(nwn,"$pagenum","2"); 
+  RerunWindowDef(nwn);
+  // :EVS
+  SetWindowNameArg(mwn,itemcode & ":" & location);
+  DeselectWindow(nwn,false);
+  GetWindowRecord(nwn,VarMatrxEntryr);
+  VarMatrxEntryr.ItemCode = itemcode;
+  // EVS: DOL-1
+  if (GetWindowClass(mwn) == "PODClass") then begin
+    VarMatrxEntryr.Price = GetItemLastCostPriceNoExtras(itemcode);
+  end;
+  // :EVS
+  PutWindowRecord(nwn,VarMatrxEntryr);
+  
+return;
+end;
+
+global
+procedure DOLMATVARINSClassPage1()
+begin
+  integer wn,nwn,mwn;
+  record VarMatrxEntryVc VarMatrxEntryr;
+  string 150 itemcode,location;
+  
+  wn = CurWindow;
+  DeselectWindow(wn,false);
+  GetWindowRecord(wn,VarMatrxEntryr);
+  mwn = MotherWindow(wn);
+  CloseWindow(wn);
+  itemcode = VarMatrxEntryr.ItemCode;
+  
+  nwn = OpenWindow("MATVARINSClass",0,mwn,itemcode,"",VarMatrxEntryr);
+  // EVS: DOL-57
+  PutWindowString(nwn,"$pagenum","1"); 
+  RerunWindowDef(nwn);
+  // :EVS
+  SetWindowNameArg(mwn,itemcode & ":" & location);
+  DeselectWindow(nwn,false);
+  GetWindowRecord(nwn,VarMatrxEntryr);
+  VarMatrxEntryr.ItemCode = itemcode;
+  // EVS: DOL-1
+  if (GetWindowClass(mwn) == "PODClass") then begin
+    VarMatrxEntryr.Price = GetItemLastCostPriceNoExtras(itemcode);
+  end;
+  // :EVS
+  PutWindowRecord(nwn,VarMatrxEntryr);
+  
+return;
+end;
+
+// EVS: DOL-104
+function string 20 ZeroStrIfBlank(val aval)
+begin
+  string 20 res;
+  
+  res = ValToString(aval,M4UVal,ThousandSeparator,DecimalSeparator,0);
+  if (blank(res)) then begin
+    res = "0";
+  end;
+  
+  ZeroStrIfBlank = res;
+return;
+end;
+
+procedure GetPageValuesForOtherPages(integer wn, integer curpg,var array string a_pagevals, string curpagevals)
+begin
+  integer i;
+  
+  for (i = 1; i <= 20; i = i + 1) begin
+    if (i != curpg) then begin
+      a_pagevals[i] = GetWindowString(wn,"$pgvals" & i);
+    end else begin
+      a_pagevals[i] = curpagevals;
+    end;
+  end;
+
+return;
+end;
+
+procedure SetPageValuesForOtherPages(integer wn, integer curpg, array string a_pagevals)
+begin
+  integer i;
+  
+  for (i = 1; i <= 20; i = i + 1) begin
+    if (i != curpg) then begin
+      PutWindowString(wn,"$pgvals" & i,a_pagevals[i]);
+    end;
+  end;
+
+return;
+end;
+
+function string 200 GetPageValuesForCurPage(record VarMatrxEntryVc VarMatrxEntryr)
+begin
+  row VarMatrxEntryVc VarMatrxEntryrw;
+  string 200 res;
+  array string 200 a_pagevals;
+  
+  if (MatRowCnt(VarMatrxEntryr) > 0) then begin
+    MatRowGet(VarMatrxEntryr,0,VarMatrxEntryrw);
+    
+    res = ZeroStrIfBlank(VarMatrxEntryrw.A) & ";";
+    res = res & ZeroStrIfBlank(VarMatrxEntryrw.B) & ";";
+    res = res & ZeroStrIfBlank(VarMatrxEntryrw.C) & ";";
+    res = res & ZeroStrIfBlank(VarMatrxEntryrw.D) & ";";
+    res = res & ZeroStrIfBlank(VarMatrxEntryrw.E) & ";";
+    res = res & ZeroStrIfBlank(VarMatrxEntryrw.F) & ";";
+    res = res & ZeroStrIfBlank(VarMatrxEntryrw.G) & ";";
+    res = res & ZeroStrIfBlank(VarMatrxEntryrw.H) & ";";
+    res = res & ZeroStrIfBlank(VarMatrxEntryrw.I) & ";";
+    res = res & ZeroStrIfBlank(VarMatrxEntryrw.J) & ";";
+    res = res & ZeroStrIfBlank(VarMatrxEntryrw.K) & ";";
+    res = res & ZeroStrIfBlank(VarMatrxEntryrw.L) & ";";
+    res = res & ZeroStrIfBlank(VarMatrxEntryrw.M) & ";";
+    res = res & ZeroStrIfBlank(VarMatrxEntryrw.N) & ";";
+    res = res & ZeroStrIfBlank(VarMatrxEntryrw.O) & ";";
+    res = res & ZeroStrIfBlank(VarMatrxEntryrw.P) & ";";
+    res = res & ZeroStrIfBlank(VarMatrxEntryrw.Q) & ";";
+    res = res & ZeroStrIfBlank(VarMatrxEntryrw.R);
+  end;
+  
+  GetPageValuesForCurPage = res;
+return;
+end;
+
+function val BlankIfZero(val aval)
+begin
+  val res;
+  
+  if (aval != 0) then begin
+    res = aval;
+  end;
+  
+  BlankIfZero = res;
+return;
+end;
+
+global
+procedure DOLSetPageValuesOnRecordForNewPage(var record VarMatrxEntryVc VarMatrxEntryr, string setvals)
+begin
+  integer cnt;
+  longint pos;
+  row VarMatrxEntryVc VarMatrxEntryrw;
+  string 20 oneval;
+  
+  if (MatRowCnt(VarMatrxEntryr) > 0) then begin
+    MatRowGet(VarMatrxEntryr,0,VarMatrxEntryrw);
+    pos = 0;
+    while (GetNextSubstring(setvals,pos,";",oneval) and cnt < 18) begin
+      switch (cnt) begin
+        case  0: VarMatrxEntryrw.A = BlankIfZero(StringToVal(oneval,M4UVal));
+        case  1: VarMatrxEntryrw.B = BlankIfZero(StringToVal(oneval,M4UVal));
+        case  2: VarMatrxEntryrw.C = BlankIfZero(StringToVal(oneval,M4UVal));
+        case  3: VarMatrxEntryrw.D = BlankIfZero(StringToVal(oneval,M4UVal));
+        case  4: VarMatrxEntryrw.E = BlankIfZero(StringToVal(oneval,M4UVal));
+        case  5: VarMatrxEntryrw.F = BlankIfZero(StringToVal(oneval,M4UVal));
+        case  6: VarMatrxEntryrw.G = BlankIfZero(StringToVal(oneval,M4UVal));
+        case  7: VarMatrxEntryrw.H = BlankIfZero(StringToVal(oneval,M4UVal));
+        case  8: VarMatrxEntryrw.I = BlankIfZero(StringToVal(oneval,M4UVal));
+        case  9: VarMatrxEntryrw.J = BlankIfZero(StringToVal(oneval,M4UVal));
+        case 10: VarMatrxEntryrw.K = BlankIfZero(StringToVal(oneval,M4UVal));
+        case 11: VarMatrxEntryrw.L = BlankIfZero(StringToVal(oneval,M4UVal));
+        case 12: VarMatrxEntryrw.M = BlankIfZero(StringToVal(oneval,M4UVal));
+        case 13: VarMatrxEntryrw.N = BlankIfZero(StringToVal(oneval,M4UVal));
+        case 14: VarMatrxEntryrw.O = BlankIfZero(StringToVal(oneval,M4UVal));
+        case 15: VarMatrxEntryrw.P = BlankIfZero(StringToVal(oneval,M4UVal));
+        case 16: VarMatrxEntryrw.Q = BlankIfZero(StringToVal(oneval,M4UVal));
+        case 17: VarMatrxEntryrw.R = BlankIfZero(StringToVal(oneval,M4UVal));
+      end;    
+      cnt = cnt + 1;
+    end;
+    
+    if (pos == 0) then begin
+      VarMatrxEntryrw.A = blankval;
+      VarMatrxEntryrw.B = blankval;
+      VarMatrxEntryrw.C = blankval;
+      VarMatrxEntryrw.D = blankval;
+      VarMatrxEntryrw.E = blankval;
+      VarMatrxEntryrw.F = blankval;
+      VarMatrxEntryrw.G = blankval;
+      VarMatrxEntryrw.H = blankval;
+      VarMatrxEntryrw.I = blankval;
+      VarMatrxEntryrw.J = blankval;
+      VarMatrxEntryrw.K = blankval;
+      VarMatrxEntryrw.L = blankval;
+      VarMatrxEntryrw.M = blankval;
+      VarMatrxEntryrw.N = blankval;
+      VarMatrxEntryrw.O = blankval;
+      VarMatrxEntryrw.P = blankval;
+      VarMatrxEntryrw.Q = blankval;
+      VarMatrxEntryrw.R = blankval;
+    end;
+    
+    MatRowPut(VarMatrxEntryr,0,VarMatrxEntryrw);
+  end;
+  
+  
+return;
+end;
+// :EVS
+
+global
+procedure DOLMATVARINSClassNextPage()
+begin
+  integer wn,nwn,mwn,pg;
+  record VarMatrxEntryVc VarMatrxEntryr;
+  string 150 itemcode,location;
+  array string 200 a_pagevals;
+  
+  wn = CurWindow;
+  DeselectWindow(wn,false);
+  GetWindowRecord(wn,VarMatrxEntryr);
+  pg = StringToInt(GetWindowString(wn,"$pagenum"));
+  GetPageValuesForOtherPages(wn,pg,a_pagevals,GetPageValuesForCurPage(VarMatrxEntryr)); // EVS: DOL-104
+  mwn = MotherWindow(wn);
+  CloseWindow(wn);
+  itemcode = VarMatrxEntryr.ItemCode;
+  
+  nwn = OpenWindow("MATVARINSClass",0,mwn,itemcode,"",VarMatrxEntryr);
+  // EVS: DOL-57
+  PutWindowString(nwn,"$pagenum",pg+1);
+  SetPageValuesForOtherPages(nwn,pg+1,a_pagevals); // EVS: DOL-104
+  RerunWindowDef(nwn);
+  // :EVS
+  SetWindowNameArg(mwn,itemcode & ":" & location);
+  DeselectWindow(nwn,false);
+  GetWindowRecord(nwn,VarMatrxEntryr);
+  DOLSetPageValuesOnRecordForNewPage(VarMatrxEntryr,a_pagevals[pg+1]); // EVS: DOL-104
+  VarMatrxEntryr.ItemCode = itemcode;
+  // EVS: DOL-1
+  if (GetWindowClass(mwn) == "PODClass") then begin
+    VarMatrxEntryr.Price = GetItemLastCostPriceNoExtras(itemcode);
+  end;
+  // :EVS
+  PutWindowRecord(nwn,VarMatrxEntryr);
+  
+return;
+end;
+
+global
+procedure DOLMATVARINSClassPrevPage()
+begin
+  integer wn,nwn,mwn,pg;
+  record VarMatrxEntryVc VarMatrxEntryr;
+  string 150 itemcode,location;
+  array string 200 a_pagevals;
+  
+  wn = CurWindow;
+  DeselectWindow(wn,false);
+  GetWindowRecord(wn,VarMatrxEntryr);
+  pg = StringToInt(GetWindowString(wn,"$pagenum"));
+  GetPageValuesForOtherPages(wn,pg,a_pagevals,GetPageValuesForCurPage(VarMatrxEntryr)); // EVS: DOL-104
+  mwn = MotherWindow(wn);
+  CloseWindow(wn);
+  itemcode = VarMatrxEntryr.ItemCode;
+  
+  nwn = OpenWindow("MATVARINSClass",0,mwn,itemcode,"",VarMatrxEntryr);
+  // EVS: DOL-57
+  PutWindowString(nwn,"$pagenum",pg-1);
+  SetPageValuesForOtherPages(nwn,pg-1,a_pagevals); // EVS: DOL-104
+  RerunWindowDef(nwn);
+  // :EVS
+  SetWindowNameArg(mwn,itemcode & ":" & location);
+  DeselectWindow(nwn,false);
+  GetWindowRecord(nwn,VarMatrxEntryr);
+  DOLSetPageValuesOnRecordForNewPage(VarMatrxEntryr,a_pagevals[pg-1]); // EVS: DOL-104
+  VarMatrxEntryr.ItemCode = itemcode;
+  // EVS: DOL-1
+  if (GetWindowClass(mwn) == "PODClass") then begin
+    VarMatrxEntryr.Price = GetItemLastCostPriceNoExtras(itemcode);
+  end;
+  // :EVS
+  PutWindowRecord(nwn,VarMatrxEntryr);
+  
+return;
+end;
+// :EVS

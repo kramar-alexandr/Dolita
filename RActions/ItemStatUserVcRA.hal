@@ -1,0 +1,24 @@
+
+
+global updating
+function LongInt ItemStatUserVcRecordCheck(var record ItemStatUserVc ItemStatUserr,record ItemStatUserVc ItemStatUser2r,LongInt stat,LongInt long4)
+BEGIN
+  LongInt res;
+  
+  res = 0;
+  if nonblank(ItemStatUserr.LocClass) and ItemStatUserr.LocBalf==0 and ItemStatUserr.LocTOf==0 then begin
+    RecordCheckError(1000001,"",-1,"LocClass");      
+    res = -1; 
+    goto LItemStatUserVcRecordCheck;
+  end;
+  
+  if (ItemStatUserr.LocBalf!=0 or ItemStatUserr.LocTOf!=0) and blank(ItemStatUserr.LocClass) then begin
+    RecordCheckError(1000002,"",-1,"LocClass");      
+    res = -1; 
+    goto LItemStatUserVcRecordCheck;
+  end;
+  
+LItemStatUserVcRecordCheck:;
+  ItemStatUserVcRecordCheck = res;
+  return;
+end;

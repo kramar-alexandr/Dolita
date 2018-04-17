@@ -1,0 +1,73 @@
+external inner function Boolean TestForMATVARINS(Integer);
+
+global
+procedure PasteVarInEBS_ChangeINVarVClass(Integer wn,array string incode,array val qty,Integer pos)
+begin
+  record RcVc RepSpec;
+  string 20 fieldname;
+
+  GetWindowRecord(wn,RepSpec);
+  DeselectWindow(wn,false);
+  fieldname = GetWindowString(wn,"FIELDNAME");
+  if fieldname=="F1" then begin
+    if (pos > 0) then begin
+      RepSpec.f1 = incode[0];
+    end;
+    PutWindowRecord(wn,RepSpec);
+    WindowFieldGoto(wn,RepSpec,-1,"f1",true);
+  end;
+  if fieldname=="F2" then begin
+    if (pos > 0) then begin
+      RepSpec.f2 = incode[0];
+    end;
+    PutWindowRecord(wn,RepSpec);
+    WindowFieldGoto(wn,RepSpec,-1,"f2",true);
+  end;
+
+  return;
+end;
+
+procedure OpenVarietyWindow(integer wn)
+begin
+  Record RcVc RepSpec;
+  string 100 fieldname;
+
+  fieldname = GetWindowString(wn,"PREV_FIELDNAME");
+  PutWindowString(wn,"FIELDNAME","");
+  PutWindowString(wn,"PREV_FIELDNAME","");
+  GetWindowRecord(wn,RepSpec);
+  if fieldname=="f1" and nonblank(RepSpec.f1) then begin
+    SetWindowNameArg(wn,RepSpec.f1 & ":" & RepSpec.f3);
+    PutWindowString(wn,"FIELDNAME","F1");
+    TestForMATVARINS(wn);
+  end;
+  if fieldname=="f2" and nonblank(RepSpec.f2) then begin
+    SetWindowNameArg(wn,RepSpec.f2 & ":" & RepSpec.f3);
+    PutWindowString(wn,"FIELDNAME","F2");
+    TestForMATVARINS(wn);
+  end;
+
+return;
+end;
+
+global
+function boolean EBS_ChangeINVarVClassAfterEditField(Integer wn,string fieldname,Integer fn,Integer rownr,Integer changed)
+begin
+
+  if changed==0 then begin
+    PutWindowString(wn,"PREV_FIELDNAME","");
+  end else begin
+    PutWindowString(wn,"PREV_FIELDNAME",fieldname);
+  end;
+
+return;
+end;
+
+global
+function boolean EBS_ChangeINVarVClassBeforeEditField(Integer wn,string fieldname,Integer fn,Integer rownr)
+begin
+
+  OpenVarietyWindow(wn);
+
+return;
+end;

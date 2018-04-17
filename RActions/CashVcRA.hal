@@ -1,0 +1,12 @@
+
+global
+function LongInt CashVcRecordDuplicate(var record CashVc Cashr,record CashVc Cash2r,LongInt stat,LongInt long4)
+BEGIN
+  LongInt res;
+    
+  res = inner.CashVcRecordDuplicate(Cashr,Cash2r,stat,long4);
+  Cashr.DoNotMakeTR = 0;
+  
+  CashVcRecordDuplicate = res; 
+  RETURN;
+END;

@@ -1,0 +1,201 @@
+external inner function Boolean IVCashDchrsum(record IVCashVc,Integer,Integer);
+external inner procedure IVCashDchsum(record IVCashVc,Integer);
+external inner procedure IVCashDClass_RefreshStringList(Integer,record IVCashVc);
+external inner function roundmode SetRoundModeD(Integer);
+external inner procedure DisplayIVCashItem(record IVCashVc,Integer);
+remote inner procedure IVCashSumup(var record IVCashVc,Boolean);
+
+procedure PriceChToolKeyPad_Numbers(string anumberstr)
+begin
+  Integer wn;
+  record RcVc RepSpec;
+  string 255 tstr;
+  string 255 pmfield,numberstr,activefield;
+  val sign;
+
+  wn = CurWindow;
+  activefield = WindowActiveField(wn);
+  numberstr = anumberstr;
+  tstr = GetWindowString(wn,activefield) & numberstr;
+  PutWindowString(wn,activefield,tstr);
+  PasteString(wn,tstr);
+
+  // wn = CurWindow;
+  // GetWindowRecord(wn,RepSpec);
+  // PasteString(wn,numberstr);
+  // PutWindowRecord(wn,RepSpec);
+  return;
+end;
+
+global
+procedure PriceChToolKeyPad0()
+begin
+  PriceChToolKeyPad_Numbers("0");
+  return;
+end;
+
+global
+procedure PriceChToolKeyPad1()
+begin
+  PriceChToolKeyPad_Numbers("1");
+  return;
+end;
+
+global
+procedure PriceChToolKeyPad2()
+begin
+  PriceChToolKeyPad_Numbers("2");
+  return;
+end;
+
+global
+procedure PriceChToolKeyPad3()
+begin
+  PriceChToolKeyPad_Numbers("3");
+  return;
+end;
+
+global
+procedure PriceChToolKeyPad4()
+begin
+  PriceChToolKeyPad_Numbers("4");
+  return;
+end;
+
+global
+procedure PriceChToolKeyPad5()
+begin
+  PriceChToolKeyPad_Numbers("5");
+  return;
+end;
+
+global
+procedure PriceChToolKeyPad6()
+begin
+  PriceChToolKeyPad_Numbers("6");
+  return;
+end;
+
+global
+procedure PriceChToolKeyPad7()
+begin
+  PriceChToolKeyPad_Numbers("7");
+  return;
+end;
+
+global
+procedure PriceChToolKeyPad8()
+begin
+  PriceChToolKeyPad_Numbers("8");
+  return;
+end;
+
+global
+procedure PriceChToolKeyPad9()
+begin
+  PriceChToolKeyPad_Numbers("9");
+  return;
+end;
+
+global
+procedure PriceChToolKeyPadPoint()
+begin
+  PriceChToolKeyPad_Numbers("."); //## international
+  return;
+end;
+
+global
+procedure PriceChToolKeyPadEnter()
+begin
+  KeyPadEnter(CurWindow);
+  return;
+end;
+
+global
+procedure PriceChToolKeyCancel()
+begin
+  Integer mwn,wn;
+
+  wn = CurWindow;
+  mwn = MotherWindow(wn);
+  CloseWindow(wn);
+  SelectWindow(mwn);
+
+  return;
+end;
+
+global updating
+procedure PriceChToolKeyOK()
+begin
+  Integer wn,mwn,rownr;
+  record GeneralOptionBlock GenOptRec;
+  record RcVc RepSpec;
+  record IVCashVc IVCashr;
+  row IVCashVc IVCashrw;
+  val price;
+  string 255 tstr,t2;
+
+  wn = CurWindow;
+  DeselectWindow(wn,true);
+  GetWindowRecord(wn,RepSpec);
+  mwn = MotherWindow(wn);
+  CloseWindow(wn);
+
+  if WindowValid(mwn) and RepSpec.toc>-1 then begin
+    BlockLoad(GenOptRec);
+    SelectWindow(mwn);
+    rownr = RepSpec.toc;
+    price = RepSpec.vals0;
+    GetWindowRecord(mwn,IVCashr);
+
+    MatRowGet(IVCashr,rownr,IVCashrw);
+    IVCashrw.Price = Round(price,SetRoundModeD(3));
+    MatRowPut(IVCashr,rownr,IVCashrw);
+    if (IVCashDchrsum(IVCashr,rownr,GenOptRec.UseDiscount)) then begin
+      IVCashDchsum(IVCashr,rownr);
+      IVCashSumup(IVCashr,true);
+    end;
+    MatRowGet(IVCashr,rownr,IVCashrw);
+    PutWindowRecord(mwn,IVCashr);
+    IVCashDClass_RefreshStringList(mwn,IVCashr);
+    DisplayIVCashItem(IVCashr,rownr);
+  end;
+
+  return;
+end;
+
+global
+procedure PriceChToolKeyPadDelete()
+begin
+  record RcVc RepSpec;
+  Integer wn;
+  string 255 tstr,activefield;
+
+  wn = CurWindow;
+  GetWindowRecord(wn,RepSpec);
+  activefield = WindowActiveField(wn);
+  tstr = GetWindowString(wn,activefield);
+  DeselectWindow(wn,false);
+  PutWindowString(wn,activefield,"");
+  PutWindowRecord(wn,RepSpec);
+  SelectWindow(wn);
+  WindowFieldGoto(wn,RepSpec,-1,activefield,true);
+  return;
+end;
+
+global
+procedure NPTSSearchCURClassArtModeBtn()
+begin
+  record RcVc RepSpec;
+  integer wn,newval;
+
+  newval = StringToInt(PushButtonTag);
+  wn = CurWindow;
+  DeselectWindow(wn,true);
+  GetWindowRecord(wn,RepSpec);
+  RepSpec.ArtMode = newval;
+  PutWindowRecord(wn,RepSpec);
+  SelectWindow(wn);
+
+  return;
+end;

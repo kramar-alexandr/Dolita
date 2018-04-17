@@ -1,0 +1,37 @@
+//VITO: DOL-91
+global
+procedure DOL_SoldINStatRClassReportDefaults(Integer wn)
+begin
+  record RcVc RepSpec;
+
+  DeselectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  ReportDefaults(RepSpec,"DOL_SoldINStatRClass");
+  RepSpec.flags[1] = 1;
+  RepSpec.flags[2] = 1; // EVS: DOL-159
+  RepSpec.flags[4] = 1; 
+  RepSpec.ArtMode = 2;
+  RepSpec.Comparison = 1;
+  PutWindowRecord(wn,RepSpec);
+  SelectWindow(wn);
+
+  return;
+end;
+//:VITO
+
+// EVS: DOL-122
+global
+procedure DOLPOItemsRClassReportDefaults(Integer wn)
+begin
+  record RcVc RepSpec;
+
+  DeselectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  ReportDefaults(RepSpec,"DOLPOItemsRClass");
+  RepSpec.BaseWidth = 1200;
+  PutWindowRecord(wn,RepSpec);
+  SelectWindow(wn);
+
+  return;
+end;
+// :EVS

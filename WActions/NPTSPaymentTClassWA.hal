@@ -1,0 +1,81 @@
+remote inner procedure CntNPTSPaymentCurrenciesRemote(string,var Array string,var Array string,var Array Integer,var Array string,var Integer);
+external inner procedure OpenGiftVoucherTouchScreenDClass(Integer,Integer,LongInt,val,val,string,string,string);
+external inner function val ValFromString(string,string,string);
+
+global
+procedure NPTSPaymentTClasGiftVoucherListBtn() begin
+  integer wn,nwn,mwn,acrncnt,i,giftindex;  
+  record LocalMachineBlock LMb;
+  record IVCashVc IVCashr;
+  record RcVc RepSpec;
+  record GCVc GCr;
+  string 255 fieldname;
+  Array string 255 acrncy,alabel,apaymentmode;
+  Array Integer apaymenttype;
+  
+  giftindex = -1;
+  BlockLoad(LMb);
+  CntNPTSPaymentCurrenciesRemote(LMb.LocalMachineCode,alabel,acrncy,apaymenttype,apaymentmode,acrncnt);
+  for (i=0;i<acrncnt;i=i+1) begin
+    switch (apaymenttype[i]) begin
+      case kInvoiceRowTypeGiftVoucherPayment:
+        giftindex = i;
+        i = acrncnt;
+    end;
+  end;
+  
+  if giftindex==-1 then begin
+    GoTo LNPTSPaymentTClasGiftVoucherListBtn;
+  end;
+  
+  wn = CurWindow;
+  mwn = MotherWindow(wn);
+  DeselectWindow(wn,true);
+  if mwn==0 then begin
+    GoTo LNPTSPaymentTClasGiftVoucherListBtn;
+  end;
+  if GetWindowClass(mwn)!="NPTSIVCashDClass" then begin
+    GoTo LNPTSPaymentTClasGiftVoucherListBtn;
+  end;
+  
+  GetWindowRecord(mwn,IVCashr);
+  OpenGiftVoucherTouchScreenDClass(mwn,-1,IVCashr.SerNr,IVCashr.RetValue,IVCashr.Sum4-IVCashr.TendValue,IVCashr.CurncyCode,apaymentmode[giftindex],alabel[giftindex]);
+  
+LNPTSPaymentTClasGiftVoucherListBtn:;
+return;
+end;
+
+global
+function Boolean NPTSPaymentTClasRestCCBtn()
+begin
+  Boolean res;
+  record RcVc RepSpec;
+  record LocalMachineBlock LMb;
+  Array string 255 acrncy,alabel,apaymentmode;
+  Array Integer apaymenttype;
+  integer acrncnt,i,wn;
+  val totdue,payval;
+  string 255 tstr;
+  
+  wn = CurWindow;
+  DeselectWindow(wn,true);
+  
+  BlockLoad(LMb);
+  totdue = ValFromString(GetWindowstring(wn,"NPTSPaymentTClassAmountDue"),DecimalSeparator,"");  
+  CntNPTSPaymentCurrenciesRemote(LMb.LocalMachineCode,alabel,acrncy,apaymenttype,apaymentmode,acrncnt);
+  for (i=0;i<acrncnt;i=i+1) begin
+    switch (apaymenttype[i]) begin
+      case kInvoiceRowTypeCreditCardPayment:
+        tstr = "NPTSPaymentTClassAmount" & apaymentmode[i];
+        payval = ValFromString(GetWindowstring(wn,tstr),DecimalSeparator,"");
+        PutWindowString(wn,tstr,ValToString(totdue + payval,M4Val,"",DecimalSeparator,0));
+        i = acrncnt;
+    end;
+  end;
+  if nonblank(tstr) then begin
+    WindowFieldGoto(wn,RepSpec,-1,tstr,true);
+  end;
+  SelectWindow(wn);
+  
+  return;
+end;

@@ -1,0 +1,425 @@
+external inner function val MulRateToBase1(var string,val,val,val,val,val,val,roundmode);
+external inner procedure CurValToOtherCur(Date,string,val,string,var val,roundmode);
+external inner procedure GetBaseCurncy(Integer,var string);
+external inner function val MulWithRateToBase1(var string,Date,val,roundmode);
+
+global
+function boolean CheckCustomerMatch(string custcode,Record RcVc RepSpec) begin
+  boolean res;
+  record IVVc IVr;
+  record CUVc CUr;
+  
+  res = true;
+  
+  if (nonblank(RepSpec.f10) or nonblank(RepSpec.f11)) then begin
+    CUr.Code = custcode;
+    if ReadFirstMain(CUr,1,true) then begin
+      if nonblank(RepSpec.f10) and RepSpec.f10!=CUr.CustCat then begin
+        res = false;
+      end;
+      if nonblank(RepSpec.f11) and !SetInSet(RepSpec.f11,CUr.Classification) then begin
+        res = false;
+      end;
+    end;
+  end;
+  
+  CheckCustomerMatch = res;
+return;
+end;
+
+procedure GetReceiptSumInCustCur(date TransDate,string custcode,val sum,string curcode,var val res,var string custname,var string custcur,string basecur) begin
+  record CUVc CUr;
+
+  custcur = basecur;
+  custname = "";
+  
+  CUr.Code = custcode;  
+  if ReadFirstMain(Cur,1,true) then begin
+    if nonblank(CUr.CurncyCode) then begin
+      custcur = CUr.CurncyCode;
+      custname = CUr.Name;
+    end;
+  end;
+  
+  if custcur==curcode then begin
+    res = sum;
+  end else begin
+    res = blankval;
+    CurValToOtherCur(TransDate,curcode,sum,custcur,res,DefaultCurRoundOff);
+  end;
+  
+return;
+end;
+
+procedure GetInvoiceSumInCustCur(record IVVc IVr,val unpaidsum,var val res,var string custcur,string basecur) begin
+  record CUVc CUr;
+
+  custcur = basecur;
+  
+  CUr.Code = IVr.CustCode;  
+  if ReadFirstMain(Cur,1,true) then begin
+    if nonblank(CUr.CurncyCode) then begin
+      custcur = CUr.CurncyCode;
+    end;
+  end;
+  
+  if custcur==IVr.CurncyCode then begin
+    res = unpaidsum;
+    GoTo LGetInvoiceSumInCustCur;
+  end;
+  
+  if (custcur==basecur) then begin
+    res = MulRateToBase1(IVr.CurncyCode,unpaidsum,IVr.FrRate,IVr.ToRateB1,IVr.ToRateB2,IVr.BaseRate1,IVr.BaseRate2,DefaultCurRoundOff);
+  end;
+  
+  res = blankval;
+  CurValToOtherCur(IVr.TransDate,IVr.CurncyCode,unpaidsum,custcur,res,DefaultCurRoundOff);
+  
+LGetInvoiceSumInCustCur:;
+return;
+end;
+
+global//VITO: DOL-102
+function integer GetInvoicePeriod(date td,date sd,date ed) begin
+  date tEndDate,tStartDate;
+  integer res;  
+  
+  res = 0;
+  tStartDate = sd;
+  tEndDate = tStartDate; 
+  tEndDate.day = DaysInMonth(Getyear(tEndDate),GetMonth(tEndDate));
+  While (tEndDate<=ed) begin
+    res = res + 1;
+    if DateInRange(td,tStartDate,tEndDate) then begin
+      GoTo LGetInvoicePeriod;
+    end;
+    
+    tStartDate = AddMonth(tStartDate,1); 
+    tStartDate.day = 1;
+    tEndDate = tStartDate; 
+    tEndDate.day = DaysInMonth(Getyear(tEndDate),GetMonth(tEndDate));
+  end;
+    
+LGetInvoicePeriod:;
+  GetInvoicePeriod = res;
+return;
+end;
+
+procedure AddCustData(string CustCode,string custname,string custcur,val t,integer period,
+                      var array string arrCustCodes,
+                      var vector string vecCustData,
+                      var vector val vecCustVals,
+                      var vector boolean vecCustAdded) begin
+  
+  
+  if vecCustAdded[custcode]==false then begin
+    vecCustData[custcode & ":NAME"] = custname;
+    vecCustData[custcode & ":CUR"] = custcur;
+    arrCustCodes[arrCustCodes.length] = CustCode;
+    vecCustAdded[custcode] = true;
+  end;
+  
+  vecCustVals[custcode & ":" & period] = vecCustVals[custcode & ":" & period] + t; 
+  
+return;
+end;
+
+procedure LoadIPVcData(Record RcVc RepSpec,date sd,date ed,string basecur,
+                       var array string arrCustCodes,
+                       var vector string vecCustData,
+                       var vector val vecCustVals,
+                       var vector boolean vecCustAdded) begin
+  record IPVc IPr;
+  row IPVc IPrw;
+  integer i,rwc;
+  boolean wloop,testf;
+  string 255 custname,custcur;
+  val t;
+  
+  IPr.TransDate = sd;
+  wloop = true;
+  While LoopKey("TransDate",IPr,1,wloop) begin
+    if IPr.TransDate>ed then begin
+      wloop = false;
+    end else begin
+      testf = true;
+      if IPr.OKFlag==0 and RepSpec.flags[1]==0 then begin
+        testf = false;
+      end;
+      if testf then begin
+        rwc = MatRowCnt(IPr);
+        for(i=0;i<rwc;i=i+1)begin
+          MatRowGet(IPr,i,IPrw);
+          testf = CheckCustomerMatch(IPrw.CustCode,RepSpec);
+          if IPrw.InvoiceNr!=-1 then begin
+            testf = false;
+          end;
+          if IPrw.CUPNr==-1 then begin
+            testf = false;
+          end;
+          if nonblank(RepSpec.f2) and IPrw.CustCode!=RepSpec.f2 then begin
+            testf = false;
+          end;
+          if (nonblank(RepSpec.f4) and ((SetInSet(RepSpec.f4,IPrw.Objects))==false)) then begin
+            testf = false;
+          end;
+          if IPrw.stp!=kReceiptRowTypeNormal then begin
+            testf = false;
+          end;
+          if testf then begin
+            GetReceiptSumInCustCur(IPr.TransDate,IPrw.CustCode,-IPrw.RecVal,IPrw.RecCurncy,t,custname,custcur,basecur);
+            AddCustData(IPrw.CustCode,custname,custcur,t,GetInvoicePeriod(IPr.TransDate,sd,ed),arrCustCodes,vecCustData,vecCustVals,vecCustAdded);
+          end;
+        end;
+      end;
+    end;
+  end;
+  
+  
+return;
+end;
+
+procedure LoadIVVcData(Record RcVc RepSpec,date sd,date ed,string basecur,
+                       var array string arrCustCodes,
+                       var vector string vecCustData,
+                       var vector val vecCustVals,
+                       var vector boolean vecCustAdded) begin
+  record IVVc IVr;
+  record ARVc ARr;
+  row IVVc IVrw;
+  integer i,rwc;
+  boolean wloop,testf;
+  val t,unpaid;
+  string 20 custcur;
+  
+  //1. normal invoice OKed
+  IVr.PayDate = sd;
+  IVr.OKFlag = 1;
+  wloop = true;
+  While LoopKey("OKFlagPayDate",IVr,2,wloop) begin
+    if IVr.PayDate>ed or IVr.OKFlag!=1 then begin
+      wloop = false;
+    end else begin
+      testf = CheckCustomerMatch(IVr.CustCode,RepSpec);
+      if (nonblank(RepSpec.f2) and (RepSpec.f2!=IVr.CustCode)) then begin
+        testf = false;
+      end;
+      if (nonblank(RepSpec.AccStr) and (SetInSet(RepSpec.AccStr,IVr.SalesMan)==false)) then begin
+        testf = false; 
+      end;
+      if (nonblank(RepSpec.f4) and ((SetInSet(RepSpec.f4,IVr.Objects))==false)) then begin
+        testf = false;
+      end;
+      if (RepSpec.flags[2]!=0) then begin
+        if (IVr.DisputedFlag!=0) then begin testf = false; end;
+      end;
+      if IVr.InvType!=kInvoiceTypeNormal then begin
+        testf = false;
+      end;
+      if testf then begin
+        ARr.InvoiceNr = IVr.SerNr;
+        if !ReadFirstMain(ARr,1,true) then begin
+          testf = false;
+        end;
+        unpaid = ARr.RVal;
+      end;
+      if testf then begin
+        GetInvoiceSumInCustCur(IVr,unpaid,t,custcur,basecur);
+        AddCustData(IVr.CustCode,IVr.Addr0,custcur,t,GetInvoicePeriod(IVr.PayDate,sd,ed),arrCustCodes,vecCustData,vecCustVals,vecCustAdded);
+      end;
+    end;
+    
+  end;
+  
+  //2. normal invoices unoked
+  IVr.PayDate = sd;
+  IVr.OKFlag = 0;
+  ResetLoop(IVr);
+  wloop = (RepSpec.flags[1]==1);
+  While LoopKey("OKFlagPayDate",IVr,2,wloop) begin
+    if IVr.PayDate>ed or IVr.OKFlag!=0 then begin
+      wloop = false;
+    end else begin
+      testf = CheckCustomerMatch(IVr.CustCode,RepSpec);
+      if (nonblank(RepSpec.f2) and (RepSpec.f2!=IVr.CustCode)) then begin
+        testf = false;
+      end;
+      if (nonblank(RepSpec.AccStr) and (SetInSet(RepSpec.AccStr,IVr.SalesMan)==false)) then begin
+        testf = false; 
+      end;
+      if (nonblank(RepSpec.f4) and ((SetInSet(RepSpec.f4,IVr.Objects))==false)) then begin
+        testf = false;
+      end;
+      if (RepSpec.flags[2]!=0) then begin
+        if (IVr.DisputedFlag!=0) then begin testf = false; end;
+      end;
+      if IVr.InvType!=kInvoiceTypeNormal then begin
+        testf = false;
+      end;
+      if testf then begin
+        GetInvoiceSumInCustCur(IVr,IVr.Sum4,t,custcur,basecur);
+        LogText(0,"PayDate = " & IVr.PayDate & " period=" & GetInvoicePeriod(IVr.PayDate,sd,ed));
+        AddCustData(IVr.CustCode,IVr.Addr0,custcur,t,GetInvoicePeriod(IVr.PayDate,sd,ed),arrCustCodes,vecCustData,vecCustVals,vecCustAdded);
+      end;
+    end;
+    
+  end;
+  
+  //3. credit invoices by transdate
+  IVr.TransDate = sd;
+  ResetLoop(IVr);
+  wloop = true;
+  While LoopKey("TransDate",IVr,1,wloop) begin
+    if IVr.TransDate>ed then begin
+      wloop = false;
+    end else begin
+      testf = CheckCustomerMatch(IVr.CustCode,RepSpec);
+      if (nonblank(RepSpec.f2) and (RepSpec.f2!=IVr.CustCode)) then begin
+        testf = false;
+      end;
+      if (nonblank(RepSpec.AccStr) and (SetInSet(RepSpec.AccStr,IVr.SalesMan)==false)) then begin
+        testf = false; 
+      end;
+      if (nonblank(RepSpec.f4) and ((SetInSet(RepSpec.f4,IVr.Objects))==false)) then begin
+        testf = false;
+      end;
+      if (RepSpec.flags[2]!=0) then begin
+        if (IVr.DisputedFlag!=0) then begin testf = false; end;
+      end;
+      if IVr.InvType!=kInvoiceTypeCredit then begin
+        testf = false;
+      end;
+      if IVr.OKFlag==0 and RepSpec.flags[1]==0 then begin
+        testf = false;
+      end;
+      if testf then begin
+        rwc = MatRowCnt(IVr);
+        for(i=0;i<rwc;i=i+1)begin
+          MatRowGet(IVr,i,IVrw);
+          if IVrw.stp==kInvoiceRowTypeCredit and IVrw.OrdRow!=-1 then begin //only credit notes without invoice number should be added
+            testf = false;
+            i = rwc;
+          end;
+        end;
+      end;
+      if testf then begin
+        GetInvoiceSumInCustCur(IVr,-IVr.Sum4,t,custcur,basecur);
+        AddCustData(IVr.CustCode,IVr.Addr0,custcur,t,GetInvoicePeriod(IVr.TransDate,sd,ed),arrCustCodes,vecCustData,vecCustVals,vecCustAdded);
+      end;
+    end;
+  end;
+  
+      
+return;
+end;
+
+global 
+procedure IPProgRn_ByMonths(Record RcVc RepSpec) begin
+  record IVVc IVr;
+  integer i,a;
+  date ed,sd,td;
+  string 20 basecur;
+  val t;
+  array string 20 arrCustCodes;
+  array val totals;
+  vector string 200 vecCustData;
+  vector val vecCustVals;
+  vector boolean vecCustAdded;
+  
+  SetRepCol(2,30);
+  SetRepCol(3,110);
+  SetRepCol(4,180);
+  SetRepCol(5,240);
+  SetRepCol(6,300);
+  SetRepCol(7,360);
+  SetRepCol(8,420);
+  
+  GetBaseCurncy(1,basecur);
+  sd = AddMonth(RepSpec.sStartDate,-2);
+  sd.day = 1;
+  ed = AddMonth(RepSpec.sStartDate,2);
+  ed.day = DaysInMonth(GetYear(ed),GetMonth(ed));
+  
+  StartFormat(15);
+  OutString(0,"",USetStr(2376),false); //Customer
+  OutString(2,"",USetStr(2448),false); //Customer name
+  OutString(3,"",USetStr(2514),false); //Customer currency
+  OutString(4,"",USetStr(2078),true); //Before
+  td = AddMonth(sd,1); td.day = 1;
+  OutString(5,"",DateToString(td,"YY.MM.DD"),true); //Last month
+  td = AddMonth(sd,2); td.day = 1;
+  OutString(6,"",DateToString(td,"YY.MM.DD"),true); //Current month
+  td = AddMonth(sd,3); td.day = 1;
+  OutString(7,"",DateToString(td,"YY.MM.DD"),true); //Next month
+  OutString(8,"",USetStr(2079),true); //After
+  OutString(1,"",USetStr(1182),true); //Balance
+  EndFormat;
+  
+  StartFormat(15);
+  OutString(0,"","",false); //Customer
+  OutString(2,"","",false); //Customer name
+  OutString(3,"","",false); //Customer currency
+  OutString(4,"","",true); //Before
+  td = AddMonth(sd,1); td.day = DaysInMonth(GetYear(td),GetMonth(td));
+  OutString(5,"",DateToString(td,"YY.MM.DD"),true); //Last month
+  td = AddMonth(sd,2); td.day = DaysInMonth(GetYear(td),GetMonth(td));
+  OutString(6,"",DateToString(td,"YY.MM.DD"),true); //Current month
+  td = AddMonth(sd,3); td.day = DaysInMonth(GetYear(td),GetMonth(td));
+  OutString(7,"",DateToString(td,"YY.MM.DD"),true); //Next month
+  OutString(8,"","",true); //After
+  OutString(1,"","",true); //Balance
+  EndFormat;
+  Black_Divider(1,0);
+  
+  LoadIVVcData(RepSpec,sd,ed,basecur,arrCustCodes,vecCustData,vecCustVals,vecCustAdded);
+  LoadIPVcData(RepSpec,sd,ed,basecur,arrCustCodes,vecCustData,vecCustVals,vecCustAdded);
+  
+  
+  SortStringArray(arrCustCodes);
+  for(i=0;i<arrCustCodes.length;i=i+1)begin
+    StartFormat(15);
+    OutString(0,"dblCUVc",arrCustCodes[i],false);
+    OutString(2,"",vecCustData[arrCustCodes[i] & ":NAME"],false);
+    OutString(3,"",vecCustData[arrCustCodes[i] & ":CUR"],false);
+    OutVal(4,"",vecCustVals[arrCustCodes[i] & ":1"],M4Val,true);
+    OutVal(5,"",vecCustVals[arrCustCodes[i] & ":2"],M4Val,true);
+    OutVal(6,"",vecCustVals[arrCustCodes[i] & ":3"],M4Val,true);
+    OutVal(7,"",vecCustVals[arrCustCodes[i] & ":4"],M4Val,true);
+    OutVal(8,"",vecCustVals[arrCustCodes[i] & ":5"],M4Val,true);
+    
+    t=0;
+    for(a=1;a<=5;a=a+1)begin
+      t = t + vecCustVals[arrCustCodes[i] & ":" & a];
+    end;
+    OutVal(1,"",t,M4Val,true);
+    EndFormat;
+    Gray_divider(1,0);
+    
+    for(a=1;a<=5;a=a+1)begin
+      if vecCustData[arrCustCodes[i] & ":CUR"]!=basecur then begin
+        totals[a] = totals[a] + MulWithRateToBase1(vecCustData[arrCustCodes[i] & ":CUR"],sd,vecCustVals[arrCustCodes[i] & ":" & a],DefaultCurRoundOff);
+      end else begin
+        totals[a] = totals[a] + vecCustVals[arrCustCodes[i] & ":" & a];
+      end;
+    end;
+  end;
+  
+  Black_divider(1,0);
+  StartFormat(15);
+  OutString(0,"","",false);
+  OutString(2,"",USetStr(20526) & " (" & basecur & ")",false);
+  OutString(3,"","",false);
+  OutVal(4,"",totals[1],M4Val,true);
+  OutVal(5,"",totals[2],M4Val,true);
+  OutVal(6,"",totals[3],M4Val,true);
+  OutVal(7,"",totals[4],M4Val,true);
+  OutVal(8,"",totals[5],M4Val,true);
+  t=0;
+  for(a=1;a<=5;a=a+1)begin
+    t = t + totals[a];
+  end;
+  OutVal(1,"",t,M4Val,true);
+  EndFormat;
+  
+return;
+end;

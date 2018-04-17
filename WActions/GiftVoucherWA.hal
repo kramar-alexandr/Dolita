@@ -1,0 +1,144 @@
+
+procedure GiftVoucherToolKeyPad_Numbers(string numberstr)
+begin
+  Integer wn;
+  record RcVc RepSpec;
+  
+  wn = CurWindow;
+  GetWindowRecord(wn,RepSpec);
+  PasteString(wn,numberstr);
+  RepSpec.f1 = RepSpec.f1 & numberstr;
+  PutWindowRecord(wn,RepSpec);
+  DeselectWindow(wn,false);
+  return;
+end;
+
+global 
+procedure GiftVoucherSalesToolKeyPad0()
+begin
+  GiftVoucherToolKeyPad_Numbers("0");
+  return;
+end;  
+
+global
+procedure GiftVoucherSalesToolKeyPad1()
+begin
+  GiftVoucherToolKeyPad_Numbers("1");
+  return;
+end;  
+
+global
+procedure GiftVoucherSalesToolKeyPad2()
+begin
+  GiftVoucherToolKeyPad_Numbers("2");
+  return;
+end;  
+
+global
+procedure GiftVoucherSalesToolKeyPad3()
+begin
+  GiftVoucherToolKeyPad_Numbers("3");
+  return;
+end;  
+
+global
+procedure GiftVoucherSalesToolKeyPad4()
+begin
+  GiftVoucherToolKeyPad_Numbers("4");
+  return;
+end;  
+
+global
+procedure GiftVoucherSalesToolKeyPad5()
+begin
+  GiftVoucherToolKeyPad_Numbers("5");
+  return;
+end;  
+
+global
+procedure GiftVoucherSalesToolKeyPad6()
+begin
+  GiftVoucherToolKeyPad_Numbers("6");
+  return;
+end;  
+
+global
+procedure GiftVoucherSalesToolKeyPad7()
+begin
+  GiftVoucherToolKeyPad_Numbers("7");
+  return;
+end;  
+
+global
+procedure GiftVoucherSalesToolKeyPad8()
+begin
+  GiftVoucherToolKeyPad_Numbers("8");
+  return;
+end;  
+
+global
+procedure GiftVoucherSalesToolKeyPad9()
+begin
+  GiftVoucherToolKeyPad_Numbers("9");
+  return;
+end;  
+
+global
+procedure GiftVoucherSalesToolKeyPadPoint()
+begin
+  GiftVoucherToolKeyPad_Numbers("."); //## international
+  return;
+end;
+
+global
+procedure GiftVoucherSalesToolKeyPadDelete()
+begin
+  integer wn;
+  record RcVc RepSpec;
+  
+  wn = CurWindow;
+  GetWindowRecord(wn,RepSpec);
+  WindowFieldGoto(wn,RepSpec,-1,"f1",false);
+  KeyPadSelectAll(CurWindow);
+  KeyPadDelete(CurWindow);
+  
+  return;
+end;  
+
+global
+procedure GiftVoucherSalesToolList()
+begin
+  integer wn,nwn;  
+  record RcVc RepSpec;
+  record GCVc GCr;
+  record LocalMachineBlock LocalMachineBl;
+  string 20 subset;
+  
+  wn = CurWindow;
+  GetWindowRecord(wn,RepSpec);
+  WindowFieldGoto(wn,RepSpec,-1,"f1",false);
+
+  BlockLoad(LocalMachineBl);  
+  subset = LocalMachineBl.DefLocation;
+  
+  nwn = OpenWindow("GCSClass",0,wn,subset,"",GCr);
+
+return;
+end;
+
+global
+procedure ListGVTouchScreenDClass() begin
+  integer wn,nwn;
+  record RcVc RepSpec;
+  record GCSVc GCSr;
+  string 20 subset;
+  record INVc INr;
+  
+  wn = CurWindow;
+  GetWindowRecord(wn,RepSpec);
+  WindowFieldGoto(wn,RepSpec,-1,"f1",false);
+  nwn = OpenWindow("GCSSClass",1,wn,"","",GCSr);
+
+return;
+end;
+

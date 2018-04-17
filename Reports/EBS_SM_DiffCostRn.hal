@@ -1,0 +1,92 @@
+external inner procedure HT2Per(Date, Date , var string);
+
+event startup
+begin
+  SetLangMode(LangLithuanian,"LIT",2);
+
+  Report("Stock movements with different costs",EBS_SM_DiffCostRClass,EBS_SM_DiffCostRn,0,modTC);
+
+  return;
+end;
+
+event DefineWindows
+begin
+
+  SetLangMode(LangLithuanian,"LIT",2);
+
+  WindowBegin("Stock movements with different costs",EBS_SM_DiffCostRClass,CGRcW,RcType);
+    SetWRect(20,80,450,150);
+  EndWindow;
+
+return;
+end;
+
+global
+procedure EBS_SM_DiffCostRn(Record RcVc RepSpec)
+Begin
+  integer i,rwc,cnt;
+  record StockMovVc StockMovr;
+  row StockMovVc StockMovrw;
+  boolean testf,wloop,printedf;
+
+  StartReportNoHeaderJob("Stock movements with different costs");
+  SetRepCol(2,40);
+  SetRepCol(3,100);
+  SetRepCol(4,240);
+  SetRepCol(5,320);
+  SetRepCol(6,400);
+
+  StartFormat(15);
+  OutString(0,"","Number",false);
+  OutString(2,"","Item",false);
+  OutString(3,"","Name from SM",false);
+  OutString(4,"","Old Price",true);
+  OutString(5,"","New Price",true);
+  OutString(6,"","Sent Old Price",true);
+  OutString(1,"","Sent New Price",true);
+  EndFormat;
+
+  ResetLoop(StockMovr);
+  StockMovr.SerNr = -1;
+  wloop = true;
+  While LoopMain(StockMovr,1,wloop) begin
+    testf = true; printedf = false;
+    if blank(StockMovr.ThrouLocation) then begin
+      testf = false;
+    end;
+    if StockMovr.OKFlag == 0 then begin
+      testf = false;
+    end;
+    if testf then begin
+      rwc = MatRowCnt(StockMovr);
+      for(i=0;i<rwc;i=i+1)begin
+        MatRowGet(StockMovr,i,StockMovrw);
+        if StockMovrw.OldPrice != StockMovrw.SentOldPrice or StockMovrw.NewPrice!=StockMovrw.SentNewPrice then begin
+          StartFormat(15);
+          OutString(0,"dblStockMovVc",StockMovr.SerNr,false);
+          OutString(2,"",StockMovrw.ArtCode,false);
+          OutString(3,"",StockMovrw.Spec,false);
+          OutVal(4,"",StockMovrw.OldPrice,M45Val,true);
+          OutVal(5,"",StockMovrw.NewPrice,M45Val,true);
+          OutVal(6,"",StockMovrw.SentOldPrice,M45Val,true);
+          OutVal(1,"",StockMovrw.SentNewPrice,M45Val,true);
+          EndFormat;
+          Gray_Divider(1,0);
+          printedf = true;
+        end;
+      end;
+      if printedf then begin
+        cnt = cnt + 1;
+      end;
+    end;
+  end;
+  Black_Divider(1,0);
+  StartFormat(15);
+  OutString(0,"",cnt,false);
+  EndFormat;
+  EndJob;
+
+
+
+return;
+end;

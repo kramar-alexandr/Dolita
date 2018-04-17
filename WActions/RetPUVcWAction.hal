@@ -1,0 +1,77 @@
+//c72140909
+remote inner function Boolean ReadFirstItem(string,var record INVc,Boolean,Boolean);
+external inner function Boolean TestForMATVARINS(Integer);
+
+function Boolean RetPUDClassVECodeEFAfter(Integer wn,Integer changedf)
+begin
+  record CUVc Ver;
+  record RetPUVc RetPUr;
+
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,RetPUr);
+    VEr.Code = RetPUr.VECode;
+    if (ReadFirstMain(VEr,1,true)) then begin
+      RetPUr.VEName = VEr.Name;
+    end;
+    PutWindowRecord(wn,RetPUr);
+  end;
+
+  RetPUDClassVECodeEFAfter = true;
+  return;
+end;
+
+function Boolean RetPUDClassArtCodeEFAfter(Integer wn,integer rownr, Integer changedf)
+begin
+  record INVc INr;
+  record RetPUVc RetPUr;
+  row RetPUVc RetPUrw;
+
+  if (changedf!=0) then begin
+    GetWindowRecord(wn,RetPUr);
+    if (rownr > -1) then begin
+      MatRowGet(RetPUr,rownr,RetPUrw);
+      SetWindowNameArg(wn,RetPUrw.ArtCode & ":" & RetPUrw.Location);
+      if (ReadFirstItem(RetPUrw.ArtCode,INr,true,false)) then begin
+        RetPUrw.Spec = INr.Name;
+      end;
+      MatRowPut(RetPUr,rownr,RetPUrw);
+    end;
+    PutWindowRecord(wn,RetPUr);
+  end;
+
+  RetPUDClassArtCodeEFAfter = true;
+  return;
+end;
+
+global
+function Boolean RetPUDClassAfterEditField(Integer wn,string fieldname,Integer fn, Integer rownr,Integer changed)
+BEGIN
+  Boolean res;
+
+  res = inner.RetPUDClassAfterEditField(wn,fieldname,fn, rownr,changed);
+
+  switch (fieldname) begin
+    case "VECode": res = RetPUDClassVECodeEFAfter(wn,changed); // EVS: DOL-139
+    case "ArtCode": res = RetPUDClassArtCodeEFAfter(wn,rownr,changed); // EVS: DOL-139
+  end;
+  RetPUDClassAfterEditField = res;
+  RETURN;
+END;
+
+global
+function Boolean RetPUDClassBeforeEditField(Integer wn,string fieldname,Integer fn, Integer rownr)
+BEGIN
+  Boolean res;
+  record RetPUVc RetPUr;
+  row RetPUVc RetPUrw;
+
+  switch (fieldname) begin
+    case "Quant":
+      GetWindowRecord(wn,RetPUr);
+      MatRowGet(RetPUr,rownr,RetPUrw);
+      if (TestForMATVARINS(wn)) then begin end;
+  end;
+
+  RetPUDClassBeforeEditField = res;
+  return;
+end;

@@ -1,0 +1,131 @@
+remote function string 20 ConvertItemCode(string);
+external function string 10 DOLGetUserLocation(string);
+
+procedure StockMovConvertItemCode(integer wn,integer rownr,integer changed) begin
+  record StockMovVc StockMovr;
+  row StockMovVc StockMovrw;  
+  
+  if changed!=0 then begin
+    GetWindowRecord(wn,StockMovr);
+    if MatRowCnt(StockMovr)>rownr then begin
+      MatRowGet(StockMovr,rownr,StockMovrw);
+      StockMovrw.ArtCode = ConvertItemCode(StockMovrw.ArtCode);
+      MatRowPut(StockMovr,rownr,StockMovrw);
+      PutWindowRecord(wn,StockMovr);
+    end;
+  end;
+  
+return;
+end;
+
+global
+function Boolean StockMovDClassAfterEditField(Integer wn,string fieldname,Integer fn, Integer rownr,Integer changed)
+BEGIN
+  Boolean res;
+
+  switch (fieldname) begin
+    case "ArtCode": StockMovConvertItemCode(wn,rownr,changed);
+  end;
+  
+  res = inner.StockMovDClassAfterEditField(wn,fieldname,fn,rownr,changed);
+  
+  StockMovDClassAfterEditField = res;
+  RETURN;
+END;
+
+global
+function Boolean StockMovDClassOrdFlagButtonAction(Integer wn,Integer value)
+begin
+  Boolean res;
+  Integer normalmode,updatemode,insertmode;
+  record StockMovVc StockMovr;
+  string 10 userloc;
+  
+  res = inner.StockMovDClassOrdFlagButtonAction(wn,value);
+  
+  if res then begin
+    normalmode = 0;//Rs_normal
+    insertmode = 1;//Rs_insert
+    updatemode = 2;//Rs_update
+    userloc = DOLGetUserLocation(CurrentUser);
+    if (WindowState(wn)==normalmode) then begin
+      GetWindowRecord(wn,StockMovr);
+    end;
+    if (WindowState(wn)==insertmode) then begin
+      GetWindowRecord(wn,StockMovr);
+    end;  
+    if (WindowState(wn)==updatemode) then begin
+      GetPrevWindowRecord(wn,StockMovr);
+    end;
+    if nonblank(userloc) and StockMovr.ToLocation!=userloc then begin
+      res = false;
+    end;
+  end;
+  
+  StockMovDClassOrdFlagButtonAction = res;
+  return;
+end;
+
+global
+function Boolean StockMovDClassOKFlagButtonAction(Integer wn,Integer value)
+begin
+  Boolean res;
+  Integer normalmode,updatemode,insertmode;
+  record StockMovVc StockMovr;
+  string 10 userloc;
+
+  res = inner.StockMovDClassOKFlagButtonAction(wn,value);
+  if res then begin
+    normalmode = 0;//Rs_normal
+    insertmode = 1;//Rs_insert
+    updatemode = 2;//Rs_update
+    userloc = DOLGetUserLocation(CurrentUser);
+    if (WindowState(wn)==normalmode) then begin
+      GetWindowRecord(wn,StockMovr);
+    end;
+    if (WindowState(wn)==insertmode) then begin
+      GetWindowRecord(wn,StockMovr);
+    end;  
+    if (WindowState(wn)==updatemode) then begin
+      GetPrevWindowRecord(wn,StockMovr);
+    end; 
+    if nonblank(userloc) and StockMovr.ToLocation!=userloc then begin
+      res = false;
+    end;
+  end;
+  
+  StockMovDClassOKFlagButtonAction = res;
+  return;
+end;
+
+global
+function Boolean StockMovDClassSentOKFlagButtonAction(Integer wn,Integer value)
+begin
+  Boolean res;
+  Integer normalmode,updatemode,insertmode;
+  record StockMovVc StockMovr;
+  string 10 userloc;
+
+  res = inner.StockMovDClassSentOKFlagButtonAction(wn,value);
+  if res then begin
+    normalmode = 0;//Rs_normal
+    insertmode = 1;//Rs_insert
+    updatemode = 2;//Rs_update
+    userloc = DOLGetUserLocation(CurrentUser);
+    if (WindowState(wn)==normalmode) then begin
+      GetWindowRecord(wn,StockMovr);
+    end;
+    if (WindowState(wn)==insertmode) then begin
+      GetWindowRecord(wn,StockMovr);
+    end;  
+    if (WindowState(wn)==updatemode) then begin
+      GetPrevWindowRecord(wn,StockMovr);
+    end;
+    if nonblank(userloc) and StockMovr.FrLocation!=userloc then begin
+      res = false;
+    end;
+  end;
+  
+  StockMovDClassSentOKFlagButtonAction = res;
+  return;
+end;

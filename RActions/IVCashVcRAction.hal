@@ -1,0 +1,28 @@
+global
+function LongInt IVCashVcRecordDuplicate(var record IVCashVc IVCashr,record IVCashVc IVCash2r,LongInt long3,LongInt long4)
+begin
+  LongInt res;
+
+  res = inner.IVCashVcRecordDuplicate(IVCashr,IVCash2r,long3,long4);
+
+  IVCashr.SrcORNr = -1;// EVS: DOL-68
+
+  IVCashVcRecordDuplicate = res;
+  return;
+end;
+
+global
+updating function LongInt IVCashVcRecordRemoveAfter(var record IVCashVc IVCashr,record IVCashVc IVCash2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  record EBS_IVCashSDVc EBS_IVCashSDr;
+
+  // res = inner.IVCashVcRecordRemoveAfter(IVCashr,IVCash2r,stat,long4);
+  EBS_IVCashSDr.SerNr = IVCashr.SerNr;
+  if ReadFirstMain(EBS_IVCashSDr,1,true) then begin
+    RecordDelete(EBS_IVCashSDr);
+  end;
+
+  IVCashVcRecordRemoveAfter = res;
+  RETURN;
+END;

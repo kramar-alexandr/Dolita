@@ -1,0 +1,23 @@
+remote procedure EBS_UserSClassOnOpenRemote(record LocalMachineBlock,var array string,var array string,var integer);
+
+global
+procedure DrawUserButtons(real h,real sv,real vs,real v3,integer maxbtn) begin
+  real v;
+  array string 255 arrUserCodes,arrUserNames;
+  integer size,i,cnt,mwn,currow;
+  record LocalMachineBlock LocalMachineBl;
+  
+  BlockLoad(LocalMachineBl);
+  EBS_UserSClassOnOpenRemote(LocalMachineBl,arrUserCodes,arrUserNames,size);
+  if size>maxbtn then begin
+    size = maxbtn;
+  end;
+  
+  v = sv;
+  for(i=0;i<size;i=i+1)begin
+    ColourPushButtonTag(h,v,h+200,v+v3,"ChooseSalesManBtn",arrUserNames[i] & " (" & arrUserCodes[i] & ")",2,arrUserCodes[i]);
+    v = v + vs;
+  end;
+  
+return;
+end;

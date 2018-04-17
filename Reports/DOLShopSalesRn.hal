@@ -1,0 +1,654 @@
+// EVS: DOL-93 auth
+external inner procedure HTLocations(string, string, var string);
+external inner procedure IVCashSumup(var record IVCashVc,Boolean);
+external inner procedure GetVATdouble(string,var val,var val,Integer);
+external inner procedure MulVATIV(string,val,var val,var val,Integer,Integer);
+external inner function Boolean GetVAT2(string,var val,var Integer,Integer);
+external inner function Boolean GetVATincl(string,var val,var Integer);
+// external inner function Boolean IVCashDchrsum(record IVCashVc,Integer,Integer);
+// external inner procedure IVCashDchsum(record IVCashVc,Integer);
+external inner procedure InvVat(Integer,Integer,Integer,Integer,string,val,var val,var val,var val,var val,var val);
+external inner procedure IVVc_PastePrice(var record IVVc,record IVVc,Integer,var string);
+external inner procedure IVSumup(var record IVVc,Boolean);
+external inner procedure FindSalesExVat(record TaxMatrixVc,string,val,Integer,Integer,var val);
+external inner function val MulRateToBase1(var string,val,val,val,val,val,val,roundmode);
+
+function date AddDate(date indate, integer type, integer coef)
+begin
+  date res;
+
+  switch (type) begin
+    case 0: // day
+      res = AddDay(indate,coef);
+    case 1: // week
+      res = AddDay(indate,(coef*7));
+    case 2: // month
+      res = AddMonth(indate,coef);
+    case 3: // quarter
+      res = AddMonth(indate,(coef*4));
+    case 4: // years
+      res = AddYear(indate,coef);
+  end;
+
+  AddDate = res;
+return;
+end;
+
+procedure SetPeriods(var record RcVc RepSpec,var array date a_sdate,var array date a_edate,var integer cnt)
+begin
+  date adate;
+  integer i;
+
+  if (BlankDate(RepSpec.d1)) then begin
+    RepSpec.d1 = CurrentDate;
+  end;
+
+  adate = AddDay(RepSpec.d1,1);
+
+  adate = AddDate(adate,RepSpec.flags[2],-12);
+
+  for (i = 0; i < 12; i = i + 1) begin
+    a_sdate[cnt] = adate;
+    adate = AddDate(adate,RepSpec.flags[2],1);
+    adate = AddDay(adate,-1);
+    a_edate[cnt] = adate;
+    adate = AddDay(adate,1);
+    cnt = cnt + 1;
+  end;
+
+return;
+end;
+
+procedure ReportResHeader(record RcVc RepSpec,array date a_sdate,array date a_edate,var integer cnt,array integer a_colx)
+begin
+  integer i;
+
+  StartFormat(15);
+  OutString(0,0,"",false);
+  for (i = 0; i < cnt; i = i + 1) begin
+    OutString(a_colx[i],0,a_sdate[i],true);
+  end;
+  EndFormat;
+
+  StartFormat(15);
+  OutString(0,0,USetStr(1000050),false);
+  for (i = 0; i < cnt; i = i + 1) begin
+    OutString(a_colx[i],0,a_edate[i],true);
+  end;
+  EndFormat;
+
+  Gray_Divider(0,1);
+
+return;
+end;
+
+procedure SetColX(integer cnt, array integer a_colx)
+begin
+  integer i;
+
+  for (i = 0; i < cnt; i = i + 1) begin
+    if (i == 0) then begin
+      a_colx[i] = 60;
+    end else begin
+      a_colx[i] = a_colx[i-1] + 30;
+    end;
+  end;
+
+return;
+end;
+
+function boolean RemoveGCRows(var record IVCashVc IVCashr)
+begin
+  boolean res;
+  row IVCashVc IVCashrw;
+  integer rwc,i;
+
+  rwc = MatRowCnt(IVCashr);
+  for (i=0; i<rwc; i=i+1) begin
+    MatRowGet(IVCashr,i,IVCashrw);
+    if (IVCashrw.stp == kInvoiceRowTypeGiftVoucherSold) then begin
+      MatRowDelete(IVCashr,i);
+      rwc = rwc - 1;
+      i = i - 1;
+      res = true;
+    end;
+  end;
+
+  RemoveGCRows = res;
+return;
+end;
+
+procedure CashInvVat(Integer stp,Integer incvat,Integer NoTAXonVAT,Integer exportflag,string vatcode,val rowsump,
+                var val vatprcp,var val vatvalp,var val vatexclprc,var val vatinclprc,var val rowtax)
+begin
+  Integer rn;
+  val tax1;
+
+  vatprcp = blankval;
+  vatvalp = blankval;
+  vatexclprc = blankval;
+  vatinclprc = blankval;
+  if (stp==1) then begin
+    switch (incvat) begin
+      case 0:
+        if ((exportflag==0) or (exportflag==3) or (exportflag==4)) then begin
+//          Mul2VAT(vatcode,rowsump,vatvalp,vatprcp,incvat);
+          GetVATdouble(vatcode,vatprcp,tax1,incvat);
+          MulVATIV(vatcode,rowsump,vatvalp,rowtax,incvat,NoTAXonVAT);
+          if (GetVAT2(vatcode,vatexclprc,rn,0)) then begin
+          end;
+          if (GetVATincl(vatcode,vatinclprc,rn)) then begin
+          end;
+        end;
+      otherwise
+//        Mul2VAT(vatcode,rowsump,vatvalp,vatprcp,incvat);
+        GetVATdouble(vatcode,vatprcp,tax1,incvat);
+        MulVATIV(vatcode,rowsump,vatvalp,rowtax,incvat,NoTAXonVAT);
+        if (GetVAT2(vatcode,vatexclprc,rn,0)) then begin
+        end;
+        if (GetVATincl(vatcode,vatinclprc,rn)) then begin
+        end;
+    end;
+  end;
+  return;
+end;
+
+function val GetValFromPOSRetInvoice(string unit_code,record IVVc pIVr,integer return_mode)
+begin
+  record IVVc IVr,IV2r;
+  row IVVc IVrw;
+  boolean sumupf;
+  record TaxMatrixVc TMr;
+  integer rwc,i;
+  val res;
+  val vatprc,vatval,vatexclprc,vatinclprc,rowtax,s,t,rowsum;
+  record GeneralOptionBlock GenOptRec;
+  string 20 warn;
+
+  BlockLoad(GenOptRec);
+
+  RecordCopy(IVr,pIVr);
+  RecordCopy(IV2r,pIVr);
+
+  rwc = MatRowCnt(IVr);
+  for (i=0; i<rwc; i=i+1) begin
+    MatRowGet(IVr,i,IVrw);
+    if (nonblank(IVrw.ArtCode) and IVrw.stp == kInvoiceRowTypeNormal) then begin
+      if (IVrw.UnitCode != unit_code and nonblank(unit_code)) then begin
+        MatRowDelete(IVr,i);
+        rwc = rwc - 1;
+        i = i - 1;
+        sumupf = true;
+      end else begin
+        // EVS: DOL-151
+        if (return_mode == 3) then begin // use price w/o VAT
+          if (IVr.InclVAT > 0) then begin
+            s = MulRateToBase1(IVr.CurncyCode,IVrw.Sum,IVr.FrRate,IVr.ToRateB1,IVr.ToRateB2,IVr.BaseRate1,IVr.BaseRate2,DefaultCurRoundOff);
+            FindSalesExVat(TMr,IVrw.VATCode,s,IVr.InclVAT,IVr.NoTAXonVAT,rowsum);
+            IVrw.rowGP = rowsum - (IVrw.Quant * IVrw.BasePrice);
+//            InvVat(IVrw.stp,IVr.InclVAT,IVr.NoTAXonVAT,0,IVrw.VATCode,IVrw.Price,vatprc,vatval,vatexclprc,vatinclprc,rowtax);
+//            IVrw.Price = IVrw.Price - vatval;
+//            MatRowPut(IVr,i,IVrw);
+//            IVVc_PastePrice(IVr,IV2r,i,warn);
+            sumupf = true;
+          end;
+        end;
+        // :EVS
+      end;
+    end;
+  end;
+  if (sumupf) then begin
+    IVSumup(IVr,true);
+  end;
+
+  switch (return_mode) begin
+    case 0: res = IVr.Sum4;
+    case 1: res = (IVr.Sum1 - IVr.Sum3);
+    case 2: res = IVr.TotQty;
+    case 3: res = IVr.TotGP;
+  end;
+
+  GetValFromPOSRetInvoice = res;
+return;
+end;
+
+function val GetSumAndGPFromPOSRetInvoice(string unit_code,record IVVc pIVr, var val tots, var val totgp)
+begin
+  record IVVc IVr,IV2r;
+  row IVVc IVrw;
+  boolean sumupf;
+  integer rwc,i;
+  record TaxMatrixVc TMr;
+  val vatprc,vatval,vatexclprc,vatinclprc,rowtax,s,t,rowsum;
+  record GeneralOptionBlock GenOptRec;
+  string 20 warn;
+
+  BlockLoad(GenOptRec);
+
+  RecordCopy(IVr,pIVr);
+  RecordCopy(IV2r,pIVr);
+
+  rwc = MatRowCnt(IVr);
+  for (i=0; i<rwc; i=i+1) begin
+    MatRowGet(IVr,i,IVrw);
+    if (nonblank(IVrw.ArtCode) and IVrw.stp == kInvoiceRowTypeNormal) then begin
+      if (nonblank(unit_code) and IVrw.UnitCode != unit_code) then begin
+        MatRowDelete(IVr,i);
+        rwc = rwc - 1;
+        i = i - 1;
+        sumupf = true;
+      end else begin
+
+        // EVS: DOL-151
+        if (IVr.InclVAT > 0) then begin
+          s = MulRateToBase1(IVr.CurncyCode,IVrw.Sum,IVr.FrRate,IVr.ToRateB1,IVr.ToRateB2,IVr.BaseRate1,IVr.BaseRate2,DefaultCurRoundOff);
+          FindSalesExVat(TMr,IVrw.VATCode,s,IVr.InclVAT,IVr.NoTAXonVAT,rowsum);
+          IVrw.rowGP = rowsum - (IVrw.Quant * IVrw.BasePrice);
+//          InvVat(IVrw.stp,IVr.InclVAT,IVr.NoTAXonVAT,0,IVrw.VATCode,IVrw.Price,vatprc,vatval,vatexclprc,vatinclprc,rowtax);
+//          IVrw.Price = IVrw.Price - vatval;
+//          MatRowPut(IVr,i,IVrw);
+//          IVVc_PastePrice(IVr,IV2r,i,warn);
+//          MatRowGet(IVr,i,IVrw);
+          sumupf = true;
+        end;
+        // :EVS
+
+        tots = tots + IVrw.Sum;
+      end;
+    end;
+  end;
+  if (sumupf) then begin
+    IVSumup(IVr,true);
+  end;
+
+  totgp = totgp + IVr.TotGP;
+return;
+end;
+
+function val GetValFromInvoice(string unit_code,record IVCashVc pIVCashr,integer return_mode)
+begin
+  record IVCashVc IVCashr;
+  row IVCashVc IVCashrw;
+  boolean sumupf;
+  integer rwc,i;
+  record TaxMatrixVc TMr;
+  val res,s,rowsum,t;
+  val vatprc,vatval,vatexclprc,vatinclprc,rowtax;
+  record GeneralOptionBlock GenOptRec;
+
+  BlockLoad(GenOptRec);
+
+  RecordCopy(IVCashr,pIVCashr);
+
+  sumupf = RemoveGCRows(IVCashr);
+  rwc = MatRowCnt(IVCashr);
+  for (i=0; i<rwc; i=i+1) begin
+    MatRowGet(IVCashr,i,IVCashrw);
+    if (nonblank(IVCashrw.ArtCode) and IVCashrw.stp == kInvoiceRowTypeNormal) then begin
+      if (IVCashrw.UnitCode != unit_code and nonblank(unit_code)) then begin
+        MatRowDelete(IVCashr,i);
+        rwc = rwc - 1;
+        i = i - 1;
+        sumupf = true;
+      end else begin
+        // EVS: DOL-151
+        if (return_mode == 3) then begin // use price w/o VAT
+          if (IVCashr.InclVAT > 0) then begin
+            s = MulRateToBase1(IVCashr.CurncyCode,IVCashrw.Sum,IVCashr.FrRate,IVCashr.ToRateB1,IVCashr.ToRateB2,IVCashr.BaseRate1,IVCashr.BaseRate2,DefaultCurRoundOff);
+            FindSalesExVat(TMr,IVCashrw.VATCode,s,IVCashr.InclVAT,IVCashr.NoTAXonVAT,rowsum);
+            IVCashrw.rowGP = rowsum - (IVCashrw.Quant * IVCashrw.BasePrice);
+            MatRowPut(IVCashr,i,IVCashrw);
+//            CashInvVat(IVCashrw.stp,IVCashr.InclVAT,IVCashr.NoTAXonVAT,0,IVCashrw.VATCode,IVCashrw.Price,vatprc,vatval,vatexclprc,vatinclprc,rowtax);
+//            IVCashrw.rowGP = IVCashrw.
+//            MatRowPut(IVCashr,i,IVCashrw);
+//            IVCashDchrsum(IVCashr,i,GenOptRec.UseDiscount);
+//            IVCashDchsum(IVCashr,i);
+            sumupf = true;
+          end;
+        end;
+        // :EVS
+      end;
+    end;
+  end;
+  if (sumupf) then begin
+    IVCashSumup(IVCashr,true);
+  end;
+
+  switch (return_mode) begin
+    case 0: res = IVCashr.Sum4;
+    case 1: res = (IVCashr.Sum1 - IVCashr.Sum3);
+    case 2: res = IVCashr.TotQty;
+    case 3: res = IVCashr.TotGP;
+  end;
+
+  GetValFromInvoice = res;
+return;
+end;
+
+function val GetSumAndGPFromInvoice(string unit_code,record IVCashVc pIVCashr, var val tots, var val totgp)
+begin
+  record IVCashVc IVCashr;
+  record TaxMatrixVc TMr;
+  row IVCashVc IVCashrw;
+  boolean sumupf;
+  integer rwc,i;
+  val vatprc,vatval,vatexclprc,vatinclprc,rowtax,s,t,rowsum;
+  record GeneralOptionBlock GenOptRec;
+
+  BlockLoad(GenOptRec);
+
+  RecordCopy(IVCashr,pIVCashr);
+
+  sumupf = RemoveGCRows(IVCashr);
+
+  rwc = MatRowCnt(IVCashr);
+  for (i=0; i<rwc; i=i+1) begin
+    MatRowGet(IVCashr,i,IVCashrw);
+    if (nonblank(IVCashrw.ArtCode) and IVCashrw.stp == kInvoiceRowTypeNormal) then begin
+      if (nonblank(unit_code) and IVCashrw.UnitCode != unit_code) then begin
+        MatRowDelete(IVCashr,i);
+        rwc = rwc - 1;
+        i = i - 1;
+        sumupf = true;
+      end else begin
+
+        // EVS: DOL-151
+        if (IVCashr.InclVAT > 0) then begin
+          s = MulRateToBase1(IVCashr.CurncyCode,IVCashrw.Sum,IVCashr.FrRate,IVCashr.ToRateB1,IVCashr.ToRateB2,IVCashr.BaseRate1,IVCashr.BaseRate2,DefaultCurRoundOff);
+          FindSalesExVat(TMr,IVCashrw.VATCode,s,IVCashr.InclVAT,IVCashr.NoTAXonVAT,rowsum);
+          IVCashrw.rowGP = rowsum - (IVCashrw.Quant * IVCashrw.BasePrice);
+          MatRowPut(IVCashr,i,IVCashrw);
+//          CashInvVat(IVCashrw.stp,IVCashr.InclVAT,IVCashr.NoTAXonVAT,0,IVCashrw.VATCode,IVCashrw.Price,vatprc,vatval,vatexclprc,vatinclprc,rowtax);
+//          MatRowPut(IVCashr,i,IVCashrw);
+////          IVCashDchrsum(IVCashr,i,GenOptRec.UseDiscount);
+//          IVCashDchsum(IVCashr,i);
+//          MatRowGet(IVCashr,i,IVCashrw);
+          sumupf = true;
+        end;
+        // :EVS
+
+        tots = tots + IVCashrw.Sum;
+      end;
+    end;
+  end;
+  if (sumupf) then begin
+    IVCashSumup(IVCashr,true);
+  end;
+
+  totgp = totgp + IVCashr.TotGP;
+return;
+end;
+
+function val GetPOSInvoiceDataForPeriod(record RcVc RepSpec,date sdate,date edate, string loc, var val gtotgp, var val gtots)
+begin
+  record IVCashVc IVCashr;
+  row IVCashVc IVCashrw;
+  boolean trhs,testf;
+  val res,s,temp;
+  val totgp,tots;
+  integer i,rwc;
+
+  gtotgp = blankval;
+  gtots = blankval;
+
+  IVCashr.Location = loc;
+  IVCashr.TransDate = sdate;
+  trhs = true;
+  while (LoopKey("Location",IVCashr,2,trhs)) begin
+    if (IVCashr.Location != loc) then begin
+      trhs = false;
+    end;
+    if (IVCashr.TransDate > edate) then begin
+      trhs = false;
+    end;
+    if (trhs) then begin
+      testf = true;
+      if (IVcashr.Invalid != 0) then begin
+        testf = false;
+      end;
+      if (IVcashr.OKFlag == 0) then begin
+        testf = false;
+      end;
+      if (RepSpec.flags[1] == 1 and IVCashr.Sum4 < 0) then begin
+        testf = false;
+      end;
+      if (RepSpec.flags[1] == 2 and IVCashr.Sum4 > 0) then begin
+        testf = false;
+      end;
+      if (testf) then begin
+        if (RepSpec.flags[0] < 4) then begin
+          res = res + GetValFromInvoice(RepSpec.f3,IVCashr,RepSpec.flags[0]);
+        end else begin
+          GetSumAndGPFromInvoice(RepSpec.f3,IVCashr,tots,totgp);
+        end;
+      end;
+    end;
+  end;
+
+  if (RepSpec.flags[0] == 4) then begin
+    temp = totgp / tots;
+    gtotgp = gtotgp + totgp;
+    gtots = gtots + tots;
+//    res = temp / 100;
+    res = temp;
+    if (res == 0) then begin
+      res = 0.00;
+    end;
+  end;
+
+  GetPOSInvoiceDataForPeriod = res;
+return;
+end;
+
+function val GetPOSReturnInvoiceDataForPeriod(record RcVc RepSpec,date sdate,date edate, string loc, var val gtotgp, var val gtots)
+begin
+  record IVVc IVr;
+  row IVVc IVrw;
+  boolean trhs,testf;
+  val res,s,temp;
+  val totgp,tots;
+  integer i,rwc;
+
+  gtotgp = blankval;
+  gtots = blankval;
+
+  IVr.Location = loc;
+  IVr.InvDate = sdate;
+  trhs = true;
+  while (LoopKey("Location",IVr,2,trhs)) begin
+    if (IVr.Location != loc) then begin
+      trhs = false;
+    end;
+    if (IVr.InvDate > edate) then begin
+      trhs = false;
+    end;
+    if (trhs) then begin
+      testf = true;
+      if (IVr.Invalid != 0) then begin
+        testf = false;
+      end;
+      if (IVr.OKFlag == 0) then begin
+        testf = false;
+      end;
+      // if only sales mode, then don't show because these are returns
+      if (RepSpec.flags[1] == 1) then begin
+        testf = false;
+      end;
+      if (IVr.POSRetFlag == 0) then begin
+        testf = false;
+      end;
+      if (IVr.InvType != kInvoiceTypeCredit) then begin
+        testf = false;
+      end;
+      if (testf) then begin
+        if (RepSpec.flags[0] < 4) then begin
+          res = res + GetValFromPOSRetInvoice(RepSpec.f3,IVr,RepSpec.flags[0]);
+        end else begin
+          GetSumAndGPFromPOSRetInvoice(RepSpec.f3,IVr,tots,totgp);
+        end;
+      end;
+    end;
+  end;
+
+  if (RepSpec.flags[0] == 4) then begin
+    temp = totgp / tots;
+    gtotgp = gtotgp + totgp;
+    gtots = gtots + tots;
+//    res = temp / 100;
+    res = temp;
+    if (res == 0) then begin
+      res = 0.00;
+    end;
+  end;
+
+  GetPOSReturnInvoiceDataForPeriod = res;
+return;
+end;
+
+procedure CollectAndPrintPOSInvDataForLocation(record RcVc RepSpec,string loc,array date a_sdate,array date a_edate,array integer a_colx,integer cnt, var array val a_totval,var array val a_totgp, var array val a_tots)
+begin
+  integer i;
+  array val a_perval;
+  val gtotgp,gtots;
+
+  for (i = 0; i < cnt; i = i + 1) begin
+    a_perval[i] = GetPOSInvoiceDataForPeriod(RepSpec,a_sdate[i],a_edate[i],loc,gtotgp,gtots);
+    if (RepSpec.flags[3] == 1) then begin
+      a_perval[i] = a_perval[i] - GetPOSReturnInvoiceDataForPeriod(RepSpec,a_sdate[i],a_edate[i],loc,gtotgp,gtots);
+    end;
+
+    a_totval[i] = a_totval[i] + a_perval[i];
+    a_totgp[i] = a_totgp[i] + gtotgp;
+    a_tots[i] = a_tots[i] + gtots;
+  end;
+
+
+  StartFormat(15);
+  OutString(0,0,loc,false);
+  for (i = 0; i < cnt; i = i + 1) begin
+    if (RepSpec.flags[0] == 4) then begin
+      if ((a_perval[i] * 100) == 0) then begin
+        OutString(a_colx[i],0,"",true);
+      end else begin
+        OutString(a_colx[i],0,(a_perval[i] * 100) & "%",true);
+      end;
+    end else begin
+      OutVal(a_colx[i],0,a_perval[i],M4Val,true);
+    end;
+  end;
+  EndFormat;
+
+  StartFormat(15);
+  EndFormat;
+
+  return;
+end;
+
+global
+procedure DOLShopSalesRn(record RcVc RepSpec)
+begin
+  integer rw,cnt,i;
+  boolean trhs;
+  record LocationVc Locr;
+  string 255 tstr;
+  val tmpv;
+  array date a_sdate,a_edate;
+  array integer a_colx;
+  array val a_totval,a_totgp,a_tots;
+
+  StartReportJob(USetStr(1000049));
+  rw = 1;
+  HTLocations(RepSpec.f1,RepSpec.f1,tstr);
+  Header(rw,tstr,1);
+  rw = rw + 1;
+
+  if (nonblank(RepSpec.f2)) then begin
+    tstr = USetStr(1000079) & ": " & RepSpec.f2;
+    Header(rw,tstr,1);
+    rw = rw + 1;
+  end;
+
+  if (nonblank(RepSpec.f3)) then begin
+    tstr = USetStr(1000080) & ": " & RepSpec.f3;
+    Header(rw,tstr,1);
+    rw = rw + 1;
+  end;
+
+  switch (RepSpec.flags[0]) begin
+    case 0: tstr = USetStr(1000052);
+    case 1: tstr = USetStr(1000053);
+    case 2: tstr = USetStr(1000054);
+    case 3: tstr = USetStr(1000055);
+    case 4: tstr = USetStr(1000056);
+  end;
+  tstr = USetStr(1000051) & ": " & tstr;
+  Header(rw,tstr,1);
+  rw = rw + 1;
+
+  switch (RepSpec.flags[1]) begin
+    case 0: tstr = USetStr(1000058);
+    case 1: tstr = USetStr(1000059);
+    case 2: tstr = USetStr(1000060);
+  end;
+  tstr = USetStr(1000057) & ": " & tstr;
+  Header(rw,tstr,1);
+  rw = rw + 1;
+
+  switch (RepSpec.flags[2]) begin
+    case 0: tstr = USetStr(1000062);
+    case 1: tstr = USetStr(1000063);
+    case 2: tstr = USetStr(1000064);
+    case 3: tstr = USetStr(1000065);
+    case 4: tstr = USetStr(1000066);
+  end;
+  tstr = USetStr(1000061) & ": " & tstr;
+  Header(rw,tstr,1);
+  rw = rw + 1;
+
+  // EVS: DOL-152
+  if (RepSpec.flags[3] == 1) then begin
+    tstr = USetStr(1000123);
+    Header(rw,tstr,1);
+    rw = rw + 1;
+  end;
+  // :EVS
+
+  EndHeader;
+
+  SetPeriods(RepSpec,a_sdate,a_edate,cnt);
+  SetColX(cnt,a_colx);
+  ReportResHeader(RepSpec,a_sdate,a_edate,cnt,a_colx);
+
+  Locr.Code = RepSpec.f1;
+  trhs = true;
+  while (LoopMain(Locr,1,trhs)) begin
+    if (RepSpec.f1 != "" and Locr.Code != RepSpec.f1) then begin
+      trhs = false;
+    end else begin
+      if (blank(RepSpec.f2) or Locr.Group == RepSpec.f2) then begin
+        CollectAndPrintPOSInvDataForLocation(RepSpec,Locr.Code,a_sdate,a_edate,a_colx,cnt,a_totval,a_totgp,a_tots);
+      end;
+    end;
+  end;
+
+  Gray_Divider(0,1);
+
+  StartFormat(15);
+  OutString(0,0,USetStr(1000067),false);
+  for (i = 0; i < cnt; i = i + 1) begin
+    if (RepSpec.flags[0] == 4) then begin
+      if ((a_totgp[i] / a_tots[i]) == 0) then begin
+        OutString(a_colx[i],0,"",true);
+      end else begin
+        OutString(a_colx[i],0,((a_totgp[i] / a_tots[i]) * 100) & "%",true);
+      end;
+    end else begin
+      OutVal(a_colx[i],0,a_totval[i],M4Val,true);
+    end;
+  end;
+  EndFormat;
+
+  EndJob;
+
+  return;
+end;

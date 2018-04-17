@@ -1,0 +1,474 @@
+enum begin
+  kPOSButtonTypeVarEnqRn = 202,
+  kPOSButtonTypeInvValRn = 203,
+  kPOSButtonTypePrintDocument = 204,
+  kPOSButtonTypePIVGPRn = 205,
+  kPOSButtonTypeCancelNew = 206,
+  kPOSButtonTypeCreateCreditSalesInvoice = 207, //VITO: DOL-89
+  kPOSButtonTypeNuolaidaPrc = 208,
+  kPOSButtonTypeChangePrice = 209,
+  kPOSButtonTypeCreateContact = 210,
+  kPOSButtonTypeDoNotPrint = 211,
+  kPOSButtonTypeCopyLastReceipt = 212,
+  kPOSButtonTypeReturnItem = 213,
+  kPOSButtonTypePeriodicReport = 214,
+  kPOSButtonTypePrintReceipt = 215
+  kPOSButtonTypeCreateCustomer = 216
+
+end;
+
+event startup
+begin
+  SetLangMode(LangLithuanian,"LIT",2);
+
+  SetBegin(1431);
+  SetText(kPOSButtonTypeBlank,"Tuščias");
+  SetText(kPOSButtonTypeAddHeaderLine,"Pridėti antraštės eilutę");
+  SetText(kPOSButtonTypeAddHiddenLine,"Pridėti paslėptą liniją");
+  SetText(kPOSButtonTypeServiceCharge,"Pridėti paslaugų mokestį");
+  SetText(kPOSButtonTypeAddSubtotalLine,"Pridėti tarpinę liniją");
+  SetText(kPOSButtonTypeAddOrderDiscount,"Pridėti užs. nuolaidą");
+  SetText(kPOSButtonTypeAllInvoices,"Visos faktūros");
+  SetText(kPOSButtonTypeAmendLine,"Taisymo eilutė");
+  SetText(kPOSButtonTypeAppleCancelAEOrder,"Apple Cancel AE Order");
+  SetText(kPOSButtonTypeAppleCreateAEOrder,"Apple Create AE Order");
+  SetText(kPOSButtonTypeAppleWarrantyStatusCheck,"Apple Warranty Status Check");
+  SetText(kPOSButtonTypeBaggerSearch,"Pakuotojo paieška");
+  SetText(kPOSButtonTypeBookings,"Užsakymai");
+  SetText(kPOSButtonTypeCalculateTip,"Skaičiuoti arbatpinigius");
+  SetText(kPOSButtonTypeCashPayment,"Grynieji");
+  SetText(kPOSButtonTypeChangeAddress,"Pakeisti adresą");
+  SetText(kPOSButtonTypeEditDate,"Change Date");
+  SetText(kPOSButtonTypeChangeTerms,"Pakeisti sąlygas");
+  SetText(kPOSButtonTypeLogin,"Pakeisti vartotoją");
+  SetText(kPOSButtonTypeChequePayment,"Čekis");
+  SetText(kPOSButtonTypeCloseSession,"Uždaryti sesiją");
+  //  if (HasLocalization("POL")) then begin
+    SetText(kPOSButtonTypeCorrectionInvoice,"Koreguojanti faktūra");
+//  end;
+  SetText(kPOSButtonTypeCreateActivity,"Sukurti veiklą");
+  SetText(kPOSButtonTypeCreateCashin,"Sukurti Kasos pajamas");
+  SetText(kPOSButtonTypeCreateCashOut,"Sukurti Kasos išlaidas");
+  SetText(kPOSButtonTypeCreateCorrectionInvoice,"Sukurti koregavimo faktūrą");
+  SetText(kPOSButtonTypeCreateCreditNote,"Sukurti kredito pažymą");
+  SetText(kPOSButtonTypeCreateCreditEMail,"Sukurti E-paštą");
+  SetText(kPOSButtonTypeCreditCardPayment,"Kreditinė kortelė");
+    SetText(kPOSButtonTypeCustomerSearch,"Pirkėjo paieška");
+  SetText(kPOSButtonTypeCreditCardPaymentReversal,"Kredito kortelės mokėjimo grąžinimas");
+  SetText(kPOSButtonTypeCustomerSearch,"Pirkėjo paieška");
+  SetText(kPOSButtonTypeCustomerSearchFiltered,"Pirkėjo paieška BF");
+  SetText(kPOSButtonTypeDebitCardPayment,"Debetinė kortelė");
+  SetText(kPOSButtonTypeDeleteItem,"Ištrinti prekę");
+  SetText(kPOSButtonTypeGotoPage,"Rodyti puslapį");
+  SetText(kPOSButtonTypeVolumetricBarCodeScan,"Dinaminis barkodas");
+  SetText(kPOSButtonTypeFinish,"Baigti");
+  SetText(kPOSButtonTypeGetCashFloat,"Gauti Kasos judėjimą");
+  SetText(kPOSButtonTypeGiftReceipt,"Dovanos čekis");
+  SetText(kPOSButtonTypeGiftVoucherPayment,"Dovanos kuponas");
+  SetText(kPOSButtonTypeInstructions,"Instrukcijos");
+  SetText(kPOSButtonTypeInvalidateInvoice,"Sustabdyti faktūrą");
+  SetText(kPOSButtonTypeInvoiceStatus,"Faktūros būklė");
+  SetText(kPOSButtonTypeItem,"Prekė");
+  SetText(kPOSButtonTypeItemSearch,"Prekės paieška");
+  SetText(kPOSButtonTypeItemStatus,"Prekės būklė");
+  SetText(kPOSButtonTypeKitchenOrder,"Užs. virtuvei");
+  //SetText(kPOSButtonTypeLevelUp,"Level Up");
+  SetText(kPOSButtonTypeLoyaltyPointsBonus,"Lojalumo premijos taškai");
+  SetText(kPOSButtonTypeLoyaltyCard,"Lojalumo kortelė");
+  SetText(kPOSButtonTypeLoyaltyPointsPayment,"Lojalumo taškų mokėjimas");
+  SetText(kPOSButtonTypeManagerDiscountOverride,"Manager Discount Override");
+  SetText(kPOSButtonTypeMergeBarTabs,"Sujungti baro korteles");
+  SetText(kPOSButtonTypeMainSerialNr,"Device Serial Number");
+  SetText(kPOSButtonTypeModifier,"Modifikatorius");
+  SetText(kPOSButtonTypeOnAccountPayment,"Išankstinis mokėjimas");
+  SetText(kPOSButtonTypeOnHotelGuestAccount,"Viešbučio svečio sąskaita");
+  SetText(kPOSButtonTypeOpenCashDrawer,"Atidaryti grynųjų stalčių");
+  SetText(kPOSButtonTypeOpenRecord,"Atidaryti įrašą");
+  SetText(kPOSButtonTypeEditCustomerRecord,"Atidaryti Pirkėjo įrašą");
+  SetText(kPOSButtonTypeEditItemRecord,"Atidaryti prekės įrašą");
+  SetText(kPOSButtonTypeOpenCalendar,"Atidaryti kalendorių");
+  SetText(kPOSButtonTypeOpenNLTransaction,"Atidaryti D/K operaciją");
+  SetText(kPOSButtonTypeOpenTaxMatrix,"Atidaryti Mok. matricą");
+  SetText(kPOSButtonTypOpenInvoices,"Atidaryti faktūras");
+  SetText(kPOSButtonTypeSpecialMenu,"Operacijų meniu funkcijos");
+  SetText(kPOSButtonTypeOpenSession,"Atidaryti sesiją");
+  SetText(kPOSButtonTypePayment,"Mokėti");
+  SetText(kPOSButtonTypePOSCommand,"POS komanda");
+  SetText(kPOSButtonTypePriceLookup,"Kainos paieška");
+    SetText(kPOSButtonTypePreviousSalesPrices,"Ankstesnės pardavimų kainos");
+  SetText(kPOSButtonTypePrintCancellation,"Spausdinti atšaukimą");
+  SetText(kPOSButtonTypePrintFireOrder,"Spausdinti fire užsakymą");
+  SetText(kPOSButtonTypePrintInvoice,"Spausdinti faktūrą");
+  SetText(kPOSButtonTypePrintProformaInvoice,"Spausdinti Proforma faktūrą");
+  SetText(kPOSButtonTypePrintOrder,"Spausdinti kortelę");
+  SetText(kPOSButtonTypePrintOrderToKitchen,"Spausdinti kortelę į virtuvę");
+  SetText(kPOSButtonTypePutCashFloat,"Put Cash Float");
+  SetText(kPOSButtonTypeReprintReceipt,"Perspausdinti čekį");
+  SetText(kPOSButtonTypeReturn,"Grąžinti");
+  SetText(kPOSButtonTypeReturnInvoiceNo,"Grąžinamos fak. nr.");
+  SetText(kPOSButtonTypeReturnReason,"Grąžinimo priežastis");
+  SetText(kPOSButtonTypeRunReportOnServer,"Paleisti ataskaitą serveryje");
+  SetText(kPOSButtonTypeSalesAssistant,"Pard. asistentas");
+  SetText(kPOSButtonTypeSelectSalesman,"Pasirinkti pardavėją");
+  SetText(kPOSButtonTypeGiftVoucherSales,"Parduoti dovanos kuponą");
+  SetText(kPOSButtonTypeSendToFiscalDevice,"Siųsti į Fiscalinį įrenginį");
+   SetText(kPOSButtonTypeSendEMail,"Siųsti e-laišką");
+  SetText(kPOSButtonTypeSeniorCitizenDiscount,"Pensininko nuolaida");
+  SetText(kPOSButtonTypeLookupSerialNr,"Serijinio numerio paieška");
+  SetText(kPOSButtonTypeSetBarTabClass,"Set Bar Tab Class");
+  SetText(kPOSButtonTypeSetCovers,"Nustayti viršų (covers)");
+  SetText(kPOSButtonTypeSetTable,"Nustatyti staliuką");
+  SetText(kPOSButtonTypeHotelGuests,"Rodyti viešbučio svečius");
+  SetText(kPOSButtonTypeSplitBarTabs,"Padalinti baro korteles");
+  SetText(kPOSButtonTypeSplitItem,"Padalinti prekę");
+  SetText(kPOSButtonTypeSupervisorSearch,"Prižiūrėtojo paieška");
+  SetText(kPOSButtonTypSaveInvoice,"Išsaugoti faktūrą");
+  SetText(kPOSButtonTypeSyncNow,"Sinchr. dabar");
+//  SetText(kPOSButtonTypeLevelDown,"Level Down");
+  SetText(kPOSButtonTypeLevelTop,"Viršutinis lygis");
+  SetText(kPOSButtonTypeTransfertoInvoice,"Perkelti į faktūras");
+    SetText(kPOSButtonTypeTransfertoQuotation,"Perkelti į pasiūlymą");
+  SetText(kPOSButtonTypeTransfertoSL,"Perkelti į pardavimų knygą");
+  SetText(kPOSButtonTypeTransfertoOrder,"Perkelti į pardavimo užsakymą");
+  SetText(kPOSButtonTypeVoidRow,"Anuliuoti eilutę");
+  SetText(kPOSButtonTypeXReading,"X-Skaitymas");
+  SetText(kPOSButtonTypeYReading,"Y-Skaitymas");
+  SetText(kPOSButtonTypeNuolaidaPrc,"Nuolaida%"); //EBS
+  SetText(kPOSButtonTypeChangePrice,"Pakeisti prekės kainą"); //EBS
+  SetText(kPOSButtonTypeCreateContact,"Sukurti kontakto kortelę"); //EBS
+  SetText(kPOSButtonTypeDoNotPrint,"Ne spausd."); //EBS
+  SetText(kPOSButtonTypeCopyLastReceipt,"Copy last receipt"); //EBS
+  SetText(kPOSButtonTypeReturnItem,"Return Item"); //EBS
+  SetText(kPOSButtonTypePeriodicReport,"Periodinė ataskaita"); //EBS
+  SetText(kPOSButtonTypePrintReceipt,"Print receipt"); //EBS
+  SetText(200,"Kolekcijos Analizė"); // EVS: DOL-4
+  SetText(201,"Kasos pajamos"); // DGK: DOL-3
+  SetText(kPOSButtonTypeVarEnqRn,"Įvairovių užklausa"); // EVS: DOL-6
+  SetText(kPOSButtonTypeInvValRn,"Prekių likučiai"); // EVS: DOL-14
+  SetText(kPOSButtonTypePrintDocument,"Print"); // EVS: DOL-39
+  SetText(kPOSButtonTypePIVGPRn,"BP, POS faktūros"); // EVS: DOL-39
+  SetText(kPOSButtonTypeCancelNew,"Nutraukti"); // EVS: DOL-78
+  SetText(kPOSButtonTypeCreateCreditSalesInvoice,"Perkelti į Kredito pažymą");//VITO: DOL-89
+  SetText(kPOSButtonTypeCreateCustomer,"Įvesti pirkėją"); //EBS
+  EndSet;
+
+  SetBegin(1495); // pos invoice, subset of 431
+  SetText(kPOSButtonTypeBlank,"Tuščias");
+  SetText(kPOSButtonTypeAddHeaderLine,"Pridėti antraštės liniją");
+  SetText(kPOSButtonTypeAllInvoices,"Visos faktūros");
+  SetText(kPOSButtonTypeAmendLine,"Taisymo eilutė");
+  SetText(kPOSButtonTypeBaggerSearch,"Pakuotojo paieška");
+  SetText(kPOSButtonTypeCashPayment,"Grynieji");
+  SetText(kPOSButtonTypeLogin,"Pakeisti vartotoją");
+  SetText(kPOSButtonTypeCashupReport,"Kasos ataskaita");
+  SetText(kPOSButtonTypeChangeAddress,"Pakeisti adresą");
+  SetText(kPOSButtonTypeChangeTerms,"Pakeisti sąlygas");
+  SetText(kPOSButtonTypeChequePayment,"Čekis");
+  SetText(kPOSButtonTypeCloseSession,"Uždaryti sesiją");
+  //  if (HasLocalization("POL")) then begin
+    SetText(kPOSButtonTypeCorrectionInvoice,"Correction Invoice");
+//  end;
+  SetText(kPOSButtonTypeCreditCardPayment,"Kreditinė kortelė");
+  SetText(kPOSButtonTypeCreditCardPaymentReversal,"Kredito kortelės mokėjimo grąžinimas");
+  SetText(kPOSButtonTypeCustomerSearch,"Pirkėjo paieška");
+  SetText(kPOSButtonTypeCustomerSearchFiltered,"Pirkėjo paieška BF");
+  SetText(kPOSButtonTypeXReading,"Dienos ataskaita");
+  SetText(kPOSButtonTypeDebitCardPayment,"Debetinė kortelė");
+  SetText(kPOSButtonTypeDeleteItem,"Ištrinti prekę");
+  SetText(kPOSButtonTypeGotoPage,"Rodyti puslapį.");
+  SetText(kPOSButtonTypeVolumetricBarCodeScan,"Dinaminis barkodas");
+  SetText(kPOSButtonTypeFinish,"Baigti");
+  SetText(kPOSButtonTypeGetCashFloat,"Gauti Kasos judėjimą");
+  SetText(kPOSButtonTypeGiftReceipt,"Dovanos grąžinimas");
+  SetText(kPOSButtonTypeGiftVoucherPayment,"Dovanos kuponas");
+  SetText(kPOSButtonTypeInvalidateInvoice,"Sustabdyti faktūrą");
+  SetText(kPOSButtonTypeItem,"Prekė");
+  SetText(kPOSButtonTypeItemSearch,"Prekės paieška");
+  SetText(kPOSButtonTypeItemStatus,"Prekės būklė");
+  //SetText(kPOSButtonTypeLevelUp,"Level Up");
+  SetText(kPOSButtonTypeLoyaltyPointsBonus,"Lojalumo premijos taškai");
+  SetText(kPOSButtonTypeLoyaltyCard,"Lojalumo kortelės");
+  SetText(kPOSButtonTypeLoyaltyPointsPayment,"Lojalumo taškų apmokėjimas");
+  SetText(kPOSButtonTypeModifier,"Modifikatorius");
+  SetText(kPOSButtonTypeOnAccountPayment,"Išankstinis apmokėjimas");
+  SetText(kPOSButtonTypeOpenCashDrawer,"Atidaryti grynųjų stalčių");
+  SetText(kPOSButtonTypeEditCustomerRecord,"Atidaryti Pirkėjo įrašą");
+    SetText(kPOSButtonTypeEditItemRecord,"Atidaryti Prekės įrašą");
+  SetText(kPOSButtonTypOpenInvoices,"Neapmokėtos faktūros");
+  SetText(kPOSButtonTypeOpenSession,"Atidaryti sesiją");
+  SetText(kPOSButtonTypeSpecialMenu,"Funkcijų Meniu eilutė");
+  SetText(kPOSButtonTypePayment,"Mokėti");
+  SetText(kPOSButtonTypePOSCommand,"POS Command");
+  SetText(kPOSButtonTypePriceLookup,"Kainos paiška");
+  SetText(kPOSButtonTypePutCashFloat,"Put Cash Float");
+  SetText(kPOSButtonTypeReprintReceipt,"Perspausdinti įplauką");
+  SetText(kPOSButtonTypeReturn,"Grąžinti");
+  SetText(kPOSButtonTypeReturnInvoiceNo,"Grąž. fakt. nr.");
+  SetText(kPOSButtonTypeReturnReason,"Grąž. priežastis");
+  SetText(kPOSButtonTypeRunReportOnServer,"Paleisti ataskaitą serveryje");
+  SetText(kPOSButtonTypeSalesAssistant,"Pardavėjas");
+  SetText(kPOSButtonTypSaveInvoice,"Išsaugoti faktūrą");
+  SetText(kPOSButtonTypeSelectSalesman,"Pasirinkti pardavėją");
+  SetText(kPOSButtonTypeGiftVoucherSales,"Parduoti dovanų kuponą");
+    SetText(kPOSButtonTypeSendEMail,"Siųsti e-laišką");
+  SetText(kPOSButtonTypeSeniorCitizenDiscount,"Pensininkų nuolaida");
+  SetText(kPOSButtonTypeLookupSerialNr,"Ser. nr. paiška");
+  SetText(kPOSButtonTypeSplitItem,"Padalinti prekes");
+  SetText(kPOSButtonTypeSupervisorSearch,"Prižiūrėtojo paiška");
+//  SetText(kPOSButtonTypeLevelDown,"Level Down");
+  SetText(kPOSButtonTypeLevelTop,"Viršutinis lygis");
+  SetText(kPOSButtonTypeTransfertoInvoice,"Perkelti į faktūrą");
+    SetText(kPOSButtonTypeTransfertoQuotation,"Perkelti į pasiūlymą");
+  SetText(kPOSButtonTypeTransfertoSL,"Perkėlimas į pardavimų knygą");
+  SetText(kPOSButtonTypeTransfertoOrder,"Perkelti į pardavimo užsakymą");
+  SetText(kPOSButtonTypeVoidRow,"Pašalinti eilutę");
+  SetText(kPOSButtonTypeNuolaidaPrc,"Nuolaida%"); //EBS
+  SetText(kPOSButtonTypeChangePrice,"Pakeisti prekės kainą"); //EBS
+  SetText(kPOSButtonTypeCreateContact,"Sukurti kontakto kortelę"); //EBS
+  SetText(kPOSButtonTypeDoNotPrint,"Ne spausd."); //EBS
+  SetText(kPOSButtonTypeCopyLastReceipt,"Copy last receipt"); //EBS
+  SetText(kPOSButtonTypeReturnItem,"Return Item"); //EBS
+  SetText(kPOSButtonTypePeriodicReport,"Periodinė ataskaita"); //EBS
+  SetText(kPOSButtonTypePrintReceipt,"Print receipt"); //EBS
+  SetText(200,"Kolekcijos Analizė"); // EVS: DOL-4
+  SetText(201,"Kasos pajamos"); // DGK: DOL-3
+  SetText(kPOSButtonTypeVarEnqRn,"Įvairovių užklausa"); // EVS: DOL-6
+  SetText(kPOSButtonTypeInvValRn,"Prekių likučiai"); // EVS: DOL-14
+  SetText(kPOSButtonTypePrintDocument,"Print"); // EVS: DOL-39
+  SetText(kPOSButtonTypePIVGPRn,"BP, POS faktūros"); // EVS: DOL-39
+  SetText(kPOSButtonTypeCancelNew,"Nutraukti"); // EVS: DOL-78
+  SetText(kPOSButtonTypeCreateCreditSalesInvoice,"Perkelti į Kredito pažymą");//VITO: DOL-89
+  SetText(kPOSButtonTypeCreateCustomer,"Įvesti pirkėją"); //EBS
+  EndSet;
+
+  SetBegin(11001);
+  SetText(0,"-");
+  SetText(1,"Loyalty card number");
+  SetText(2,"Classification button");
+  SetText(3,"Email field");
+  EndSet;
+
+  //Additional actions in person groups
+  StrSetAdd(3);
+    StrSetText(AllowINInitPriceChange,"Allow to change item initial price");  //EBS
+    StrSetText(AllowPutCashFloatSumChange,"Allow to change put cash float sum");  //EBS
+    StrSetText(DoNotAllowChangePutCashFloat,"Disallow changing Put Cash Float");  //EBS
+  EndStrSet;
+
+  /* CollectionsAnalysisRn */
+  SString(28100,"Kolekcijos Analizė");
+  SString(28101,"Mok. Būdas");
+  SString(28102,"Pardavimai");
+  SString(28103,"Pinigų Įdėjimas");
+  SString(28104,"Balansas");
+  SString(28105,"Lokalus kompiuteris");
+  SString(28106,"Viso");
+  SString(28107,"Viso Lokalus kompiuteris");
+  SString(28108,"Lokalus kompiuteris");
+  SString(28109,"Viso mokėjimo būdai");
+  SString(28110,"Mok. Būdas");
+
+  SString(1000001,"Pažymėkita prekės balansą arba prekės apyvarta");
+  SString(1000002,"Nurodykite patalpos klasifikaciją");
+  SString(1000003,"Pinigų įnešimas");
+  SString(1000004,"Pinigai grąžai");
+  SString(1000005,"Inkasacija");
+  SString(1000006,"Pinigų išėmimas");
+  SString(1000007,"Neteisingas nuolaidos kiekis");
+  SString(1000008,"Gražinamos Faktūros");
+  SString(1000009,"Naujas Pardavimas");
+  SString(1000010,"Leidžiamas tik prekių ar jų grupė");
+  SString(1000011,"Vnt. Kaina");
+  SString(1000012,"Nuolaida");
+  SString(1000013,"Kvito nr.: ");
+
+  SString(1000014,"Neteisingas vertė. Įstatinis reikšmė tarp 0 ir 100.");
+  SString(1000015,"Nuolaida didesnė, nei leidžiama");
+
+  SString(1000016,"Prekės kaina: ");
+
+  SString(1000017,"Padidinti kvito viso sumą, kad jinai sutaptu su Dovanų kupono suma?");
+  SString(1000018,"Taip");
+  SString(1000019,"Ne");
+  SString(1000020,"Viso suma mažesnė negu Dovanų kuponas");
+
+  SString(1000021,"Pardavėjas turi būti nurodyta");
+  SString(1000022,"Pardavėjas neegzistuoja");
+
+  SString(1000023,"Kaina");
+  SString(1000024,"Pradinė kaina");
+  SString(1000025,"Nuolaida %");
+
+  // EVS: DOL-79
+  SString(1000026,"DOL - Parduotų prekių likučiai");
+  SString(1000027,"Minimalus lygis: ");
+  SString(1000028,"Prekė");
+  SString(1000029,"Įvair.");
+  SString(1000030,"Patalpa 1");
+  SString(1000031,"Per patalpą");
+  SString(1000032,"Patalpa 2");
+  SString(1000033,"Kiekis Patalpoje 1");
+  SString(1000034,"Kiekis Per Patalpą");
+  SString(1000035,"Kiekis Patalpoje 2");
+  SString(1000036,"Viso suma:");
+  // :EVS
+
+  SString(1000037,"Dovanų kuponas");
+  SString(1000038,"Leista tik naujuose įrašuose");
+
+  //VITO: DOL-91
+  SString(1000039,"DOL - Prekių pardavimų statistika");
+  SString(1000040,"Prekė");
+  SString(1000041,"Pavadinimas");
+  SString(1000042,"Faktūra");
+  SString(1000043,"Kiekis");
+  SString(1000044,"Vidutinė");
+  SString(1000045,"Viso");
+  SString(1000046,"Funkcijos: Peržiūra");
+  SString(1000047,"Funkcijos: Detaliai");
+  //:VITO
+
+  SString(1000048,"Iš pradžių reikia atidaryti sesiją");
+
+  // EVS: DOL-93
+  SString(1000049,"DOL - Parduotuvės pardavimai");
+  SString(1000050,"Patalpa");
+  SString(1000051,"Funkcija");
+  SString(1000052,"Pardavimai su PVM");
+  SString(1000053,"Pardavimai be PVM");
+  SString(1000054,"Kiekiai");
+  SString(1000055,"BP");
+  SString(1000056,"BP %");
+  SString(1000057,"Įtraukti");
+  SString(1000058,"Viskas");
+  SString(1000059,"Tik pardavimai");
+  SString(1000060,"Tik grąžinimai");
+  SString(1000061,"Periodo tipas");
+  SString(1000062,"Diena");
+  SString(1000063,"Savaitė");
+  SString(1000064,"Mėnuo");
+  SString(1000065,"Ketvirtis");
+  SString(1000066,"Metai");
+  SString(1000067,"Totalinis");
+  // :EVS
+
+  // JP: DOL-90
+  SString(1000068,"Narystės lygis");
+  SString(1000069,"Narystės lygis: ");
+  SString(1000070,"Minimalus taškų likutis: ");
+  SString(1000071,"Minimalus pelnytų taškų skaičius: ");
+  //:JP
+
+  //VITO: DOL-89
+  SString(1000072,"Faktūra sukurta sekmingai: ");
+  SString(1000073,"Faktūra sukurta nepavyksta.");
+  //:VITO
+
+  SString(1000074,"Turi būti užpildyta");
+  SString(1000075,"Ne ta pati prekė");
+  SString(1000076,"Nėra sandėlyje");
+
+  //VITO: DOL-102
+  SString(1000077,"Pagal mėnesius");
+  //:VITO
+
+  SString(1000078,"Viso");
+
+  // EVS: DOL-93
+  SString(1000079,"Patalpos grupė");
+  SString(1000080,"Vienetas");
+  // :EVS
+
+  SString(1000081,"Numeriai jau užimti"); // EVS: DOL-111
+
+  SString(1000082,"Dydžio keitimas");
+  SString(1000083,"Gyvenimas yra gražus");
+
+  //VITO: DOL-91
+  SString(1000084,"Prekių įvairovė");
+  SString(1000085,"Vienetas");
+  SString(1000086,"Pardavimo");
+  SString(1000087,"Savikaina");
+  SString(1000088,"Nuolaida");
+  SString(1000089,"kaina");
+  SString(1000090,"pardavimų");
+  //:VITO
+
+  // EVS: DOL-122
+  SString(1000091,"DOL - Prekių užsakymo iš tiekėjų");
+  SString(1000092,"Įtraukti");
+  SString(1000093,"Uždarytus");
+  SString(1000094,"Nepatvirtintus");
+  SString(1000095,"Būklė");
+  SString(1000096,"Visi");
+  SString(1000097,"Pristatyta");
+  SString(1000098,"Dalinai pristatyta");
+
+  SString(1000099,"Numatoma Prist. Data");
+  SString(1000100,"Užsakymo status");
+  SString(1000101,"Sezonas");
+  SString(1000102,"Brandas");
+  SString(1000103,"Tiekėjas");
+  SString(1000104,"Prekės kodas");
+  SString(1000105,"Lytis");
+  SString(1000106,"Vienetas");
+  SString(1000107,"Kategorija");
+  SString(1000108,"Dydis (spalva)");
+  SString(1000109,"Užsakyta");
+  SString(1000110,"Nepatiekta");
+  SString(1000111,"Anuliuota");
+  SString(1000112,"Suma");
+
+  SString(1000113,"Nepristatyta");
+
+  SString(1000114,"Negerai duomenų formatas");
+  // :EVS
+
+  SString(1000115,"Funkcijos: Peržiūra su įvairoves");//VITO: DOL-91
+  SString(1000116,"Incorrect password");
+  SString(1000117,"Abu vienu metu negalimi");
+  SString(1000118,"Percent must be between 0 and 100");
+
+  SString(1000119,"Prekės neįvestos"); // EVS: DOL-89
+
+  //VITO: DOL-91
+  SString(1000120,"Rūšiavimas: Prekės kodas");
+  SString(1000121,"Rūšiavimas: Aukščiausi pardavimai");
+  SString(1000122,"Rūšiavimas: Žemiausi pardavimai");
+  //:VITO
+
+  SString(1000123,"Įskaitant pardavimų knygos duomenis"); // EVS: DOL-152
+
+  SString(1000125,"Telefonas"); // EVS: DOL-155
+
+  SString(1000126,"Ir Inkasacija");
+
+  // EVS: DOL-155
+  SString(1000127,"Neįtraukiant uždarytų kortelių");
+  SString(1000128,"Neįtraukiant klientų, kurie nenori gauti laiškų");
+  // :EVS
+
+  SString(1000129,"Įskaitant pardavimų knygos duomenis"); // EVS: DOL-159
+
+  // EVS: DOL-160
+  SString(1000130,"Likutis");
+  SString(1000131,"%");
+  // :EVS
+
+  SString(1000132,"GRĄŽA");
+  SString(1000133,"POS Invoices");
+
+  SString(1000134,"Already used loyalty card");
+  SString(1000135,"Loyalty card must be specified");
+  SString(1000136,"Nėra");
+  SString(1000137,"Uždaryta");
+  SString(1000138,"Turi");
+
+  SString(1000139,"Tokia lojalumo kortelė neegzistuoju");
+  SString(1000140,"Lojalumo kortelė priskirta kitam pirkėjui");
+
+  SString(1000141,"Brokas");
+  SString(1000142,"Brokas %");
+
+  return;
+end;

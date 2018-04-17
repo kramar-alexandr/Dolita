@@ -1,0 +1,20 @@
+global
+function string 40 CUDClassSpecPasteName(Integer wn,string defpsname)
+begin
+  string 255 psname;
+  record CUVc CUr;
+  record CCatVc CCatr;
+  Integer rownr;
+  boolean sp;
+  
+  psname = inner.CUDClassSpecPasteName(wn,defpsname);
+  
+  // EVS: DOL-142
+  if (psname == "CUClassSClass") then begin
+    psname = "DOLCUClassSClass";
+  end;
+  // :EVS
+  
+  CUDClassSpecPasteName = psname;
+  return;
+end;

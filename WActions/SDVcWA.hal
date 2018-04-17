@@ -1,0 +1,48 @@
+remote function string 20 ConvertItemCode(string);
+remote function string 60 AddLocationObject(string,string,boolean);
+
+procedure SDConvertItemCode(integer wn,integer rownr,integer changed) begin
+  record SDVc SDr;
+  row SDVc SDrw;  
+  
+  if changed!=0 then begin
+    GetWindowRecord(wn,SDr);
+    if MatRowCnt(SDr)>rownr then begin
+      MatRowGet(SDr,rownr,SDrw);
+      SDrw.ArtCode = ConvertItemCode(SDrw.ArtCode);
+      MatRowPut(SDr,rownr,SDrw);
+      PutWindowRecord(wn,SDr);
+    end;
+  end;
+  
+return;
+end;
+
+procedure SDPasteLocation(integer wn,integer rownr,integer changed) begin
+  record SDVc SDr;
+  row SDVc SDrw;  
+  
+  if changed!=0 and rownr<0 then begin
+    GetWindowRecord(wn,SDr);
+    SDr.Objects = AddLocationObject(SDr.Objects,SDr.Location,true); //EBS
+    PutWindowRecord(wn,SDr);
+  end;
+  
+return;
+end;
+
+global
+function Boolean SDDClassAfterEditField(Integer wn,string fieldname,Integer fn, Integer rownr,Integer changed)
+BEGIN
+  Boolean res;
+
+  switch (fieldname) begin
+    case "ArtCode": SDConvertItemCode(wn,rownr,changed);
+    case "Location": SDPasteLocation(wn,rownr,changed);
+  end;
+  
+  res = inner.SDDClassAfterEditField(wn,fieldname,fn,rownr,changed);
+  
+  SDDClassAfterEditField = res;
+  RETURN;
+END;

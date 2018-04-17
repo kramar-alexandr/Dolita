@@ -1,0 +1,70 @@
+
+begin
+
+  BlockBegin(UserPOSGroupBlock,-,"");
+    RecordField(Math,M4Matrix,0,0);
+    ArrayBegin(Math,-,1);
+    ArrayField(UserCode,M4Code,10,UserVc);
+    ArrayField(POSGroups,M4UStr,60,0);
+    EndArray;
+  EndBlock;
+
+  // EVS: general Dolita settings block
+  BlockBegin(DOLSetBlock,-,"");
+  RecordField(SeasonCType,M4Code,10,CTypeVc); // EVS: DOL-122
+  RecordField(TypeCType,M4Code,10,CTypeVc); // EVS: DOL-122
+  EndBlock;
+
+  RecordBegin(EBS_AddUserFieldVc,-,"");
+    RecordField(Code,M4Code,10,UserVc);
+    RecordField(ShowCrossSalesFlag,M4Int,0,0); // EVS: DOL-2
+    RecordField(MaxvRebate,M41Val,0,0); // EVS: DOL-22
+    MainKeyBegin(Code,0);
+    KeySegment(Code);
+  EndRecord;
+
+  // EVS: DOL-166
+  BlockBegin(DOLShopifyBlock,-,"");
+  RecordField(APIUser,M4Str,255,0);
+  RecordField(APIPass,M4Str,255,0);
+  RecordField(UpdItems,M4Int,0,0);
+  RecordField(UpdStock,M4Int,0,0);
+  RecordField(UpdStockInertval,M4Int,0,0);
+  RecordField(ShopifyURL,M4Str,255,0);
+  RecordField(ShopifyPort,M4Int,0,0);
+  RecordField(StockClass,M4Code,20,0);
+  RecordField(SaveReqResp,M4Int,0,0);
+  RecordField(InchVARGCode,M4Code,10,0);
+  RecordField(UpdStockAlways,M4Int,0,0);
+  RecordField(UpdPriceAlways,M4Int,0,0); // EVS: DOL-167
+  EndBlock;
+
+  BlockBegin(DOLSzConvBlock,-,"");
+  RecordField(Math,M4Matrix,0,0);
+  ArrayBegin(Math,-,1);
+  ArrayField(Inch,M4UVal,0,0);
+  ArrayField(CM,M4UVal,0,0);
+  EndArray;
+  EndBlock;
+  // :EVS
+
+  BlockBegin(EBS_NewCUFieldsBlock,-,"");
+    RecordField(Math,M4Matrix,0,0);
+    ArrayBegin(Math,-,1);
+    ArrayField(FieldType,M4Set,11001,0);
+    ArrayField(EditState,M4Set,510,0);
+    ArrayField(Label,M4Str,100,0);
+    ArrayField(DefValue,M4Str,100,0); //EBS
+    EndArray;
+  EndBlock;
+
+  // stores numbers of IVCashVc records for which SD are done
+  RecordBegin(EBS_IVCashSDVc,-,"");
+    RecordField(SerNr,M4Long,0,0);
+    RecordField(TransDate,M4Date,0,0);
+    RecordField(TransTime,M4Time,0,0);
+    MainKeyBegin(SerNr,0);
+    KeySegment(SerNr);
+  EndRecord;
+return;
+end;

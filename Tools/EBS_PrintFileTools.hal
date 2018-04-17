@@ -1,0 +1,497 @@
+external inner procedure GetUserName(String,var String);
+external inner function RoundMode SetRoundModeD(integer);
+external inner function string 50 TimeToString(time,string,boolean);
+external function boolean DOLCheckForInvReturn(record IVCashVc);
+
+function string 255 ConvertStr(string tstr) begin
+  integer i,l;
+  string 255 res;
+
+  // l = len(tstr);
+  // for(i=0;i<l;i=i+1)begin
+  //   LogText(0,"char = " & mid(tstr,i,1) & " asc=" & asc(mid(tstr,i,1)));
+  //   if asc(mid(tstr,i,1))>0 then begin
+  //     res = res & mid(tstr,i,1);
+  //   end;
+  // end;  
+  res = ConvertStringToCodePage("CP1257",tstr);
+
+  ConvertStr = res;
+return;
+end;
+
+procedure EBS_ExportPadString(string tstr) begin
+  string 255 tstr2;  
+  
+  // tstr2 = ConvertStr(tstr);
+  tstr2 = tstr & "=;" & chr(13) & chr(10);
+  
+  ExportPadString(tstr2,len(tstr2)," ",false);
+  return;
+end;
+
+procedure printCmdLine(integer cmd,string params) begin
+  string 255 tstr;  
+  
+  tstr = "cmdline(" & cmd & ",'" & params & "')";
+  EBS_ExportPadString(tstr);
+  
+  return;
+end;
+
+procedure printInitLine() begin
+  
+  EBS_ExportPadString("init()");
+
+  return;
+end;
+
+procedure printOpenFiscalReceipt(string operatorNr,string operatorCode,string cashRegNr) begin
+  string 255 tstr;
+  
+  printCmdLine(48,operatorNr & "," & operatorCode & "," & cashRegNr);
+
+return;
+end;
+
+procedure printRegisterItem(string itemname,string vatgroup,val price,val quant,val discount,boolean retinvf) begin
+  string 255 tstr,tstr2;  
+  val lp,lq,ld;
+
+  tstr = itemname;
+  if len(tstr)>41 then begin
+    tstr = Left(tstr,41);
+  end;
+  tstr = tstr & chr(9);
+  
+  if quant!=1 or retinvf then begin
+    tstr = tstr & vatgroup & 
+        ValToString(price,M4Val,"",".",0) & 
+        "*" & 
+        ValToString(quant,M4UVal,"",".",0);
+  end else begin
+    tstr = tstr & vatgroup & 
+        ValToString(price,M4Val,"",".",0);
+  end;
+  
+  if !retinvf then begin
+    if discount!=0 then begin
+      tstr = tstr & ";-" & ValToString(discount,M4UVal,"",".",0);
+    end;
+    printCmdLine(49,tstr);
+  end else begin
+    printCmdLine(1049,tstr);
+  end;
+  
+return;
+end;
+
+procedure printPayCommand(string text,string mode,val sum) begin
+  
+  printCmdLine(53,text & chr(9) & mode & ValToString(sum,M4UVal,"",".",0));
+
+return;
+end;
+
+procedure printTextInFiscalReceipt(string orgStr) begin
+  string 255 tstr;
+  integer i,l;
+  
+  i=0;
+  l = len(orgStr);
+  while i<l begin
+    tstr = Mid(orgStr,i,42);
+    printCmdLine(54,tstr);
+    i = i+42;
+  end;
+  
+return;
+end;
+
+procedure printCloseLine() begin
+
+  EBS_ExportPadString("close()");
+  
+  return;
+end;
+
+procedure printIfNotBlank(string tstr) begin
+  
+  if nonblank(tstr) then begin
+    printTextInFiscalReceipt(tstr);
+  end;
+
+return;
+end;
+
+procedure printHeader(record MachineCashVc MCr) begin
+  string 255 tstr;  
+  
+  printIfNotBlank(MCr.Head0);
+  printIfNotBlank(MCr.Head1);
+  printIfNotBlank(MCr.Head2);
+  printIfNotBlank(MCr.Head3);
+  printIfNotBlank(MCr.Head4);
+
+return;
+end;
+
+procedure printFooter(record MachineCashVc MCr) begin
+  string 255 tstr;  
+  
+  printIfNotBlank(MCr.Foot0);
+  printIfNotBlank(MCr.Foot1);
+  printIfNotBlank(MCr.Foot2);
+  printIfNotBlank(MCr.Foot3);
+  printIfNotBlank(MCr.Foot4);
+
+return;
+end;
+
+procedure printUserName(string pername) begin
+  string 255 tstr;
+  
+  tstr = USetStr(2692) & ": " & pername;
+  if BytesInString(tstr)>42 then begin
+    printTextInFiscalReceipt(USetStr(2692) & ":");
+    printTextInFiscalReceipt(pername);
+  end else begin
+    printTextInFiscalReceipt(tstr);
+  end;
+  
+return;
+end;
+
+procedure PrintNormalLine(row IVCashVc IVCashrw,boolean retinvf) begin
+  val p,d,t;
+  
+  d = 0;
+  p = 0;
+  p = Round(IVCashrw.Sum / IVCashrw.Quant,SetRoundModeD(2));
+  
+  
+  if nonblank(IVCashrw.ArtCode) then begin
+    printTextInFiscalReceipt(USetStr(7764) & ": " & IVCashrw.ArtCode);
+  end;
+  
+  if retinvf then begin
+    IVCashrw.Quant = -IVCashrw.Quant;
+  end;
+  printRegisterItem(IVCashrw.Spec,"A",p,IVCashrw.Quant,d,retinvf);
+  
+  //Print comment line with discount sum
+  if IVCashrw.vRebate!=0 and !retinvf then begin
+    p = IVCashrw.Price;
+    t = IVCashrw.Quant * p;
+    d = t - IVCashrw.Sum;
+    printTextInFiscalReceipt(USetStr(1000012) & " (" & ValToString(d,M4Val,"",".",0) & ")");
+  end;
+  
+return;
+end;
+
+function Integer EBS_PrintInvoiceLines(record IVCashVc IVCashr,boolean retinvf)
+begin
+  Integer res,noErr;
+  Integer i,rwcnt,VATNo;
+  row IVCashVc IVCashrw;
+  string 255 replystr,tstr;
+  val downpay,t,t1,discount;
+  boolean DoPayment;
+  array val arrPaySums;
+
+  DoPayment = false;
+  rwcnt =  MatRowCnt(IVCashr);
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowGet(IVCashr,i,IVCashrw);
+    switch (IVCashrw.stp) begin
+      case kInvoiceRowTypeHeader:
+        printTextInFiscalReceipt(IVCashrw.Spec);
+      case kInvoiceRowTypeStructuredItemComponent:
+        PrintNormalLine(IVCashrw,retinvf);
+      case kInvoiceRowTypeNormal:
+        PrintNormalLine(IVCashrw,retinvf);
+      case kInvoiceRowTypeGiftVoucherSold:
+        if !retinvf then begin
+          printRegisterItem(IVCashrw.Spec & " - " & IVCashrw.GCNr,"B",IVCashrw.Sum,1,0,retinvf);
+        end;
+      case kInvoiceRowTypeLoyaltyPointsPayment:
+        arrPaySums[1] = arrPaySums[1] + IVCashrw.Sum;
+        DoPayment = true;
+        goto LSkipRow;
+      case kInvoiceRowTypeGiftVoucherPayment:
+        DoPayment = true;
+        arrPaySums[2] = arrPaySums[2] + IVCashrw.Sum;
+        goto LSkipRow;
+      case kInvoiceRowTypeCashPayment:
+        if IVCashrw.CurncyCode=="EUR" then begin
+          arrPaySums[6] = arrPaySums[6] + IVCashrw.Sum;
+        end else begin
+          arrPaySums[3] = arrPaySums[3] + IVCashrw.Sum;
+        end;
+        DoPayment = true;
+        goto LSkipRow;
+      case kInvoiceRowTypeCreditCardPayment:
+        arrPaySums[4] = arrPaySums[4] + IVCashrw.Sum;
+        DoPayment = true;
+        goto LSkipRow;
+      case kInvoiceRowTypeChequePayment:
+        arrPaySums[5] = arrPaySums[5] + IVCashrw.Sum;
+        DoPayment = true;
+        goto LSkipRow;
+      otherwise 
+        goto LSkipRow;
+    end;    
+LSkipRow:;    
+  end;
+  
+  if !retinvf then begin
+    for(i=1;i<=6;i=i+1)begin
+      if arrPaySums[i]!=0 then begin
+        //Print payment
+        Switch (i) begin
+          Case 2: //Gift voucher
+            printPayCommand("","D",arrPaySums[i]);
+          Case 3: //Cash LTL (and other currencies)
+            printPayCommand("","E",arrPaySums[i]);
+          Case 4: //Credit card
+            printPayCommand("","C",arrPaySums[i]);
+          Case 6: //Cash EUR
+            printPayCommand("","P",arrPaySums[i]);
+          otherwise
+            LogText(0,"Unsupported payment type");
+        end;
+      end;
+    end;
+  end;
+  
+  if retinvf then begin
+    printCmdLine(1070,"G" & ValToString(IVCashr.Sum4,M4Val,"",".",0));
+  end;
+  
+  EBS_PrintInvoiceLines = res;
+  return;
+end;
+
+function string 255 CreateTempInpFile() begin
+  string 255 res;
+  
+  res = DateToString(CurrentDate,"YYMMDD") & TimeToString(CurrentTime,"HHMMSS",false) & "-POSFile.tinp";
+  CreateFile(res);
+  SetExportCodePage("CP1257");
+  
+  CreateTempInpFile = res;
+return;
+end;
+
+procedure RenameIfNotExists(string fromfn,string tofn,boolean initwaitf) begin
+  boolean filerenamedf;
+  integer i;  
+  
+  if initwaitf then begin
+    MilliSleep(500);
+  end;
+  
+  filerenamedf = false;
+  for(i=0;i<4;i=i+1) begin //try renaming 4 times with 0.5 sec intervals
+    if !FileExists(tofn) then begin
+      RenameFile(fromfn,tofn);
+      i = 4;
+      filerenamedf = true;
+    end else begin
+      MilliSleep(1000);
+    end;
+  end;
+  
+  if !filerenamedf then begin
+    LogText(0,"RenameIfNotExists ERROR :: Target file already exists!");
+  end;
+
+return;
+end;
+
+global
+procedure PrintReceipt_SendToFiscal(record IVCashVc IVCashr,string donotprint,boolean opencashdrawerf) begin
+  string 255 filename,pername,invnr;  
+  record MachineCashVc MCr;
+  boolean foundf,retinvf;
+  
+  if nonblank(donotprint) then begin
+    GoTo LPrintReceipt_SendToFiscal;
+  end;
+  if IVCashr.Sum4==0 then begin
+    GoTo LPrintReceipt_SendToFiscal;
+  end;
+  
+  filename = CreateTempInpFile;
+  retinvf = DOLCheckForInvReturn(IVCashr);
+  
+  printCmdLine(57,"");
+  if !retinvf then begin
+    printCmdLine(65,"");
+    printOpenFiscalReceipt("1","0000","0001");
+  end;
+  printTextInFiscalReceipt(USetStr(1000013) & IVCashr.SerNr);
+  MCr.Code = IVCashr.LocalMachineCode;
+  foundf = ReadFirstMain(MCr,1,true);
+  if foundf then begin
+    printHeader(MCr);
+  end;
+  
+  GetUserName(IVCashr.SalesMan,pername);
+  printUserName(pername);
+  EBS_PrintInvoiceLines(IVCashr,retinvf);
+  
+  if foundf then begin
+    printFooter(MCr);
+  end;
+  invnr = IVCashr.SerNr;
+  // while (len(invnr)<12) begin
+  //   invnr = "0" & invnr;
+  // end;
+  
+  if !retinvf then begin
+    printCmdLine(84,"3," & invnr);
+    printCmdLine(56,"");
+    printCmdLine(65,"");
+  end;
+  if retinvf then begin
+    printCmdLine(106,""); //Open cash drawer command
+  end;
+  
+  CloseFile;
+  RenameIfNotExists(filename,"POSFile.inp",true);
+  
+LPrintReceipt_SendToFiscal:;
+return;
+end;
+
+global
+procedure PrintDayReport_SendToFiscal(string tagstr) begin
+  string 255 filename;
+  
+  if tagstr!="1" and tagstr!="2" then begin
+    GoTo LPrintDayReport;
+  end;
+  
+  filename = CreateTempInpFile;
+  
+  if tagstr=="1" then begin
+    //X-report
+    printCmdLine(69,"2");
+  end;
+  if tagstr=="2" then begin
+    //Z-report
+    printCmdLine(69,"0");
+  end;
+  
+  CloseFile;
+  RenameIfNotExists(filename,"POSFile.inp",false);
+  
+LPrintDayReport:;
+return;
+end;
+
+global
+procedure OpenCashDrawer_SendToFiscal() begin
+  string 255 filename;
+  
+  filename = CreateTempInpFile;
+  printCmdLine(106,"");
+  CloseFile;
+  RenameIfNotExists(filename,"POSFile.inp",false);
+  
+  return;
+end;
+
+global
+procedure CashInOut_SendToFiscal(record CashVc Cashr) begin
+  string 255 filename;
+  val t;
+  
+  filename = CreateTempInpFile;
+  printCmdLine(57,"");
+  t = Cashr.Total;
+  if Cashr.Event==0 then begin
+    t = -t;
+  end;
+  printCmdLine(70,ValToString(t,M4Val,"",".",0));
+  CloseFile;
+  RenameIfNotExists(filename,"POSFile.inp",false);
+
+return;
+end;
+
+global
+procedure LastReceiptCopy_SendToFiscal() begin
+  string 255 filename;  
+
+  filename = CreateTempInpFile;
+  printCmdLine(109,"1");
+  CloseFile;
+  RenameIfNotExists(filename,"POSFile.inp",false);
+
+return;
+end;
+
+function string 20 RefactorLineTxt(string orgstr) begin
+  string 20 res;
+  
+  res = orgstr;
+  
+  if mid(orgstr,6,7)==" kaina:" then begin //Prekes kaina: XXX,XX EUR
+    res = USetStr(12665) & " " & Right(orgstr,len(orgstr) - 14); //Kaina XXX,XX EUR
+    GoTo LRefactorLineTxt;
+  end;
+  
+LRefactorLineTxt:;
+  RefactorLineTxt = Left(res,20);
+return;
+end;
+
+global
+procedure ShowTextClientDisplay_SendToFiscal(string dispstr,string disp2str) begin
+  string 255 filename;
+  string 20 line1,line2,ldispstr;   
+  
+  filename = CreateTempInpFile;
+  ldispstr = dispstr;
+  
+  if blank(ldispstr) and blank(disp2str) then begin
+    ldispstr = USetStr(1000083);
+  end;
+  
+  line1 = RefactorLineTxt(ldispstr);
+  line2 = RefactorLineTxt(disp2str);
+  
+  printCmdLine(47,line1);
+  printCmdLine(35,line2);
+  CloseFile;
+  RenameIfNotExists(filename,"POSFile.inp",false);
+LShowTextClientDisplay_SendToFiscal:;
+return;
+end;
+
+global
+procedure ClearClientDisplay_SendToFiscal() begin
+  string 255 filename;  
+
+  filename = CreateTempInpFile;
+  printCmdLine(33," ");
+  CloseFile;
+  RenameIfNotExists(filename,"POSFile.inp",false);
+  
+return;
+end;
+
+global
+procedure ReportFromFiscalMem_SendToFiscal(integer reptype,date sd,date ed) begin
+  string 255 filename;  
+
+  filename = CreateTempInpFile;
+  printCmdLine(reptype,DateToString(sd,"DDMMYY") & "," & DateToString(ed,"DDMMYY"));
+  CloseFile;
+  RenameIfNotExists(filename,"POSFile.inp",false);
+  
+return;
+end;

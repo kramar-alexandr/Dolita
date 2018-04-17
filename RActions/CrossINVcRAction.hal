@@ -1,0 +1,29 @@
+global
+function LongInt CrossINVcRecordCheck(var record CrossINVc CrossINr,record CrossINVc CrossIN2r,LongInt stat,LongInt check)
+begin
+  LongInt res;
+  record ITVc ITr;
+  
+  res = inner.CrossINVcRecordCheck(CrossINr,CrossIN2r,stat,check);
+  // EVS: DOL-2
+  if (res == 0) then begin
+    if (nonblank(CrossINr.ItemCode) and nonblank(CrossINr.ItemGroup)) then begin // EVS: DOL-2
+      RecordCheckError(1000010,"",-1,"ItemCode");
+      res = -1;
+      goto LCrossINVcRecordCheck;
+    end;
+    if (nonblank(CrossINr.ItemGroup)) then begin // EVS: DOL-2
+      ITr.Code = CrossINr.ItemGroup;
+      if (!ReadFirstMain(ITr,1,true)) then begin
+        RecordCheckError(1058,"",-1,"ItemGroup");
+        res = -1;
+        goto LCrossINVcRecordCheck;
+      end;
+    end;
+  end;
+  // :EVS
+  
+LCrossINVcRecordCheck:;
+  CrossINVcRecordCheck = res;
+  return;
+end;

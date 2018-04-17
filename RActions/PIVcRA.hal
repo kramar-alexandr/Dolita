@@ -1,0 +1,54 @@
+external inner function Boolean ReadFirstItem(string,var record INVc,Boolean,Boolean);
+external function string 20 BuildINBarCode(string,date,string);
+
+updating
+procedure UpdateINBarCode(record PIVc PIr) begin
+  record INVc INr,oldINr;  
+  string 20 newbarcode;
+  
+  if PIr.DefaultChoice==0 then begin
+    GoTo LUpdateINBarCode;
+  end;
+  
+  if !ReadFirstItem(PIr.ItemCode,INr,true,false) then begin
+    GoTo LUpdateINBarCode;
+  end;
+  
+  newbarcode = BuildINBarCode(INr.Code,INr.CreateDate,INr.DispGroups);
+  if INr.BarCode!=newbarcode then begin
+    RecordCopy(oldINr,INr);
+    INr.BarCode=newbarcode;
+    if RecordUpdate(oldINr,INr,true)!=0 then begin
+      LogText(0,"UpdateINBarCode ERROR could not update INVc record " & INr.Code);
+    end;
+  end;
+  
+LUpdateINBarCode:;
+return;
+end;
+
+global
+updating function LongInt PIVcRecordSaveAfter(Var Record PIVc PIr, Record PIVc PI2r, LongInt stat, LongInt check)
+begin
+  LongInt res;
+  
+  res = 0;
+  // res = inner.PIVcRecordSaveAfter(PIr,PI2r,stat,check); //no inner for this version
+  UpdateINBarCode(PIr);
+  
+  PIVcRecordSaveAfter = res;
+  return;
+end;
+
+global
+updating function LongInt PIVcRecordUpdateAfter(Var Record PIVc PIr, Record PIVc PI2r, LongInt stat, LongInt check)
+begin
+  LongInt res;
+  
+  res = 0;  
+  // res = inner.PIVcRecordUpdateAfter(PIr,PI2r,stat,check); //no inner for this version
+  UpdateINBarCode(PIr);
+  
+  PIVcRecordUpdateAfter = res;
+  return;
+end;

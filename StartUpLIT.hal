@@ -1,0 +1,48 @@
+event startup
+begin
+  SetLangMode(LangLithuanian,"LIT",2);
+
+  //modDBMain
+  Maintenance("Atšaukti negaliojančias rezervacijas",RemoveORReservVClass,RemoveORReservMn,modDBMain);
+  Maintenance("Add objects to contacts",AddCUObjVClass,AddCUObjMn,modDBMain);
+  Maintenance("Item name update",UpdateItemNameVClass,UpdateItemNameMn,modDBMain);
+  Maintenance("DOL - Pašalinti klasę iš prekė",DOLRemoveDIINVClass,DOLRemoveDIINMn,modDBMain); // EVS: DOL-114
+  Maintenance("Pridėti klasę pirkėjams",NoSalesVClass,NoSalesMn,modDBMain); // EVS: DOL-119
+  Maintenance("DOL - Clear Official Nr. from POS Inv",DOLClearOffNoIVCashVClass,DOLClearOffNoIVCashMn,modDBMain); // EVS: DOL-125
+  Maintenance("DOL - Fill POS Inv. Missing Official Nr. from Support Reg.",DOLRenewOffNrIVCashVClass,DOLRenewOffNrIVCashMn,modDBMain); // EVS: DOL-138
+  Maintenance("DOL - Fix GP in POS Invoices (Inv No. Returns)",DOLFixGPRetIVCashVClass,DOLFixGPRetIVCashMn,modDBMain); // EVS: DOL-154
+  Maintenance("Recalcualte stock records (EBS)",EBS_StockRecalcVClass,EBS_StockRecalcMn,modDBMain);
+
+  //modPOS
+  Report("DOL - Prekių pardavimų statistika",DOL_SoldINStatRClass,DOL_SoldINStatRn,0,modPOS);//VITO: DOL-91
+  Report("DOL - Parduotuvės pardavimai",DOLShopSalesRClass,DOLShopSalesRn,0,modPOS);//EVS: DOL-93
+  Maintenance("DOL - Lojalumo kortelių kūrimas",DOLGenLCVClass,DOLGenLCMn,modPOS); // EVS: DOL-111
+  Setting("User POS groups",UserPOSGroupTClass,modPOS);
+  Setting("Lojalumo kortelės",LoyaltyCardLClass,modPOS); // EVS: added to POS for ease of use
+  Setting("DOL - Laukai naujo kliento sukūrimui",EBS_NewCUFieldsTClass,modPOS);
+  Setting("DOL - Create customer touchscreen",EBS_TempWClass,modPOS);
+
+  //modIN
+  Report("DOL - Parduotų prekių likučiai",DOLSoldINBalRClass,DOLSoldINBalRn,0,modIN); // EVS: DOL-79
+  Maintenance("Kurti bar kodus",EBS_GenBarCodesVClass,EBS_GenBarCodesMn,modIN);
+  Maintenance("Dydžio keitimas",EBS_ChangeINVarVClass,EBS_ChangeINVarMn,modIN);
+  Export("DOL - Barkodai skeneriui",DOLItemBCEClass,DOLItemBCEn,modIN); // EVS: DOL-120
+  Import("DOL - Inventorizacijos rezultatas",DOLStockTakeIn,DOLStockTakeIn,modIN); // EVS: DOL-121
+
+  //modSL
+  Report("Išrašomų PVM s/f registras",SLVATLitRClass,SLVATLitRn,0,modSL); //Standart report from 7.2, seems to be missing in 8.0
+  Maintenance("Pridėti klasę pirkėjams",NoSalesVClass,NoSalesMn,modSL); // EVS: DOL-131
+  Maintenance("Pašalinti klasę iš kontaktų",RemoveClassCUMClass,RemoveClassMn,modSL); // EVS: DOL-141
+
+  //modPO
+  Report("DOL - Prekių užsakymo iš tiekėjų",DOLPOItemsRClass,DOLPOItemsRn,0,modPO); // EVS: DOL-122
+
+  //modSY
+  Setting("Dolita - Sistema Parametrai",DOLSetTClass,modSY);
+  Setting("Dolita - Additional user fields",EBS_AddUserFieldLClass,modSY);
+  Setting("Dolita - Shopify",DOLShopifyTClass,modSY); // EVS: DOL-166
+  Setting("Dolita - Inch to CM conversion (Shopify)",DOLSzConvTClass,modSY); // EVS: DOL-166
+  Maintenance("Dolita - Load Shopify Product IDs",DOLGetShopifyProdIDVClass,DOLGetShopifyProdIDMn,modSY); // EVS: DOL-166
+
+  return;
+end;

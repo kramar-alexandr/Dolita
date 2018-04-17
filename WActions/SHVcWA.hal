@@ -1,0 +1,33 @@
+remote function string 20 ConvertItemCode(string);
+
+procedure SHConvertItemCode(integer wn,integer rownr,integer changed) begin
+  record SHVc SHr;
+  row SHVc SHrw;  
+  
+  if changed!=0 then begin
+    GetWindowRecord(wn,SHr);
+    if MatRowCnt(SHr)>rownr then begin
+      MatRowGet(SHr,rownr,SHrw);
+      SHrw.ArtCode = ConvertItemCode(SHrw.ArtCode);
+      MatRowPut(SHr,rownr,SHrw);
+      PutWindowRecord(wn,SHr);
+    end;
+  end;
+  
+return;
+end;
+
+global
+function Boolean SHDClassAfterEditField(Integer wn,string fieldname,Integer fn, Integer rownr,Integer changed)
+BEGIN
+  Boolean res;
+
+  switch (fieldname) begin
+    case "ArtCode": SHConvertItemCode(wn,rownr,changed);
+  end;
+  
+  res = inner.SHDClassAfterEditField(wn,fieldname,fn,rownr,changed);
+  
+  SHDClassAfterEditField = res;
+  RETURN;
+END;

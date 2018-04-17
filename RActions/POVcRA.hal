@@ -1,0 +1,37 @@
+remote function string 60 AddLocationObject(string,string,boolean);
+
+global
+function LongInt POVcRecordDefaults(var record POVc POr,record POVc PO2r,LongInt long3,LongInt long4)
+begin
+  LongInt res;
+  
+  res = inner.POVcRecordDefaults(POr,PO2r,long3,long4);
+  POr.Objects = AddLocationObject(POr.Objects,POr.Location,true); 
+  
+  POVcRecordDefaults = res;
+  return;
+end;
+
+global
+function LongInt POVcRecordImport(var record POVc POr,record POVc PO2r,LongInt stat,LongInt long4)
+BEGIN
+  row POVc POrw;  
+  integer i,rwc;
+  longInt res;
+  
+  res = inner.POVcRecordImport(POr,PO2r,stat,long4);
+  
+  // EVS: DOL-122
+  rwc = MatRowCnt(POr);
+  for (i = 0; i < rwc; i = i + 1) begin
+    MatRowGet(POr,i,POrw);
+    if (blankdate(POrw.PlanShipRowDate)) then begin
+      POrw.PlanShipRowDate = StringToDate(POrw.PlanShipRow);
+      MatRowPut(POr,i,POrw);
+    end;
+  end;
+  // :EVS
+  
+  POVcRecordImport = res;
+  RETURN;
+END;

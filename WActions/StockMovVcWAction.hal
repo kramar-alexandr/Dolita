@@ -1,0 +1,113 @@
+remote inner function Boolean StockMovVc_PasteQuant(var record StockMovVc,Integer);
+remote inner procedure StockMovVc_PasteSentQuant(var record StockMovVc,Integer);
+
+// EVS: DOL-27
+global
+procedure DOLOpenFrFilterLClassBtn()
+begin
+  record LocalMachineBlock lmb;
+  record StockMovVc SMr;
+  integer wn;
+  string 20 subset;
+  
+  BlockLoad(lmb);
+  
+  wn = CurWindow;
+  CloseWindow(wn);
+  OpenWindow("StockMovFrLClass",1,0,lmb.DefLocation,"",SMr);
+
+return;
+end;
+
+global
+procedure DOLOpenToFilterLClassBtn()
+begin
+  record LocalMachineBlock lmb;
+  record StockMovVc SMr;
+  integer wn;
+  string 20 subset;
+  
+  BlockLoad(lmb);
+  
+  wn = CurWindow;
+  CloseWindow(wn);
+  OpenWindow("StockMovLClass",1,0,lmb.DefLocation,"",SMr);
+
+return;
+end;
+
+global
+procedure DOLOpenAllFilterLClassBtn()
+begin
+  record StockMovVc SMr;
+  integer wn;
+  
+  wn = CurWindow;
+  CloseWindow(wn);
+  OpenWindow("StockMovToLClass",1,0,"","",SMr);
+
+return;
+end;
+
+global
+function boolean StockMovLClassOnOpenWindow(integer wn)
+begin
+  record LocalMachineBlock lmb;
+  
+  BlockLoad(lmb);
+  SetWindowSubset(wn,lmb.DefLocation);
+  
+  StockMovLClassOnOpenWindow = true;
+return
+end;
+
+// :EVS
+
+// EVS: DOL-82
+global
+procedure DOLSetStockMovColQty()
+begin
+  record StockMovVc SMr;
+  row StockMovVc SMrw;
+  integer tag,i,rwc,wn;
+  
+  tag = StringToInt(PushButtonTag);
+  
+  wn = CurWindow;
+  DeselectWindow(wn,false);
+  GetWindowRecord(wn,SMr);
+  
+  rwc = MatRowCnt(SMr);
+  for (i = 0; i < rwc; i = i + 1) begin
+    MatRowGet(SMr,i,SMrw);
+    if (nonblank(SMrw.ArtCode)) then begin
+      switch (tag) begin
+        case 0:
+          if (SMrw.OrdQuant == blankval) then begin
+            SMrw.OrdQuant = 1;
+            MatRowPut(SMr,i,SMrw);
+          end;
+        case 1:
+          if (SMrw.SentQuant == blankval) then begin
+            SMrw.SentQuant = SMrw.OrdQuant;
+            MatRowPut(SMr,i,SMrw);
+            StockMovVc_PasteSentQuant(SMr,i);
+          end;
+        case 2:
+          if (SMrw.Quant == blankval) then begin
+            SMrw.Quant = SMrw.SentQuant;
+            if (SMrw.Quant == blankval) then begin
+              SMrw.Quant = SMrw.OrdQuant;
+            end;
+            MatRowPut(SMr,i,SMrw);
+            StockMovVc_PasteQuant(SMr,i);
+          end;
+      end;
+    end;
+  end;
+  
+  PutWindowRecord(wn,SMr);
+  
+return;
+end;
+// :EVS

@@ -1,0 +1,654 @@
+external inner procedure POSMoneyInsm;
+external inner function val ValFromString(string,string,string);
+external inner function Boolean NPTSPaymentTClassAfterEditField(Integer,string,Integer,Integer,Integer);
+external inner function string 60 AddObjectToObjectList(string,string);
+external inner procedure IVCashDClass_RefreshStringList(Integer,record IVCashVc);
+external inner function string 50 TimeToString(time,string,boolean);
+external inner function Boolean IsSessionOpen(string,string,Date,Time);
+remote inner procedure CntNPTSPaymentCurrenciesRemote(string,var Array string,var Array string,var Array Integer,var Array string,var Integer);
+remote function val FindLastCashOut(string,string);
+remote function Val GetPOSBalancePM(Date,Time,string,string,string);
+external function string 60 RemoveObjectsWithType(string,string);
+external procedure ClearClientDisplay_SendToFiscal;
+//VITO: DOL-89
+external function integer DefineIVCashType(record IVCashVc);
+external inner procedure RowCalculateTaxMatrix_IVVc(var record IVVc,Integer,row IVVc);
+remote inner procedure IVSumup(var record IVVc,Boolean);
+//:VITO
+external function val DOLGetUnitPriceFromSum(val);
+external inner procedure SetPOSWindowDisplay(string,string);
+external procedure ShowTextClientDisplay_SendToFiscal(string,string);
+external function boolean VerifyUserPassword(string,string);
+
+procedure EBS_POSPOSMoney2Insm(string tag)
+begin
+  record CashVc Cashr;
+  row CashVc Cashrw;
+  record DefCashBlock DefCashRec;
+  Integer nwn;
+  val t;
+  string 255 comment;
+
+  BlockLoad(DefCashRec);
+  RecordNew(Cashr);
+
+
+  ClearRow(Cashr,Cashrw,1);
+  Cashrw.PMCode = DefCashRec.DefCashPayMode;
+
+  Switch (tag) begin
+    case "1":
+              comment = USetStr(1000003);
+              Cashr.Event = 1;
+    case "2": comment = USetStr(1000004) & " " & CurrentDate;
+              Cashrw.Amount = FindLastCashOut(Cashr.Drawer,DefCashRec.DefCashPayMode);
+              Cashr.Event = 1;
+              Cashr.DoNotMakeTR = 1;
+    case "3": comment = USetStr(1000006);
+              Cashrw.Amount = GetPOSBalancePM(CurrentDate,CurrentTime,Cashr.MachineName,Cashr.Drawer,DefCashRec.DefCashPayMode);
+              Cashr.Event = 0;
+    case "4": comment = USetStr(1000005);
+              Cashr.Event = 0;
+  end;
+  Cashr.Comment = comment;
+  Cashr.Total = Cashrw.Amount;
+
+  MatRowPut(Cashr,0,Cashrw);
+  nwn = OpenWindow("CashSimpleInDClass",1,0,"","",Cashr);
+  PutWindowString(nwn,"ButtonTag",tag);
+
+  Switch (tag) begin
+    case "1": WindowFieldGoto(nwn,Cashr,0,"Amount",false);
+    case "4": WindowFieldGoto(nwn,Cashr,0,"Amount",false);
+  end;
+
+  return;
+end;
+
+global
+procedure EBS_POSMoneyInsm(string tag) begin
+  record IVCashVc IVCashr;
+  integer wn;
+
+  wn = CurWindow;
+  GetWindowRecord(wn,IVCashr);
+
+  if (!IsSessionOpen(IVCashr.LocalMachineCode,IVCashr.DrawerCode,CurrentDate,CurrentTime)) then begin
+    MessageBox(1000048,"");
+    GoTo LEBS_POSMoneyInsm;
+  end;
+
+  Switch (tag) begin
+    case "1": EBS_POSPOSMoney2Insm(tag);
+    case "2": EBS_POSPOSMoney2Insm(tag);
+    case "3": EBS_POSPOSMoney2Insm(tag);
+    case "4": EBS_POSPOSMoney2Insm(tag);
+    otherwise
+      POSMoneyInsm;
+  end;
+
+  LEBS_POSMoneyInsm:;
+return;
+end;
+
+global
+procedure EBS_UpdatePayWindow(integer wn,integer mwn,record IVCashVc IVCashr) begin
+  record RcVc RepSpec;
+  record LocalMachineBlock LMb;
+  row IVCashVc IVCashrw;
+  Array string 255 acrncy,alabel,apaymentmode;
+  Array Integer apaymenttype;
+  Integer acrncnt,rwcnt,i;
+  string 255 tstr;
+  val receivedgv,prevsum,prevpay;
+  vector val vpaymodeamount;
+
+  if wn<=0 then begin
+    GoTo LEBS_UpdatePayWindow;
+  end;
+
+  BlockLoad(LMb);
+  CntNPTSPaymentCurrenciesRemote(LMb.LocalMachineCode,alabel,acrncy,apaymenttype,apaymentmode,acrncnt);
+  rwcnt = MatRowCnt(IVCashr);
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowGet(IVCashr,i,IVCashrw);
+    switch (IVCashrw.stp) begin
+      case kInvoiceRowTypeGiftVoucherPayment:
+        vpaymodeamount[IVCashrw.PayMode] = vpaymodeamount[IVCashrw.PayMode] + IVCashrw.Sum;
+    end;
+  end;
+
+  GetWindowRecord(wn,RepSpec);
+  for (i=0;i<acrncnt;i=i+1) begin
+    switch (apaymenttype[i]) begin
+      case kInvoiceRowTypeGiftVoucherPayment:
+        tstr = "NPTSPaymentTClassGVPAmount" & apaymentmode[i];
+        prevsum = ValFromString(GetWindowstring(wn,tstr),DecimalSeparator,"");
+        if vpaymodeamount[apaymentmode[i]]!=prevsum then begin
+          receivedgv = receivedgv + vpaymodeamount[apaymentmode[i]] - prevsum;
+        end;
+        PutWindowString(wn,tstr,vpaymodeamount[apaymentmode[i]]);
+    end;
+  end;
+
+  PutWindowRecord(wn,RepSpec);
+  prevpay = ValFromString(GetWindowstring(wn,"NPTSPaymentTClassBase1ReceivedAmount"),DecimalSeparator,"");
+  PutWindowString(wn,"NPTSPaymentTClassBase1ReceivedAmount",prevpay + receivedgv);
+  PutWindowString(wn,"NPTSPaymentTClassAmountDue",RepSpec.vals1-receivedgv-prevpay);
+  if (RepSpec.vals0<0) then begin
+    RepSpec.vals0 = 0;
+  end;
+  PutWindowString(wn,"NPTSPaymentTClassBase1ChangeAmount",RepSpec.vals0);
+
+  SelectWindow(wn);
+
+LEBS_UpdatePayWindow:;
+return;
+end;
+
+global
+function string 60 EBS_AddPersObject(string orgobj,string pers) begin
+  record UserVc Userr;
+  record ObjVc Objr;
+  string 60 res,tstr;
+
+  Userr.Code = pers;
+  if !ReadFirstMain(Userr,1,true) then begin
+    res = orgobj;
+    GoTo LEBS_AddPersObject;
+  end;
+
+  if blank(Userr.PersObjx) then begin
+    res = orgobj;
+    GoTo LEBS_AddPersObject;
+  end;
+
+  Objr.Code = Userr.PersObjx;
+  if !ReadFirstMain(Objr,1,true) then begin
+    res = orgobj;
+    GoTo LEBS_AddPersObject;
+  end;
+
+  tstr = orgobj;
+  if nonblank(orgobj) and nonblank(Objr.OTCode) then begin
+    tstr = RemoveObjectsWithType(orgobj,Objr.OTCode);
+  end;
+  res = AddObjectToObjectList(tstr,Userr.PersObjx);
+
+LEBS_AddPersObject:;
+  EBS_AddPersObject = res;
+return;
+end;
+
+global
+procedure CancelGiftVoucherTouchScreenDClass() begin
+  integer wn,paywn;
+
+  paywn = FindWindow("NPTSPaymentTClass");
+  CloseWindow(CurWindow);
+  if paywn>0 then begin
+    SelectWindow(paywn);
+  end;
+
+return;
+end;
+
+global
+procedure RemRetSumTask(string arg) begin
+  integer wn;
+  string 255 tstr;
+  record RcVc RepSpec;
+  record CashierDefBlock CashierDefBl;
+
+  wn = StringToInt(Left(arg,Len(arg)-8));
+  if wn>0 then begin
+    if WindowValid(wn) and GetWindowClass(wn)=="EBS_ChooseSalesManVClass" then begin
+      tstr = GetWindowString(wn,"TaskParam");
+      if tstr == arg then begin //this is added so that another window could not be updated
+        BlockLoad(CashierDefBl);
+        if CashierDefBl.UpdateCustDisplay==1 then begin
+          // ClearClientDisplay_SendToFiscal; //clear customer display
+          ShowTextClientDisplay_SendToFiscal("","");
+        end;
+        GetWindowRecord(wn,RepSpec);
+        RepSpec.vals0=blankval;
+        PutWindowRecord(wn,RepSpec);
+      end;
+    end;
+  end;
+
+return;
+end;
+
+global
+procedure OpenSalesManSelectionWindow(integer mwn,val retSum,integer taskdelay) begin
+  integer nwn,i;
+  record RcVc RepSpec;
+  string 255 tstr;
+  date td;
+  time t,t2;
+
+  RepSpec.vals0 = retSum;
+  RepSpec.f1 = "";
+  nwn = OpenWindow("EBS_ChooseSalesManVClass",0,mwn,"","",RepSpec);
+  WindowFieldGoto(nwn,RepSpec,-1,"f1",true);
+
+  i = taskdelay;
+  if i<=0 then begin
+    i = 120;
+  end;
+
+  td = CurrentDate;
+  t = CurrentTime;
+  t2 = AddSeconds(t,i);
+  if t2<t then begin
+    td = AddDay(td,1);
+  end;
+
+  tstr = nwn & "::" & TimeToString(t2,"HHMMSS",false);
+  PutWindowString(nwn,"TaskParam",tstr);
+  NewTimedTask("RemRetSumTask","Remove return sum from selection window","RemRetSumTask",nwn & "::" & TimeToString(t2,"HHMMSS",false),td,t2,"","");
+
+
+return;
+end;
+
+global
+procedure EBS_ChooseSalesManVClassOKBtn() begin
+  integer wn,mwn;
+  record UserVc Userr;
+  record RcVc RepSpec;
+  record IVCashVc IVCashr;
+
+  wn = CurWindow();
+  mwn = MotherWindow(wn);
+  DeselectWindow(wn,false);
+
+  GetWindowRecord(wn,RepSpec);
+  if blank(RepSpec.f1) then begin
+    SelectWindow(wn);
+    WindowFieldGoto(wn,RepSpec,-1,"f1",false);
+    MessageBox(1000021,"");
+    GoTo LEBS_ChooseSalesManVClassOKBtn;
+  end;
+
+  Userr.Code = RepSpec.f1;
+  if !ReadFirstMain(Userr,1,true) then begin
+    SelectWindow(wn);
+    WindowFieldGoto(wn,RepSpec,-1,"f1",false);
+    MessageBox(1000022,"");
+    GoTo LEBS_ChooseSalesManVClassOKBtn;
+  end;
+
+  if !VerifyUserPassword(RepSpec.f1,RepSpec.f2) then begin
+    MessageBox(1000116,"");
+    GoTo LEBS_ChooseSalesManVClassOKBtn;
+  end;
+
+  if GetWindowClass(mwn)=="NPTSIVCashDClass" then begin
+    GetWindowRecord(mwn,IVCashr);
+    IVCashr.SalesMan = RepSpec.f1;
+    PutWindowString(mwn,"touchscreenwindowcursalesman",RepSpec.f1);
+    PutWindowString(mwn,"CustomerDisplayData_Line1",USetStr(1000009));
+    PutWindowString(mwn,"CustomerDisplayData_Line2","");
+    PutWindowRecord(mwn,IVCashr);
+    IVCashDClass_RefreshStringList(mwn,IVCashr);
+  end;
+  CloseWindow(wn);
+
+LEBS_ChooseSalesManVClassOKBtn:;
+return;
+end;
+
+//Seems that returning true prevents window from closing and that is what is needed here
+global
+function Boolean EBS_ChooseSalesManVClassOnClose(Integer wn,Integer wn2)
+begin
+
+  EBS_ChooseSalesManVClassOnClose = true;
+  return;
+end;
+
+global
+procedure ChooseSalesManBtn() begin
+  string 255 tagstr;
+  record RcVc RepSpec;
+  record IVCashVc IVCashr;
+  integer wn,mwn;
+
+  tagstr = PushButtonTag;
+  wn = CurWindow;
+  if nonblank(tagstr) then begin
+    DeselectWindow(wn,false);
+    GetWindowRecord(wn,RepSpec);
+    RepSpec.f1 = tagstr;
+    PutWindowRecord(wn,RepSpec);
+    SelectWindow(wn);
+    WindowFieldGoto(wn,RepSpec,-1,"f2",true);
+
+    // mwn = MotherWindow(wn);
+    // GetWindowRecord(mwn,IVCashr);
+    // IVCashr.SalesMan = tagstr;
+    // IVCashr.RetValue = blankval;
+    // PutWindowString(mwn,"touchscreenwindowcursalesman",tagstr);
+    // PutWindowString(mwn,"CustomerDisplayData_Line1",USetStr(1000009));
+    // PutWindowString(mwn,"CustomerDisplayData_Line2","");
+    // PutWindowRecord(mwn,IVCashr);
+    // IVCashDClass_RefreshStringList(mwn,IVCashr);
+    // CloseWindow(wn);
+  end;
+
+return;
+end;
+
+global
+procedure OpenSession_UpdateIVCash(integer wn) begin
+  record IVCashVc IVCashr;
+
+  GetWindowRecord(wn,IVCashr);
+  IVCashr.TransTime = CurrentTime;
+  PutWindowRecord(wn,IVCashr);
+
+return;
+end;
+
+global
+procedure LoadStdProblemsToArray(var array string a_probcodes,var array string a_probnames,var integer probcnt) begin
+  record StandProblemVc StandProblemr;
+
+  StandProblemr.Code = "";
+  While LoopMain(StandProblemr,1,true) begin
+    a_probcodes[probcnt] = StandProblemr.Code;
+    a_probnames[probcnt] = StandProblemr.ShortDesc;
+    probcnt = probcnt + 1;
+  end;
+
+return;
+end;
+
+global
+procedure LoadLocationsToArray(record LocalMachineBlock lmb,var array string a_loccodes,var array string a_locnames,var integer loccnt) begin
+  record LocationVc Locationr,defLocr;
+
+  defLocr.Code = lmb.DefLocation;
+  if !ReadFirstMain(defLocr,1,true) then begin
+    GoTo LLoadLocationsToArray;
+  end;
+
+  Locationr.Code = "";
+  While LoopMain(Locationr,1,true) begin
+    if Locationr.Group==defLocr.Group then begin
+      a_loccodes[loccnt] = Locationr.Code;
+      a_locnames[loccnt] = Locationr.Name;
+      loccnt = loccnt + 1;
+    end;
+  end;
+
+LLoadLocationsToArray:;
+return;
+end;
+
+global
+procedure DblEBSPOSIVCashVc(string dblstr,string l,Integer currepwn) begin
+  integer wn,i;
+  longint sernr;
+  record RcVc RepSpec;
+
+  for(i=0;i<len(l);i=i+1)begin
+    if mid(l,i,1)==":" then begin
+      sernr = StringToLongInt(Left(l,i));
+      wn = StringToInt(Right(l,len(l)-i-1));
+    end;
+  end;
+
+  if sernr!=-1 and wn>0 then begin
+    if WindowValid(wn) and GetWindowClass(wn)=="ReturnInvNoNPTSSClass" then begin
+      CloseWindow(currepwn);
+
+      DeselectWindow(wn,false);
+      GetWindowRecord(wn,RepSpec);
+      RepSpec.long1 = sernr;
+      PutWindowRecord(wn,RepSpec);
+      SelectWindow(wn);
+      WindowFieldGoto(wn,RepSpec,-1,"long1",true);
+    end;
+  end;
+
+return;
+end;
+
+//VITO: DOL-89
+global // EVS: DOL-89 heavily updated
+updating function longint DOLCreateCreditSalesInvoiceFromIVCash(record IVCashVc IVCashr,var record IVVc IVr)
+begin
+  record IVVc IV2r;
+  record ARVc ARr;
+  row IVCashVc IVCashrw;
+  row IVVc IVrw;
+  integer coef,rwcnt,i,rownr,curcomp;
+  record TaxMatrixVc TMr;
+  longint res;
+  record AccBlock setbl;
+
+  BlockLoad(setbl);
+
+  res = 1000073;//Fakt�ra sukurta nepavyksta
+
+  coef = 1;
+  if (DefineIVCashType(IVCashr) == 2) then begin
+    coef = -1;
+  end;
+
+  RecordNew(IVr);
+  IVr.TransDate = IVCashr.TransDate;
+  IVr.SerNr = NextSerNr("IVVc",IVr.TransDate,-1,false,"");
+  IVr.InvDate = IVCashr.InvDate;
+  IVr.PayDate = IVr.InvDate;
+  IVr.CustCode = IVCashr.CustCode;//� Customer code;
+  IVr.Addr0 = IVCashr.Addr0;
+  IVr.Addr1 = IVCashr.Addr1;
+  IVr.Addr2 = IVCashr.Addr2;
+  IVr.Addr3 = IVCashr.Addr3;
+  IVr.OurContact = IVCashr.OurContact;
+  IVr.ClientContact = IVCashr.ClientContact;
+  IVr.CustCat = IVCashr.CustCat;
+  IVr.PriceList = IVCashr.PriceList;
+  IVr.Objects = IVCashr.Objects;
+  IVr.InclVAT = IVCashr.InclVAT;
+  IVr.ARAcc = IVCashr.ARAcc;
+  IVr.SalesMan = IVCashr.SalesMan;//� Salesman code.
+  IVr.ToRateB1 = IVCashr.ToRateB1;
+  IVr.CurncyCode = IVCashr.CurncyCode;
+  IVr.LangCode = IVCashr.LangCode;
+  IVr.Sum0 = coef*IVCashr.Sum0;//� Sums with positive quantities;
+  IVr.Sum1 = coef*IVCashr.Sum1;
+  IVr.Sum2 = coef*IVCashr.Sum2;
+  IVr.Sum3 = coef*IVCashr.Sum3;
+  IVr.Sum4 = coef*IVCashr.Sum4;
+  IVr.VATNr = IVCashr.VATNr;
+  IVr.CustVATCode = IVCashr.CustVATCode;
+  IVr.BaseSum4 = IVCashr.BaseSum4;
+  IVr.FrRate = IVCashr.FrRate;
+  IVr.ToRateB2 = IVCashr.ToRateB2;
+  IVr.BaseRate1 = IVCashr.BaseRate1;
+  IVr.BaseRate2 = IVCashr.BaseRate2;
+  IVr.TotGP = IVCashr.TotGP;
+  IVr.CreditCard = IVCashr.CreditCard;
+  IVr.AuthorizationCode = IVCashr.AuthorizationCode;
+  IVr.RecValue = IVCashr.RecValue;
+  IVr.RetValue = IVCashr.RetValue;
+  IVr.MachineName = IVCashr.LocalMachineCode;
+  IVr.TransTime = IVCashr.TransTime;
+  IVr.DrawerCode = IVCashr.DrawerCode;
+  IVr.NoTAXonVAT = IVCashr.NoTAXonVAT;
+  IVr.RegDate = IVCashr.RegDate;
+  IVr.RegTime = IVCashr.RegTime;
+  IVr.TerminalID = IVCashr.TerminalID;
+  IVr.FiscalDeviceSeqNr = IVCashr.FiscalDeviceSeqNr;
+//  IVr.OfficialSerNr = IVCashr.OfficialSerNr;
+//  IVr.OfficialSerNr2 = IVCashr.OfficialSerNr2;
+  IVr.CustTaxTemplateCode = IVCashr.CustTaxTemplateCode;
+  IVr.Location = IVCashr.Location;
+  IVr.Reason = IVCashr.StandProblemCode;//� Standard problem is transferred to the field �Kredito prie�astis�;
+  IVr.PayDeal = "CR";//payment term �CR�
+  IVr.InvType = kInvoiceTypeCredit;
+  if (nonblank(setbl.POSRetAcc)) then begin
+    IVr.ARAcc = Setbl.POSRetAcc; // EVS: DOL-89
+  end;
+
+  rwcnt = MatRowCnt(IVCashr);
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowGet(IVCashr,i,IVCashrw);
+    if (IVCashrw.stp == kInvoiceRowTypeNormal) then begin
+      IVrw.stp = IVCashrw.stp;
+      IVrw.ArtCode = IVCashrw.ArtCode;//� Item code with positive quantity (multiplied by -1);
+      IVrw.Quant = coef*IVCashrw.Quant;
+      IVrw.Price = IVCashrw.Price;//� Item prices;
+      IVrw.Sum = coef*IVCashrw.Sum;
+      IVrw.vRebate = IVCashrw.vRebate;//� Discounts;
+      IVrw.SalesAcc = IVCashrw.SalesAcc;
+      if (nonblank(setbl.CredDomSalesAcc)) then begin
+        IVrw.SalesAcc = setbl.CredDomSalesAcc; // EVS: DOL-89
+      end;
+      IVrw.Objects = IVCashrw.Objects;//� Item objects;
+      IVrw.BasePrice = IVCashrw.BasePrice;//� Item prices;
+      IVrw.rowGP = coef*IVCashrw.rowGP;
+      IVrw.Spec = IVCashrw.Spec;
+      IVrw.VATCode = IVCashrw.VATCode;
+      IVrw.SerialNr = IVCashrw.SerialNr;
+      IVrw.PriceFactor = IVCashrw.PriceFactor;
+      IVrw.Coefficient = IVCashrw.Coefficient;
+      IVrw.UnitCode = IVCashrw.UnitCode;
+      IVrw.CreditCard = IVCashrw.CreditCard;
+      IVrw.AuthorizationCode = IVCashrw.AuthorizationCode;
+      IVrw.PosCode = IVCashrw.PosCode;
+      IVrw.CurncyCode = IVCashrw.CurncyCode;
+      IVrw.FrRate = IVCashrw.FrRate;
+      IVrw.ToRateB1 = IVCashrw.ToRateB1;
+      IVrw.ToRateB2 = IVCashrw.ToRateB2;
+      IVrw.BaseRate1 = IVCashrw.BaseRate1;
+      IVrw.BaseRate2 = IVCashrw.BaseRate2;
+      IVrw.PayMode = IVCashrw.PayMode;
+      IVrw.GCNr = IVCashrw.GCNr;
+      IVrw.VoidedRowNr = IVCashrw.VoidedRowNr;
+      IVrw.VoidedSign = IVCashrw.VoidedSign;
+      IVrw.ovst = IVCashrw.ovst;
+      IVrw.MBRCode = IVCashrw.MBRCode;
+      IVrw.ChequeNr = IVCashrw.ChequeNr;
+      IVrw.CheckNr = IVCashrw.CheckNr;
+      IVrw.TaxTemplateCode = IVCashrw.TaxTemplateCode;//� Discounts;
+      IVrw.Salesmen = IVCashrw.Salesmen;
+      rownr = MatRowCnt(IVr);
+      UnpackRowFieldMatrix(IVCashrw,"TaxMatrix",TMr);
+      PackRowFieldMatrix(IVrw,"TaxMatrix",TMr);
+      RowCalculateTaxMatrix_IVVc(IVr,rownr,IVrw);
+      MatRowPut(IVr,rownr,IVrw);
+    end;
+  end;
+
+  IVSumup(IVr,true);
+
+  // EVS: DOL-89
+  IVr.POSRetFlag = 1;
+  if (RecordStore(IVr,false)) then begin
+    RecordCopy(IV2r,IVr);
+    IVr.OfficialSerNr = "";
+    IVr.OKFlag = 1;
+    RecordUpdate(IV2r,IVr,true);
+    // they will pay the invoice by creating payment records
+//    ARr.InvoiceNr = IVr.SerNr;
+//    if (ReadFirstMain(ARr,1,true)) then begin
+//      RecordDelete(ARr);
+//    end;
+    // the POS invoice is deleted .. not sure about why this would be needed
+//    curcomp = CurrentCompany;
+//    CreateRecordLink(IVr,curcomp,IVCashr,curcomp);
+//    CreateRecordLink(IVCashr,curcomp,IVr,curcomp);
+    res = 1000072;//Fakt�ra sukurta sekmingai:
+  end;
+  // :EVS
+
+  DOLCreateCreditSalesInvoiceFromIVCash = res;
+
+  return;
+end;
+
+global
+updating function boolean UpdateIVCashStandProblem(string reason,var record IVCashVc IVCashr)
+begin
+  record  IVCashVc oldIVCashr;
+  boolean res;
+
+  RecordCopy(oldIVCashr,IVCashr);
+  IVCashr.StandProblemCode = reason;
+  if (RecordUpdate(oldIVCashr,IVCashr,false) == 0) then begin
+    res = true;
+  end;
+
+  UpdateIVCashStandProblem = res;
+
+  return;
+end;
+//:VITO
+
+global
+procedure SetPOSWindowDisplay_EBS(Integer wn)
+begin
+  integer sline,matrowix,res;
+  string 255 tstr,t2,tag;
+  record IVCashVc IVCashr;
+  row IVCashVc IVCashrw;
+  val t;
+  Boolean testf;
+
+  sline = SelectedListLine(wn);
+  if (sline<>-1) then begin
+    tag = GetListTag(wn,sline);
+    if ((tag==USetStr(1000132)) or (tag==USetStr(24173)) or (tag==USetStr(24171))) then begin
+      matrowix = -1;
+    end else begin
+      matrowix = StringToLongInt(tag);
+    end;
+  end else begin
+    matrowix = -1;
+  end;
+  GetWindowRecord(wn,IVCashr);
+  if (matrowix>=0) then begin
+    MatRowGet(IVCashr,matrowix,IVCashrw);
+    switch (IVCashrw.stp) begin
+      case kInvoiceRowTypeStructuredItemComponent:
+        goto LkInvoiceRowTypeNormal1;
+      case kInvoiceRowTypeNormal:
+LkInvoiceRowTypeNormal1:;
+        tstr = USetStr(1000016) & ValToString(DOLGetUnitPriceFromSum(IVCashrw.Sum),M4Val,"",".",0) & " " & IVCashr.CurncyCode;
+        t2 = "";
+        tstr = tstr & t2;
+        if (HasLocalization("POL")) then begin
+          tstr = tstr & chr(10) & USetStr(24171) & ": " & IVCashr.Sum4;
+        end;
+        t2 = IVCashrw.ArtCode & " " & IVCashrw.Spec;
+        if (len(t2) > 35) then begin
+          t2 = left(t2,35) & "(..)";
+        end;
+        SetPOSWindowDisplay(t2,tstr);
+      case kInvoiceRowTypeCashPayment:
+        tstr = IVCashrw.Spec & "  " & ValToString(IVCashrw.Sum,M4Val,ThousandSeparator,DecimalSeparator,0);
+        SetPOSWindowDisplay(tstr,"");
+//EBS-->
+      case kInvoiceRowTypeCreditCardPayment:
+        tstr = USetStr(20801) & "  " & ValToString(IVCashrw.Sum,M4Val,ThousandSeparator,DecimalSeparator,0);
+        SetPOSWindowDisplay(tstr,"");
+      case kInvoiceRowTypeGiftVoucherPayment:
+        tstr = USetStr(1000037) & "  " & ValToString(IVCashrw.Sum,M4Val,ThousandSeparator,DecimalSeparator,0);
+        SetPOSWindowDisplay(tstr,"");
+//EBS<--
+      case kPOSButtonTypeOnAccountPayment:
+        tstr = IVCashrw.Spec & "  " & ValToString(IVCashrw.Sum,M4Val,ThousandSeparator,DecimalSeparator,0);
+        SetPOSWindowDisplay(tstr,"");
+      otherwise
+        SetPOSWindowDisplay("","");
+    end;
+  end;
+
+  return;
+end;

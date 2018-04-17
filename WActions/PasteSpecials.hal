@@ -1,0 +1,30 @@
+remote inner procedure CUVc_CUClassSClass(record CUVc,var record RcVc);
+external inner procedure PasteFromTRObjS(Integer,Integer);
+
+// EVS: DOL-142
+global
+function Boolean DOLCUClassSClassOnOpenWindow(Integer wn)
+begin
+  Integer mwn;
+  record RcVc RepSpec;
+  record CUVc CUr;
+
+  mwn = MotherWindow(wn);
+  GetWindowRecord(mwn,CUr);
+ // GetWindowRecord(wn,RepSpec);
+  CUVc_CUClassSClass(CUr,RepSpec);
+  PutWindowRecord(wn,RepSpec);
+  DOLCUClassSClassOnOpenWindow = false;
+  return;
+end;
+
+global
+function Boolean DOLCUClassSClassOnOKWindow(Integer wn)
+begin
+
+  PasteFromTRObjS(wn,1);
+
+  DOLCUClassSClassOnOKWindow = false;
+  return;
+end;
+// :EVS

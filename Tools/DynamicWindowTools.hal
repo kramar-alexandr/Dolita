@@ -1,0 +1,104 @@
+external inner function Boolean HasModIN();
+external inner function Boolean HasModPO();
+external inner function Boolean HasModSO();
+external procedure FillLocNameArray(string,var array string,var integer);
+external function string 60 GetUserPOSGroups(record UserPOSGroupBlock,string);
+
+global
+procedure EBS_ItemStatusUserSettings(string usercode,var Boolean InStockf,var Boolean OrddOutf,var Boolean POQtyf,var Boolean Shpblef,
+                                 var Boolean GPf,var Boolean NotRsrvdf,var Boolean GPPrcf,var Boolean DiscUPrf,var Boolean Instock2f,
+                                 var Boolean Varf,var Boolean LeadDatef,var Boolean Statf,var Boolean Locsf,var Boolean CostPricef,
+                                 var boolean INClassf,var boolean LocBalf,var boolean LocTOf,var array string LocNames,var integer size) //EBS
+BEGIN
+  record ItemStatusSettBlock ISSb;
+  record ItemStatUserVc ISUr;
+
+  ISUr.Signature = usercode;
+  if (ReadFirstMain(ISUr,1,true)) then begin
+    InStockf = ISUr.InStock!=0;
+    OrddOutf = ISUr.OrddOut!=0;
+    POQtyf = ISUr.POQty!=0;
+    Shpblef = ISUr.Shpble!=0;
+    GPf = ISUr.GP!=0;
+    NotRsrvdf = ISUr.NotRsrvd!=0;
+    GPPrcf = ISUr.GPPrc!=0;
+    DiscUPrf = ISUr.DiscUPr!=0;
+    Instock2f = ISUr.Instock2!=0;
+    Varf = ISUr.Var!=0;
+    LeadDatef = ISUr.LeadDate!=0;
+    Statf = ISUr.Statf!=0;
+    Locsf = ISUr.Loc!=0;
+    CostPricef = ISUr.InPrice!=0;
+//EBS-->
+    INClassf = ISUr.INClassf!=0;
+    LocBalf = ISUr.LocBalf!=0;
+    LocTOf = ISUr.LocTOf!=0;
+    if nonblank(ISUr.LocClass) then begin
+      FillLocNameArray(ISSb.LocClass,LocNames,size);
+    end;
+//EBS<--
+  end else begin
+    BlockLoad(ISSb);
+    InStockf = ISSb.InStock!=0 or (HasModIN and IsStandardProduct);
+    OrddOutf = ISSb.OrddOut!=0 or (HasModSO and IsStandardProduct);
+    POQtyf = ISSb.POQty!=0 or (HasModPO and IsStandardProduct);
+    Shpblef = ISSb.Shpble!=0 or (HasModIN and IsStandardProduct);
+    GPf = ISSb.GP!=0;
+    NotRsrvdf = ISSb.NotRsrvd!=0;
+    GPPrcf = ISSb.GPPrc!=0;
+    DiscUPrf = ISSb.DiscUPr!=0;
+    Instock2f = ISSb.Instock2!=0;
+    Varf = ISSb.Var!=0;
+    LeadDatef = ISSb.LeadDate!=0;
+    Statf = ISSb.Statf!=0;
+    Locsf = ISSb.Loc!=0;
+    CostPricef = ISSb.InPrice!=0;
+//EBS-->
+    INClassf = ISSb.INClassf!=0;
+    LocBalf = ISSb.LocBalf!=0;
+    LocTOf = ISSb.LocTOf!=0;
+    if nonblank(ISSb.LocClass) then begin
+      FillLocNameArray(ISSb.LocClass,LocNames,size);
+    end;
+//EBS<--
+  end;
+  RETURN;
+END;
+
+global
+procedure DOLGetSalesmen(string posgroup, var array string a_usrcodes, var integer usrcnt)
+begin
+  boolean trhs;
+  record UserVc USr;
+  record UserPOSGroupBlock UserPOSGroupBl;
+  string 60 userPosGroups;
+
+  usrcnt = 0;
+  BlockLoad(UserPOSGroupBl);
+
+  trhs = true;
+  while (LoopMain(USr,1,true)) begin
+    userPosGroups = GetUserPOSGroups(UserPOSGroupBl,USr.Code);
+    if (nonblank(posgroup) and SetInSet(posgroup,userPosGroups)) then begin
+      a_usrcodes[usrcnt] = USr.Code;
+      usrcnt = usrcnt + 1;
+    end;
+  end;
+
+return;
+END;
+
+global
+function string 10 DOLGetUserLocation(string user_code)
+begin
+  record UserVc USr;
+  string 10 res;
+
+  USr.Code = user_code;
+  if (ReadFirstMain(USr,1,true)) then begin
+    res = USr.Location;
+  end;
+
+  DOLGetUserLocation = res;
+return;
+END;

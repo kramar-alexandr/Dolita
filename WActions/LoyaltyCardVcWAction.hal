@@ -1,0 +1,31 @@
+function boolean LoyaltyCardDClassCustCodeEFAfter(integer wn, integer changed)
+begin
+  record LoyaltyCardVc LCr;
+  boolean res;
+  
+  if (changed != 0) then begin
+    if (WindowState(wn) == Rs_insert) then begin
+      DeselectWindow(wn,false);
+      GetWindowRecord(wn,LCr);
+      LCr.PointsBalance = blankval;
+      PutWindowRecord(wn,LCr);
+    end;
+  end;
+  
+  LoyaltyCardDClassCustCodeEFAfter = res;
+return;
+end;
+
+global
+function Boolean LoyaltyCardDClassAfterEditField(Integer wn,string fieldname,Integer fn, Integer rownr,Integer changed)
+begin
+  Boolean res;
+  
+  res = inner.LoyaltyCardDClassAfterEditField(wn,fieldname,fn,rownr,changed);
+  
+  switch (fieldname) begin
+    case "CustCode": res = LoyaltyCardDClassCustCodeEFAfter(wn,changed); // EVS: DOL-18
+  end;
+  LoyaltyCardDClassAfterEditField = res;
+  return;
+end;

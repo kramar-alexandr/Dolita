@@ -1,0 +1,23 @@
+
+global updating
+function LongInt ItemStatusSettBlockCheck(var record ItemStatusSettBlock ItemStatusSettBl,record ItemStatusSettBlock ItemStatusSett2Bl,LongInt stat,LongInt long4)
+BEGIN
+  LongInt res;
+  
+  res = 0;
+  if nonblank(ItemStatusSettBl.LocClass) and ItemStatusSettBl.LocBalf==0 and ItemStatusSettBl.LocTOf==0 then begin
+    RecordCheckError(1000001,"",-1,"LocClass");      
+    res = -1; 
+    goto LItemStatusSettBlockCheck;
+  end;
+  
+  if (ItemStatusSettBl.LocBalf!=0 or ItemStatusSettBl.LocTOf!=0) and blank(ItemStatusSettBl.LocClass) then begin
+    RecordCheckError(1000002,"",-1,"LocClass");      
+    res = -1; 
+    goto LItemStatusSettBlockCheck;
+  end;
+  
+LItemStatusSettBlockCheck:;
+  ItemStatusSettBlockCheck = res;
+  return;
+end;

@@ -1,0 +1,320 @@
+external inner function Boolean GetItemPriceDiscount3(string,val,var record INVc,string,val,val,val,val,val,string,string,string,string,
+                                                var val,var string,var val,var string,var val,var string,Integer,var Boolean,Date,Time,
+                                                string,Boolean,var Boolean,string,var string,var val,string,string,var string);
+external inner function Boolean ReadFirstItem(string,var record INVc,Boolean,Boolean);
+external inner function roundmode SetRoundModeD(integer);
+external inner updating function Boolean DoReleaseAll(record ORVc,Integer);
+external inner procedure SetORFlags(record ORVc);
+
+// EVS: DOL-2
+global
+function val DOLGetItemPriceForIVCashVc(record IVCashVc IVCashp, string artcode)
+begin
+  val res;
+  Boolean calcprice,dummyf;
+  string 255 tstr,tax2code,taxtemplatecode,salesacc,vatcode;
+  val price,baseprice,tax2prc,vreb;
+  record INVc INr;
+  
+  if (GetItemPriceDiscount3(artcode,1,INr,IVCashp.CurncyCode,
+    IVCashp.FrRate,IVCashp.ToRateB1,IVCashp.ToRateB2,IVCashp.BaseRate1,IVCashp.BaseRate2,
+    IVCashp.LangCode,IVCashp.CustCat,IVCashp.PriceList,IVCashp.RebCode,
+    price,tstr,vreb,vatcode,baseprice,
+    salesacc,0,calcprice,IVCashp.TransDate,IVCashp.TransTime,IVCashp.CustCode,true,dummyf,IVCashp.PayDeal,tax2code,tax2prc,"","",taxtemplatecode)) then begin end;
+    
+  res = price;
+  
+  DOLGetItemPriceForIVCashVc = res;
+return;
+end;
+
+function boolean LoopCrossItems(integer mode, string keyval, string prevartcode,var record INVc rINr, var boolean foundf)
+begin
+  boolean trhs,res;
+  string 10 key;
+  record CrossINVc Crossr;
+  
+  Crossr.ItemCode = keyval;
+  key = "ItemCode";
+  if (mode == 1) then begin
+    Crossr.ItemGroup = keyval;
+    key = "ItemGroup";
+  end;
+  
+  trhs = true;
+  while (LoopKey(key,Crossr,1,trhs)) begin
+    if (Crossr.ItemCode != keyval and mode == 0) then begin
+      trhs = false;
+    end;
+    if (Crossr.ItemGroup != keyval and mode == 1) then begin
+      trhs = false;
+    end;
+    
+    if (trhs) then begin
+      if (nonblank(prevartcode)) then begin
+        if (!foundf) then begin
+          if (prevartcode == Crossr.CrossItemCode) then begin
+            foundf = true;
+          end;
+        end else begin
+          if (ReadFirstItem(Crossr.CrossItemCode,rINr,false,false)) then begin
+            rINr.Name = Crossr.CrossItemName;
+            rINr.Brand = Crossr.CrossItemCode;
+            res = true;
+            trhs = false;
+          end;
+        end;
+      end else begin
+        if (ReadFirstItem(Crossr.CrossItemCode,rINr,false,false)) then begin
+          rINr.Name = Crossr.CrossItemName;
+          rINr.Brand = Crossr.CrossItemCode;
+          res = true;
+          trhs = false;
+        end;
+      end;
+    end;
+  end;
+  
+  LoopCrossItems = res;
+return;
+end;
+  
+global
+function boolean DOLLoadNextCrossSalesItem(string orgartcode, string prevartcode, var record INVc rINr)
+begin
+  boolean res,foundf;
+  record INVc oINr;
+  string 5 orgitemgroup;
+  string 25 orgartcode_clean;
+  longint pos;
+  
+  if (!ReadFirstItem(orgartcode,oINr,true,true)) then begin
+    oINr.Code = orgartcode;
+    if (ReadFirstMain(oINr,1,true)) then begin
+      orgitemgroup = oINr.Group;
+    end;
+  end else begin
+    orgitemgroup = oINr.Group;
+  end;
+    
+  res = LoopCrossItems(0,orgartcode,prevartcode,rINr,foundf);
+  
+  if (!res) then begin
+    pos = 0;
+    GetNextSubstring(orgartcode,pos,".",orgartcode_clean);
+    if (orgartcode_clean != orgartcode) then begin
+      res = LoopCrossItems(0,orgartcode_clean,prevartcode,rINr,foundf);
+    end;
+  end;
+  
+  if (!res and nonblank(orgitemgroup)) then begin
+    res = LoopCrossItems(1,orgitemgroup,prevartcode,rINr,foundf);
+  end;
+  
+  DOLLoadNextCrossSalesItem = res;
+return;
+end;
+// :EVS
+
+// EVS: DOL-16
+global
+function boolean DOLCheckForInvReturn(record IVCashVc IVCashr)
+begin
+  boolean res;
+  
+  res = IVCashr.Sum4 < 0;
+  
+  DOLCheckForInvReturn = res;
+return;
+end;
+// :EVS
+
+// EVS: DOL-34
+global
+function val DOLGetIVCashGCPaymentSum(record IVCashVc IVCashr)
+begin
+  row IVCashVc IVCashrw;
+  integer i,rwc;
+  val res;
+  
+  rwc = MatRowCnt(IVCashr);
+  for (i=0;i<rwc;i=i+1) begin
+    MatRowGet(IVCashr,i,IVCashrw);
+    if (IVCashrw.stp == kInvoiceRowTypeGiftVoucherPayment) then begin
+      res = res + IVCashrw.Sum;
+    end;
+    if (IVCashrw.stp != kInvoiceRowTypeGiftVoucherPayment and IVCashrw.stp != kInvoiceRowTypeNormal) then begin // anything else can be returned
+      res = res - IVCashrw.Sum;
+    end;
+  end;
+    
+  DOLGetIVCashGCPaymentSum = res;
+  return;
+end;
+// :EVS
+
+// EVS: DOL-50
+procedure PasteValueToNPTSIVCashListWindow(string value)
+begin
+  integer wn,mwn;
+  string 255 search_str;
+  
+  wn = CurWindow;
+  mwn = MotherWindow(wn);
+  search_str = GetWindowString(mwn,"WinSearchField");
+  search_str = search_str & value;
+  PutWindowString(mwn,"WinSearchField",search_str);
+  SetWindowState(mwn,Rs_normal);
+  
+return;
+end;
+
+global
+procedure DOLNPTSIVCashListNumNum1()
+begin
+  PasteValueToNPTSIVCashListWindow("1");
+return;
+end;
+
+global
+procedure DOLNPTSIVCashListNumNum2()
+begin
+  PasteValueToNPTSIVCashListWindow("2");
+return;
+end;
+
+global
+procedure DOLNPTSIVCashListNumNum3()
+begin
+  PasteValueToNPTSIVCashListWindow("3");
+return;
+end;
+
+global
+procedure DOLNPTSIVCashListNumNum4()
+begin
+  PasteValueToNPTSIVCashListWindow("4");
+return;
+end;
+
+global
+procedure DOLNPTSIVCashListNumNum5()
+begin
+  PasteValueToNPTSIVCashListWindow("5");
+return;
+end;
+
+global
+procedure DOLNPTSIVCashListNumNum6()
+begin
+  PasteValueToNPTSIVCashListWindow("6");
+return;
+end;
+
+global
+procedure DOLNPTSIVCashListNumNum7()
+begin
+  PasteValueToNPTSIVCashListWindow("7");
+return;
+end;
+
+global
+procedure DOLNPTSIVCashListNumNum8()
+begin
+  PasteValueToNPTSIVCashListWindow("8");
+return;
+end;
+
+global
+procedure DOLNPTSIVCashListNumNum9()
+begin
+  PasteValueToNPTSIVCashListWindow("9");
+return;
+end;
+
+global
+procedure DOLNPTSIVCashListNumNum0()
+begin
+  PasteValueToNPTSIVCashListWindow("0");
+return;
+end;
+
+
+global
+procedure DOLNPTSIVCashListNumDel()
+begin
+  integer wn,mwn;
+  string 20 search_str;
+  
+  wn = CurWindow;
+  mwn = MotherWindow(wn);
+  search_str = GetWindowString(mwn,"WinSearchField");
+  if (len(search_str) > 0) then begin
+    search_str = left(search_str,len(search_str)-1);
+  end;
+  PutWindowString(mwn,"WinSearchField",search_str);
+return;
+end;
+
+global
+procedure DOLNPTSIVCashListNumOK()
+begin
+  record IVCashVc IVCashr;
+  integer wn,mwn;
+  
+  wn = CurWindow;
+  DeselectWindow(wn,false);
+  mwn = MotherWindow(wn);
+  GetWindowRecord(mwn,IVCashr);
+  SelectWindow(mwn);
+  WindowFieldGoto(mwn,IVCashr,-1,"WinSearchField",false);
+  SetWindowState(mwn,Rs_search);
+  KeyPadEnter(mwn);
+  
+return;
+end;
+
+// :EVS
+
+// EVS: DOL-52
+global
+function val DOLGetUnitPriceFromSum(val sum)
+begin
+  
+  DOLGetUnitPriceFromSum = round(sum/1,SetRoundModeD(2));
+  
+return;
+end;
+// :EVS
+
+// EVS: DOL-68
+global
+updating procedure DOLUpdateSourceOrder(longint ornr)
+begin
+  record ORVc ORr,OR2r;
+  row ORVc ORrw;
+  integer rwc,i;
+
+  ORr.SerNr = ornr;
+  if (ReadFirstMain(ORr,1,true)) then begin
+    RecordCopy(OR2r,ORr);
+    if (ORr.Reserved == 1) then begin
+      DoReleaseAll(ORr,-1);
+    end;
+    rwc = MatRowCnt(ORr);
+    for (i = 0; i < rwc; i = i + 1) begin
+      MatRowGet(ORr,i,ORrw);
+      if (nonblank(ORrw.ArtCode) and ORrw.stp == kInvoiceRowTypeNormal) then begin
+        ORrw.Shipd1 = ORrw.Quant;
+        ORrw.Shipd2 = ORrw.Quant;
+        ORrw.Invd = ORrw.Quant;
+        MatRowPut(ORr,i,ORrw);
+      end;
+    end;
+    SetORFlags(ORr);
+    RecordUpdate(OR2r,ORr,false);
+  end;
+  
+return;
+end;
+// :EVS

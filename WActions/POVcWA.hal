@@ -1,0 +1,63 @@
+remote function string 20 ConvertItemCode(string);
+
+procedure POConvertItemCode(integer wn,integer rownr,integer changed) begin
+  record POVc POr;
+  row POVc POrw;  
+  
+  if changed!=0 then begin
+    GetWindowRecord(wn,POr);
+    if MatRowCnt(POr)>rownr then begin
+      MatRowGet(POr,rownr,POrw);
+      POrw.ArtCode = ConvertItemCode(POrw.ArtCode);
+      MatRowPut(POr,rownr,POrw);
+      PutWindowRecord(wn,POr);
+    end;
+  end;
+  
+return;
+end;
+
+// EVS: DOL-122
+procedure ConformToDateFormat(integer wn,integer rownr,integer changed)
+begin
+  record POVc POr;
+  row POVc POrw;  
+  date blankd
+  
+  if changed!=0 then begin
+    GetWindowRecord(wn,POr);
+    if MatRowCnt(POr)>rownr then begin
+      MatRowGet(POr,rownr,POrw);
+      if (len(POrw.PlanShipRow) != 10 and len(StripNonDigits(POrw.PlanShipRow))!= 8) then begin
+        MessageBox(0,"Negerai duomen÷ formatas");
+        POrw.PlanShipRowDate = blankd;
+        POrw.PlanShipRow = "";
+      end else begin
+        POrw.PlanShipRowDate = StringToDate(POrw.PlanShipRow);
+        POrw.PlanShipRow = POrw.PlanShipRowDate;
+      end;
+      MatRowPut(POr,rownr,POrw);
+      PutWindowRecord(wn,POr);
+    end;
+  end;
+  
+return;
+end;
+// :EVS
+
+global
+function Boolean PODClassAfterEditField(Integer wn,string fieldname,Integer fn, Integer rownr,Integer changed)
+BEGIN
+  Boolean res;
+
+  switch (fieldname) begin
+    case "ArtCode": POConvertItemCode(wn,rownr,changed);
+    case "PlanShipRow": ConformToDateFormat(wn,rownr,changed);
+  end;
+  
+  
+  res = inner.PODClassAfterEditField(wn,fieldname,fn,rownr,changed);
+  
+  PODClassAfterEditField = res;
+  RETURN;
+END;

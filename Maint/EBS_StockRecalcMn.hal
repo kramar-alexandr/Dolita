@@ -1,0 +1,577 @@
+remote updating function LongInt IVVcRecordCheck(record IVVc,record IVVc,LongInt,LongInt);
+
+updating procedure UnOKSRVc(date sd) begin
+  Record SRVc SRr,oldSRr;
+  Record TRVc TRr;
+  boolean wloop,testf;
+
+  SRr.TransDate=sd;
+  wloop=true;
+  While LoopKey("TransDate",SRr,1,wloop) begin
+    if SRr.TransDate<sd then begin
+      wloop=false;
+    end else begin
+      testf=true;
+      if SRr.OKFlag==0 then begin
+        testf=false;
+      end;
+      if testf then begin
+        TRr.IntYc=SRYc;
+        TRr.Number=SRr.SerNr;
+        if ReadFirstMain(TRr,2,true) then begin
+          RecordDelete(TRr);
+        end else begin
+          LogText(0,"UnOKSRVc :: Cannot find transaction for record " & SRr.SerNr);
+        end;
+        RecordCopy(oldSRr,SRr);
+        SRr.OKFlag=0;
+        RecordUpdate(oldSRr,SRr,false);
+      end;
+    end;
+  end;
+
+return;
+end;
+
+updating procedure UnOKRetPUVc(date sd) begin
+  Record RetPUVc RetPUr,oldRetPUr;
+  Record TRVc TRr;
+  boolean wloop,testf;
+
+  RetPUr.TransDate=sd;
+  wloop=true;
+  While LoopKey("TransDate",RetPUr,1,wloop) begin
+    if RetPUr.TransDate<sd then begin
+      wloop=false;
+    end else begin
+      testf=true;
+      if RetPUr.OKFlag==0 then begin
+        testf=false;
+      end;
+      if testf then begin
+        TRr.IntYc=RetPUYc;
+        TRr.Number=RetPUr.SerNr;
+        if ReadFirstMain(TRr,2,true) then begin
+          RecordDelete(TRr);
+        end else begin
+          LogText(0,"UnOKRetPUVc :: Cannot find transaction for record " & RetPUr.SerNr);
+        end;
+        RecordCopy(oldRetPUr,RetPUr);
+        RetPUr.OKFlag=0;
+        RecordUpdate(oldRetPUr,RetPUr,false);
+      end;
+    end;
+  end;
+
+return;
+end;
+
+updating procedure UnOKStockMovVc(date sd) begin
+  Record StockMovVc StockMovr,oldStockMovr;
+  Record TRVc TRr;
+  boolean wloop,testf;
+
+  StockMovr.SerNr=-1;
+  wloop=true;
+  While LoopMain(StockMovr,1,true) begin
+    // if StockMovr.TransDate<sd then begin
+    //   wloop=false;
+    // end else begin
+      testf=true;
+      if StockMovr.OKFlag==0 and StockMovr.SentOKFlag==0 then begin
+        testf=false;
+      end;
+      if testf then begin
+        TRr.IntYc=STMovYc;
+        TRr.Number=StockMovr.SerNr;
+        if ReadFirstMain(TRr,2,true) then begin
+          RecordDelete(TRr);
+        end else begin
+          LogText(0,"UnOKStockMovVc :: Cannot find transaction for record " & StockMovr.SerNr);
+        end;
+
+        if StockMovr.SentOKFlag!=0 then begin
+          TRr.IntYc = SentSTMovYc;
+          TRr.Number=StockMovr.SerNr;
+          if ReadFirstMain(TRr,2,true) then begin
+            RecordDelete(TRr);
+          end else begin
+            LogText(0,"UnOKStockMovVc :: Cannot find SENT transaction for record " & StockMovr.SerNr);
+          end;
+        end;
+
+        RecordCopy(oldStockMovr,StockMovr);
+        StockMovr.OKFlag=0;
+        StockMovr.SentOKFlag=0;
+        RecordUpdate(oldStockMovr,StockMovr,false);
+      end;
+    // end;
+  end;
+
+return;
+end;
+
+updating procedure UnOKSDVc(date sd) begin
+  Record SDVc SDr,oldSDr;
+  Record TRVc TRr;
+  boolean wloop,testf;
+
+  SDr.TransDate=sd;
+  wloop=true;
+  While LoopKey("TransDate",SDr,1,wloop) begin
+    if SDr.TransDate<sd then begin
+      wloop=false;
+    end else begin
+      testf=true;
+      if SDr.OKFlag==0 then begin
+        testf=false;
+      end;
+      if testf then begin
+        if SDr.DoNotGenTrans==0 then begin
+          TRr.IntYc=SDYc;
+          TRr.Number=SDr.SerNr;
+          if ReadFirstMain(TRr,2,true) then begin
+            RecordDelete(TRr);
+          end else begin
+            LogText(0,"UnOKSDVc :: Cannot find transaction for record " & SDr.SerNr);
+          end;
+        end;
+        RecordCopy(oldSDr,SDr);
+        SDr.OKFlag=0;
+        RecordUpdate(oldSDr,SDr,false);
+      end;
+    end;
+  end;
+
+return;
+end;
+
+updating procedure UnOKPUVc(date sd) begin
+  Record PUVc PUr,oldPUr;
+  Record TRVc TRr;
+  boolean wloop,testf;
+
+  PUr.TransDate=sd;
+  wloop=true;
+  While LoopKey("TransDate",PUr,1,wloop) begin
+    if PUr.TransDate<sd then begin
+      wloop=false;
+    end else begin
+      testf=true;
+      if PUr.OKFlag==0 then begin
+        testf=false;
+      end;
+      if testf then begin
+        if PUr.DoNotGenTrans==0 then begin
+          TRr.IntYc = PUYc;
+          TRr.Number = PUr.SerNr;
+          if ReadFirstMain(TRr,2,true) then begin
+            RecordDelete(TRr);
+          end else begin
+            LogText(0,"UnOKPUVc :: Cannot find transaction for record " & PUr.SerNr);
+          end;
+        end;
+        RecordCopy(oldPUr,PUr);
+        PUr.OKFlag=0;
+        RecordUpdate(oldPUr,PUr,false);
+      end;
+    end;
+  end;
+
+return;
+end;
+
+updating procedure UnOKRetVc(date sd) begin
+  Record RetVc Retr,oldRetr;
+  Record TRVc TRr;
+  boolean wloop,testf;
+
+  Retr.TransDate=sd;
+  wloop=true;
+  While LoopKey("TransDate",Retr,1,wloop) begin
+    if Retr.TransDate<sd then begin
+      wloop=false;
+    end else begin
+      testf=true;
+      if Retr.OKFlag==0 then begin
+        testf=false;
+      end;
+      if testf then begin
+        TRr.IntYc = RetYc;
+        TRr.Number = Retr.SerNr;
+        if ReadFirstMain(TRr,2,true) then begin
+          RecordDelete(TRr);
+        end else begin
+          LogText(0,"UnOKRetVc :: Cannot find transaction for record " & Retr.SerNr);
+        end;
+        RecordCopy(oldRetr,Retr);
+        Retr.OKFlag=0;
+        RecordUpdate(oldRetr,Retr,false);
+      end;
+    end;
+  end;
+
+return;
+end;
+
+updating procedure UnOKSHVc(date sd) begin
+  Record SHVc SHr,oldSHr;
+  Record TRVc TRr;
+  boolean wloop,testf;
+
+  SHr.ShipDate=sd;
+  wloop=true;
+  While LoopKey("ShipDate",SHr,1,wloop) begin
+    if SHr.ShipDate<sd then begin
+      wloop=false;
+    end else begin
+      testf=true;
+      if SHr.OKFlag==0 then begin
+        testf=false;
+      end;
+      if testf then begin
+        TRr.IntYc = SHYc;
+        TRr.Number = SHr.SerNr;
+        if ReadFirstMain(TRr,2,true) then begin
+          RecordDelete(TRr);
+        end else begin
+          LogText(0,"UnOKSHVc :: Cannot find transaction for record " & SHr.SerNr);
+        end;
+        RecordCopy(oldSHr,SHr);
+        SHr.OKFlag=0;
+        RecordUpdate(oldSHr,SHr,false);
+      end;
+    end;
+  end;
+
+return;
+end;
+
+procedure AddToCacher(var record SMVc Cacher,string reg,longint sernr,val lockok,integer stockmovtype,date td)
+begin
+  row SMVc Cacherw,insCacherw;
+  integer i,rwc;
+  boolean foundf;
+
+  insCacherw.AccNumber = reg;
+  insCacherw.Objects = sernr;
+  insCacherw.DebVal = lockok;
+  insCacherw.RowSimStat = stockmovtype;
+  insCacherw.TransDate = td;
+
+  rwc = MatRowCnt(Cacher);
+  for(i=0;i<rwc;i=i+1)begin
+    MatRowGet(Cacher,i,Cacherw);
+    if Cacherw.TransDate > td then begin
+      foundf = true;
+      MatRowInsert(Cacher,i,insCacherw);
+      i = rwc;
+    end;
+    if Cacherw.DebVal > insCacherw.DebVal and Cacherw.TransDate==td then begin
+      foundf = true;
+      MatRowInsert(Cacher,i,insCacherw);
+      i = rwc;
+    end;
+  end;
+
+  if !foundf then begin
+    MatRowPut(Cacher,rwc,insCacherw);
+  end;
+
+  return;
+end;
+
+procedure AddPUToCacher(var record SMVc Cacher,date startdate) begin
+  record PUVc PUr;
+  boolean wloop;
+
+  PUr.TransDate = startdate;
+  wloop = true;
+  While LoopKey("TransDate",PUr,1,wloop) begin
+    if PUr.TransDate<startdate then begin
+      wloop = false;
+    end else begin
+      if PUr.OKFlag==0 and PUr.LocOKNr>0 then begin
+        AddToCacher(Cacher,"PUVc",PUr.SerNr,PUr.LocOKNr,0,PUr.TransDate);
+      end;
+    end;
+  end;
+
+  return;
+end;
+
+procedure AddSDToCacher(var record SMVc Cacher,date startdate) begin
+  record SDVc SDr;
+  boolean wloop;
+
+  SDr.TransDate = startdate;
+  wloop = true;
+  While LoopKey("TransDate",SDr,1,wloop) begin
+    if SDr.TransDate<startdate then begin
+      wloop = false;
+    end else begin
+      if SDr.OKFlag==0 and SDr.LocOKNr>0 then begin
+        AddToCacher(Cacher,"SDVc",SDr.SerNr,SDr.LocOKNr,0,SDr.TransDate);
+      end;
+    end;
+  end;
+
+  return;
+end;
+
+procedure AddSRToCacher(var record SMVc Cacher,date startdate) begin
+  record SRVc SRr;
+  boolean wloop;
+
+  SRr.TransDate = startdate;
+  wloop = true;
+  While LoopKey("TransDate",SRr,1,wloop) begin
+    if SRr.TransDate<startdate then begin
+      wloop = false;
+    end else begin
+      if SRr.OKFlag==0 and SRr.LocOKNr>0 then begin
+        AddToCacher(Cacher,"SRVc",SRr.SerNr,SRr.LocOKNr,0,SRr.TransDate);
+      end;
+    end;
+  end;
+
+  return;
+end;
+
+procedure AddRetPUToCacher(var record SMVc Cacher,date startdate) begin
+  record RetPUVc RetPUr;
+  boolean wloop;
+
+  RetPUr.TransDate = startdate;
+  wloop = true;
+  While LoopKey("TransDate",RetPUr,1,wloop) begin
+    if RetPUr.TransDate<startdate then begin
+      wloop = false;
+    end else begin
+      if RetPUr.OKFlag==0 and RetPUr.LocOKNr>0 then begin
+        AddToCacher(Cacher,"RetPUVc",RetPUr.SerNr,RetPUr.LocOKNr,0,RetPUr.TransDate);
+      end;
+    end;
+  end;
+
+  return;
+end;
+
+procedure AddRetToCacher(var record SMVc Cacher,date startdate) begin
+  record RetVc Retr;
+  boolean wloop;
+
+  Retr.TransDate = startdate;
+  wloop = true;
+  While LoopKey("TransDate",Retr,1,wloop) begin
+    if Retr.TransDate<startdate then begin
+      wloop = false;
+    end else begin
+      if Retr.OKFlag==0 and Retr.LocOKNr>0 then begin
+        AddToCacher(Cacher,"RetVc",Retr.SerNr,Retr.LocOKNr,0,Retr.TransDate);
+      end;
+    end;
+  end;
+
+  return;
+end;
+
+procedure AddSHToCacher(var record SMVc Cacher,date startdate) begin
+  record SHVc SHr;
+  boolean wloop;
+
+  SHr.ShipDate = startdate;
+  wloop = true;
+  While LoopKey("ShipDate",SHr,1,wloop) begin
+    if SHr.ShipDate<startdate then begin
+      wloop = false;
+    end else begin
+      if SHr.OKFlag==0 and SHr.LocOKNr>0 then begin
+        AddToCacher(Cacher,"SHVc",SHr.SerNr,SHr.LocOKNr,0,SHr.ShipDate);
+      end;
+    end;
+  end;
+
+  return;
+end;
+
+procedure AddStockMovToCacher(var record SMVc Cacher,date startdate) begin
+  record StockMovVc StockMovr;
+  boolean wloop;
+
+  StockMovr.TransDate = startdate;
+  wloop = true;
+  While LoopKey("TransDate",StockMovr,1,wloop) begin
+    if StockMovr.TransDate<startdate then begin
+      wloop = false;
+    end else begin
+      if nonblank(StockMovr.ThrouLocation) and StockMovr.SentOKFlag==0 and StockMovr.ToThrouLocOKNr>0 then begin
+        AddToCacher(Cacher,"StockMovVc",StockMovr.SerNr,StockMovr.ToThrouLocOKNr,1,StockMovr.SentTransDate);
+      end;
+      if StockMovr.OKFlag==0 and nonblankdate(StockMovr.TransDate) and StockMovr.ToLocOKNr>0 then begin
+        AddToCacher(Cacher,"StockMovVc",StockMovr.SerNr,StockMovr.ToLocOKNr,0,StockMovr.TransDate);
+      end;
+    end;
+  end;
+
+  return;
+end;
+
+procedure FillCacher(var record SMVc Cacher,date startdate)
+begin
+
+  AddPUToCacher(Cacher,startdate);
+  AddStockMovToCacher(Cacher,startdate);
+  AddSDToCacher(Cacher,startdate);
+  AddSRToCacher(Cacher,startdate);
+  AddRetToCacher(Cacher,startdate);
+  AddRetPUToCacher(Cacher,startdate);
+  AddSHToCacher(Cacher,startdate);
+
+  return;
+end;
+
+updating
+procedure OKRecords(date startdate) begin
+  record SMVc Cacher;
+  row SMVc Cacherw;
+  record PUVc PUr,oldPUr;
+  record SDVc SDr,oldSDr;
+  record SHVc SHr,oldSHr;
+  record SRVc SRr,oldSRr;
+  record RetVc Retr,oldRetr;
+  record RetPUVc RetPUr,oldRetPUr;
+  record StockMovVc StockMovr,oldStockMovr;
+  integer i,rwc;
+  longint cnt;
+
+  LogText(0,"OKRecords INFO :: Filling cacher with correct OK order");
+  FillCacher(Cacher,startdate);
+
+  rwc = MatRowCnt(Cacher);
+  for(i=0;i<rwc;i=i+1)begin
+    MatRowGet(Cacher,i,Cacherw);
+    LogText(0,"Record=" & Cacherw.AccNumber & " Nr=" & Cacherw.Objects & " LocOK=" & Cacherw.DebVal & " td=" & Cacherw.TransDate);
+  end;
+
+  LogText(0,"OKRecords INFO :: OKing records");
+  rwc = MatRowCnt(Cacher);
+  for(i=0;i<rwc;i=i+1)begin
+    MatRowGet(Cacher,i,Cacherw);
+    cnt = cnt + 1;
+    if cnt == 300 then begin
+      LogText(0,"OKRecords INFO :: OKing record " & (i+1) & " done, total " & rwc);
+      cnt = 0;
+    end;
+
+    Switch (Cacherw.AccNumber) begin
+      case "PUVc":
+        PUr.SerNr = StringToLongInt(Cacherw.Objects);
+        if ReadFirstMain(PUr,1,true) then begin
+          RecordCopy(oldPUr,PUr);
+          PUr.OKFlag = 1;
+          if RecordUpdate(oldPUr,PUr,true)!=0 then begin
+            LogText(0,"OKRecords ERROR :: Could not OK PUVc record " & PUr.SerNr);
+            GoTo LOKRecords;
+          end;
+        end;
+      case "SDVc":
+        SDr.SerNr = StringToLongInt(Cacherw.Objects);
+        if ReadFirstMain(SDr,1,true) then begin
+          RecordCopy(oldSDr,SDr);
+          SDr.OKFlag = 1;
+          if RecordUpdate(oldSDr,SDr,true)!=0 then begin
+            LogText(0,"OKRecords ERROR :: Could not OK SDVc record " & SDr.SerNr);
+            GoTo LOKRecords;
+          end;
+        end;
+      case "SHVc":
+        SHr.SerNr = StringToLongInt(Cacherw.Objects);
+        if ReadFirstMain(SHr,1,true) then begin
+          RecordCopy(oldSHr,SHr);
+          SHr.OKFlag = 1;
+          if RecordUpdate(oldSHr,SHr,true)!=0 then begin
+            LogText(0,"OKRecords ERROR :: Could not OK SHVc record " & SHr.SerNr);
+            GoTo LOKRecords;
+          end;
+        end;
+      case "SRVc":
+        SRr.SerNr = StringToLongInt(Cacherw.Objects);
+        if ReadFirstMain(SRr,1,true) then begin
+          RecordCopy(oldSRr,SRr);
+          SRr.OKFlag = 1;
+          if RecordUpdate(oldSRr,SRr,true)!=0 then begin
+            LogText(0,"OKRecords ERROR :: Could not OK SRVc record " & SRr.SerNr);
+            GoTo LOKRecords;
+          end;
+        end;
+      case "RetVc":
+        Retr.SerNr = StringToLongInt(Cacherw.Objects);
+        if ReadFirstMain(Retr,1,true) then begin
+          RecordCopy(oldRetr,Retr);
+          Retr.OKFlag = 1;
+          if RecordUpdate(oldRetr,Retr,true)!=0 then begin
+            LogText(0,"OKRecords ERROR :: Could not OK RetVc record " & Retr.SerNr);
+            GoTo LOKRecords;
+          end;
+        end;
+      case "RetPUVc":
+        RetPUr.SerNr = StringToLongInt(Cacherw.Objects);
+        if ReadFirstMain(RetPUr,1,true) then begin
+          RecordCopy(oldRetPUr,RetPUr);
+          RetPUr.OKFlag = 1;
+          if RecordUpdate(oldRetPUr,RetPUr,true)!=0 then begin
+            LogText(0,"OKRecords ERROR :: Could not OK RetPUVc record " & RetPUr.SerNr);
+            GoTo LOKRecords;
+          end;
+        end;
+      case "StockMovVc":
+        StockMovr.SerNr = StringToLongInt(Cacherw.Objects);
+        if ReadFirstMain(StockMovr,1,true) then begin
+          RecordCopy(oldStockMovr,StockMovr);
+          if Cacherw.RowSimStat==1 then begin
+            StockMovr.SentOKFlag = 1;
+          end else begin
+            StockMovr.OKFlag = 1;
+          end;
+          if RecordUpdate(oldStockMovr,StockMovr,true)!=0 then begin
+            LogText(0,"OKRecords ERROR :: Could not OK StockMovVc record " & StockMovr.SerNr);
+            GoTo LOKRecords;
+          end;
+        end;
+    end;
+  end;
+
+LOKRecords:;
+
+return;
+end;
+
+global updating
+procedure EBS_StockRecalcMn(Record RcVc RepSpec) begin
+  date td;
+
+  td.day = 1;
+  td.month = 1;
+  td.year = 2000;
+  RepSpec.d1 = td;
+
+  if RepSpec.ArtMode==0 then begin //Unok
+    UnOKSDVc(RepSpec.d1);
+    UnOKPUVc(RepSpec.d1);
+    UnOKSHVc(RepSpec.d1);
+    UnOKRetVc(RepSpec.d1);
+    UnOKRetPUVc(RepSpec.d1);
+    UnOKSRVc(RepSpec.d1);
+    UnOKStockMovVc(RepSpec.d1);
+  end;
+
+  if RepSpec.ArtMode==1 then begin //Ok
+    OKRecords(RepSpec.d1);
+  end;
+
+
+EndStockRecalcMn:;
+
+return;
+end;

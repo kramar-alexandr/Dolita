@@ -1,0 +1,62 @@
+
+// EVS: DOL-140
+global
+procedure PrepStockMovForPrinting(var record StockMovVc StockMovr)
+begin
+  row StockMovVc StockMovrw,StockMov2rw;
+  integer i,j,rwc;
+  longint pos;
+  string 20 item,curitem;
+  
+  // sort
+  SortRows(StockMovr,"ArtCode",true);
+  
+  // merge per art code
+  rwc = MatRowCnt(StockMovr);
+  for (i = 0; i < rwc; i = i + 1) begin
+    MatRowGet(StockMovr,i,StockMovrw);
+    for (j = i + 1; j < rwc; j = j + 1) begin
+      MatRowGet(StockMovr,j,StockMov2rw);
+      if (StockMovrw.ArtCode == StockMov2rw.ArtCode) then begin
+        StockMovrw.Quant =     StockMovrw.Quant + StockMov2rw.Quant;
+        StockMovrw.SentQuant = StockMovrw.SentQuant + StockMov2rw.SentQuant;
+        StockMovrw.OrdQuant =  StockMovrw.OrdQuant + StockMov2rw.OrdQuant;
+        MatRowDelete(StockMovr,j);
+        j = j - 1;
+        rwc = rwc - 1;
+      end;
+    end;
+    MatRowPut(StockMovr,i,StockMovrw);
+  end;
+  
+  // add seperator rows
+  rwc = MatRowCnt(StockMovr);
+  for (i = 0; i < rwc; i = i + 1) begin
+    MatRowGet(StockMovr,i,StockMovrw);
+    if (nonblank(StockMovrw.ArtCode)) then begin
+      pos = 0;
+      GetNextSubstring(StockMovrw.ArtCode,pos,".",item);
+      if (curitem != item) then begin
+        if (nonblank(curitem)) then begin
+          ClearRow(StockMovr,StockMov2rw,1);
+          StockMov2rw.Spec = " ";
+          MatRowInsert(StockMovr,i,StockMov2rw);
+          rwc = rwc + 1;
+        end;
+        curitem = item;
+      end;
+    end;
+  end;
+  
+  // EVS: DOL-147
+  MatRowGet(StockMovr,rwc-1,StockMovrw);
+  if (nonblank(StockMovrw.ArtCode) or StockMovrw.Spec != " ") then begin
+    ClearRow(StockMovr,StockMovrw,1);
+    StockMovrw.Spec = " ";
+    MatRowPut(StockMovr,rwc,StockMovrw);
+  end;
+  // :EVS
+  
+return;
+end;
+// :EVS

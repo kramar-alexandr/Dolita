@@ -1,0 +1,30 @@
+// EVS: DOL-84
+global
+function boolean HALMatchPricingWithLoyaltyCard(record IVCashVc IVCashr)
+begin
+  boolean res;
+  record LoyaltyCardVc LoyaltyCardr;
+  record LCMLevelSetBlock LCMLevelSetBl;
+  row LCMLevelSetBlock LCMLevelSetrw;
+  Integer i,rwcnt;
+  
+  BlockLoad(LCMLevelSetBl);
+  rwcnt = MatRowCnt(LCMLevelSetBl);
+    
+  if (nonblank(IVCashr.LoyaltyCardNr)) then begin
+    LoyaltyCardr.SerNr = IVCashr.LoyaltyCardNr;
+    if (ReadFirstMain(LoyaltyCardr,1,true)) begin
+      for (i=0;i<rwcnt;i=i+1) begin
+        MatRowGet(LCMLevelSetBl,i,LCMLevelSetrw);
+        if (LCMLevelSetrw.LCMLevel == LoyaltyCardr.LCMLevel) then begin
+          res = (IVCashr.RebCode == LCMLevelSetrw.RebCode) and (IVCashr.PriceList == LCMLevelSetrw.PLCode);
+          i = rwcnt;
+        end;
+      end;
+    end;
+  end;
+  
+  HALMatchPricingWithLoyaltyCard = res;
+return;
+end;
+// :EVS

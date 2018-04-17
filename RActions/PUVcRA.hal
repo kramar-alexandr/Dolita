@@ -1,0 +1,36 @@
+remote function string 60 AddLocationObject(string,string,boolean);
+
+global
+function LongInt PUVcRecordDefaults(var record PUVc PUr,record PUVc PU2r,LongInt long3,LongInt long4)
+begin
+  LongInt res;
+  
+  res = inner.PUVcRecordDefaults(PUr,PU2r,long3,long4);
+  PUr.Objects = AddLocationObject(PUr.Objects,PUr.Location,true); 
+  
+  PUVcRecordDefaults = res;
+  return;
+end;
+
+global
+function LongInt PUVcRecordDefaultsClient(LongInt wn,var record PUVc PUr,record PUVc PU2r,LongInt long3,LongInt long4)
+begin
+  LongInt res;
+  
+  res = inner.PUVcRecordDefaultsClient(wn,PUr,PU2r,long3,long4);
+  PUr.Objects = AddLocationObject(PUr.Objects,PUr.Location,true); 
+  
+  return;
+end;
+
+global
+function LongInt PUVcRecordDuplicate(var record PUVc PUr,record PUVc PU2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  
+  res = inner.PUVcRecordDuplicate(PUr,PU2r,stat,long4);
+  PUr.DoNotGenTrans = 0;
+  
+  PUVcRecordDuplicate = res;
+  return;
+end;

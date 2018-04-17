@@ -1,0 +1,99 @@
+// EVS: DOL-16
+global
+function boolean DOLIsReturnInvoice(record IVCashVc IVCashr, var longint retivnr)
+begin
+  row IVCashVc IVCashrw;
+  boolean res;
+  integer i,rwc;
+  
+  retivnr = -1;
+  
+  rwc = MatRowCnt(IVCashr);
+  for (i = 0; i < rwc; i = i + 1) begin
+    MatRowGet(IVCashr,i,IVCashrw);
+    if (IVCashrw.stp == kInvoiceRowTypeReturnIVNr) then begin
+      res = true;
+      retivnr = IVCashrw.OrgIVNr;
+      i = rwc;
+    end;
+  end;
+  
+  if IVCashr.Sum4<0 then begin
+    res = true;
+  end;
+  
+  DOLIsReturnInvoice = res;
+return;
+end;
+
+
+global
+function boolean DOLReturnSumMismatch(val ret_sum, longint orgivnr)
+begin
+  record IVCashVc IVCashr;
+  boolean res;
+  
+  IVCashr.SerNr = orgivnr;
+  if (ReadFirstMain(IVCashr,1,true)) then begin
+    res = ret_sum > IVCashr.Sum4;
+  end;
+
+  DOLReturnSumMismatch = res;
+return;
+end;
+// :EVS
+
+// EVS: DOL-22
+global
+function val DOLGetUserMaxRebate(string user)
+begin
+  record EBS_AddUserFieldVc EBS_AddUserFieldr;
+  val res;
+  
+  if (nonblank(user)) then begin
+    EBS_AddUserFieldr.Code = user;
+  end else begin
+    EBS_AddUserFieldr.Code = CurrentUser;
+  end;
+  if (ReadFirstMain(EBS_AddUserFieldr,1,true)) then begin
+    res = EBS_AddUserFieldr.MaxvRebate;
+  end else begin
+    res = -1;
+  end;
+  
+  DOLGetUserMaxRebate = res;
+return;
+end;
+
+
+global
+function boolean DOLUserCanGivePOSDiscount(record IVCashVc IVCashr, var val max_reb)
+begin
+  boolean res;
+  row IVCashVc IVCashrw;
+  integer i,rwc;  
+  
+//  max_reb = 0;
+//  
+//  max_reb = DOLGetUserMaxRebate(IVCashr.SalesMan);
+//  if (max_reb != -1) then begin
+//    res = true;
+//  end else begin
+//    res = false;
+//  end;
+//  
+//  rwc = MatRowCnt(IVCashr);
+//  for (i = 0; i < rwc; i = i + 1) begin
+//    MatRowGet(IVCashr,i,IVCashrw);
+//    if (IVCashrw.stp == kInvoiceRowTypeNormal) then begin
+//      if (IVCashrw.vRebate > max_reb) then begin
+//        res = false;
+//        i = rwc;
+//      end;
+//    end;
+//  end;
+  res = true; // this function is not used ...
+  DOLUserCanGivePOSDiscount = res;
+return;
+end;
+// :EVS

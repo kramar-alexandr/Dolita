@@ -1,0 +1,105 @@
+external inner function Boolean SDVc_PasteArtCode(var record SDVc,Integer,Integer,var string,var string);
+external inner function Boolean SDVc_PasteQty(var record SDVc,Integer);
+external inner function Boolean PUVc_PasteArtCode(var record PUVc,Integer,var string,var string);
+external inner function Integer PUVc_PasteQuant(var record PUVc,Integer);
+external inner procedure PUSumUp(var record PUVc);
+external inner procedure PUCalcCostPrice(string,val,Integer,Integer,string,string,
+                                   val,val,val,val,val,
+                                   val,val,val,val,val,val,
+                                   string,var val,val,var val,string,Integer);
+external inner function Boolean PUDchrsum(record PUVc,Integer);
+external function string 60 AddLocationObject(string,string,boolean);
+
+global updating
+procedure EBS_ChangeINVarMn(Record RcVc RepSpec) begin
+  record PUVc PUr,oldPUr;
+  record SDVc SDr,oldSDr;
+  row SDVc SDrw;
+  row PUVc PUrw;
+  string 255 inwarning,warning,tstr;
+  val s,p;
+  
+  //Create depr.
+  RecordNew(SDr);
+  SDr.TransDate = CurrentDate;
+  SDr.Location = RepSpec.f3;
+  SDr.Objects = AddLocationObject(SDr.Objects,SDr.Location,true);
+  
+  ClearRow(SDr,SDrw,1);
+  SDrw.ArtCode = RepSpec.f1;
+  MatRowPut(SDr,0,SDrw);
+  SDVc_PasteArtCode(SDr,0,1,inwarning,warning);
+  MatRowGet(SDr,0,SDrw);
+  SDrw.Qty = 1;
+  MatRowPut(SDr,0,SDrw);
+  SDVc_PasteQty(SDr,0);
+  
+  SDr.SerNr = NextSerNr("SDVc",SDr.TransDate,-1,true,"");
+  
+  RecordNew(PUr); //needed here for adding PUr.SerNr to SD comment
+  PUr.TransDate = CurrentDate; //needed here for adding PUr.SerNr to SD comment
+  PUr.SerNr = NextSerNr("PUVc",PUr.TransDate,-1,true,""); //needed here for adding PUr.SerNr to SD comment
+  
+  tstr = USetStr(1000082);
+  SDr.Comment = tstr & " " & PUr.SerNr;
+  PUr.Comment = tstr & " " & SDr.SerNr;
+  
+  if SDr.SerNr==-1 then begin
+    LogText(0,"EBS_ChangeINVarMn ERROR :: Could not assign serial nr for SDVc");
+    GoTo LEBS_ChangeINVarMn;
+  end;
+  if RecordStore(SDr,false) then begin
+    RecordCopy(oldSDr,SDr);
+    SDr.OKFlag=1;
+    SDr.DoNotGenTrans = 1;
+    if RecordUpdate(oldSDr,Sdr,true)!=0 then begin
+      LogText(0,"EBS_ChangeINVarMn ERROR :: Could not update SDVc record " & SDr.SerNr);
+      GoTo LEBS_ChangeINVarMn;
+    end;
+  end;
+  
+  MatRowGet(SDr,0,SDrw);
+  
+  //Create goods receipt
+  PUr.Location = RepSpec.f3;
+  PUr.Objects = AddLocationObject(PUr.Objects,PUr.Location,true);
+  
+  ClearRow(PUr,PUrw,1);
+  PUrw.ArtCode = RepSpec.f2;
+  MatRowPut(PUr,0,PUrw);
+  PUVc_PasteArtCode(PUr,0,inwarning,warning);
+  MatRowGet(PUr,0,PUrw);
+  PUrw.Quant = 1;
+  MatRowPut(PUr,0,PUrw);
+  PUVc_PasteQuant(PUr,0);
+  MatRowGet(PUr,0,PUrw);
+  PUrw.UPrice = SDrw.FIFO;
+  MatRowPut(PUr,0,PUrw);
+  
+  PUCalcCostPrice(PUrw.ArtCode,PUrw.UPrice,PUr.InclVAT,PUr.NoTAXonVAT,PUrw.Extra,PUr.CurncyCode,
+                  PUr.FrRate,PUr.ToRateB1,PUr.ToRateB2,PUr.BaseRate1,PUr.BaseRate2,
+                  PUrw.ShipCost,PUrw.RowCost1,PUrw.RowCost2,PUrw.RowCost3,PUrw.RowCost4,PUrw.RowCost5,
+                  PUrw.CustomsCost,p,PUrw.Quant,s,PUrw.VATCode,PUr.ExportFlag);
+  PUrw.CostPrice = p;
+  PUrw.Sum = s;
+  PUrw.VATCode = "";
+  MatRowPut(PUr,0,PUrw);    
+  PUDchrsum(PUr,0);
+  PUSumUp(PUr);
+  
+  if PUr.SerNr==-1 then begin
+    LogText(0,"EBS_ChangeINVarMn ERROR :: Could not assign serial nr for PUVc");
+    GoTo LEBS_ChangeINVarMn;
+  end;
+  if RecordStore(PUr,false) then begin
+    RecordCopy(oldPUr,PUr);
+    PUr.OKFlag=1;
+    PUr.DoNotGenTrans = 1;
+    if RecordUpdate(oldPUr,PUr,true)!=0 then begin
+      LogText(0,"EBS_ChangeINVarMn ERROR :: Could not update PUVc record " & PUr.SerNr);
+      GoTo LEBS_ChangeINVarMn;
+    end;
+  end;
+LEBS_ChangeINVarMn:;
+return;
+end;

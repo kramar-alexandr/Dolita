@@ -1,0 +1,36 @@
+// EVS: DOL-126
+global
+function integer LookForItemInOtherRecStockTakeVc(record StockTakeVc StockTaker,string item,var record StockTakeVc res_StockTaker)
+begin
+  row StockTakeVc StockTakerw;  
+  integer i,rwc,mwn;
+  integer res;
+  boolean trhs;
+  
+  res = -1;
+  
+  res_StockTaker.TransDate = StockTaker.TransDate;
+  trhs = true;
+  while (LoopKey("TransDate",res_StockTaker,1,trhs)) begin
+    if (res_StockTaker.TransDate != StockTaker.TransDate) then begin
+      trhs = false;
+    end else begin
+      if (res_StockTaker.Location == StockTaker.Location) then begin
+        rwc = MatRowCnt(res_StockTaker);
+        for (i = 0; i < rwc; i = i + 1) begin
+          MatRowGet(res_StockTaker,i,StockTakerw);
+          if (StockTakerw.ArtCode == item or (left(StockTakerw.ArtCode,len(item)+1) == (item & "."))
+              ) then begin
+            res = i;
+            i = rwc;
+            trhs = false;
+          end;
+        end;
+      end;
+    end;
+  end;
+  
+  LookForItemInOtherRecStockTakeVc = res;
+return;
+end;
+// :EVS

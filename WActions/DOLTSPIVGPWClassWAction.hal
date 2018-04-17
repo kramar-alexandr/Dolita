@@ -1,0 +1,76 @@
+// EVS: DOL-61
+global
+procedure DOLTSPIVGPWClassSetPer()
+begin
+  record RcVc RepSpec;
+  integer wn,per,dateid;
+  date sdate,edate;
+  
+  wn = CurWindow;
+  DeselectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  per = StringToInt(PushButtonTag);
+  
+  switch (per) begin
+    case 0: sdate = CurrentDate; edate = sdate;
+    case 1: 
+      dateid = GetDateId(CurrentDate);
+      sdate = AddDay(CurrentDate,-(dateid-1));
+      edate = AddDay(sdate,7);
+    case 2:
+      sdate = CurrentDate;
+      sdate.day = 1;
+      edate = AddMonth(sdate,1);
+      edate = AddDay(edate,-1);
+  end;
+  
+  RepSpec.sStartDate = sdate;
+  RepSpec.sEndDate = edate;
+  RepSpec.Period2Str = sdate & ":" & edate;
+  
+  PutWindowRecord(wn,RepSpec);
+
+return;
+end;
+
+global
+procedure DOLTSPIVGPWClassPasteUser()
+begin
+  record RcVc RepSpec;
+  integer wn,dateid;
+  date sdate,edate;
+  string 20 usr;
+  
+  wn = CurWindow;
+  DeselectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  usr = PushButtonTag;
+  
+  RepSpec.AccStr = usr;  
+  
+  PutWindowRecord(wn,RepSpec);
+
+return;
+end;
+
+global
+procedure DOLTSPIVGPWClassRunRep()
+begin
+  record RcVc RepSpec;
+  integer wn,mode,dateid;
+  date sdate,edate;
+  
+  wn = CurWindow;
+  DeselectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  mode = StringToInt(PushButtonTag);
+  
+  RepSpec.ArtMode = mode;
+  
+  CloseWindow(wn);
+  
+  RunReport(RepSpec,0);
+  
+return;
+end;
+// :EVS

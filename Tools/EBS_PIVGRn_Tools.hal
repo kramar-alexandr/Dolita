@@ -1,0 +1,18 @@
+
+global
+function val GetIVCashCCPaySum(record IVCashVc IVCashr) begin
+  row IVCashVc IVCashrw;
+  integer i,rwc;
+  val res;
+
+  rwc = MatRowCnt(IVCashr);
+  for(i=0;i<rwc;i=i+1)begin
+    MatRowGet(IVCashr,i,IVCashrw);
+    if IVCashrw.stp==kInvoiceRowTypeCreditCardPayment then begin
+      res = res + IVCashrw.Sum;
+    end;
+  end;  
+    
+  GetIVCashCCPaySum = res;
+return;
+end;

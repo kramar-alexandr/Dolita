@@ -1,0 +1,52 @@
+external inner function Boolean FindItemVAR(string,var string,var string,var string,var string);
+external inner procedure FillMaskVAR(string,string,string,Array string,Array string);
+external inner procedure FillOneItemOneVAR(string,string,string,Array string,var Array string,Integer,Boolean);
+external inner function Boolean ReadFirstItem(string,var record INVc,Boolean,Boolean);
+
+global updating
+procedure EBS_GenBarCodesMn(Record RcVc RepSpec)
+Begin
+  record INVc INr,INp;
+  record BarCodeVc Barcoder,oldBarcoder;
+  Array string 20 maskvar,vars;
+  Array string 2 maskvarsz;
+  string 255 mask,tstr;
+  string 10 itemsize;
+  string 60 sz,mskrep,litemcode,itemcode;  
+  string 200 varsubset;
+  Integer i,aCnt,ilcnt;
+  record VARVc VARr;  
+
+  INr.Code="";
+  While LoopMain(INr,1,true) begin
+    itemcode = INr.Code;
+    if (FindItemVAR(itemcode,sz,mask,mskrep,varsubset)) and nonblank(INr.BarCode) then begin  
+      FillMaskVAR(itemcode,itemsize,mask,maskvar,maskvarsz);    
+      FillOneItemOneVAR(itemcode,"",varsubset,maskvar,vars,1,true);
+      i = 0;
+      while(nonblank(vars[i+1])) begin
+        i = i + 1;
+        VARr.Code = vars[i];
+        if ReadFirstMain(VARr,1,true) then begin
+          tstr = INr.BarCode & VARr.Code;
+          if len(tstr)>20 then begin
+            ilcnt = ilcnt + 1; 
+            tstr = "ILGBAR" & ilcnt;
+          end;
+          Barcoder.Barcode = tstr;
+          if !ReadFirstMain(Barcoder,1,true) then begin
+            RecordNew(Barcoder);
+            Barcoder.Itemcode = INr.Code & "." & VARr.Code;
+            Barcoder.Barcode = tstr;
+            if (ReadFirstItem(Barcoder.Itemcode,INp,true,true)) then begin
+              Barcoder.Comment = INp.Name;
+            end;
+            RecordStore(Barcoder,false);
+          end;
+        end;
+      end;
+    end;
+  end;
+  
+return;
+end;

@@ -1,0 +1,191 @@
+external inner procedure CashSumup(record CashVc);
+external procedure CashInOut_SendToFiscal(record CashVc);
+
+procedure CashToolKeyPad_Numbers(string anumberstr)
+begin
+  Integer wn,activerow;
+  string 255 tstr;
+  string 255 pmfield,numberstr,activefield;
+  val sign;
+
+  wn = CurWindow;
+  activefield = WindowActiveField(wn);
+  activerow = WindowActiveRow(wn);
+  numberstr = anumberstr;
+  tstr = GetWindowString(wn,activefield & ":" & activerow) & numberstr;
+  PutWindowString(wn,activefield & ":" & activerow,tstr);
+  PasteString(wn,tstr);
+
+  return;
+end;
+
+global
+procedure CashToolKeyPad0()
+begin
+  CashToolKeyPad_Numbers("0");
+  return;
+end;
+
+global
+procedure CashToolKeyPad1()
+begin
+  CashToolKeyPad_Numbers("1");
+  return;
+end;
+
+global
+procedure CashToolKeyPad2()
+begin
+  CashToolKeyPad_Numbers("2");
+  return;
+end;
+
+global
+procedure CashToolKeyPad3()
+begin
+  CashToolKeyPad_Numbers("3");
+  return;
+end;
+
+global
+procedure CashToolKeyPad4()
+begin
+  CashToolKeyPad_Numbers("4");
+  return;
+end;
+
+global
+procedure CashToolKeyPad5()
+begin
+  CashToolKeyPad_Numbers("5");
+  return;
+end;
+
+global
+procedure CashToolKeyPad6()
+begin
+  CashToolKeyPad_Numbers("6");
+  return;
+end;
+
+global
+procedure CashToolKeyPad7()
+begin
+  CashToolKeyPad_Numbers("7");
+  return;
+end;
+
+global
+procedure CashToolKeyPad8()
+begin
+  CashToolKeyPad_Numbers("8");
+  return;
+end;
+
+global
+procedure CashToolKeyPad9()
+begin
+  CashToolKeyPad_Numbers("9");
+  return;
+end;
+
+global
+procedure CashToolKeyPadPoint()
+begin
+  CashToolKeyPad_Numbers("."); //## international
+  return;
+end;
+
+global
+procedure CashToolKeyPadMinus()
+begin
+  CashToolKeyPad_Numbers("-"); //## international
+  return;
+end;
+
+global
+procedure CashToolKeyPadEnter()
+begin
+  KeyPadEnter(CurWindow);
+  return;
+end;
+
+global
+procedure CashToolKeyPadOK()
+begin
+  Integer wn;
+  record CashVc Cashr;
+
+  wn = CurWindow;
+  DeselectWindow(wn,true);
+  GetWindowRecord(wn,Cashr);
+  if Cashr.OKFlag==1 then begin
+    Cashr.OKFlag = 0;
+  end else begin
+    Cashr.OKFlag = 1;
+  end;
+  PutWindowRecord(wn,Cashr);
+  SelectWindow(wn);
+
+  return;
+end;
+
+global updating
+procedure CashToolKeyEnterSave()
+begin
+  Integer wn,i,rwc;
+  record CashVc Cashr;
+  row CashVc Cashrw;
+  string 255 tag;
+  boolean updatef;
+
+  wn = CurWindow;
+  tag = GetWindowString(wn,"ButtonTag");
+  DeselectWindow(wn,true);
+  GetWindowRecord(wn,Cashr);
+
+  if Cashr.OKFlag==0 then begin
+    Cashr.OKFlag = 1;
+  end;
+
+  CashInOut_SendToFiscal(Cashr);
+  PutWindowRecord(wn,Cashr);
+  WindowDoOK(wn,0);
+  // SelectWindow(wn);
+  CloseWindow(wn);
+
+  return;
+end;
+
+global
+procedure CashToolKeyPadDelete()
+begin
+  record CashVc Cashr;
+  row CashVc Cashrw;
+  Integer wn,activerow;
+  string 255 tstr,activefield;
+
+  wn = CurWindow;
+  GetWindowRecord(wn,Cashr);
+  activefield = WindowActiveField(wn);
+  activerow = WindowActiveRow(wn);
+  DeselectWindow(wn,false);
+  if activerow>=0 then begin
+    MatRowGet(Cashr,activerow,Cashrw);
+    if activefield=="Amount" then begin
+      Cashrw.Amount = blankval;
+      MatRowPut(Cashr,activerow,Cashrw);
+    end;
+    if activefield=="PMCode" then begin
+      Cashrw.PMCode = "";
+      MatRowPut(Cashr,activerow,Cashrw);
+    end;
+  end;
+  PasteString(wn,"");
+  PutWindowString(wn,activefield & ":" & activerow,"");
+  PutWindowRecord(wn,Cashr);
+  SelectWindow(wn);
+  WindowFieldGoto(wn,Cashr,activerow,activefield,true);
+
+  return;
+end;

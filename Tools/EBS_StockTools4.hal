@@ -1,0 +1,94 @@
+external inner procedure GetItemStatusSupersessions(string,string,string,Integer,var val,var val,var val,var val,var val,var val,var val);
+external inner procedure ExpandStructure(record INVc,string,string,Integer,var val,var val,Boolean);
+external inner function Boolean ReadFirstItem(string,var record INVc,Boolean,Boolean);
+external inner procedure FindStockValue(string,string,var record ItemStatusVc);
+external procedure BuildLocValArray(string,var array val,var integer,string,record INVc);
+
+function val ItemDeliveryPositionQty(string location,string item)
+begin
+  val res;
+  record LocationVc Locr;
+  record PISVc PISr;
+
+  Locr.Code = location;
+  ReadFirstMain(Locr,1,true);
+  if (Locr.RequirePos==0) then begin
+    PISr.ArtCode = item;
+    PISr.Position = Locr.WHMDeliveryPosCode;
+    if (ReadFirstMain(PISr,2,true)) then begin
+      res = PISr.Instock;
+    end;
+  end;
+  ItemDeliveryPositionQty = res;
+  return;
+end;
+
+global
+function Boolean EBS_GetItemStatus(string item,string location,string arecepy,Integer inclsupersessin,var val stockp,var val ordp,var val purchp,var val unitcoefficientp,var val prodordp,var val rsrv,var val inprice,var string class,var array val arrLocVals,var integer size,string user) //EBS added params
+begin
+  record ItemStatusVc ISr;
+  record INVc INr;
+  record MainStockBlock MSb;
+  Boolean foundf;
+  val stocksin,ordsin,purchsin,unitcoefficientsin,prodordsin,rsrvsin,q;
+  string 255 recepy;
+
+  foundf = false;
+  BlockLoad(MSb);
+  stockp = BlankVal;
+  ordp = BlankVal;
+  purchp = BlankVal;
+  prodordp = BlankVal;
+  rsrv = blankval;
+  if (ReadFirstItem(item,INr,true,false)) then begin
+//EBS-->
+    class = INr.DispGroups;
+    BuildLocValArray(item,arrLocVals,size,user,INr);
+//EBS<--
+    inprice = INr.InPrice;
+    foundf = true;
+    recepy = arecepy;
+    if (blank(recepy)) then begin
+      recepy = INr.Recepy;
+    end;
+    if ((INr.ItemType==kItemTypeStructured) and (nonblank(recepy))) then begin
+      ExpandStructure(INr,recepy,location,MSb.UpdateAvailable,stockp,ordp,false);
+      FindStockValue(item,location,ISr);
+      ordp = ISr.OrddOut;
+    end else begin
+      FindStockValue(item,location,ISr);
+      switch (MSb.UpdateAvailable) begin
+        case 0:
+          stockp = ISr.Instock - ItemDeliveryPositionQty(location,item);
+          ordp = ISr.OrddOut;
+          purchp = ISr.POUnOKQty;
+        case 1:
+          stockp = ISr.Instock - ISr.InShipment - ItemDeliveryPositionQty(location,item);
+          ordp = ISr.OrddOut - ISr.InShipment;
+          if (ordp<0) then begin ordp = blankval; end; //can hapen in case of order with blank location and delievry for other location
+          purchp = ISr.POUnOKQty;
+      end;
+      if (inclsupersessin) then begin
+        GetItemStatusSupersessions(item,location,recepy,inclsupersessin,stocksin,ordsin,purchsin,unitcoefficientsin,prodordsin,rsrvsin,inprice);
+        stockp = stockp + stocksin;
+        ordp = ordp + ordsin;
+        purchp = purchp + purchsin;
+        prodordp = prodordp + prodordsin;
+        rsrv = rsrv + rsrvsin;
+      end;
+    end;
+    unitcoefficientp = INr.UnitCoefficient;
+    prodordp = ISr.ProdOrd;
+    switch (MSb.UpdateAvailable) begin
+      case 0:
+        rsrv = ISr.RsrvQty + ISr.StockRsrvQty;
+      case 1:
+        q = ISr.RsrvQty + ISr.StockRsrvQty - ISr.InShipment;
+        if (q>0) then begin
+          rsrv = q;
+        end;
+    end;
+  end;
+  EBS_GetItemStatus = foundf;
+  return;
+end;

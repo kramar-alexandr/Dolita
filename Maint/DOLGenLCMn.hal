@@ -1,0 +1,70 @@
+// EVS: DOL-111 auth
+external inner procedure NextM4Number(string,var string);
+
+global
+procedure DOLGenLCMnCheckIfNumbersUsed(record RcVc RepSpec,var longint err, var longint err_add)
+begin
+  record LoyaltyCardVc tLCr;
+  integer i;
+  string 40 startnum,nextnum;
+  
+  err = -1;
+  err_add = -1;
+  
+  startnum = RepSpec.f3;
+  
+  for (i = 0; i < RepSpec.long2; i = i + 1) begin
+    if (i == 0) then begin
+      nextnum = startnum;
+    end else begin
+      NextM4Number(startnum,nextnum);
+    end;
+    tLCr.SerNr = nextnum;
+    startnum = nextnum;
+    if (ReadFirstMain(tLCr,1,true)) then begin
+      err = 1000081;
+      err_add = tLCr.SerNr;
+      i = RepSpec.long2;
+    end;
+  end;
+  
+return;
+end;
+
+global
+updating procedure DOLGenLCMn(record RcVc RepSpec)
+begin
+  record CUVc CUr;
+  record LoyaltyCardVc tLCr,LCr;
+  integer i;
+  string 40 startnum,nextnum;
+  
+  
+  if (RepSpec.f3 != "" and RepSpec.long2 > 0 and nonblank(RepSpec.f1)) then begin
+    startnum = RepSpec.f3;
+    CUr.Code = RepSpec.f1;
+    if (ReadFirstMain(CUr,1,true)) then begin
+      for (i = 0; i < RepSpec.long2; i = i + 1) begin
+        RecordNew(LCr);
+        if (i == 0) then begin
+          nextnum = startnum;
+        end else begin
+          NextM4Number(startnum,nextnum);
+        end;
+        LCr.SerNr = nextnum;
+        startnum = nextnum;
+        LCr.CustCode = CUr.Code;
+        LCr.CustName = CUr.Name;
+        if (nonblank(RepSpec.f2)) then begin
+          LCr.LCMLevel = RepSpec.f2;
+        end;
+        if (nonblank(LCr.SerNr)) then begin
+          RecordStore(LCr,false);
+        end;
+      end;
+    end;
+  end;
+  
+  
+return;
+end;

@@ -1,0 +1,168 @@
+external inner function Boolean FindItemVAR(string,var string,var string,var string,var string);
+external inner procedure FillMaskVAR(string,string,string,Array string,Array string);
+external inner procedure FillThisItemVAR(string,string,string,Array string,Array string,Array string,Array string,var string);
+external inner function Boolean FillAndPrepareVarCodes(var Array string,Integer,string);
+external inner procedure SplitVars(string,Array string,Array string,Array string);
+external inner procedure FillOneItemOneVAR(string,string,string,Array string,var Array string,Integer,Boolean);
+external inner procedure PrintValue(string,val,Integer,record LangNrVc,record SysFormatBlock,Boolean);
+
+function Boolean FillAndPrepareVarCodes2(var Array string vars,Integer pos,string itemcode)
+begin
+  Array string 20 maskvar;
+  Array string 2 maskvarsz;
+  string 255 mask;
+  string 10 itemsize;
+  string 60 sz,mskrep,litemcode;  
+  string 200 varsubset;
+  Boolean res;
+
+  litemcode = FirstInRange(itemcode,20);
+  if (FindItemVAR(litemcode,sz,mask,mskrep,varsubset)) then begin  
+//    FillMaskVAR(itemcode,itemsize,mskrep,maskvar,maskvarsz);// mskrep aint working well
+    FillMaskVAR(itemcode,itemsize,mask,maskvar,maskvarsz);    
+    FillOneItemOneVAR(itemcode,"",varsubset,maskvar,vars,pos,true);
+    res = true;
+  end;
+  FillAndPrepareVarCodes2 = res;
+  return;
+end;
+
+global
+procedure PrintVarietyFields(integer rownr,record LangNrVc LangNrr,record SysFormatBlock SysFormatRec,vector string vecVarData,vector val vecVarQtys) begin
+  integer i2;
+  
+  for (i2=0;i2<20;i2=i2+1) begin //1 usually will be blank  
+    OutFormField("FF_VARCODE_" & i2,vecVarData[rownr & ":" & i2 & ":CODE"]);
+    OutFormField("FF_VARNAME_" & i2,vecVarData[rownr & ":" & i2 & ":NAME"]);
+    PrintValue("FF_VARQTY_" & i2,vecVarQtys[rownr & ":" & i2 & ":QUANT"],M4UVal,LangNrr,SysFormatRec,false);
+    PrintValue("FF_VARVEQTY_" & i2,vecVarQtys[rownr & ":" & i2 & ":VEQUANT"],M4UVal,LangNrr,SysFormatRec,false);
+  end;  
+  
+return;
+end;
+
+global 
+procedure PackRowVarPOVc(record POVc orgPOr,var record POVc POp,var vector string vecVarData,var vector val vecVarQtys) begin
+  record POVc POr;
+  row POVc POrw,PO2rw;
+  record INVc INr;
+  record VARVc VARr;
+  integer i,rwc,rownr,i2,insrow;  
+  Array string 20 maskvar;
+  Array string 2 maskvarsz;
+  Array string 20 vars;
+  Array string 2 varssz;
+  Array string 255 amsk;
+  string 255 mask,itemcode;
+  LongInt varpos;
+  string 10 itemsize;
+  string 60 sz,msk,mskrep,subset,variety;  
+  string 200 varsubset,comment;
+  vector boolean vec_itemaddedf;
+  vector integer vec_itemrow;
+  
+  RecordCopy(POp,orgPOr);
+  RecordCopy(POr,POp);
+  
+  
+  //1. delete all rows from POr
+  rwc = MatRowCnt(POr);
+  for(i=rwc-1;i>=0;i=i-1)begin
+    MatRowDelete(POr,i);
+  end;
+  
+  //2. add lines that are not varieties and unique variety items, also delete these lines
+  rownr = 0;
+  rwc = MatRowCnt(POp);
+  for(i=0;i<rwc;i=i+1)begin
+    MatRowGet(POp,i,POrw);
+    if POrw.stp!=1 then begin //non normal rows
+      MatRowPut(POr,rownr,POrw);
+      rownr = rownr + 1;
+      MatRowDelete(POp,i);
+      //step back
+      rwc = rwc - 1;
+      i = i - 1;
+      GoTo LPONextLine;
+    end;
+    if blank(POrw.ArtCode) then begin //blank rows
+      MatRowPut(POr,rownr,POrw);
+      rownr = rownr + 1;
+      MatRowDelete(POp,i);
+      //step back
+      rwc = rwc - 1;
+      i = i - 1;
+      GoTo LPONextLine;
+    end;
+    
+    itemcode = POrw.ArtCode;
+    if (FindItemVAR(itemcode,sz,mask,mskrep,varsubset)) then begin
+      SplitVars(POrw.ArtCode,maskvar,maskvarsz,amsk);
+      itemcode = amsk[0];
+      if vec_itemaddedf[itemcode]==false then begin //unique variety rows
+        FillAndPrepareVarCodes2(vars,1,itemcode);
+        for (i2=0;i2<20;i2=i2+1) begin
+          VARr.Code = vars[i2];
+          ReadFirstMain(VARr,1,true); 
+          vecVarData[rownr & ":" & i2 & ":CODE"] = VARr.Code;
+          vecVarData[rownr & ":" & i2 & ":NAME"] = VARr.Comment;
+          if amsk[1]==vars[i2] then begin
+            vecVarQtys[rownr & ":" & i2 & ":QUANT"] = vecVarQtys[rownr & ":" & i2 & ":QUANT"] + POrw.Quant;
+            vecVarQtys[rownr & ":" & i2 & ":VEQUANT"] = vecVarQtys[rownr & ":" & i2 & ":VEQUANT"] + POrw.VEQuant;
+          end; 
+        end;
+        
+        vec_itemaddedf[itemcode] = true;
+        vec_itemrow[itemcode] = rownr;
+        MatRowPut(POr,rownr,POrw);
+        rownr = rownr + 1;
+        MatRowDelete(POp,i);
+        //step back
+        rwc = rwc - 1;
+        i = i - 1;
+        GoTo LPONextLine;
+      end;
+    end else begin
+      MatRowPut(POr,rownr,POrw); //non variety row
+      rownr = rownr + 1;
+      MatRowDelete(POp,i);
+      //step back
+      rwc = rwc - 1;
+      i = i - 1;
+      GoTo LPONextLine;
+    end;
+LPONextLine:;
+  end;
+  
+  //3. now we have all unique items in POr and add remaining rows to vectors
+  rwc = MatRowCnt(POp);
+  for(i=0;i<rwc;i=i+1)begin
+    MatRowGet(POp,i,POrw);
+    itemcode = POrw.ArtCode;
+    if (FindItemVAR(itemcode,sz,mask,mskrep,varsubset)) then begin
+      SplitVars(POrw.ArtCode,maskvar,maskvarsz,amsk);
+      itemcode = amsk[0];
+      rownr = vec_itemrow[itemcode];
+      //Sum up Qty and Sum
+      MatRowGet(POr,rownr,PO2rw);
+      PO2rw.Quant = PO2rw.Quant + POrw.Quant;
+      PO2rw.Sum = PO2rw.Sum + POrw.Sum; 
+      PO2rw.VEQuant = PO2rw.VEQuant + POrw.VEQuant; 
+      MatRowPut(POr,rownr,PO2rw);
+      
+      //Fill var qtys
+      FillAndPrepareVarCodes2(vars,1,itemcode);
+      for (i2=0;i2<20;i2=i2+1) begin
+        VARr.Code = vars[i2];
+        ReadFirstMain(VARr,1,true);
+        if amsk[1]==vars[i2] then begin
+          vecVarQtys[rownr & ":" & i2 & ":QUANT"] = vecVarQtys[rownr & ":" & i2 & ":QUANT"] + POrw.Quant;
+          vecVarQtys[rownr & ":" & i2 & ":VEQUANT"] = vecVarQtys[rownr & ":" & i2 & ":VEQUANT"] + POrw.VEQuant;
+        end;
+      end;
+    end;
+  end;
+
+  RecordCopy(POp,POr);
+return;
+end;

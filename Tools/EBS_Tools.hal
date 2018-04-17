@@ -1,0 +1,1065 @@
+external inner procedure M4PadString(string,Integer,string,Boolean,var string);
+external inner function Integer CountObjects(string);
+external inner procedure ExtractElemFromSet(string,integer,var string);
+external inner procedure FindTimeOfLastPOSBalance(var Date,var Time,string,string,var val,var val);
+external inner procedure DoTheCashup(Integer,Integer,Integer,Integer,Integer,Integer,Integer,Date,Date,Time,Time,string,string,string,Integer,Boolean,Boolean,
+                      var val,var val,var val,var array string,var array val,var array val,var array val,var Integer,var val,var val,var array string,var array val,Integer,var record SMVc,
+                      var array string,var array string,var array val,var array val,var array val,var array val,var array val,var array val,var array val,var Integer,
+                      var array string,var array string,var array val,var array val,var array val,var array val,var array val,var array val,var array val,var Integer,
+                      var array string,var array string,var array val,var array val,var array val,var array val,var array val,var array val,var array val,var Integer,
+                      var record SMVc,var vector val,var Date);
+external inner function Boolean IVCashVc_PasteQuant(var record IVCashVc,Integer);
+external inner procedure ExtractObj(string,var Integer,var string);
+external inner function Boolean PasteCustInCashInv(var record IVCashVc,string,string,var string);
+external inner procedure IVCashDchsum(record IVCashVc,Integer);
+external inner function Boolean IVCashDchrsum(record IVCashVc,Integer,Integer);
+external inner procedure IVCashSumup(var record IVCashVc,Boolean);
+external inner function Boolean GetPurchaseItem(string,string,var record PIVc);
+external inner function Boolean FindItemVAR(string,var string,var string,var string,var string);
+external inner procedure SplitVars(string,Array string,Array string,Array string);
+external inner function string 60 AddObjectToObjectList(string,string);
+external inner function string 60 RemoveObjectFromObjectList(string,string);
+external inner function val GetStockQty(string,string,Date,Boolean);
+external inner function Boolean ReadFirstItem(string,var record INVc,Boolean,Boolean);
+external inner function Boolean IVCashVc_PasteCustCode(var record IVCashVc,string,string,string,var Integer,var string);
+external function boolean DOLCheckForInvReturn(record IVCashVc);
+
+global updating
+procedure AddObjectToRec(string code,var string objstr,string apx,string objtype,string name,string hobj)
+begin
+  record ObjVc Objr;
+  string 20 newobj;
+
+  newobj = apx & code;
+  Objr.Code = newobj;
+  if (ReadFirstMain(Objr,1,true)==false) then begin
+    RecordNew(Objr);
+    Objr.Code = newobj;
+    Objr.Comment = name;
+    Objr.OTCode = objtype;
+    Objr.AutoObjects = hobj;
+    if (RecordStore(Objr,true)) then begin end;
+  end;
+  if (SetInSet(newobj,objstr)==false) then begin
+    if (objstr <> "") then begin objstr = objstr & ","; end;
+    objstr = objstr & newobj;
+  end;
+return;
+end;
+
+global
+function string 20 BuildINBarCode(string code,date createDate,string classification) begin
+  string 20 res,cclass;
+  record DIVc DIr;
+  record PIVc PIr;
+  integer cnt,i;
+
+  // res = Right(createDate.year,2);
+  res = "";
+
+  //Class with type "M"
+  cnt = CountObjects(classification);
+  for (i=1;i<=cnt;i=i+1) begin
+    ExtractElemFromSet(classification,i,cclass);
+    DIr.Code=cclass;
+    if (ReadFirstMain(DIr,1,true)) then begin
+      if DIr.CType=="M" then begin
+        res = cclass;
+        i = cnt + 1;
+      end;
+    end;
+  end;
+
+  //Class with type "SEZ"
+  cnt = CountObjects(classification);
+  for (i=1;i<=cnt;i=i+1) begin
+    ExtractElemFromSet(classification,i,cclass);
+    DIr.Code=cclass;
+    if (ReadFirstMain(DIr,1,true)) then begin
+      if DIr.CType=="SEZ" then begin
+        res = res & cclass;
+        i = cnt + 1;
+      end;
+    end;
+  end;
+
+  PIr.ItemCode = code;
+  PIr.DefaultChoice = 1;
+  if (ReadFirstKey("DefaultChoice",PIr,2,true)) then begin
+    res = res & PIr.VECode;
+  end;
+
+  res = res & code;
+
+  BuildINBarCode = res;
+return;
+end;
+
+global
+function string 20 ConvertItemCode(string fullBarCode) begin
+  string 20 barcode,variety,res;
+  record INVc INr;
+  integer l,i;
+  boolean foundf;
+
+  l = len(fullBarCode);
+  for(i=0;i<l;i=i+1)begin
+    if Mid(fullBarCode,i,1)=="-" then begin
+      barcode = Left(fullBarCode,i);
+      variety = Right(fullBarCode,l-i-1);
+      foundf = true;
+    end;
+  end;
+
+  if foundf then begin
+    foundf = false;
+    INr.BarCode = barcode;
+    if ReadFirstKey("BarCode",INr,1,true) then begin
+      foundf = true;
+      res = INr.Code & "." & variety;
+    end;
+  end;
+
+  if !foundf then begin
+    res = fullBarCode;
+  end;
+
+  ConvertItemCode = res;
+return;
+end;
+
+global
+function string 100 BuildINName(string classification) begin
+  string 100 res,clType,cclass;
+  record DIVc DIr;
+  record ItemSettingBlock ItemSettingBl;
+  integer cnt,clCnt,i,i2;
+  boolean foundf;
+
+  BlockLoad(ItemSettingBl);
+  if blank(ItemSettingBl.DescrClassTypes) then begin
+    GoTo LBuildINName;
+  end;
+
+  clCnt = CountObjects(ItemSettingBl.DescrClassTypes);
+  cnt = CountObjects(classification);
+  for(i=1;i<=clCnt;i=i+1)begin
+    ExtractElemFromSet(ItemSettingBl.DescrClassTypes,i,clType);
+    for (i2=1;i2<=cnt;i2=i2+1) begin
+      ExtractElemFromSet(classification,i2,cclass);
+      DIr.Code=cclass;
+      if (ReadFirstMain(DIr,1,true)) then begin
+        if DIr.CType==clType then begin
+          if nonblank(res) then begin
+            res = res & " ";
+          end;
+          res = res & DIr.Name;
+          foundf = true;
+          i2 = cnt + 1;
+        end;
+      end;
+    end;
+  end;
+
+LBuildINName:;
+  if foundf then begin
+    res = res & " ";
+  end;
+  BuildINName = res;
+return;
+end;
+
+global
+function val FindLastCashOut(string drawer,string paymode) begin
+  record CashVc Cashr;
+  row CashVc Cashrw;
+  boolean wloop,testf;
+  integer i,rwc;
+  val res;
+
+  Cashr.Drawer = drawer;
+  Cashr.Event = 0;
+  Cashr.TransDate = AddYear(CurrentDate,1);
+  Cashr.TransTime = CurrentTime;
+  wloop = true;
+  While LoopBackKey("DrawerEvent",Cashr,4,wloop) begin
+    if Cashr.Event != 0 or Cashr.Drawer != drawer then begin
+      wloop = false;
+    end else begin
+      testf = true;
+      if Cashr.OKFlag==0 then begin
+        testf = false;
+      end;
+      if testf and wloop then begin
+        rwc = MatRowCnt(Cashr);
+        for(i=0;i<rwc;i=i+1)begin
+          MatRowGet(Cashr,i,Cashrw);
+          if Cashrw.PMCode == paymode then begin
+            res = res + Cashrw.Amount;
+            wloop = false;
+          end;
+        end;
+      end;
+    end;
+  end;
+
+  FindLastCashOut = res;
+return;
+end;
+
+global
+function Val GetPOSBalancePM(Date dat,Time tim,string machine,string drawer,string paymode)
+begin
+  val res,totin,totout;
+  array string 20 aitcode;
+  array val aitsum;
+  array val aitvat;
+  array val aitqty;
+  array string 20 avatcode;
+  array val avatsum;
+  val totsum,totvat,avatcnt;
+  Integer aitcnt;
+  record SMVc SMr;
+  array string 20 aitcodetot;
+  array string 20 aitcrncytot;
+  array val aitsumtot,aitsumb1tot,aitnrtot,aitstartbaltot,aitstartbalb1tot,aitvattot,aitsumb1outtot;
+  Integer aitcnttot;
+  array string 20 atrsfitcodetot;
+  array string 20 atrsfitcrncytot;
+  array val atrsfitsumtot,atrsfitsumb1tot,atrsfitnrtot,atrsfitstartbaltot,atrsfitstartbalb1tot,atrsfitvattot,atrsfitsumb1outtot;
+  Integer atrsfitcnttot;
+
+  array string 20 aitcodesum;
+  array string 20 aitcrncysum;
+  array val aitsumsum,aitsumb1sum,aitnrsum,aitstartbalsum,aitstartbalb1sum,aitvatsum,aitsumb1outsum;
+  Integer aitcntsum,i;
+  Date ReportingDate;
+
+  Date d;
+  Time t;
+  record SMVc CountSMr;
+  val bal,accsales;
+  vector val vstatussum;
+
+  d = dat;
+  t = AddSeconds(tim,-1);
+  FindTimeOfLastPOSBalance(d,t,machine,drawer,bal,accsales);
+  DoTheCashup(0,1,1,1,0,1,0,d,dat,t,tim,
+              machine,drawer,"",0,false,false,res,totin,totout,aitcode,aitsum,aitvat,aitqty,aitcnt,totsum,totvat,avatcode,avatsum,avatcnt,SMr,
+              aitcodetot,aitcrncytot,aitsumtot,aitsumb1tot,aitnrtot,aitstartbaltot,aitstartbalb1tot,aitvattot,aitsumb1outtot,aitcnttot,
+              atrsfitcodetot,atrsfitcrncytot,atrsfitsumtot,atrsfitsumb1tot,atrsfitnrtot,atrsfitstartbaltot,atrsfitstartbalb1tot,atrsfitvattot,atrsfitsumb1outtot,atrsfitcnttot,
+              aitcodesum,aitcrncysum,aitsumsum,aitsumb1sum,aitnrsum,aitstartbalsum,aitstartbalb1sum,aitvatsum,aitsumb1outsum,aitcntsum,
+              CountSMr,vstatussum,ReportingDate);
+
+  res = blankval;
+  for (i=0;i<aitcnttot;i=i+1) begin
+    if aitcodetot[i]==paymode then begin
+      res = aitstartbalb1tot[i] + aitsumb1tot[i] - aitsumb1outtot[i];
+      i = aitcnttot;
+    end;
+  end;
+
+  GetPOSBalancePM = res;
+  return;
+end;
+
+global updating
+procedure UpdateGiftVoucherInfo(longint sernr,val sum,date selldate) begin
+  record GCVc GCr,oldGCr;
+  record GCSVc GCSr;
+  record GCBlock GCb;
+  integer i,rwc;
+
+  GCr.SerNr = sernr;
+  if ReadFirstMain(GCr,1,true) then begin
+    if sum<0 then begin //return gift voucher, delete gift voucher sold
+      GCSr.SerNr = GCr.SerNr;
+      if ReadFirstMain(GCSr,1,true) then begin
+        RecordDelete(GCSr);
+      end;
+      RecordCopy(oldGCr,GCr);
+      GCr.Closed = 0;
+      if RecordUpdate(oldGCr,GCr,true)!=0 then begin
+        LogText(0,"ERROR updating GCVc record " & sernr);
+      end;
+      GoTo LUpdateGiftVoucherInfo;
+    end;
+    if GCr.Amount!=sum or GCr.TransDate!=selldate then begin
+      BlockLoad(GCb);
+      RecordCopy(oldGCr,GCr);
+      GCr.Amount = sum;
+      GCr.TransDate = selldate;
+      GCr.ExpiryDate = AddMonth(GCr.TransDate,GCb.ExpiryMonths);
+      if RecordUpdate(oldGCr,GCr,true)!=0 then begin
+        LogText(0,"ERROR updating GCVc record " & sernr);
+      end;
+    end;
+  end;
+
+LUpdateGiftVoucherInfo:;
+return;
+end;
+
+global
+procedure PrintStdProblem(string probCode) begin
+  Record StandProblemVc StandProblemr;
+
+  StandProblemr.Code = probCode;
+  ReadFirstMain(StandProblemr,1,true);
+  OutFormField("FF_ProbCode",StandProblemr.Code);
+  OutFormField("FF_ProbShortDesc",StandProblemr.ShortDesc);
+  OutFormField("FF_ProbComment1",StandProblemr.Comment1);
+  OutFormField("FF_ProbComment2",StandProblemr.Comment2);
+  OutFormField("FF_ProbComment3",StandProblemr.Comment3);
+
+return;
+end;
+
+global
+procedure PrintCredInv(longint VISer) begin
+  record VIVc VIr;
+
+  if VISer!=-1 then begin
+    VIr.SerNr = viser;
+    if ReadFirstMain(VIr,1,true) begin
+      OutFormField("FF_OrgInvDate",VIr.InvDate);
+      OutFormField("FF_OrgInvOffNr",VIr.InvoiceNr);
+    end;
+  end;
+
+return;
+end;
+
+global
+function string 60 RemoveObjectsWithType(string objstr,string objtype)
+BEGIN
+  record ObjVc Objr;
+  Integer pos,oldpos;
+  string 60 ostr,oldostr,res;
+
+  res = objstr;
+  if blank(objtype) then begin
+    GoTo LRemoveObjectsWithType;
+  end;
+  if blank(objstr) then begin
+    GoTo LRemoveObjectsWithType;
+  end;
+
+  res = "";
+  ExtractObj(objstr,pos,ostr);
+  while (nonblank(ostr)) begin
+    Objr.Code = ostr;
+    ReadFirstMain(Objr,1,true);
+    if Objr.OTCode!=objtype then begin
+      if nonblank(res) then begin
+        res = res & ",";
+      end;
+      res = res & ostr;
+    end;
+    ExtractObj(objstr,pos,ostr);
+  end;
+
+LRemoveObjectsWithType:;
+  RemoveObjectsWithType = res;
+  RETURN;
+END;
+
+global
+function string 60 GetUserPOSGroups(record UserPOSGroupBlock UserPOSGroupBl,string usercode) begin
+  string 60 res;
+  row UserPOSGroupBlock UserPOSGrouprw;
+  integer i,rwc;
+
+  rwc = MatRowCnt(UserPOSGroupBl);
+  for(i=0;i<rwc;i=i+1)begin
+    MatRowGet(UserPOSGroupBl,i,UserPOSGrouprw);
+    if nonblank(UserPOSGrouprw.UserCode) and UserPOSGrouprw.UserCode==usercode then begin
+      res = UserPOSGrouprw.POSGroups;
+      i = rwc;
+    end;
+  end;
+
+  GetUserPOSGroups = res;
+return;
+end;
+
+global
+procedure EBS_UserSClassOnOpenRemote(record LocalMachineBlock LocalMachineBl,var array string arrUserCodes,var array string arrUserNames,var integer size) begin
+  record UserVc Userr;
+  boolean wloop;
+  record UserPOSGroupBlock UserPOSGroupBl;
+  string 60 userPosGroups;
+
+  BlockLoad(UserPOSGroupBl);
+
+  Userr.Code = "";
+  While LoopMain(Userr,1,true) begin
+    userPosGroups = GetUserPOSGroups(UserPOSGroupBl,Userr.Code);
+    if blank(LocalMachineBl.POSGroup) or SetInSet(LocalMachineBl.POSGroup,userPosGroups) then begin
+      arrUserCodes[size] = Userr.Code;
+      arrUserNames[size] = Userr.Name;
+      size = size + 1;
+    end;
+  end;
+
+return;
+end;
+
+global
+function string 60 GetCashLocObject(string machine) begin
+  record LocalMachineVc LocalMachiner;
+  record LocationVc Locationr;
+  string 60 res;
+
+  res = "";
+  LocalMachiner.Code = machine;
+  if ReadFirstMain(LocalMachiner,1,true) then begin
+    Locationr.Code = LocalMachiner.FaxNo;
+    if ReadFirstmain(Locationr,1,true) then begin
+      res = Locationr.Objects;
+    end;
+  end;
+
+  GetCashLocObject = res;
+return;
+end;
+
+global
+function string 20 GetVarietyBarCode(string item,string variety) begin
+  record BarCodeVc Barcoder;
+  string 20 res;
+
+  res = "";
+  if nonblank(variety) then begin
+    Barcoder.Itemcode = item & "." & variety;
+  end else begin
+    Barcoder.Itemcode = item;
+  end;
+  if (ReadFirstKey("Itemcode",Barcoder,1,true)==true) then begin
+    res = Barcoder.Barcode;
+  end;
+
+  GetVarietyBarCode = res;
+  return;
+end;
+
+global
+procedure PrintAdditionalFields(record PUVc PUr,row PUVc PUrw) begin
+  record PIVc PIr;
+  record VARVc VARr;
+  record CUVc VEr;
+  string 20 vecode;
+  string 255 mask,itemsize,varsubset,mskrep;
+  Array string 255 maskvar,maskvarsz,amsk;
+  string 20 itemcode;
+
+  vecode = "";
+  // EVS:
+  if (FindItemVAR(PUrw.ArtCode,itemsize,mask,mskrep,varsubset)) then begin
+    SplitVars(PUrw.ArtCode,maskvar,maskvarsz,amsk);
+    itemcode = amsk[0];
+  end else begin
+    itemcode = PUrw.ArtCode;
+  end;
+  // :EVS
+
+  if (GetPurchaseItem(itemcode,"",PIr)) then begin
+    VEr.Code = PIr.VECode;
+    if ReadFirstMain(VEr,1,true) then begin
+      OUTFORMFIELD("FF_VEADDR1",VEr.InvAddr0);
+      OUTFORMFIELD("FF_VEADDR2",VEr.InvAddr1);
+      OUTFORMFIELD("FF_VEADDR3",VEr.InvAddr2);
+      OUTFORMFIELD("FF_VEADDR4",VEr.InvAddr3);
+      OUTFORMFIELD("FF_VEADDR5",VEr.InvAddr4);
+      OUTFORMFIELD("FF_VENAME",VEr.Name);
+    end;
+  end;
+  OUTFORMFIELD("F_ARTNR2",PIr.VEName);
+
+  if (FindItemVAR(PUrw.ArtCode,itemsize,mask,mskrep,varsubset)) then begin
+    SplitVars(PUrw.ArtCode,maskvar,maskvarsz,amsk);
+    if nonblank(amsk[1]) then begin
+      VARr.Code = amsk[1];
+      ReadFirstMain(VARr,1,true);
+      OutFormField("F_OBJECT",VARr.Comment);
+      OutFormField("F_HALVARCODE",VARr.Code);
+    end;
+  end;
+
+return;
+end;
+
+global
+procedure AddFieldsFromCCat(var record CUVc CUr) begin
+  record CCatVc CCatr;
+
+  if nonblank(CUr.CustCat) then begin
+    CCatr.Code = CUr.CustCat;
+    if ReadFirstMain(CCatr,1,true) then begin
+      if nonblank(CCatr.Objects) then begin
+        CUr.Objects = AddObjectToObjectList(CUr.Objects,CCatr.Objects);
+      end;
+      if nonblank(CCatr.CustClass) then begin
+        CUr.Classification = AddObjectToObjectList(CUr.Classification,CCatr.CustClass);
+      end;
+    end;
+  end;
+
+return;
+end;
+
+global
+function string 100 GetLoyaltyCardLevelName(string loyaltycardnr) begin
+  string 100 res,levelname;
+  record LoyaltyCardVc LoyaltyCardr;
+  record LCMemberLevelVc LCMemberLevelr;
+
+  levelname = "";
+  if blank(loyaltycardnr) then begin
+    GoTo LGetLoyaltyCardLevelName;
+  end;
+
+  LoyaltyCardr.SerNr = loyaltycardnr;
+  if !ReadFirstMain(LoyaltyCardr,1,true) then begin
+    GoTo LGetLoyaltyCardLevelName;
+  end;
+  if blank(LoyaltyCardr.LCMLevel) then begin
+    GoTo LGetLoyaltyCardLevelName;
+  end;
+
+  LCMemberLevelr.Code = LoyaltyCardr.LCMLevel;
+  if !ReadFirstmain(LCMemberLevelr,1,true) then begin
+    GoTo LGetLoyaltyCardLevelName;
+  end;
+
+  levelname = LCMemberLevelr.Comment;
+
+LGetLoyaltyCardLevelName:;
+  res = "";
+  if nonblank(levelname) then begin
+    res = " (" & levelname & ")";
+  end;
+
+  GetLoyaltyCardLevelName = res;
+return;
+end;
+
+function string 60 RemoveObjectsWithType(string objstr,string remtype) begin
+  string 60 res,ostr;
+  record ObjVc Objr;
+  Integer pos;
+
+  res = "";
+  pos = 0;
+  ExtractObj(objstr,pos,ostr);
+  while (nonblank(ostr)) begin
+    Objr.Code = ostr;
+    if ReadFirstMain(Objr,1,true) then begin
+      if Objr.OTCode==remtype then begin
+        goto LRemoveObjectsWithType;
+      end;
+    end;
+    if (nonblank(res)) then begin
+      res = res & ",";
+    end;
+    res = res & ostr;
+LRemoveObjectsWithType:;
+    ExtractObj(objstr,pos,ostr);
+  end;
+  RemoveObjectsWithType = res;
+return;
+end;
+
+global
+function string 60 AddLocationObject(string orgobj,string newloc,boolean remObjf) begin
+  record LocationVc Locationr;
+  record ObjVc Objr;
+  string 60 objstr;
+
+  objstr = orgobj;
+
+  if nonblank(newloc) then begin
+    Locationr.Code = newloc;
+    if ReadFirstMain(Locationr,1,true) then begin
+      Objr.Code = Locationr.Objects;
+      if ReadFirstMain(Objr,1,true) then begin
+        if remObjf then begin
+          objstr = RemoveObjectsWithType(objstr,Objr.OTCode);
+        end;
+        objstr = AddObjectToObjectList(objstr,Locationr.Objects);
+      end;
+    end;
+  end;
+
+  AddLocationObject = objstr;
+return;
+end;
+
+global
+function boolean EBS_ChangeINVarVClassRemote(Record RcVc RepSpec,var string errmsg,var string errfield) begin
+  boolean res;
+  val instock;
+  string 255 mask,itemsize,varsubset,mskrep;
+  Array string 255 maskvar,maskvarsz,amsk;
+
+  res = true;
+  instock = GetStockQty(RepSpec.f1,RepSpec.f3,CurrentDate,false);
+  if instock<1.0 then begin
+    res = false;
+    errmsg = USetStr(1000076);
+    errfield = "f3";
+  end;
+
+  EBS_ChangeINVarVClassRemote = res;
+return;
+end;
+
+global
+procedure PrintAddRowFields(Row POVc POrw,record INVc INr) begin
+  record INVc IN2r;
+  record PIVc PIr;
+  record CUVc VEr;
+
+  IN2r.Code = INr.Code; //EBS
+  ReadFirstMain(IN2r,1,true); //EBS
+  OutFormField("FF_ITEMNAME",IN2r.Name); //EBS
+  OutFormField("FF_PLANSHIPROW",POrw.PlanShipRow); //EBS
+
+  if (GetPurchaseItem(INr.Code,"",PIr)) then begin
+    VEr.Code = PIr.VECode;
+    if ReadFirstMain(VEr,1,true) then begin end;
+    OUTFORMFIELD("FF_VEADDR1",VEr.InvAddr0);
+    OUTFORMFIELD("FF_VEADDR2",VEr.InvAddr1);
+    OUTFORMFIELD("FF_VEADDR3",VEr.InvAddr2);
+    OUTFORMFIELD("FF_VEADDR4",VEr.InvAddr3);
+    OUTFORMFIELD("FF_VEADDR5",VEr.InvAddr4);
+    OUTFORMFIELD("FF_VENAME",VEr.Name);
+    OUTFORMFIELD("FF_PIVECODE",PIr.VECode);
+  end else begin
+    OUTFORMFIELD("FF_VEADDR1","");
+    OUTFORMFIELD("FF_VEADDR2","");
+    OUTFORMFIELD("FF_VEADDR3","");
+    OUTFORMFIELD("FF_VEADDR4","");
+    OUTFORMFIELD("FF_VEADDR5","");
+    OUTFORMFIELD("FF_VENAME","");
+    OUTFORMFIELD("FF_PIVECODE","");
+  end;
+
+
+return;
+end;
+
+global
+procedure EBS_GetItemNameStr(string ArtCode,string Spec,var string tstr) begin
+  string 255 res,orgstr;
+  record INVc INr;
+
+  res = tstr;
+  if blank(artcode) then begin
+    GoTo LEBS_GetItemNameStr;
+  end;
+
+  if !ReadFirstItem(ArtCode,INr,true,true) then begin
+    GoTo LEBS_GetItemNameStr;
+  end;
+
+  if INr.Name!=spec then begin
+    GoTo LEBS_GetItemNameStr;
+  end;
+
+  if !ReadFirstItem(ArtCode,INr,false,false) then begin
+    GoTo LEBS_GetItemNameStr;
+  end;
+
+  res = INr.Name;
+
+LEBS_GetItemNameStr:;
+  tstr = res;
+return;
+end;
+
+global
+procedure PasteRetInvoiceRows(var record IVCashVc IVCashr,longint orgnr) begin
+  record IVCashVc orgIVCashr;
+  row IVCashVc IVCashrw,orgIVCashrw;
+  integer i,rwc,rownr,err;
+  record GeneralOptionBlock GenOptRec;
+  record LocalMachineBlock lmr;
+  string 100 warning,oldcust;
+
+  BlockLoad(GenOptRec);
+  BlockLoad(lmr);
+
+  rownr = MatRowCnt(IVCashr);
+  orgIVCashr.SerNr = orgnr;
+  if ReadFirstMain(orgIVCashr,1,true) then begin
+
+    // EVS: DOL-40
+//    IVCashr.Location = orgIVCashr.Location;
+    oldcust = IVCashr.CustCode;
+    IVCashr.CustCode = orgIVCashr.CustCode;
+    // EVS: DOL-143
+    if (oldcust != IVCashr.CustCode) then begin
+      IVCashVc_PasteCustCode(IVCashr,oldcust,lmr.DefLocation,lmr.PLCode,err,warning);
+    end;
+    // :EVS
+    IVCashr.Addr0 = orgIVCashr.Addr0;
+    IVCashr.InvCust = orgIVCashr.InvCust;
+    IVCashr.InvCustName = orgIVCashr.InvCustName;
+    IVCashr.Addr1 = orgIVCashr.Addr1;
+    IVCashr.Addr2 = orgIVCashr.Addr2;
+    IVCashr.Addr3 = orgIVCashr.Addr3;
+    IVCashr.InvAddr3 = orgIVCashr.InvAddr3;
+    IVCashr.InvAddr4 = orgIVCashr.InvAddr4;
+    IVCashr.ClientContact =orgIVCashr.ClientContact;
+    IVCashr.CustCat = orgIVCashr.CustCat;
+    IVCashr.Objects = AddLocationObject(orgIVCashr.Objects,IVCashr.Location,true);
+    IVCashr.SalesMan = orgIVCashr.SalesMan;
+    IVCashr.LangCode = orgIVCashr.LangCode;
+    IVCashr.CustVATCode = orgIVCashr.CustVATCode;
+    IVCashr.CurncyCode = orgIVCashr.CurncyCode;
+    IVCashr.CurncyCode = orgIVCashr.CurncyCode;
+    IVCashr.FrRate = orgIVCashr.FrRate;
+    IVCashr.ToRateB1 = orgIVCashr.ToRateB1;
+    IVCashr.ToRateB2 = orgIVCashr.ToRateB2;
+    IVCashr.BaseRate1 = orgIVCashr.BaseRate1;
+    IVCashr.BaseRate2 = orgIVCashr.BaseRate2;
+    IVCashr.VATNr = orgIVCashr.VATNr;
+    IVCashr.RebCode = orgIVCashr.RebCode;
+    IVCashr.InclVAT = orgIVCashr.InclVAT;
+    IVCashr.PriceList = orgIVCashr.PriceList;
+    IVCashr.FiscalFlag =orgIVCashr.FiscalFlag;
+    IVCashr.LoyaltyCardNr =orgIVCashr.LoyaltyCardNr;
+    IVCashr.LCMLevel = orgIVCashr.LCMLevel;
+    IVCashr.Points = orgIVCashr.Points;
+    IVCashr.LoyaltyCardNr =orgIVCashr.LoyaltyCardNr;
+    IVCashr.LCMLevel = orgIVCashr.LCMLevel;
+    IVCashr.Points = orgIVCashr.Points;
+    // :EVS
+
+    rwc = MatRowCnt(orgIVCashr);
+    for(i=0;i<rwc;i=i+1)begin
+      MatRowGet(orgIVCashr,i,orgIVCashrw);
+      CopyRow(orgIVCashr,orgIVCashrw,IVCashrw);
+      if orgIVCashrw.stp==kInvoiceRowTypeGiftVoucherSold then begin
+        IVCashrw.Sum = IVCashrw.Sum * -1;
+        MatRowPut(IVCashr,rownr,IVCashrw);
+        IVCashSumup(IVCashr,true);
+        rownr = rownr + 1;
+      end;
+      if orgIVCashrw.stp==1 then begin
+        // EVS: return invoices exactly as they were sold
+        IVCashrw.Quant = IVCashrw.Quant * -1;
+        IVCashrw.Sum = IVCashrw.Sum * -1;
+        MatRowPut(IVCashr,rownr,IVCashrw);
+        // IVCashDchrsum(IVCashr,rownr,GenOptRec.UseDiscount); //this sometimes fucks up row sum
+        IVCashDchsum(IVCashr,rownr);
+        rownr = rownr + 1;
+      end;
+    end;
+    IVCashSumup(IVCashr,true);
+  end;
+
+return;
+end;
+
+global
+function boolean VerifyUserPassword(string usercode,string password) begin
+  record UserVc Userr;
+  boolean wloop,res;
+
+  Userr.Code = usercode;
+  if !ReadFirstMain(Userr,1,true) then begin
+    GoTo LVerifyUserPassword;
+  end;
+
+  if (Userr.NewPassWord == CalcPassword(password,usercode,0)) then begin
+    res = true;
+  end;
+
+LVerifyUserPassword:;
+  VerifyUserPassword = res;
+return;
+end;
+
+global
+procedure PrintOrgInvFields(record IVCashVc IVCashp) begin
+  record IVCashVc IVCashr;
+  row IVCashVc IVCashrw;
+  integer i,rwc;
+
+  if !DOLCheckForInvReturn(IVCashp) then begin
+    GoTo LPrintOrgInvFields;
+  end;
+
+  rwc = MatRowCnt(IVCashp);
+  for(i=0;i<rwc;i=i+1)begin
+    MatRowGet(IVCashp,i,IVCashrw);
+    if IVCashrw.stp==kInvoiceRowTypeReturnIVNr then begin
+      IVCashr.SerNr = IVCashrw.OrgIVNr;
+      if ReadFirstMain(IVCashr,1,true) then begin
+        OutFormField("FF_ORGINVOFFSERNR",IVCashr.OfficialSerNr);
+        OutFormField("FF_ORGINVDATE",IVCashr.InvDate);
+      end;
+      i = rwc;
+    end;
+  end;
+
+LPrintOrgInvFields:;
+return;
+end;
+
+global
+function boolean LocalLoginToPOSWindow(string user)
+begin
+  boolean res;
+  record LocalLoginBlock LLb;
+  row LocalLoginBlock LLbrw;
+  integer i,rwc;
+
+  res = false;
+
+  BlockLoad(LLb);
+  rwc = MatRowCnt(LLb);
+  for(i=0;i<rwc;i=i+1)begin
+    MatRowGet(LLb,i,LLbrw);
+    if LLbrw.Code==user and LLbrw.OnLoginWindow==8 then begin
+      res = true;
+      i = rwc;
+    end;
+  end;
+
+  LocalLoginToPOSWindow = res;
+  return;
+end;
+
+global
+procedure EBS_CloseWindowBtn() begin
+  integer wn,mwn;
+
+  wn = CurWindow;
+  mwn = MotherWindow(wn);
+  CloseWindow(wn);
+
+  if WindowValid(mwn) then begin
+    SelectWindow(mwn);
+  end;
+
+  return;
+end;
+
+procedure GetLastCustLoyaltyCard(string CustCode,var date lastdate,var string loyaltycardnr)
+begin
+  record LoyaltyCardVc LoyaltyCardr;
+  boolean wloop,testf;
+
+  LoyaltyCardr.CustCode = CustCode;
+  wloop = true;
+  While LoopKey("CustCode",LoyaltyCardr,1,wloop) begin
+    if LoyaltyCardr.CustCode != CustCode then begin
+      wloop = false;
+    end else begin
+      testf = true;
+      if LoyaltyCardr.Closed==1 then begin
+        testf = false;
+      end;
+      // these seem to be empty in database, so should not use them
+      // if nonblankdate(lastdate) and LoyaltyCardr.StartDate<lastdate then begin
+      //   testf = false;
+      // end;
+
+      //not a good way to do it, as these are strings, but date is blank and this is all we have
+      if loyaltycardnr > LoyaltyCardr.SerNr then begin
+        testf = false;
+      end;
+      if  testf then begin
+        loyaltycardnr = LoyaltyCardr.SerNr;
+        // lastdate = LoyaltyCardr.StartDate;
+      end;
+    end;
+  end;
+
+  return;
+end;
+
+global
+function boolean DOL_FindLoyaltyCardByPhone(var record RcVc RepSpec) begin
+  boolean wloopcu,res;
+  record CUVc CUr;
+  date lastdate;
+  string 20 loyaltycardnr;
+
+  loyaltycardnr = "";
+  wloopcu = true;
+  CUr.Phone = RepSpec.f6;
+  While LoopKey("Phone",CUr,1,wloopcu) begin
+    if CUr.Phone != RepSpec.f6 then begin
+      wloopcu = false;
+    end else begin
+      GetLastCustLoyaltyCard(CUr.Code,lastdate,loyaltycardnr);
+    end;
+  end;
+
+  if nonblank(loyaltycardnr) then begin
+    RepSpec.f1 = loyaltycardnr;
+    res = true;
+  end;
+
+  DOL_FindLoyaltyCardByPhone = res;
+  return;
+end;
+
+global
+procedure EBS_LoadDefaultValuesFromSet(var record CUVc CUr)
+begin
+  record NPTSNewCUFieldsBlock NPTSNewCUFieldsr;
+  row NPTSNewCUFieldsBlock NPTSNewCUFieldsrw;
+  integer i,rwc;
+
+  BlockLoad(NPTSNewCUFieldsr);
+  rwc = MatRowCnt(NPTSNewCUFieldsr);
+  for(i=0;i<rwc;i=i+1)begin
+    MatRowGet(NPTSNewCUFieldsr,i,NPTSNewCUFieldsrw);
+    if nonblank(NPTSNewCUFieldsrw.FieldName) and nonblank(NPTSNewCUFieldsrw.DefValue) then begin
+      SetFieldValueByName(CUr,NPTSNewCUFieldsrw.FieldName,NPTSNewCUFieldsrw.DefValue,-1);
+    end;
+  end;
+
+  return;
+end;
+
+global updating
+procedure DOL_SetLoyaltyCardCustomer(string CustCode, string custname, string cardnr)
+begin
+  record LoyaltyCardVc LoyaltyCardr, oldLoyaltyCardr;
+
+  LoyaltyCardr.SerNr = cardnr;
+  if ReadFirstMain(LoyaltyCardr,1,true) then begin
+    RecordCopy(oldLoyaltyCardr,LoyaltyCardr);
+    LoyaltyCardr.CustCode = CustCode;
+    LoyaltyCardr.CustName = custname;
+    if RecordUpdate(oldLoyaltyCardr,LoyaltyCardr,true) != 0 then begin
+      LogText(0,"DOL_SetLoyaltyCardCustomer ERROR :: Could not update loyalty card nr " & cardnr);
+    end;
+  end;
+
+  return;
+end;
+
+global
+function boolean DOL_LoyaltyCardIsUnassigned(string cardnr)
+begin
+  record LoyaltyCardVc LoyaltyCardr;
+  record CashierDefBlock CashierDefBl;
+  boolean res;
+
+  res = true;
+  LoyaltyCardr.SerNr = cardnr;
+  ReadFirstMain(LoyaltyCardr,1,true);
+
+  BlockLoad(CashierDefBl);
+  if LoyaltyCardr.CustCode != CashierDefBl.DefLoyaltyCustomer then begin
+    res = false;
+  end;
+
+  DOL_LoyaltyCardIsUnassigned = res;
+  return;
+end;
+
+function string 255 GetLoyaltyStr(string custcode)
+begin
+  record LoyaltyCardVc LoyaltyCardr;
+  boolean wloop, hasLoyatlyCardf, hasActiveLoyCardf;
+  string 255 res;
+
+  LoyaltyCardr.CustCode = custcode;
+  wloop = true;
+  While LoopKey("CustCode", LoyaltyCardr, 1, wloop) begin
+    if LoyaltyCardr.CustCode != custcode then begin
+      wloop = false;
+    end else begin
+      hasLoyatlyCardf = true;
+      if LoyaltyCardr.Closed == 0 then begin
+        hasActiveLoyCardf = true;
+        wloop = false;
+      end;
+    end;
+  end;
+
+  if hasActiveLoyCardf then begin
+    res = USetStr(1000138); //Turi
+    GoTo LGetLoyaltyStr;
+  end;
+
+  if hasLoyatlyCardf then begin
+    res = USetStr(1000137); //Uždaryta
+    GoTo LGetLoyaltyStr;
+  end;
+
+  res = USetStr(1000136); //Nėra
+
+LGetLoyaltyStr:;
+  GetLoyaltyStr = res;
+  return;
+end;
+
+global
+procedure DOL_SetTagArrayAndLoyaltyCards(var array string astr,var array string atags, integer acnt)
+begin
+  integer i,a,slen;
+  string 255 custcode,tstr,reststr,loyaltystr;
+
+  for (i=0; i<acnt; i=i+1) begin
+    if astr[i] != USetStr(19391) and len(astr[i])>1 then begin
+      custcode = "";
+      tstr = astr[i];
+      slen = len(tstr);
+      for (a=1;a<slen;a=a+1) begin
+        if (Mid(tstr,a,1)==" ") then begin
+          custcode = Left(tstr,a);
+          reststr = Right(tstr,slen-a-1);
+          a = slen;
+        end;
+      end;
+      if nonblank(custcode) then begin
+        atags[i] = custcode;
+        loyaltystr = GetLoyaltyStr(custcode);
+        M4PadString(loyaltystr,10," ",false,loyaltystr);
+        astr[i] = loyaltystr & reststr;
+      end;
+    end;
+  end;
+
+  return;
+end;
+
+global
+function longint EBS_GetIVCashSDNr(longint sernr)
+begin
+  record EBS_IVCashSDVc EBS_IVCashSDr;
+  longint res;
+
+  EBS_IVCashSDr.SerNr = sernr;
+  if ReadFirstMain(EBS_IVCashSDr,1,true) then begin
+    res = sernr;
+  end else begin
+    res = -1;
+  end;
+
+  EBS_GetIVCashSDNr = res;
+  return;
+end;
+
+global updating
+procedure EBS_StoreIVCashSDNr(longint sernr)
+begin
+  record EBS_IVCashSDVc EBS_IVCashSDr;
+
+  RecordNew(EBS_IVCashSDr);
+  EBS_IVCashSDr.SerNr = sernr;
+  EBS_IVCashSDr.TransDate = CurrentDate;
+  EBS_IVCashSDr.TransTime = CurrentTime;
+  RecordStore(EBS_IVCashSDr,true);
+
+  return;
+end;

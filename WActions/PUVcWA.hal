@@ -1,0 +1,52 @@
+remote function string 20 ConvertItemCode(string);
+
+procedure PUConvertItemCode(integer wn,integer rownr,integer changed) begin
+  record PUVc PUr;
+  row PUVc PUrw;  
+  
+  if changed!=0 then begin
+    GetWindowRecord(wn,PUr);
+    if MatRowCnt(PUr)>rownr then begin
+      MatRowGet(PUr,rownr,PUrw);
+      PUrw.ArtCode = ConvertItemCode(PUrw.ArtCode);
+      MatRowPut(PUr,rownr,PUrw);
+      PutWindowRecord(wn,PUr);
+    end;
+  end;
+  
+return;
+end;
+
+global
+function Boolean PUDClassAfterEditField(Integer wn,string fieldname,Integer fn, Integer rownr,Integer changed)
+BEGIN
+  Boolean res;
+
+  switch (fieldname) begin
+    case "ArtCode": PUConvertItemCode(wn,rownr,changed);
+  end;
+  
+  res = inner.PUDClassAfterEditField(wn,fieldname,fn,rownr,changed);
+  
+  PUDClassAfterEditField = res;
+  RETURN;
+END;
+
+// EVS: DOL-100
+global
+procedure PrintPULabPUOneDocumentDsm()
+BEGIN
+  record RcVc RepSpec;
+  record PUVc PUr;
+  Integer wn;
+
+  wn = CurWindow;
+  GetWindowRecord(wn,PUr);
+  RepSpec.f1 = PUr.SerNr;
+  RepSpec.Media = mtPrinter;
+  RepSpec.repname = "PULabForm";
+  RepSpec.flags[2] = 0; // EVS: DOL-100
+  if (PrintDocument(RepSpec,"PULabForm",false)) then begin end;
+  RETURN;
+END;
+// :EVS

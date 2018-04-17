@@ -1,0 +1,372 @@
+// EVS: auth DOL-79
+external inner procedure HT2Per(Date, Date , var string);
+external inner procedure HTLocations(string, string, var string);
+external inner procedure HTITs(string,string,var string);
+external inner function Boolean ReadFirstItem(string,var record INVc,Boolean,Boolean);
+external inner function val GetStockQty(string,string,Date,Boolean);
+
+procedure SetReportHeader(record RcVc RepSpec)
+begin
+  integer i,rw;
+  string 20 tstr;
+  
+  rw = 1;
+
+  HT2Per(RepSpec.sStartDate,RepSpec.sEndDate,tstr);
+  Header(rw,tstr,1)
+  rw = rw + 1;
+  
+  if (nonblank(RepSpec.f1)) then begin
+    tstr = "";
+    HTITs(RepSpec.f1,RepSpec.f1,tstr);
+    Header(rw,tstr,1)
+    rw = rw + 1;
+  end;
+  
+  if (nonblank(RepSpec.f2)) then begin
+    tstr = "";
+    HTLocations(RepSpec.f2,RepSpec.f2,tstr);
+    tstr = "1 " & tstr;
+    Header(rw,tstr,1)
+    rw = rw + 1;
+  end;
+  
+  if (nonblank(RepSpec.f3)) then begin
+    tstr = "";
+    HTLocations(RepSpec.f3,RepSpec.f3,tstr);
+    tstr = "Per " & tstr;
+    Header(rw,tstr,1)
+    rw = rw + 1;
+  end;
+  
+  if (nonblank(RepSpec.f4)) then begin
+    tstr = "";
+    HTLocations(RepSpec.f4,RepSpec.f4,tstr);
+    tstr = "2 " & tstr;
+    Header(rw,tstr,1)
+    rw = rw + 1;
+  end;
+  
+  tstr = USetStr(1000027) &  RepSpec.vals0;
+  Header(rw,tstr,1)
+  rw = rw + 1;
+  
+  EndHeader;
+return;
+end;
+
+procedure SetReportDispStruct()
+begin
+
+  SetRepCol(2,40);
+  SetRepCol(3,80);
+  SetRepCol(4,120);
+  SetRepCol(5,175);
+  SetRepCol(6,320);
+  SetRepCol(7,400);
+  
+  StartFormat(15);
+  OutString(0,0,USetStr(1000028),false);
+  OutString(2,0,USetStr(1000029),false);
+  OutString(3,0,USetStr(1000030),false);
+  OutString(4,0,USetStr(1000031),false);
+  OutString(5,0,USetStr(1000032),false);
+  OutString(6,0,USetStr(1000033),true);
+  OutString(7,0,USetStr(1000034),true);
+  OutString(1,0,USetStr(1000035),true);
+  EndFormat;
+  
+  Gray_Divider(0,1);
+  
+  return;
+end;
+
+procedure GetSoldItemsInPeriod(record RcVc RepSpec,var array string a_solditems,var integer solditems_cnt)
+begin
+  record IVVc IVr;
+  row IVVc IVrw;
+  record IVCashVc IVCashr;
+  record INVc INr;
+  row IVCashVc IVCashrw;
+  integer i,rwc;
+  boolean trhs,testf;
+  vector boolean v_itemaddedf;
+  vector boolean v_itemfailf;
+  
+  IVCashr.InvDate = RepSpec.sStartDate;
+  trhs = true;
+  while (LoopKey("InvDate",IVCashr,1,trhs)) begin
+    if (IVCashr.InvDate > RepSpec.sEndDate) then begin
+      trhs = false;
+    end else begin
+      testf = true;
+      if (IVCashr.Sum4 <= 0 or IVCashr.OKFlag == 0 or IVCashr.Invalid == 1) then begin
+        testf = false;
+      end;
+      if (testf) then begin
+        rwc = MatRowCnt(IVCashr);
+        for (i = 0; i < rwc; i = i + 1) begin
+          MatRowGet(IVCashr,i,IVCashrw);
+          if (IVCashrw.stp == kInvoiceRowTypeNormal and nonblank(IVCashrw.ArtCode) and IVCashrw.ovst == 0) then begin
+            if (!v_itemaddedf[IVCashrw.ArtCode]) then begin
+              if (nonblank(RepSpec.f1)) then begin
+                if (!v_itemfailf[IVCashrw.ArtCode]) then begin
+                  if (ReadFirstItem(IVCashrw.ArtCode,INr,true,true)) then begin
+                    if (INr.Group != RepSpec.f1) then begin
+                      v_itemfailf[IVCashrw.ArtCode] = true;
+                    end;
+                  end else begin
+                    v_itemfailf[IVCashrw.ArtCode] = true;
+                  end;
+                end;
+              end;
+              if (!v_itemfailf[IVCashrw.ArtCode]) then begin
+                a_solditems[solditems_cnt] = IVCashrw.ArtCode;
+                solditems_cnt = solditems_cnt + 1;
+                v_itemaddedf[IVCashrw.ArtCode] = true;
+              end;
+            end;
+          end;
+        end;
+        
+      end;
+    end;
+  end;
+  
+  IVr.InvDate = RepSpec.sStartDate;
+  trhs = true;
+  while (LoopKey("InvDate",IVr,1,trhs)) begin
+    if (IVr.InvDate > RepSpec.sEndDate) then begin
+      trhs = false;
+    end else begin
+      testf = true;
+      if (IVr.Sum4 <= 0 or IVr.OKFlag == 0 or IVr.Invalid == 1) then begin
+        testf = false;
+      end;
+      if (testf) then begin
+        rwc = MatRowCnt(IVr);
+        for (i = 0; i < rwc; i = i + 1) begin
+          MatRowGet(IVr,i,IVrw);
+          if (IVrw.stp == kInvoiceRowTypeNormal and nonblank(IVrw.ArtCode) and IVrw.ovst == 0) then begin
+            if (!v_itemaddedf[IVrw.ArtCode]) then begin
+              if (nonblank(RepSpec.f1)) then begin
+                if (!v_itemfailf[IVrw.ArtCode]) then begin
+                  if (ReadFirstItem(IVrw.ArtCode,INr,true,true)) then begin
+                    if (INr.Group != RepSpec.f1) then begin
+                      v_itemfailf[IVrw.ArtCode] = true;
+                    end;
+                  end else begin
+                    v_itemfailf[IVrw.ArtCode] = true;
+                  end;
+                end;
+              end;
+              if (!v_itemfailf[IVrw.ArtCode]) then begin
+                a_solditems[solditems_cnt] = IVrw.ArtCode;
+                solditems_cnt = solditems_cnt + 1;
+                v_itemaddedf[IVrw.ArtCode] = true;
+              end;
+            end;
+          end;
+        end;
+        
+      end;
+    end;
+  end;
+  
+  SortStringArray(a_solditems);
+  
+return;
+end;
+
+function val GetStockMovQty(record RcVc RepSpec, string itemcode, string toloc)
+begin
+  record StockMovVc SMr;
+  row StockMovVc SMrw;
+  integer i,rwc;
+  boolean trhs,testf;
+  val res;
+  
+  SMr.FrLocation = RepSpec.f2;
+  SMr.OKFlag = 0;
+  trhs = true;
+  while (LoopKey("FrLocOK",SMr,2,trhs)) begin
+    if (SMr.FrLocation != RepSpec.f2 or SMr.OKFlag != 0) then begin
+      trhs = false;
+    end else begin
+      testf = true;
+      if (toloc != SMr.ToLocation) then begin
+        testf = false;
+      end;
+      if (SMr.ThrouLocation == RepSpec.f3 and SMr.SentOKFlag == 1 and testf) then begin
+        rwc = MatRowCnt(SMr);
+        for (i = 0; i < rwc; i = i + 1) begin
+          MatRowGet(SMr,i,SMrw);
+          if (SMrw.ArtCode == itemcode) then begin
+            res = res + SMrw.SentQuant;
+          end;
+        end;
+      end;
+    end;
+  end;
+  
+  GetStockMovQty = res;
+return;
+end;
+
+procedure GetViaAndLoc2Qty(record RcVc RepSpec,string itemcode, val loc1qty, var array string a_loclist,var array val a_loc2qty,var array val a_locviaqty,var integer loclist_cnt, integer mode)
+begin
+  record LocationVc Locr;
+  boolean testf,trhs;
+  
+  loclist_cnt = 0;
+  
+  Locr.Code = RepSpec.f4;
+  trhs = true;
+  while (LoopMain(Locr,1,trhs)) begin
+    if (nonblank(RepSpec.f4) and Locr.Code != RepSpec.f4) then begin
+      trhs = false;
+    end else begin
+      testf = false;
+      if (Locr.Code != RepSpec.f2) then begin
+        switch (mode) begin
+          case 0: // "If Min lvl is empty, report will show item balances for Location1 and
+                  // Location2."
+            a_loc2qty[loclist_cnt] = GetStockQty(itemcode,Locr.Code,CurrentDate,false);
+            if (nonblank(RepSpec.f3)) then begin
+              a_locviaqty[loclist_cnt] = GetStockMovQty(RepSpec,itemcode,Locr.Code);
+            end;
+            testf = true;
+          case 1: // "If Min lvl is 0, report will show only those rows where Location1 Qty
+                  // is more than 0 and Location2 Qty is 0."
+            if (loc1qty > 0) then begin
+              a_loc2qty[loclist_cnt] = GetStockQty(itemcode,Locr.Code,CurrentDate,false);
+              if (a_loc2qty[loclist_cnt] == 0) then begin
+                if (nonblank(RepSpec.f3)) then begin
+                  a_locviaqty[loclist_cnt] = GetStockMovQty(RepSpec,itemcode,Locr.Code);
+                end;
+                testf = true;
+              end;
+            end;
+          case 2: // "If Min lvl is other number, the report will show only those rows where
+                  // Location2 Qty is less or equal to the number entered here and Location1
+                  // Qty is more than ã0Ò"
+            if (loc1qty > 0) then begin
+              a_loc2qty[loclist_cnt] = GetStockQty(itemcode,Locr.Code,CurrentDate,false);
+              if (a_loc2qty[loclist_cnt] <= RepSpec.vals0) then begin
+                if (nonblank(RepSpec.f3)) then begin
+                  a_locviaqty[loclist_cnt] = GetStockMovQty(RepSpec,itemcode,Locr.Code);
+                end;
+                testf = true;
+              end;
+            end;
+        end;
+      end;
+      if (testf) then begin
+        a_loclist[loclist_cnt] = Locr.Code;
+        loclist_cnt = loclist_cnt + 1;
+      end;
+    end;
+  end;
+
+return;
+end;
+
+procedure DisplayTotals(val tot1,val tot2,val tot3)
+begin
+
+  Black_Divider(0,1);
+  
+  StartFormat(15);
+  OutString(0,0,USetStr(1000036),false);
+  OutString(2,0,"",false);
+  OutString(3,0,"",false);
+  OutString(4,0,"",false);
+  OutString(5,0,"",false);
+  OutVal(6,0,tot1,M4Val,true);
+  OutVal(7,0,tot2,M4Val,true);
+  OutVal(1,0,tot3,M4Val,true);
+  EndFormat;
+  
+return;
+end;
+
+procedure GetStockQtyAndDisplayItems(record RcVc RepSpec,array string a_solditems,integer solditems_cnt)
+begin
+  record INVc INr;
+  integer i,loclist_cnt,j,mode;
+  val loc1qty,tot1,tot2,tot3;
+  string 20 item,variety;
+  array val a_loc2qty,a_locviaqty;
+  array string 10 a_loclist;
+  string 20 str_val;
+  record VARVc VARr;
+
+  str_val = RepSpec.vals0;
+  mode = -1;
+  if (str_val != "") then begin
+    if (RepSpec.vals0 == 0) then begin
+      mode = 1;
+    end;
+    if (RepSpec.vals0 > 0) then begin
+      mode = 2;
+    end;
+  end else begin
+    mode = 0;
+  end;
+
+  if (mode > -1) then begin
+    for (i = 0; i < solditems_cnt; i = i + 1) begin
+    
+      if (ReadFirstItem(a_solditems[i],INr,true,true)) then begin
+        item = INr.Code;
+        variety = right(a_solditems[i],len(a_solditems[i]) - len(item));
+        VARr.Code = right(variety,len(variety)-1);
+        if (ReadFirstMain(VARr,1,true)) then begin
+          variety = VARr.Comment;
+        end;
+      end;
+    
+      loc1qty = GetStockQty(a_solditems[i],RepSpec.f2,CurrentDate,false);
+      GetViaAndLoc2Qty(RepSpec,a_solditems[i],loc1qty,a_loclist,a_loc2qty,a_locviaqty,loclist_cnt,mode);
+      for (j = 0; j < loclist_cnt; j = j + 1) begin
+        StartFormat(15);
+        OutString(0,0,item,false);
+        OutString(2,0,variety,false);
+        OutString(3,0,RepSpec.f2,false);
+        OutString(4,0,RepSpec.f3,false);
+        OutString(5,0,a_loclist[j],false);
+        OutVal(6,0,loc1qty,M4Val,true);
+        OutVal(7,0,a_locviaqty[j],M4Val,true);
+        OutVal(1,0,a_loc2qty[j],M4Val,true);
+        EndFormat;
+        
+        tot2 = tot2 + a_locviaqty[j];
+        tot3 = tot3 + a_loc2qty[j];
+      end;
+      tot1 = tot1 + loc1qty;
+    end;
+  end;
+  
+  DisplayTotals(tot1,tot2,tot3);
+  
+return;
+end;
+
+global
+procedure DOLSoldINBalRn(record RcVc RepSpec)
+begin
+  integer solditems_cnt;
+  array string 20 a_solditems;
+  
+  StartReportJob(USetStr(1000026));
+  SetReportHeader(RepSpec);
+  SetReportDispStruct;
+  
+  GetSoldItemsInPeriod(RepSpec,a_solditems,solditems_cnt);
+  
+  GetStockQtyAndDisplayItems(RepSpec,a_solditems,solditems_cnt);
+  
+  EndJob;
+  
+return;
+end;

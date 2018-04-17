@@ -1,0 +1,42 @@
+procedure SetTimedEventScheduler()
+begin
+  record DOLShopifyBlock DOLShopifyBl;
+  record CompaniesBlock CompaniesRec;
+  row CompaniesBlock comprw;
+  Integer i,rwcnt;
+  Integer curcomp;
+
+  curcomp = CurrentCompany;  
+  BlockLoad(CompaniesRec);
+  rwcnt = MatRowCnt(CompaniesRec);
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowGet(CompaniesRec,i,comprw);
+    if (SetCompanyCode(comprw.CompCode,false)) then begin
+      BlockLoad(DOLShopifyBl);
+      if (DOLShopifyBl.UpdStock == 1 and DOLShopifyBl.UpdStockInertval > 0) then begin
+        logtext(0,"INFO: Scheduling DOLUpdShopifyStock to run every " & DOLShopifyBl.UpdStockInertval & " minutes in company No. " & CurrentCompany);
+        NewPeriodicTask("Update Shopify Stock","DOLUpdShopifyStock","DOLUpdShopifyStock",CurrentCompany & ";*",DOLShopifyBl.UpdStockInertval * 60,"");
+      end;
+      if (DOLShopifyBl.UpdItems == 1) then begin
+        logtext(0,"INFO: Item sending to Shopify is enabled in company No. " & CurrentCompany);
+      end;
+    end;
+    ResetCompany(curcomp);
+  end;
+  ResetCompany(curcomp);
+  
+return;
+end;
+
+global
+procedure OnApplicationStartupComplete()
+begin
+  time t;
+
+  inner.OnApplicationStartupComplete;
+  if (ServerMode or SingleUserMode) then begin
+		SetTimedEventScheduler;
+  end;
+  
+  return;
+end;

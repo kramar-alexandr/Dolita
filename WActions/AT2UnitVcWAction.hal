@@ -1,0 +1,53 @@
+remote function Boolean PasteAT2CodeInAT2Unit(var record AT2UnitVc,string);
+external procedure FindFiscalYear(Date,var Date,var Date);
+
+// EVS: DOL-115
+function Boolean AT2UnitDClassStartingDate1EFAfter(Integer wn,Integer fn,Integer rownr,Integer changedf)
+begin
+  record AT2UnitVc AT2Unitr;
+  record DprModVc DprModr;
+  date adate;
+
+  if (changedf!=0) then begin  
+    GetWindowRecord(wn,AT2Unitr);
+    DeselectWindow(wn,false);
+    if (nonblank(AT2Unitr.Model1)) then begin
+      DprModr.Code = AT2Unitr.Model1;
+      if (ReadFirstMain(DprModr,1,true)) then begin
+        if (nonblankdate(AT2Unitr.StartingDate1)) then begin
+          if (DprModr.DeprPerc != 0) then begin
+            adate = AddMonth(AT2Unitr.StartingDate1,(100/DprModr.DeprPerc)*12);
+            adate.day = 1;
+            adate = AddDay(adate,-1);
+          end else begin
+            adate = AT2Unitr.StartingDate1;
+          end;
+          AT2Unitr.EndDate = adate;
+        end else begin
+          AT2Unitr.EndDate = adate;
+        end;
+      end;
+    end;
+    PutWindowRecord(wn,AT2Unitr);
+  end;
+  
+  AT2UnitDClassStartingDate1EFAfter = true;
+  return;
+end;
+// :EVS
+
+global
+function Boolean AT2UnitDClassAfterEditField(Integer wn,string fieldname,Integer fn, Integer rownr,Integer changed)
+BEGIN
+  Boolean res;
+  
+  res = inner.AT2UnitDClassAfterEditField(wn,fieldname,fn,rownr,changed);
+  
+  switch (fieldname) begin
+    case "StartingDate1": res = AT2UnitDClassStartingDate1EFAfter(wn,fn,rownr,changed);
+    case "Model1": res = AT2UnitDClassStartingDate1EFAfter(wn,fn,rownr,changed);
+  end;
+  
+  AT2UnitDClassAfterEditField = res;
+  RETURN;
+END;

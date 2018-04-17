@@ -1,0 +1,24 @@
+external function string 100 BuildINName(string);
+
+global updating
+procedure UpdateItemNameMn(Record RcVc RepSpec)
+Begin
+  record INVc INr,oldINr;
+  string 255 tstr;
+  
+  INr.Code="";
+  while LoopMain(INr,1,true) begin
+    if INr.DoNotUpdName==0 then begin
+      tstr = BuildINName(INr.DispGroups);
+      if nonblank(tstr) and tstr!=INr.Name then begin
+        RecordCopy(oldINr,INr);
+        INr.Name = tstr;
+        if RecordUpdate(oldINr,INr,true) != 0 then begin
+          LogText(0,"UpdateItemNameMn ERROR could not update INVc record " & INr.Code);
+        end;
+      end;
+    end;
+  end;
+  
+return;
+end;

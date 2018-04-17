@@ -1,0 +1,274 @@
+  // RecordAddBegin(CUVc,"cu5");
+  //   RecordField(SuppContrNo,M4Str,20,0);
+  //   RecordField(OurCustDate,M4Date,0,0);
+  //   RecordField(LicContrNo,M4Str,20,0);
+
+    // ChangeField(Name,M4Str,255,0);
+    // ChangeMatrixField(ArtCode,M4Code,30,INVc);
+
+    // ArrayField(CustArrStr,M4Str,255,0);
+    // ArrayField(CustArrInt,M4Int,0,0);
+    // KeyBegin(NewKey);
+    // KeySegment(CustomStr);
+    // KeySegment(Code);
+    // SubSetKeyBegin2(CustArrStr);
+    // AppendMatrixFieldToKeyName(CustArrStr,0);
+    // KeySegment(Code);
+
+
+    // DisableIndex("IndexName");
+    // EndRecordAdd;
+
+begin
+
+  RecordAddBegin(INVc,"dol_invc");
+  RecordField(CreateDate,M4Date,0,0); //EBS
+  RecordField(InitPrice,M4Val,0,0); //EBS
+  RecordField(InitDisc,M4Val,0,0); //EBS
+  RecordField(DoNotUpdName,M4Int,0,0); //EBS
+  RecordField(ShopifyID,M4Str,60,0); // EVS: DOL-166
+  RecordField(ShopifyPrice,M4Val,0,0); // EVS: DOL-167
+  EndRecordAdd;
+
+  RecordAddBegin(ItemStatUserVc,"dol_IStatUsVc");
+  RecordField(INClassf,M4Int,0,0); //EBS
+  RecordField(LocBalf,M4Int,0,0); //EBS
+  RecordField(LocClass,M4Code,10,0); //EBS
+  RecordField(LocTOf,M4Int,0,0); //EBS
+  EndRecordAdd;
+
+  RecordAddBegin(POSButtonsVc,"dol_POSButtonsVc");
+  ChangeMatrixField(ButtonType,M4Set,1431,0); //Change set from 431 -> 1431
+  EndRecordAdd;
+
+  RecordAddBegin(VarMatrxEntryVc,"dol_VarMEntryVc");
+  RecordField(Price,M4Val,0,0); // EVS: DOL-1
+  RecordField(PlanDelDate,M4Date,0,0); // EVS: DOL-1
+  EndRecordAdd;
+
+  RecordAddBegin(GCVc,"dol_GCVc");
+  RecordField(Location,M4Code,10,LocationVc);  //EBS
+
+  SubsetKeyBegin2(ActSerNr2); //EBS
+  StoreInBaseKey; //EBS
+  AppendFieldToKeyName(Location); //EBS
+  KeySegment(SerNr);
+  KeySegment(Closed);
+  SubsetKeyBegin2(ActTransDate2); //EBS
+  StoreInBaseKey; //EBS
+  AppendFieldToKeyName(Location); //EBS
+  KeySegment(TransDate);
+  KeySegment(Closed);
+  KeySegment(SerNr);
+  SubsetKeyBegin2(ActComment2); //EBS
+  StoreInBaseKey; //EBS
+  AppendFieldToKeyName(Location); //EBS
+  KeySegment(Comment);
+  KeySegment(Closed);
+  KeySegment(SerNr);
+  EndRecordAdd;
+
+  RecordAddBegin(CrossINVc,"dol_CrossINVc");
+  RecordField(ItemGroup,M4Code,5,ITVc); // EVS: DOL-2
+  KeyBegin(ItemGroup);
+  KeySegment(ItemGroup);
+  KeySegment(ItemCode);
+  KeySegment(CrossItemCode);
+  EndRecordAdd;
+
+  // RecordAddBegin(UserVc,"dol_uservc");
+  // RecordField(ShowCrossSalesFlag,M4Int,0,0); // EVS: DOL-2
+  // RecordField(MaxvRebate,M41Val,0,0); // EVS: DOL-22
+  // EndRecordAdd;
+
+  RecordAddBegin(VIVc,"dol_VIVc");
+  RecordField(StandProblemCode,M4Code,20,StandProblemVc); //EBS
+
+  KeyBegin(OKFlagDueDate);
+  KeySegment(OKFlag);
+  KeySegment(DueDate);
+  KeySegment(SerNr);
+  EndRecordAdd;
+
+  RecordAddBegin(IVCashVc,"dol_IVCashVc");
+  RecordField(InvCust,M4Code,20,CUVc); // EVS: DOL-39
+  RecordField(InvCustName,M4Str,200,0); // EVS: DOL-39
+  RecordField(StandProblemCode,M4Code,20,StandProblemVc); // EVS: DOL-41
+  RecordField(SrcORNr,M4Long,0,ORVc); // EVS: DOL-68
+
+  KeyBegin(SrcORNr);
+  KeySegment(SrcORNr);
+  KeySegment(SerNr);
+
+  KeyBegin(DOL_InvCustDate);
+  KeySegment(InvCust);
+  KeySegment(InvDate);
+  KeySegment(SerNr);
+
+  KeyBegin(DOL_CustTransDate);
+  KeySegment(InvCust);
+  KeySegment(TransDate);
+  KeySegment(SerNr);
+  EndRecordAdd;
+
+  RecordAddBegin(StandProblemVc,"dol_standprbl");
+  RecordField(ForceRetLocFlag,M4Int,0,0); // EVS: DOL-41
+  EndRecordAdd;
+
+  RecordAddBegin(StockMovVc,"dol_StockMov");
+  SubsetKeyBegin2(FrSerNr);
+  StoreInBaseKey;
+  AppendListFieldToKeyName(FrLocation);
+  KeySegment(SerNr);
+  SubsetKeyBegin2(FrSentOKFlag);
+  StoreInBaseKey;
+  AppendListFieldToKeyName(FrLocation);
+  KeySegment(SentOKFlag);
+  KeySegment(SerNr);
+  SubsetKeyBegin2(FrOKFlag);
+  StoreInBaseKey;
+  AppendListFieldToKeyName(FrLocation);
+  KeySegment(OKFlag);
+  KeySegment(SerNr);
+  SubsetKeyBegin2(FrSentTransDate);
+  StoreInBaseKey;
+  AppendListFieldToKeyName(FrLocation);
+  KeySegment(SentTransDate);
+  KeySegment(SerNr);
+  SubsetKeyBegin2(FrTransDate);
+  StoreInBaseKey;
+  AppendListFieldToKeyName(FrLocation);
+  KeySegment(TransDate);
+  KeySegment(SerNr);
+  SubsetKeyBegin2(FrFrLocOK);
+  StoreInBaseKey;
+  AppendListFieldToKeyName(FrLocation);
+  KeySegment(FrLocation);
+  KeySegment(OKFlag);
+  KeySegment(TransDate);
+  KeySegment(SerNr);
+  SubsetKeyBegin2(FrToLocOK);
+  StoreInBaseKey;
+  AppendListFieldToKeyName(FrLocation);
+  KeySegment(ToLocation);
+  KeySegment(OKFlag);
+  KeySegment(TransDate);
+  KeySegment(SerNr);
+  SubsetKeyBegin2(FrToThrouLocOK);
+  StoreInBaseKey;
+  AppendListFieldToKeyName(FrLocation);
+  KeySegment(ThrouLocation);
+  KeySegment(SentOKFlag);
+  KeySegment(SentTransDate);
+  KeySegment(SerNr);
+  SubsetKeyBegin2(FrComment);
+  StoreInBaseKey;
+  AppendListFieldToKeyName(FrLocation);
+  KeySegment(Comment);
+  KeySegment(SerNr);
+
+  SubsetKeyBegin2(ToSerNr);
+  StoreInBaseKey;
+  AppendListFieldToKeyName(ToLocation);
+  KeySegment(SerNr);
+  SubsetKeyBegin2(ToSentOKFlag);
+  StoreInBaseKey;
+  AppendListFieldToKeyName(ToLocation);
+  KeySegment(SentOKFlag);
+  KeySegment(SerNr);
+  SubsetKeyBegin2(ToOKFlag);
+  StoreInBaseKey;
+  AppendListFieldToKeyName(ToLocation);
+  KeySegment(OKFlag);
+  KeySegment(SerNr);
+  SubsetKeyBegin2(ToSentTransDate);
+  StoreInBaseKey;
+  AppendListFieldToKeyName(ToLocation);
+  KeySegment(SentTransDate);
+  KeySegment(SerNr);
+  SubsetKeyBegin2(ToTransDate);
+  StoreInBaseKey;
+  AppendListFieldToKeyName(ToLocation);
+  KeySegment(TransDate);
+  KeySegment(SerNr);
+  SubsetKeyBegin2(ToFrLocOK);
+  StoreInBaseKey;
+  AppendListFieldToKeyName(ToLocation);
+  KeySegment(ToLocation);
+  KeySegment(OKFlag);
+  KeySegment(TransDate);
+  KeySegment(SerNr);
+  SubsetKeyBegin2(ToToLocOK);
+  StoreInBaseKey;
+  AppendListFieldToKeyName(ToLocation);
+  KeySegment(ToLocation);
+  KeySegment(OKFlag);
+  KeySegment(TransDate);
+  KeySegment(SerNr);
+  SubsetKeyBegin2(ToToThrouLocOK);
+  StoreInBaseKey;
+  AppendListFieldToKeyName(ToLocation);
+  KeySegment(ThrouLocation);
+  KeySegment(SentOKFlag);
+  KeySegment(SentTransDate);
+  KeySegment(SerNr);
+  SubsetKeyBegin2(ToComment);
+  StoreInBaseKey;
+  AppendListFieldToKeyName(ToLocation);
+  KeySegment(Comment);
+  KeySegment(SerNr);
+  EndRecordAdd;
+
+  RecordAddBegin(LoyaltyCardVc,"dol_LoyaltyCard");
+  RecordField(NoAutoLevelingFlag,M4Int,0,0); // EVS: DOL-83
+  EndRecordAdd;
+
+  RecordAddBegin(CCatVc,"dol_CCatVc");
+  RecordField(Objects,M4Code,20,0); //EBS
+  RecordField(CustClass,M4Code,20,0); //EBS
+  EndRecordAdd;
+
+  RecordAddBegin(OrderClassVc,"dol_OrderClass");
+  RecordField(Object,M4Code,20,ObjVc);
+  EndRecordAdd;
+
+  RecordAddBegin(CashVc,"dol_CashVc");
+  RecordField(DoNotMakeTR,M4Int,0,0); //EBS
+  EndRecordAdd;
+
+  RecordAddBegin(POVc,"dol_POVc");
+  RecordField(TotQty,M4UVal,0,0); //EBS
+  ArrayField(PlanShipRowDate,M4Date,0,0); // EVS: DOL-122
+  EndRecordAdd;
+
+  RecordAddBegin(PUVc,"dol_PUVc");
+  RecordField(DoNotGenTrans,M4Int,0,0); //EBS
+  EndRecordAdd;
+
+  RecordAddBegin(SDVc,"dol_SDVc");
+  RecordField(DoNotGenTrans,M4Int,0,0); //EBS
+  ArrayField(SalesPrice,M45Val,0,0); //EBS
+  ArrayField(RowGP,M45Val,0,0);      //EBS
+  ArrayField(SalesPriceNoVAT,M45Val,0,0); //EBS
+  EndRecordAdd;
+
+  RecordAddBegin(IVVc,"dol_IVVc");
+  RecordField(POSRetFlag,M4Int,0,0); // EVS: DOL-89
+
+  KeyBegin(DOL_TransDateCust);
+  KeySegment(CustCode);
+  KeySegment(TransDate);
+  KeySegment(SerNr);
+  EndRecordAdd;
+
+  RecordAddBegin(LocalMachineVc,"dol_LocalMachine");
+  RecordField(MachineNr,M4Str,20,0);
+  EndRecordAdd;
+
+  RecordAddBegin(FormDefVc,"dol_FormDefVc");
+  ArrayField(FromRow,M4Long,0,0); // EVS: DOL-129
+  ArrayField(ToRow,M4Long,0,0); // EVS: DOL-129
+  EndRecordAdd;
+
+  return;
+end;

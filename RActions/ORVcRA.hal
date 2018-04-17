@@ -1,0 +1,24 @@
+remote function string 60 AddLocationObject(string,string,boolean);
+
+global
+function LongInt ORVcRecordDefaults(var record ORVc ORr,record ORVc OR2r,LongInt long3,LongInt long4)
+begin
+  LongInt res;
+  
+  res = inner.ORVcRecordDefaults(ORr,OR2r,long3,long4);
+  ORr.Objects = AddLocationObject(ORr.Objects,ORr.Location,true); 
+  
+  ORVcRecordDefaults = res;
+  return;
+end;
+
+global
+function LongInt ORVcRecordDefaultsClient(LongInt wn,var record ORVc ORr,record ORVc OR2r,LongInt long3,LongInt long4)
+begin
+  LongInt res;
+  
+  res = inner.ORVcRecordDefaultsClient(wn,ORr,OR2r,long3,long4);
+  ORr.Objects = AddLocationObject(ORr.Objects,ORr.Location,true); 
+  
+  return;
+end;

@@ -1,0 +1,33 @@
+remote function string 20 ConvertItemCode(string);
+
+procedure IVConvertItemCode(integer wn,integer rownr,integer changed) begin
+  record IVVc IVr;
+  row IVVc IVrw;  
+  
+  if changed!=0 then begin
+    GetWindowRecord(wn,IVr);
+    if MatRowCnt(IVr)>rownr then begin
+      MatRowGet(IVr,rownr,IVrw);
+      IVrw.ArtCode = ConvertItemCode(IVrw.ArtCode);
+      MatRowPut(IVr,rownr,IVrw);
+      PutWindowRecord(wn,IVr);
+    end;
+  end;
+  
+return;
+end;
+
+global
+function Boolean IVDClassAfterEditField(Integer wn,string fieldname,Integer fn, Integer rownr,Integer changed)
+BEGIN
+  Boolean res;
+
+  switch (fieldname) begin
+    case "ArtCode": IVConvertItemCode(wn,rownr,changed);
+  end;
+  
+  res = inner.IVDClassAfterEditField(wn,fieldname,fn,rownr,changed);
+  
+  IVDClassAfterEditField = res;
+  RETURN;
+END;

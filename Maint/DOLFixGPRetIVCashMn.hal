@@ -1,0 +1,43 @@
+// EVS: DOL-154
+external function boolean DOLIsReturnInvoice(record IVCashVc, var longint);
+external inner function Boolean IVCashDchrsum(record IVCashVc,Integer,Integer);
+external inner procedure IVCashDchsum(record IVCashVc,Integer);
+external inner procedure IVCashSumup(var record IVCashVc,Boolean);
+
+global updating
+procedure DOLFixGPRetIVCashMn(Record RcVc RepSpec)
+begin
+  record IVCashVc IVCashr,IVCash2r;
+  record GeneralOptionBlock GenOptRec;
+  row IVCashVc IVCashrw;
+  boolean trhs;
+  integer i,rwc;
+  longint tempi;
+
+  BlockLoad(GenOptRec);
+
+  IVCashr.TransDate = RepSpec.sStartDate;
+  trhs = true;
+  while (LoopKey("TransDate",IVCashr,2,trhs)) begin
+    if (IVCashr.TransDate > RepSpec.sEndDate) then begin
+      trhs = false;
+    end;
+    if (trhs) then begin
+      if (DOLIsReturnInvoice(IVCashr,tempi)) then begin
+        RecordCopy(IVCash2r,IVCashr);
+        rwc = MatRowCnt(IVCashr);
+        for (i=0; i<rwc; i=i+1) begin
+          MatRowGet(IVCashr,i,IVCashrw);
+          if (nonblank(IVCashrw.ArtCode) and IVCashrw.stp == kInvoiceRowTypeNormal) then begin
+            IVCashDchrsum(IVCashr,i,GenOptRec.UseDiscount);
+            IVCashDchsum(IVCashr,i);
+          end;
+        end;
+        IVCashSumup(IVCashr,true);
+        RecordUpdate(IVCash2r,IVCashr,false);
+      end;
+    end;
+  end;
+
+return;
+end;

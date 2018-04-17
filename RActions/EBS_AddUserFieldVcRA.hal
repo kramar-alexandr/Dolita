@@ -1,0 +1,22 @@
+
+global
+updating function LongInt EBS_AddUserFieldVcRecordCheck(record EBS_AddUserFieldVc EBS_AddUserFieldr,record EBS_AddUserFieldVc EBS_AddUserField2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  
+  res = 0;
+  if blank(EBS_AddUserFieldr.Code) then begin
+    RecordCheckError(1058,"",-1,"Code");
+    res = -1;
+    goto LEBS_AddUserFieldVcRecordCheck;
+  end;
+  if (EBS_AddUserFieldr.MaxvRebate < 0 or EBS_AddUserFieldr.MaxvRebate > 100) then begin
+    RecordCheckError(1000014,"",-1,"MaxvRebate");
+    res = -1;
+    goto LEBS_AddUserFieldVcRecordCheck;
+  end;
+  
+LEBS_AddUserFieldVcRecordCheck:;
+  EBS_AddUserFieldVcRecordCheck = res;
+  return;
+end;

@@ -1,0 +1,24 @@
+// EVS: DOL-125 auth
+
+global
+updating procedure DOLRenewOffNrIVCashMn(record RcVc RepSpec)
+begin
+  record IVCashVc IVCashr,IVCash2r;
+  record OffSerNrIVVc OffSerNrIVr;
+  string 255 offno;
+  
+  while (LoopMain(IVCashr,1,true)) begin
+    if (IVCashr.OfficialSerNr == "") then begin
+      RecordCopy(IVCash2r,IVCashr);
+    
+      OffSerNrIVr.FileName = "IVCashVc";
+      OffSerNrIVr.IVNr = IVCashr.SerNr;
+      if (ReadFirstMain(OffSerNrIVr,2,true)) then begin
+        IVCashr.OfficialSerNr = OffSerNrIVr.OfficialSerNr;
+        RecordUpdate(IVCash2r,IVCashr,false);
+      end;
+    end;
+  end;
+  
+return;
+end;

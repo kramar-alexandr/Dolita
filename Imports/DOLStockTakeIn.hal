@@ -1,0 +1,182 @@
+// EVS: DOL-121
+external inner function Boolean GetFirstItem(var string,var record INVc);
+external inner function Boolean StockTakeVc_PasteArtCode(var record StockTakeVc,Integer,Integer,var string);
+
+function boolean ImportLineExplode(string instr,var longint id,var string barcode,var val qty)
+begin
+  longint pos;
+  integer i;
+  string 100 onefield;
+  
+  id = -1;
+  barcode = "";
+  qty = blankval;
+  
+  pos = 0;
+  while (GetNextSubstring(instr,pos,",",onefield)) begin
+    if (i == 0) then begin
+      id = StringToLongint(onefield);
+    end;
+    if (i == 1) then begin
+      barcode = onefield;
+    end;
+    if (i == 2) then begin
+      qty = StringToVal(onefield,M4UVal);
+    end;
+    if (i == 3) then begin
+      // ignore for now
+    end;
+    i = i + 1;
+  end;
+  
+  ImportLineExplode = (i == 4);
+return;
+end;
+
+updating procedure UpsertItemStocktake(longint id,var string barcode,val qty)
+begin
+  record INVc INr;
+  record StockTakeVc ST2r,STr,ST3r;
+  row StockTakeVc STrw;
+  boolean trhs,foundf,newstf;
+  integer i,rwc;
+  longint last_stocktakeid;
+  string 20 inwarn;
+  
+  ST2r.SerNr = id;
+  if (ReadFirstMain(ST2r,1,true)) then begin
+    if (GetFirstItem(barcode,INr)) then begin
+      STr.SerNr = id;
+      STr.TransDate = ST2r.TransDate;
+      trhs = true;
+      while (LoopKey("TransDate",STr,2,trhs)) begin
+        if (STr.TransDate != ST2r.TransDate) then begin
+          trhs = false;
+        end else begin
+          if (STr.Location == ST2r.Location and STr.OKFlag == 0) then begin
+            last_stocktakeid = STr.SerNr;
+            RecordCopy(ST3r,STr);
+            rwc = MatRowCnt(STr);
+            for (i = 0; i < rwc; i = i + 1) begin
+              MatRowGet(STr,i,STrw);
+              if (STrw.ArtCode == INr.Code) then begin
+                STrw.Qty = STrw.Qty + qty;
+                MatRowPut(STr,i,STrw);
+                foundf = true;
+                i = rwc;
+                trhs = false;
+              end;
+            end;
+            if (foundf) then begin
+              RecordUpdate(ST3r,STr,false);
+            end;
+          end;
+        end;
+      end;
+      if (!foundf) then begin
+        STr.SerNr = last_stocktakeid;
+        if (ReadFirstMain(STr,1,true)) then begin
+          rwc = MatRowCnt(STr);
+          if (rwc < 200) then begin
+            RecordCopy(ST3r,STr);
+            
+            ClearRow(STr,STrw,1);
+            STrw.ArtCode = INr.Code;
+            MatRowPut(STr,rwc,STrw);
+            StockTakeVc_PasteArtCode(STr,rwc,1,inwarn);
+            MatRowGet(STr,rwc,STrw);
+            STrw.Qty = qty;
+            MatRowPut(STr,rwc,STrw);
+            
+            RecordUpdate(ST3r,STr,false);
+          end else begin
+            newstf = true;
+          end;
+        end else begin
+          newstf = true;
+        end;
+        if (newstf) then begin
+          RecordClear(STr);
+          RecordNew(STr);
+          
+          STr.Location = ST2r.Location;
+          STr.TransDate = ST2r.TransDate;
+          
+          ClearRow(STr,STrw,1);
+          STrw.ArtCode = INr.Code;
+          MatRowPut(STr,rwc,STrw);
+          StockTakeVc_PasteArtCode(STr,rwc,1,inwarn);
+          MatRowGet(STr,rwc,STrw);
+          STrw.Qty = qty;
+          MatRowPut(STr,rwc,STrw);
+          
+          STr.SerNr = NextSerNr("StockTakeVc",STr.TransDate,-1,false,"");
+          if (STr.SerNr > -1) then begin
+            RecordStore(STr,false);
+          end;
+        end;
+      end;
+    end;
+  end;
+  
+return;
+end;
+
+updating procedure NullifyQtysInExistingStocktakes(longint id)
+begin
+  record StockTakeVc ST2r,STr,ST3r;
+  row StockTakeVc STrw;
+  boolean trhs;
+  integer i,rwc;
+  
+  ST2r.SerNr = id;
+  if (ReadFirstMain(ST2r,1,true)) then begin
+    STr.SerNr = id;
+    STr.TransDate = ST2r.TransDate;
+    trhs = true;
+    while (LoopKey("TransDate",STr,2,trhs)) begin
+      if (STr.TransDate != ST2r.TransDate) then begin
+        trhs = false;
+      end else begin
+        if (STr.Location == ST2r.Location and STr.OKFlag == 0) then begin
+          RecordCopy(ST3r,STr);
+          rwc = MatRowCnt(STr);
+          for (i = 0; i < rwc; i = i + 1) begin
+            MatRowGet(STr,i,STrw);
+            if (nonblank(STrw.ArtCode)) then begin
+              STrw.Qty = 0;
+              MatRowPut(STr,i,STrw);
+            end;
+          end;
+          RecordUpdate(ST3r,STr,false);
+        end;
+      end;
+    end;
+  end;
+  
+return;
+end;
+
+global
+updating procedure DOLStockTakeIn()
+begin
+  longint id;
+  val qty;
+  boolean oncef;
+  string 20 barcode;
+  
+  while (!TestEOF) begin
+    if (ImportLineExplode(ImportField,id,barcode,qty)) then begin
+      if (!oncef) then begin
+        NullifyQtysInExistingStocktakes(id);
+        oncef = true;
+      end;
+      UpsertItemStocktake(id,barcode,qty);
+    end;
+    NextImportLine(true);
+  end;
+  
+  CloseFile;
+  
+return;
+end;

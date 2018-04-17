@@ -1,0 +1,48 @@
+global
+function LongInt LoyaltyCardVcRecordDuplicate(var record LoyaltyCardVc LoyaltyCardr,record LoyaltyCardVc LoyaltyCard2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  val pts;
+  
+  // EVS: DOL-18
+  if (LoyaltyCardr.Closed == 1) then begin
+    pts = LoyaltyCardr.PointsBalance;
+  end;
+  // :EVS
+  
+  res = inner.LoyaltyCardVcRecordDuplicate(LoyaltyCardr,LoyaltyCard2r,stat,long4);
+  
+  LoyaltyCardr.PointsBalance = pts; // EVS: DOL-18
+
+  LoyaltyCardVcRecordDuplicate = res; 
+  return;
+end;
+
+global
+updating function LongInt LoyaltyCardVcRecordUpdateAfter(var record LoyaltyCardVc LCr,record LoyaltyCardVc LC2r,LongInt stat,LongInt long4)
+begin
+  record PointsHistVc PHr,PH2r;
+  boolean trhs;
+  LongInt res;
+  
+  res = inner.LoyaltyCardVcRecordUpdateAfter(LCr,LC2r,stat,long4);
+  
+  // EVS: DOL-99
+  if (LCr.CustCode != LC2r.CustCode) then begin
+    PHr.LMCardNr = LCr.SerNr;
+    trhs = true;
+    while (LoopKey("CardDate",PHr,1,trhs)) begin
+      if (PHr.LMCardNr != LCr.SerNr) then begin
+        trhs = false;
+      end else begin
+        RecordCopy(PH2r,PHr);
+        PHr.CustCode = LCr.CustCode;
+        RecordUpdate(PH2r,PHr,false);
+      end;
+    end;
+  end;
+  // :EVS
+  
+  LoyaltyCardVcRecordUpdateAfter = res;
+  return;
+end;

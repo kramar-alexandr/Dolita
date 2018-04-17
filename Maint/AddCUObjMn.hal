@@ -1,0 +1,38 @@
+external updating procedure AddObjectToRec(string,var string,string,string,string,string);
+
+global updating
+procedure AddCUObjMn(Record RcVc RepSpec)
+Begin
+  record CUVc CUr,oldCUr;
+  string 60 tstr;
+  boolean updatef;
+  
+  CUr.Code = "";
+  While LoopMain(Cur,1,true) begin
+    RecordCopy(oldCUr,CUr);
+    updatef = false;
+    if (CUr.CUType == 1) then begin
+      tstr=CUr.Objects;
+      AddObjectToRec(CUr.Code,tstr,"D","D",CUr.Code & " " & CUr.Name,"");
+      if tstr!=CUr.Objects then begin
+        CUr.Objects=tstr;
+        updatef = true;
+      end;
+    end;
+    if (CUr.VEType == 1) then begin
+      tstr=CUr.VEObjects;
+      AddObjectToRec(CUr.Code,tstr,"C","C",CUr.Code & " " & CUr.Name,"");
+      if tstr!=CUr.VEObjects then begin
+        CUr.VEObjects=tstr;
+        updatef = true;
+      end;
+    end;  
+    if updatef then begin
+      if RecordUpdate(oldCUr,CUr,true)!=0 then begin
+        LogText(0,"AddCUObjMn ERROR could not update CUVc record " & CUr.Code);
+      end;
+    end;
+  end;
+  
+return;
+end;

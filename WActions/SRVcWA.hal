@@ -1,0 +1,93 @@
+external inner function RoundMode SetRoundModeD(integer);
+remote inner procedure SRVc_PasteNewFIFO(var record SRVc,Integer);
+
+procedure AddRowDiscount(record SRVc SRr,integer rownr,val disc) begin
+  row SRVc SRrw;  
+
+  MatRowGet(SRr,rownr,SRrw);
+  SRrw.NewFIFO = SRrw.FIFO - disc;
+  MatRowPut(SRr,rownr,SRrw);
+  SRVc_PasteNewFIFO(SRr,rownr);
+  
+return;
+end;
+
+procedure DivideRebate(val totdisc,val prcdisc,record SRVc SRr) begin
+  row SRVc SRrw;
+  integer i,rwc;
+  val totqty,t;
+  
+  rwc = MatRowCnt(SRr);
+  if rwc==0 then begin
+    GoTo LDivideRebate;
+  end;
+  
+  if totdisc!=0 then begin //total disount
+    if SRr.TotQty==0 then begin
+      GoTo LDivideRebate;
+    end;
+    t = Round(totdisc/SRr.TotQty,SetRoundModeD(5));
+  end;
+  
+  rwc = MatRowCnt(SRr);
+  for(i=0;i<rwc;i=i+1)begin
+    MatRowGet(SRr,i,SRrw);
+    if prcdisc!=0 then begin
+      t = Round((SRrw.FIFO / 100) * prcdisc,SetRoundModeD(5));
+    end;
+    AddRowDiscount(SRr,i,t);
+  end;
+  
+LDivideRebate:;
+return;
+end;
+
+global
+procedure EBS_AddDiscountBtn() begin
+  record RcVc RepSpec;
+  record SRVc SRr;
+  integer wn,mwn;
+  
+  wn = CurWindow;
+  DeselectWindow(wn,false);
+  
+  mwn = MotherWindow(wn);
+  GetWindowRecord(wn,RepSpec);
+  
+  if blank(RepSpec.vals0) and blank(RepSpec.vals1) then begin
+    CloseWindow(wn);
+    GoTo LEBS_AddDiscountBtn;
+  end;
+
+  if nonblank(RepSpec.vals0) and nonblank(RepSpec.vals1) then begin
+    MessageBox(1000117,"");
+    GoTo LEBS_AddDiscountBtn;
+  end;
+  
+  if RepSpec.vals1<0 or RepSpec.vals1>100 then begin
+    MessageBox(1000118,"");
+    GoTo LEBS_AddDiscountBtn;
+  end;
+  
+  if WindowValid(mwn) and GetWindowClass(mwn)=="SRDClass" then begin
+    CloseWindow(wn);
+    GetWindowRecord(mwn,SRr);
+    DivideRebate(RepSpec.vals0,RepSpec.vals1,SRr);
+    PutWindowRecord(mwn,SRr);
+  end;
+  
+LEBS_AddDiscountBtn:;
+return;
+end;
+
+global
+procedure EBS_AddDisctountSRDsm() begin
+  integer nwn,wn;
+  record RcVc RepSpec;
+  record SRVc SRr;
+  
+  wn = CurWindow;
+  nwn = OpenWindow("EBS_AddDiscountWClass",1,wn,"","",RepSpec);  
+
+return;
+end;

@@ -1,0 +1,62 @@
+
+global
+procedure ReturnInvNoNPTSSClassInvListBtn() begin
+  record RcVc RepSpec;
+  integer nwn,wn;
+  
+  wn = CurWindow;
+  nwn = OpenWindow("RetInvoiceRunRepWClass",0,wn,"","",RepSpec);
+
+return;
+end;
+
+global
+procedure RetInvoiceRunRepWClassPasteLocation() begin
+  record RcVc RepSpec;
+  integer wn;
+  string 255 tag;
+  
+  wn = CurWindow;
+  DeselectWindow(wn,true);
+  GetWindowRecord(wn,RepSpec);
+  
+  RepSpec.f2 = PushButtonTag;
+  PutWindowRecord(wn,RepSpec);
+  SelectWindow(wn);
+  WindowFieldGoto(wn,RepSpec,-1,"f2",true);
+
+return;
+end;
+
+global
+procedure RetInvoiceRunRepWClassRunReport() begin
+  record RcVc wRepSpec,RepSpec;
+  integer wn,mwn;
+  date td;
+  
+  wn = CurWindow;
+  DeselectWindow(wn,true);
+  GetWindowRecord(wn,wRepSpec);
+  
+  td = wRepSpec.d1;
+  if blankdate(wRepSpec.d1) then begin
+    td = CurrentDate;
+  end;
+  
+  ReportDefaults(RepSpec,"PIVGPRClass");
+  RepSpec.sStartDate = AddDay(td,-3);
+  RepSpec.sEndDate = td;
+  RepSpec.Period2Str = "" & RepSpec.sStartDate & ":" & RepSpec.sEndDate;
+  RepSpec.FirstAcc = wRepSpec.f1;
+  RepSpec.f4 = wRepSpec.f2;
+  RepSpec.vals4 = wRepSpec.vals1;
+  RepSpec.Media = mtScreen;
+  RepSpec.repname = "PIVGPRn";
+  RepSpec.ArtMode = 1;
+  RepSpec.flags[29] = MotherWindow(wn);
+  
+  CloseWindow(wn);
+  RunReport(RepSpec,0);
+  
+return;
+end;

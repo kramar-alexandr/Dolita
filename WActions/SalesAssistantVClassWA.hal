@@ -1,0 +1,22 @@
+
+global
+procedure SalesAssistantVClassUserListBtn() begin
+  integer wn,nwn;
+  record RcVc RepSpec;
+  record UserVc Userr;
+  string 20 subset;
+
+  wn = CurWindow;
+  DeselectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  // stopalert("f1=" & RepSpec.f1);
+  RepSpec.f1 = "";
+  PutWindowString(wn,"f1","");
+  PutWindowRecord(wn,RepSpec);
+  SelectWindow(wn);
+
+  WindowFieldGoto(wn,RepSpec,-1,"f1",false);
+  nwn = OpenWindow("EBS_UserSClass",0,wn,"","",Userr);
+
+return;
+end;

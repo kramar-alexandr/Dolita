@@ -1,0 +1,34 @@
+
+global updating
+procedure RemoveORReservMn(Record RcVc RepSpec)
+Begin
+  record ORVc oldORr,ORr;
+  boolean wloop,testf;
+  date td;
+  
+  ORr.Reserved = 1;
+  wloop = true;
+  While LoopKey("Reserved",ORr,1,wloop) begin
+    if ORr.Reserved != 1 then begin
+      wloop = false;
+    end else begin
+      testf = true;
+      if blank(ORr.PlanShip) then begin
+        testf = false;
+      end;
+      td = StringToDate(ORr.PlanShip);
+      if td>RepSpec.d1 then begin
+        testf = false;
+      end;
+      if testf then begin
+        RecordCopy(oldORr,ORr);
+        ORr.Reserved = 0;
+        if RecordUpdate(oldORr,ORr,true)!=0 then begin
+          LogText(0,"RemoveORReservMn ERROR could not update ORVc record " & ORr.SerNr);
+        end;
+      end;
+    end;
+  end;
+  
+return;
+end;

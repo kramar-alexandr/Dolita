@@ -1,0 +1,35 @@
+external inner updating function Boolean DoAutoReserveAll(record ORVc,Integer);
+
+global
+updating function LongInt ORVcRecordSaveAfter(var record ORVc ORr,record ORVc OR2r,LongInt long3,LongInt long4)
+begin
+  LongInt res;
+  
+  res = inner.ORVcRecordSaveAfter(ORr,OR2r,long3,long4);
+  
+  // EVS: DOL-9
+  if (ORr.OKFlag == 1 and ORr.Reserved == 1) then begin
+    DoAutoReserveAll(ORr,-1);
+  end;
+  // :EVS
+
+  ORVcRecordSaveAfter = res; 
+  return;
+end;
+
+global
+updating function LongInt ORVcRecordUpdateAfter(var record ORVc ORr,record ORVc OR2r,LongInt long3,LongInt long4)
+begin
+  LongInt res;
+  
+  res = inner.ORVcRecordUpdateAfter(ORr,OR2r,long3,long4);
+  
+  // EVS: DOL-9
+  if (OR2r.OKFlag == 0 and ORr.OKFlag == 1 and ORr.Reserved == 1) then begin
+    DoAutoReserveAll(ORr,-1);
+  end;
+  // :EVS
+
+  ORVcRecordUpdateAfter = res; 
+  return;
+end;

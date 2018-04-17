@@ -1,0 +1,8 @@
+// EVS: DOL-34
+global
+procedure DOLDialogDoNothing()
+begin
+  CloseWindow(CurWindow);
+  return;
+end;
+// :EVS

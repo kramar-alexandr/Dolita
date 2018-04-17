@@ -1,0 +1,36 @@
+// EVS: DOL-2
+global
+function Boolean CrossINDClassItemGroupEFAfter(Integer wn,Integer changedf)
+begin
+  record CrossINVc CrossINr;
+  record ITVc ITr;
+
+  if (changedf!=0) then begin  
+    GetWindowRecord(wn,CrossINr);
+    ITr.Code = CrossINr.ItemGroup;
+    if (ReadFirstMain(ITr,1,true)) then begin
+      CrossINr.ItemName = ITr.Comment;
+    end;
+    PutWindowRecord(wn,CrossINr);
+  end;
+  
+  CrossINDClassItemGroupEFAfter = true;
+  return;
+end;
+// :EVS
+
+
+global
+function Boolean CrossINDClassAfterEditField(Integer wn,string fieldname,Integer fn,Integer rownr,Integer changed)
+begin
+  Boolean res;
+
+  res = inner.CrossINDClassAfterEditField(wn,fieldname,fn,rownr,changed);
+
+  switch (fieldname) begin
+    case "ItemGroup": res = CrossINDClassItemGroupEFAfter(wn,changed); // EVS: DOL-2
+  end;
+  
+  CrossINDClassAfterEditField = res;
+  return;
+end;

@@ -1,0 +1,19 @@
+
+global
+function LongInt POSEventVcRecordSaveClient(LongInt wn,var record POSEventVc POSEventp,record POSEventVc POSEvent2p,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  Integer mwn;
+  record CashierDefBlock CDb;
+
+  if POSEventp.Event==2 then begin
+    BlockLoad(CDb);
+    if (CDb.CushUpOnCloseSession!=0) then begin
+      NewTimedTask("POS_Cashup","Cashup Maintenance","POSCashupIdleTasks",CurrentCompany & ":onlyPOS:" & POSEventp.MachineName,CurrentDate,CurrentTime,"","");
+    end;
+  end;
+  res = inner.POSEventVcRecordSaveClient(wn,POSEventp,POSEvent2p,stat,long4);
+
+  POSEventVcRecordSaveClient = res;
+  return;
+end;

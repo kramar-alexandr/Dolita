@@ -1,0 +1,274 @@
+remote inner function Boolean GetFirstItem(var string,var record INVc);
+remote function boolean EBS_ChangeINVarVClassRemote(Record RcVc,var string,var string);
+external inner function Boolean TestForMATVARINS(Integer);
+remote function string 10 DOLGetUserLocation(string);
+remote procedure DOLGenLCMnCheckIfNumbersUsed(record RcVc,var longint, var longint);
+external inner procedure In2Period(var string,var Date,var Date);
+
+SetLangMode(LangLithuanian,"LIT",2);
+
+// EVS: DOL-6
+global
+function Boolean NPTSVarEnqWClassAfterEditField(Integer wn,string fieldname,Integer fn,Integer rownr,Integer changed)
+begin
+  Boolean res;
+  record RcVc RepSpec;
+  record INVc INr;
+
+  res = false;
+//  switch (fieldname) begin // EVS: DOL-105 rm
+//    case "f4":
+//      GetWindowRecord(wn,RepSpec);
+//      if (GetFirstItem(RepSpec.f4,INr)) then begin
+//        RepSpec.f4 = Inr.Code;
+//        PutWindowRecord(wn,RepSpec);
+//        SetWindowNameArg(wn,RepSpec.f4);
+//        TestForMATVARINS(wn);
+//      end;
+//  end;
+
+  NPTSVarEnqWClassAfterEditField = res;
+  return;
+end;
+// :EVS
+
+// EVS: DOL-41
+global
+function boolean DOLPOSPasteStandProblemWClassOnOpenWindow(integer wn)
+begin
+  record RcVc RepSpec;
+  record StandProblemVc SPr;
+
+  GetWindowRecord(wn,RepSpec);
+//  WindowFieldGoto(wn,RepSpec,-1,"f1",true);
+
+  // OpenWindow("StandProblemsSClass",0,wn,"","",SPr);
+
+  DOLPOSPasteStandProblemWClassOnOpenWindow = true;
+return;
+end;
+// :EVS
+
+// EVS: DOL-49
+global
+function Boolean NPTSInvValWClassAfterEditField(Integer wn,string fieldname,Integer fn,Integer rownr,Integer changed)
+begin
+  Boolean res;
+  record RcVc RepSpec;
+  record INVc INr;
+
+//  res = false;
+//  switch (fieldname) begin
+//    case "f4":
+//      GetWindowRecord(wn,RepSpec);
+//      if (GetFirstItem(RepSpec.f4,INr)) then begin
+//        RepSpec.f4 = Inr.Code;
+//        PutWindowRecord(wn,RepSpec);
+//        SetWindowNameArg(wn,RepSpec.f4);
+//        TestForMATVARINS(wn);
+//      end;
+//  end;
+
+  NPTSInvValWClassAfterEditField = res;
+  return;
+end;
+// :EVS
+
+// EVS: DOL-58
+global
+procedure DOLNPTSUserRowToolKeyDel()
+BEGIN
+  record USRowVc RepSpec;
+  Integer wn;
+  string 255 tstr,activefield;
+
+  wn = CurWindow;
+  GetWindowRecord(wn,RepSpec);
+  activefield = WindowActiveField(wn);
+  tstr = GetWindowString(wn,activefield);
+  DeselectWindow(wn,false);
+  tstr = Left(tstr,BytesInString(tstr)-1);
+  PutWindowString(wn,activefield,tstr);
+  PutWindowRecord(wn,RepSpec);
+  SelectWindow(wn);
+  WindowFieldGoto(wn,RepSpec,-1,activefield,true);
+  return;
+end;
+// :EVS
+
+// EVS: DOL-79
+global
+function boolean DOLSoldINBalRClassOnOKWindow(Integer wn)
+begin
+  record RcVc RepSpec;
+  boolean res;
+
+  GetWindowRecord(wn,RepSpec);
+  if (blank(RepSpec.f2)) then begin
+    MessageBox(1058,"");
+    WindowFieldGoto(wn,RepSpec,-1,"f2",true);
+    res = false;
+  end else begin
+    res = true;
+  end;
+
+  DOLSoldINBalRClassOnOKWindow = res;
+  return;
+end;
+// :EVS
+
+// EVS: DOL-93
+global
+procedure DOLShopSalesRClassReportDefaults(Integer wn)
+begin
+  record RcVc RepSpec;
+
+  DeselectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  ReportDefaults(RepSpec,"DOLShopSalesRClass");
+  RepSpec.BaseWidth = 1200;
+  RepSpec.f1 = DOLGetUserLocation(CurrentUser);
+  RepSpec.f2 = "PARDUOTUVĖ"; // :( plaintext
+  RepSpec.flags[3] = 1; // EVS: DOL-152
+  PutWindowRecord(wn,RepSpec);
+  SelectWindow(wn);
+
+  return;
+end;
+
+global
+function Boolean DOLShopSalesRClassActiveEditField(Integer wn,string fieldname,Integer fn,Integer wnst,Integer rownr,Integer changed)
+begin
+  boolean res;
+
+  res = true;
+
+  if (fieldname == "f1") then begin
+    res = (DOLGetUserLocation(CurrentUser) == "");
+  end;
+
+  DOLShopSalesRClassActiveEditField = res;
+  return;
+end;
+// :EVS
+
+global
+function boolean EBS_ChangeINVarVClassOnOKWindow(integer wn)
+begin
+  record RcVc RepSpec;
+  string 255 errmsg,errfield;
+  boolean res;
+
+  DeselectWindow(wn,true);
+  GetWindowRecord(wn,RepSpec);
+
+  res = true;
+  if blank(Repspec.f1) then begin
+    MessageBox(1000074,"");
+    res = false;
+    WindowFieldGoto(wn,RepSpec,-1,"f1",true);
+    GoTo LEBS_ChangeINVarVClassOnOKWindow;
+  end;
+  if blank(RepSpec.f2) then begin
+    MessageBox(1000074,"");
+    res = false;
+    WindowFieldGoto(wn,RepSpec,-1,"f2",true);
+    GoTo LEBS_ChangeINVarVClassOnOKWindow;
+  end;
+  if blank(RepSpec.f3) then begin
+    MessageBox(1000074,"");
+    res = false;
+    WindowFieldGoto(wn,RepSpec,-1,"f3",true);
+    GoTo LEBS_ChangeINVarVClassOnOKWindow;
+  end;
+  if RepSpec.f1==RepSpec.f2 then begin
+    MessageBox(1000075,"");
+    res = false;
+    WindowFieldGoto(wn,RepSpec,-1,"f2",true);
+    GoTo LEBS_ChangeINVarVClassOnOKWindow;
+  end;
+
+  res = EBS_ChangeINVarVClassRemote(RepSpec,errmsg,errfield);
+  if !res then begin
+    MessageBox(0,errmsg);
+    WindowFieldGoto(wn,RepSpec,-1,errfield,true);
+    GoTo LEBS_ChangeINVarVClassOnOKWindow;
+  end;
+
+LEBS_ChangeINVarVClassOnOKWindow:;
+  SelectWindow(wn);
+  EBS_ChangeINVarVClassOnOKWindow = res;
+return;
+end;
+
+
+// EVS: DOL-111
+global
+function boolean DOLGenLCVClassOnOKWindow(Integer wn)
+begin
+  record RcVc RepSpec;
+  boolean res;
+  longint err,err_add;
+
+  res = true;
+
+  GetWindowRecord(wn,RepSpec);
+  if (RepSpec.f3 == "") then begin
+    MessageBox(1854,"");
+    WindowFieldGoto(wn,RepSpec,-1,"f3",true);
+    res = false;
+  end;
+  if (RepSpec.long2 < 0 and res) then begin
+    MessageBox(1854,"");
+    WindowFieldGoto(wn,RepSpec,-1,"long2",true);
+    res = false;
+  end;
+  if (blank(RepSpec.f1) and res) then begin
+    MessageBox(1854,"");
+    WindowFieldGoto(wn,RepSpec,-1,"f1",true);
+    res = false;
+  end;
+//  if (blank(RepSpec.f2) and res) then begin
+//    MessageBox(1854,"");
+//    WindowFieldGoto(wn,RepSpec,-1,"f2",true);
+//    res = false;
+//  end;
+
+  if (res) then begin
+    DOLGenLCMnCheckIfNumbersUsed(RepSpec,err,err_add);
+    if (err > -1) then begin
+      MessageBox(err,": " & err_add);
+      res = false;
+    end;
+  end;
+
+  DOLGenLCVClassOnOKWindow = res;
+  return;
+end;
+// :EVS
+
+
+// EVS: DOL-157
+global
+function Boolean VIJRClassAfterEditField(Integer wn,string fieldname,Integer fn,Integer rownr,Integer changed)
+BEGIN
+  Boolean res;
+  Date d1,d2;
+  string 30 tstr;
+  record RcVc RepSpec;
+
+  res = false;
+  switch (fieldname) begin
+    case "f9":
+      GetWindowRecord(wn,RepSpec);
+      In2Period(RepSpec.f9,d1,d2);
+      tstr = d1;
+      tstr = tstr & ":";
+      tstr = tstr & d2;
+      RepSpec.f9 = tstr;
+      PutWindowRecord(wn,RepSpec);
+  end;
+  VIJRClassAfterEditField = res;
+  RETURN;
+END;
+// :EVS

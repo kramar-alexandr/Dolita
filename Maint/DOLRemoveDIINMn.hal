@@ -1,0 +1,71 @@
+// EVS: DOL-114 auth
+external procedure CheckFlush(var Integer,Integer);
+external procedure ExtractObj(string,var Integer,var string);
+
+function string 255 RemoveClassFromItem(string dispgroups, string remdi)
+begin
+  longint pos;
+  string 255 res,onedi;
+  
+  pos = 0;
+  while (GetNextSubstring(dispgroups,pos,",",onedi)) begin
+    if (onedi != remdi) then begin
+      if (res != "") then begin
+        res = res & ",";
+      end;
+      res = res & onedi;
+    end;
+  end;
+  RemoveClassFromItem = res;
+  return;
+end;
+
+global
+updating procedure DOLRemoveDIINMn(record RcVc RepSpec)
+begin
+  record INVc INr,IN2r;
+  boolean TrHs,testf;
+  string 20 frin,toin,key;
+  integer keycnt;
+  
+  
+  frin = FirstInRange(RepSpec.f1,20);
+  toin = LastInRange(RepSpec.f1,20);
+  INr.Code = frin;
+  key = "Code";
+  keycnt = 1;
+  if (nonblank(RepSpec.f2)) then begin
+    INr.Group = RepSpec.f2;
+    key = "Group";
+    if (nonblank(RepSpec.f1)) then begin
+      keycnt = 2;
+    end;
+  end;
+
+  TrHs = nonblank(RepSpec.FirstAcc);
+  while (LoopKey(key,INr,keycnt,TrHs)) begin 
+    if (nonblank(RepSpec.f1)) then begin 
+      if (INr.Code<frin) then begin TrHs = false; end;
+      if (Inr.Code>toin) then begin TrHs = false; end;
+    end;
+    if (nonblank(RepSpec.f2)) then begin
+      if (INr.Group != RepSpec.f2) then begin 
+        trhs = false;
+      end;
+    end;
+    if (TrHs) then begin
+      testf = true;
+      if (!SetInSet(RepSpec.FirstAcc,INr.DispGroups)) then begin
+        testf = false;
+      end;
+      if (testf) then begin
+        RecordCopy(IN2r,INr);
+        INr.DispGroups = RemoveClassFromItem(INr.DispGroups,RepSpec.FirstAcc);
+        MaintTrace(INr.Code); 
+        if (RecordUpdate(IN2r,INr,false)==0) then begin end;
+      end;
+    end;
+  end;
+  
+  return;
+end;

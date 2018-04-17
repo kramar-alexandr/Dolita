@@ -1,0 +1,77 @@
+remote function string 60 AddLocationObject(string,string,boolean);
+
+global
+function LongInt SDVcRecordDefaults(var record SDVc SDr,record SDVc SD2r,LongInt long3,LongInt long4)
+begin
+  LongInt res;
+  
+  res = inner.SDVcRecordDefaults(SDr,SD2r,long3,long4);
+  SDr.Objects = AddLocationObject(SDr.Objects,SDr.Location,true); 
+  
+  SDVcRecordDefaults = res;
+  return;
+end;
+
+global
+function LongInt SDVcRecordDefaultsClient(LongInt wn,var record SDVc SDr,record SDVc SD2r,LongInt long3,LongInt long4)
+begin
+  LongInt res;
+  
+  res = inner.SDVcRecordDefaultsClient(wn,SDr,SD2r,long3,long4);
+  SDr.Objects = AddLocationObject(SDr.Objects,SDr.Location,true); 
+  
+  return;
+end;
+
+global
+function LongInt SDVcRecordDuplicate(var record SDVc SDr,record SDVc SD2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  
+  res = inner.SDVcRecordDuplicate(SDr,SD2r,stat,long4);
+  SDr.DoNotGenTrans = 0;
+  
+  SDVcRecordDuplicate = res;
+  RETURN;
+END;
+
+procedure UpdateSDRowGP(var record SDVc SDr) begin
+  row SDVc SDrw;
+  integer i,rwc;
+  
+  rwc = MatRowCnt(SDr);
+  for(i=0;i<rwc;i=i+1)begin
+    MatRowGet(SDR,i,SDrw);
+    SDrw.RowGP = blankval;
+    if SDrw.SalesPriceNoVAT<>0 then begin
+      SDrw.RowGP = (SDrw.SalesPriceNoVAT * SDrw.Qty) - SDrw.FIFO; 
+    end;
+    MatRowPut(SDr,i,SDrw);
+  end;
+  
+return;
+end;
+
+global
+function LongInt SDVcRecordSave(var record SDVc SDr,record SDVc SD2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  
+  res = inner.SDVcRecordSave(SDr,SD2r,stat,long4);
+  UpdateSDRowGP(SDr);
+  
+  SDVcRecordSave = res;
+  RETURN;
+END;
+
+global
+function LongInt SDVcRecordUpdate(var record SDVc SDr,record SDVc SD2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  
+  res = inner.SDVcRecordUpdate(SDr,SD2r,stat,long4);
+  UpdateSDRowGP(SDr);
+  
+  SDVcRecordUpdate = res;
+  RETURN;
+END;

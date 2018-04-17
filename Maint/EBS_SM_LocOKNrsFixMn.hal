@@ -1,0 +1,65 @@
+
+event startup
+begin
+  SetLangMode(LangLithuanian,"LIT",2);
+
+  Maintenance("Fix LocOK numbers in Stock movement",EBS_SM_LocOKNrsFixVClass,EBS_SM_LocOKNrsFixMn,modTC);
+
+  return;
+end;
+
+event DefineWindows
+begin
+
+  SetLangMode(LangLithuanian,"LIT",2);
+
+  WindowBegin("Fix LocOK numbers in Stock movement",EBS_SM_LocOKNrsFixVClass,CGMnt,RcType);
+    SetWRect(20,80,450,150);
+    StaticText(20,20,"This maintenacne fixes locOK numbers in",false);
+    StaticText(20,36,"stock movement records",false);
+  EndWindow;
+
+  return;
+end;
+
+global updating
+procedure EBS_SM_LocOKNrsFixMn(Record RcVc RepSpec)
+Begin
+  record StockMovVc StockMovr,oldStockMovr;
+  boolean testf,wloop;
+
+  ResetLoop(StockMovr);
+  StockMovr.SerNr = -1;
+  wloop = true;
+  While LoopMain(StockMovr,1,wloop) begin
+    testf = true;
+    if blank(StockMovr.ThrouLocation) then begin
+      testf = false;
+    end;
+    if nonblank(StockMovr.FrThrouLocOKNr) and nonblank(StockMovr.ToLocOKNr) then begin
+      testf = false;
+    end;
+    if StockMovr.OKFlag == 0 then begin
+      testf = false;
+    end;
+    if testf then begin
+      if blank(StockMovr.ToThrouLocOKNr) or blank(StockMovr.FrLocOKNr) then begin
+        LogText(0,"EBS_SM_LocOKNrsFixMn ERROR :: ToThrouLocOKNr or FrLocOKNr is empty for SM " & StockMovr.SerNr);
+        testf = false;
+      end;
+    end;
+    if testf then begin
+      RecordCopy(oldStockMovr,StockMovr);
+      if blank(StockMovr.FrThrouLocOKNr) then begin
+        StockMovr.FrThrouLocOKNr = StockMovr.ToThrouLocOKNr + 1;
+      end;
+      if blank(StockMovr.ToLocOKNr) then begin
+        StockMovr.ToLocOKNr = StockMovr.FrThrouLocOKNr + 1;
+      end;
+      RecordUpdate(oldStockMovr,StockMovr,false);
+      LogText(0,"EBS_SM_LocOKNrsFixMn INFO :: Found and fixed incorrect locOK numbers in SM " & StockMovr.SerNr);
+    end;
+  end;
+
+return;
+end;

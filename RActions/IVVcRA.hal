@@ -1,0 +1,24 @@
+remote function string 60 AddLocationObject(string,string,boolean);
+
+global
+function LongInt IVVcRecordDefaults(var record IVVc IVr,record IVVc IV2r,LongInt long3,LongInt long4)
+begin
+  LongInt res;
+  
+  res = inner.IVVcRecordDefaults(IVr,IV2r,long3,long4);
+  IVr.Objects = AddLocationObject(IVr.Objects,IVr.Location,true); 
+  
+  IVVcRecordDefaults = res;
+  return;
+end;
+
+global
+function LongInt IVVcRecordDefaultsClient(LongInt wn,var record IVVc IVr,record IVVc IV2r,LongInt long3,LongInt long4)
+begin
+  LongInt res;
+  
+  res = inner.IVVcRecordDefaultsClient(wn,IVr,IV2r,long3,long4);
+  IVr.Objects = AddLocationObject(IVr.Objects,IVr.Location,true); 
+  
+  return;
+end;

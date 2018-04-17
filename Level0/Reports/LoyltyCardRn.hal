@@ -1,0 +1,785 @@
+external procedure HT2Per(Date, Date , var string);
+external procedure HTCusts(string, string, var string);
+external procedure HTCustClass(string,var string);
+external function Boolean SetInSet2(string,string);
+external function val MulRateToBase1(var string,val,val,val,val,val,val,roundmode);
+external function val GetLCardStartBalance(string,string,date); 
+external procedure HTCustCat(string,var string);
+external procedure HTMembershipLvl(string, var string);  // JP: DOL-90
+external procedure HTPointsBalance(string, var string);  // JP: DOL-90
+external procedure HTPointsPerPeriod(string, var string);  // JP: DOL-90
+
+// EVS: DOL-90
+function boolean CheckLCPointsAndBalance(record RcVc RepSpec, string lcnr)
+begin
+  record PointsHistVc PHr;
+  record LoyaltyCardVc LoyaltyCardr;
+  record IVVc IVr;
+  record IVCashVc IVCashr;
+  record RestAccVc RestAccr;
+  boolean trhs,res,oncef;
+  Integer koef;
+  val points,bal,invoices,t;
+  
+  PHr.LMCardNr = lcnr;
+  TrHs = true;
+  while (LoopKey("CardDate",PHr,1,TrHs)) begin 
+    if (PHr.LMCardNr != lcnr) then begin
+      trhs = false;
+    end else begin
+      if (!oncef) then begin
+        LoyaltyCardr.SerNr = PHr.LMCardNr;
+        if (ReadFirstMain(LoyaltyCardr,1,true)) then begin
+          bal = GetLCardStartBalance(LoyaltyCardr.SerNr,RepSpec.AccStr,RepSpec.sStartDate);
+        end;
+        points = bal;
+        oncef = true;
+      end;
+      if (DateInRange(PHr.TransDate,RepSpec.sStartDate,RepSpec.sEndDate)) then begin 
+        switch (PHr.FileName) begin
+          case "IVVc": 
+            IVr.SerNr = PHr.TransNr;
+            koef = 1;
+            if (PHr.Points<0) then begin
+              koef = -1;
+            end;
+            if (ReadFirstMain(IVr,1,true)) then begin 
+              if (IVr.InvType==kInvoiceTypeCredit or IVr.InvType==kInvoiceTypeCreditSpecialSales) then begin 
+                koef = -1;
+              end;  
+              if (IVr.Invalid!=1) then begin 
+                points   = points + IVr.Points*koef;
+                t = MulRateToBase1(IVr.CurncyCode,IVr.Sum4,IVr.FrRate,IVr.ToRateB1,IVr.ToRateB2,IVr.BaseRate1,IVr.BaseRate2,DefaultCurRoundOff);
+                invoices = invoices + t*koef;
+              end;  
+            end;
+          case "IVCashVc":
+            IVCashr.SerNr = PHr.TransNr;
+            koef = 1;
+            if (PHr.Points<0) then begin
+              koef = -1;
+            end;
+            if (ReadFirstMain(IVCashr,1,true)) then begin 
+              if (IVCashr.Invalid!=1) then begin 
+                points   = points + PHr.Points;
+                t = MulRateToBase1(IVCashr.CurncyCode,IVCashr.Sum4,IVCashr.FrRate,IVCashr.ToRateB1,IVCashr.ToRateB2,IVCashr.BaseRate1,IVCashr.BaseRate2,DefaultCurRoundOff);
+                invoices = invoices + t*koef;
+              end;  
+            end;  
+          case "RestAccVc":
+            RestAccr.SerNr = PHr.TransNr;
+            koef = 1;
+            if (PHr.Points<0) then begin
+              koef = -1;
+            end;
+            if (ReadFirstMain(RestAccr,1,true)) then begin 
+              if (RestAccr.Invalid==0) then begin 
+                points = points + PHr.Points;
+                t = RestAccr.Sum4;
+                invoices = invoices + t*koef;
+              end;  
+            end;  
+        end;
+      end; 
+    end;
+  end;
+  
+  res = true;
+  
+  if (RepSpec.vals1 != blankval and RepSpec.vals1 > points) then begin
+    res = false;
+  end;
+  if ((RepSpec.vals0 != blankval and RepSpec.vals0 > (points+bal)) and res) then begin
+    res = false;
+  end;
+  
+  CheckLCPointsAndBalance = res;
+return;
+end;
+// :EVS
+
+procedure PrintLCard(record RcVc RepSpec,var boolean printcard,record PointsHistVc PHr, var val points, var val invoices,var val bal)
+begin 
+  record LoyaltyCardVc LoyaltyCardr;
+  record CUVc CUr;
+  record IVVc IVr;
+  record IVCashVc IVCashr;
+  record RestAccVc RestAccr;
+  Integer koef;
+  val t;
+
+  if (printcard==false) then begin 
+    LoyaltyCardr.SerNr = PHr.LMCardNr;
+    if (ReadFirstMain(LoyaltyCardr,1,true)) then begin end;
+    bal = GetLCardStartBalance(LoyaltyCardr.SerNr,RepSpec.AccStr,RepSpec.sStartDate);
+    printcard = true;
+    
+    // EVS: DOL-90 moved to other values printout
+//    if (RepSpec.ArtMode==0) then begin
+//      StartFormat(15);
+//      OutString(0,"DblLCardVc",PHr.LMCardNr,false);
+//      OutString(80,"DblCUVc",PHr.CustCode,false);
+//      OutString(120,0,LoyaltyCardr.CustName,false);
+//      OutVal(260,0,bal,M4Val,true);
+//    end;
+    if (RepSpec.ArtMode==1) then begin
+      points = bal;
+
+      StartFormat(15);
+      OutString(0,"DblLCardVc",PHr.LMCardNr,false);
+      OutString(100,"DblCUVc",PHr.CustCode,false);
+      OutString(160,0,LoyaltyCardr.CustName,false);
+      EndFormat;
+      if (DateInRange(PHr.TransDate,RepSpec.sStartDate,RepSpec.sEndDate)) then begin 
+        Black_Divider(0,1);
+        StartFormat(15);
+        OutString(0,0,USetStr(19269),false);
+        OutString(100,0,USetStr(19270),false);
+        OutString(180,0,USetStr(19271),false);
+        OutString(260,0,USetStr(19274),false);
+        OutString(360,0,USetStr(19272),true);
+        OutString(1,0,USetStr(19273),true);
+        EndFormat;
+      end;  
+
+      Gray_Divider(0,1);
+      StartFormat(15);
+      OutString(100,0,USetStr(19275),false);
+      OutVal(1,0,bal,M4Val,true);
+      EndFormat;
+    end;  
+  end;
+  if (DateInRange(PHr.TransDate,RepSpec.sStartDate,RepSpec.sEndDate)==true) then begin
+    switch (PHr.FileName) begin
+      case "IVVc": 
+        IVr.SerNr = PHr.TransNr;
+        koef = 1;
+        if (PHr.Points<0) then begin
+          koef = -1;
+        end;
+        if (ReadFirstMain(IVr,1,true)) then begin 
+          if (IVr.InvType==kInvoiceTypeCredit or IVr.InvType==kInvoiceTypeCreditSpecialSales) then begin 
+            koef = -1;
+          end;  
+          if (IVr.Invalid!=1) then begin 
+            points   = points + IVr.Points*koef;
+            t = MulRateToBase1(IVr.CurncyCode,IVr.Sum4,IVr.FrRate,IVr.ToRateB1,IVr.ToRateB2,IVr.BaseRate1,IVr.BaseRate2,DefaultCurRoundOff);
+            invoices = invoices + t*koef;
+            if (RepSpec.ArtMode==1) then begin
+              StartFormat(15);
+              OutLongIntOvst(0,"DblIVVc",IVr.SerNr,false,IVr.Invalid);
+              OutString(100,0,IVr.TransDate,false);
+              OutString(180,0,IVr.LCMLevel,false);
+              OutString(260,"DblLCardVc",PHr.PointsFrom,false);
+              OutVal(360,0,t*koef,M4Val,true);
+              OutVal(1,0,PHr.Points,M4Val,true);
+              EndFormat;
+            end;
+          end;  
+        end;
+      case "IVCashVc":
+        IVCashr.SerNr = PHr.TransNr;
+        koef = 1;
+        if (PHr.Points<0) then begin
+          koef = -1;
+        end;
+        if (ReadFirstMain(IVCashr,1,true)) then begin 
+          if (IVCashr.Invalid!=1) then begin 
+            points   = points + PHr.Points;
+            t = MulRateToBase1(IVCashr.CurncyCode,IVCashr.Sum4,IVCashr.FrRate,IVCashr.ToRateB1,IVCashr.ToRateB2,IVCashr.BaseRate1,IVCashr.BaseRate2,DefaultCurRoundOff);
+            invoices = invoices + t*koef;
+            if (RepSpec.ArtMode==1) then begin
+              StartFormat(15);
+              OutLongIntOvst(0,"DblIVCash",IVCashr.SerNr,false,IVCashr.Invalid);
+              OutString(100,0,IVCashr.TransDate,false);
+              OutString(180,0,IVCashr.LCMLevel,false);
+              OutString(260,"DblLCardVc",PHr.PointsFrom,false);
+              OutVal(360,0,t*koef,M4Val,true);
+              OutVal(1,0,PHr.Points,M4Val,true);
+              EndFormat;
+            end;
+          end;  
+        end;  
+      case "RestAccVc":
+        RestAccr.SerNr = PHr.TransNr;
+        koef = 1;
+        if (PHr.Points<0) then begin
+          koef = -1;
+        end;
+        if (ReadFirstMain(RestAccr,1,true)) then begin 
+          if (RestAccr.Invalid==0) then begin 
+            points = points + PHr.Points;
+            t = RestAccr.Sum4;
+            invoices = invoices + t*koef;
+            if (RepSpec.ArtMode==1) then begin
+              StartFormat(15);
+              OutLongIntOvst(0,"DblRestAccVc",RestAccr.SerNr,false,RestAccr.Invalid);
+              OutString(100,0,RestAccr.TransDate,false);
+              OutString(180,0,RestAccr.LCMLevel,false);
+              OutString(260,"DblLCardVc",PHr.PointsFrom,false);
+              OutVal(360,0,t*koef,M4Val,true);
+              OutVal(1,0,PHr.Points,M4Val,true);
+              EndFormat;
+            end;
+          end;  
+        end;  
+      case "LoyaltyCardVc":
+        StartFormat(15);
+        OutLongIntOvst(0,"DblLCardVc",PHr.PointsFrom,false,0);
+        OutString(100,0,PHr.TransDate,false);
+        OutString(180,0,"",false);
+        OutString(260,"DblLCardVc",PHr.PointsFrom,false);
+        OutVal(360,0,PHr.Points,M4Val,true);
+        OutVal(1,0,PHr.Points,M4Val,true);
+        EndFormat;     
+        points   = points + PHr.Points;
+    end;
+  end;  
+
+  return;
+end;  
+
+// EVS: DOL-155
+function boolean HasOpsInPeriod(record RcVc RepSpec, string lmcardnr)
+begin
+  record PointsHistVc PHr;
+  boolean foundf,trhs;
+  
+  PHr.LMCardNr = lmcardnr;
+  PHr.TransDate = RepSpec.sStartDate;
+  trhs = true;
+  while (LoopKey("CardDate",PHr,2,trhs)) begin
+    if (PHr.TransDate > RepSpec.sEndDate or PHr.LMCardNr != lmcardnr) then begin
+      trhs = true;
+    end else begin
+      trhs = false;
+      foundf = true;
+    end;
+  end;
+  
+  HasOpsInPeriod = foundf;
+return;
+end;
+
+function string 60 GetPhone(string customer)
+begin 
+  record CUVc CUr;
+  string 60 res;
+  
+  res = "";
+  
+  Cur.Code = customer;
+  if (ReadFirstMain(CUr,1,true)) then begin
+    res = CUr.Phone;
+  end;
+  
+  GetPhone = res;
+return;
+end;
+
+// :EVS
+
+global
+procedure LoyaltyCardRn(record RcVc RepSpec)
+begin 
+  record PointsHistVc PHr;
+  record CUVc CUr;
+  record LoyaltyCardVc LoyaltyCardr,LoyaltyCard2r; //JP: DOL-90 
+  boolean TrHs,testf;
+  integer rw,x0;
+  string 255 tstr;
+  Boolean printcard;
+  val points,cpoints,tpoints;
+  val invoices,cinvoices,tinvoices,startbal;
+  val tbal;
+  string 20 card,customer;
+  vector boolean v_pointsfailf;
+  vector boolean v_lccheckedf;
+  
+  StartReportJob(USetStr(19260));
+  points = 0;
+  cpoints = 0;
+  tpoints = 0;
+  rw = 1;
+  HT2Per(RepSpec.sStartDate,RepSpec.sEndDate,tstr);
+  Header(rw,tstr,1);
+  rw = rw + 1;
+  if (nonblank(RepSpec.f1)) then begin 
+    tstr = UsetStr(19261) & ":" & RepSpec.f1;  
+    Header(rw,tstr,1);
+    rw = rw + 1;
+  end;
+  HTCusts(RepSpec.f2,RepSpec.f2,tstr);
+  Header(rw,tstr,1); 
+  rw = rw + 1;
+  HTCustClass(RepSpec.f3,tstr);
+  if (nonblank(tstr)) then begin
+    Header(rw,tstr,1);
+    rw = rw + 1;
+  end; 
+  HTCustCat(RepSpec.f4,tstr);
+  if (nonblank(tstr)) then begin
+    Header(rw,tstr,1);
+    rw = rw + 1;
+  end;
+  HTMembershipLvl(RepSpec.f5,tstr);  // JP: DOL-90
+  if (nonblank(tstr)) then begin  
+    Header(rw,tstr,1);
+    rw = rw + 1;
+  end; //:JP
+  HTPointsBalance(RepSpec.vals0,tstr);  // JP: DOL-90
+  if (nonblank(tstr)) then begin  
+    Header(rw,tstr,1);
+    rw = rw + 1;
+  end; //:JP
+  HTPointsPerPeriod(RepSpec.vals1,tstr);  // JP: DOL-90
+  if (nonblank(tstr)) then begin  
+    Header(rw,tstr,1);
+    rw = rw + 1;
+  end; //:JP
+  if (RepSpec.flags[2] == 1) then begin
+    Header(rw,USetStr(1000127),1);
+    rw = rw + 1;
+  end;
+  if (RepSpec.flags[3] == 1) then begin
+    Header(rw,USetStr(1000128),1);
+    rw = rw + 1;
+  end;
+  EndHeader;
+  
+  x0 = 230;
+  
+  if (RepSpec.ArtMode==0) then begin
+    StartFormat(15);
+    OutString(0,0,USetStr(19261),false);
+    OutString(80,0,USetStr(19262),false);
+    OutString(120,0,USetStr(19263),false);
+    OutString(x0,0,USetStr(1000125),false);
+    OutString(330,0,USetStr(19275),true);
+    OutString(380,0,USetStr(19264),true);
+    OutString(435,0,USetStr(19273),true);  
+    OutString(1,0,USetStr(19276),true);
+    EndFormat;
+  end; 
+   if (RepSpec.ArtMode==1) then begin
+    StartFormat(15);
+    OutString(0,0,USetStr(19261),false);
+    OutString(100,0,USetStr(19262),false);
+    OutString(160,0,USetStr(19263),false);
+    OutString(360,0,USetStr(19264),true);
+    OutString(1,0,USetStr(19265),true);
+    EndFormat;
+  end; 
+  Gray_Divider(0,1);
+
+  if (nonblank(RepSpec.f1)) then begin 
+    printcard = false;
+    PHr.LMCardNr = RepSpec.f1;
+    TrHs = true;
+    while (LoopKey("CardDate",PHr,1,TrHs)) begin 
+      testf = true;
+      if (PHr.LMCardNr!=RepSpec.f1) then begin 
+        TrHs = false;
+        testf = false;
+      end;
+      // EVS: DOL-90
+      if (nonblank(RepSpec.f5)) then begin
+        LoyaltyCardr.SerNr = PHr.LMCardNr;
+        if (ReadFirstMain(LoyaltyCardr,1,true)) then begin
+          if (LoyaltyCardr.LCMLevel != RepSpec.f5) then begin
+            trhs = false;
+            testf = false;
+          end;
+        end;
+      end;
+      if (RepSpec.ArtMode == 1 and testf and trhs) then begin
+        if (!CheckLCPointsAndBalance(RepSpec,PHr.LMCardNr)) then begin
+          trhs = false;
+          testf = false;
+        end;
+      end;
+      // :EVS
+      // EVS: DOL-155
+      if (RepSpec.flags[1]==1) then begin 
+        if (DateInRange(PHr.TransDate,RepSpec.sStartDate,RepSpec.sEndDate)==false) then begin
+          testf = false;
+        end;
+      end;
+      if (RepSpec.flags[1]==2) then begin 
+        if (DateInRange(PHr.TransDate,RepSpec.sStartDate,RepSpec.sEndDate)) then begin
+          testf = false;
+        end else begin
+          if (HasOpsInPeriod(RepSpec,PHr.LMCardNr)) then begin
+            testf = false;
+          end;
+        end;
+      end;
+//      if (RepSpec.flags[1]==1) then begin 
+//        if (DateInRange(PHr.TransDate,RepSpec.sStartDate,RepSpec.sEndDate)==false) then begin
+//          testf = false;
+//        end else begin 
+//          if (PHr.TransDate>RepSpec.sEndDate) then begin 
+//            testf = false;
+//          end;  
+//        end;
+//      end;  
+      if (RepSpec.flags[2] == 1) then begin
+        LoyaltyCardr.SerNr = PHr.LMCardNr;
+        if (ReadFirstMain(LoyaltyCardr,1,true)) then begin
+          if (LoyaltyCardr.Closed == 1) then begin
+            testf = false;
+          end;
+        end;
+      end;
+      if (RepSpec.flags[3] == 1) then begin
+        CUr.Code = PHr.CustCode;
+        if (ReadFirstMain(CUr,1,true)) then begin
+          if (CUr.NoLetterPosting == 1) then begin
+            testf = false;
+          end;
+        end;
+      end;
+      // :EVS
+      if (nonblank(RepSpec.LastAcc)) then begin
+        if (PHr.Location!=RepSpec.LastAcc) then begin testf = false; end;
+      end;
+      if (testf) then begin
+        PrintLCard(RepSpec,printcard,PHr,points,invoices,startbal);
+        // EVS: DOL-90
+        card = PHr.LMCardNr;
+        customer = PHr.CustCode;
+        // :EVS
+      end;
+    end;  
+    if (printcard==true) then begin 
+      tbal = tbal + startbal;
+    end;
+  end else begin 
+    //customer is specified
+    if nonblank(RepSpec.f2) then begin 
+      PHr.CustCode = RepSpec.f2;
+    end;
+    TrHs = true;
+    while (LoopKey("CustCode",PHr,1,TrHs)) begin 
+      testf = true;
+      if (nonblank(RepSpec.f2)) then begin 
+        if (PHr.CustCode!=RepSpec.f2) then begin 
+          TrHs = false;
+          testf = false;
+        end;
+      end;
+      // EVS: DOL-155
+      if (RepSpec.flags[1]==1) then begin 
+        if (DateInRange(PHr.TransDate,RepSpec.sStartDate,RepSpec.sEndDate)==false) then begin
+          testf = false;
+        end;
+      end;
+      if (RepSpec.flags[1]==2) then begin 
+        if (DateInRange(PHr.TransDate,RepSpec.sStartDate,RepSpec.sEndDate)) then begin
+          testf = false;
+        end else begin
+          if (HasOpsInPeriod(RepSpec,PHr.LMCardNr)) then begin
+            testf = false;
+          end;
+        end;
+      end;
+//      if (RepSpec.flags[1]==1) then begin 
+//        if (DateInRange(PHr.TransDate,RepSpec.sStartDate,RepSpec.sEndDate)==false) then begin
+//          testf = false;
+//        end;
+//      end else begin 
+//        if (PHr.TransDate>RepSpec.sEndDate) then begin 
+//          testf = false;
+//        end;  
+//      end;  
+      if (RepSpec.flags[2] == 1) then begin
+        LoyaltyCardr.SerNr = PHr.LMCardNr;
+        if (ReadFirstMain(LoyaltyCardr,1,true)) then begin
+          if (LoyaltyCardr.Closed == 1) then begin
+            testf = false;
+          end;
+        end;
+      end;
+      if (RepSpec.flags[3] == 1) then begin
+        CUr.Code = PHr.CustCode;
+        if (ReadFirstMain(CUr,1,true)) then begin
+          if (CUr.NoLetterPosting == 1) then begin
+            testf = false;
+          end;
+        end;
+      end;
+      // :EVS
+      if (nonblank(RepSpec.LastAcc)) then begin
+        if (PHr.Location!=RepSpec.LastAcc) then begin testf = false; end;
+      end;
+      LoyaltyCardr.SerNr = PHr.LMCardNr; //JP: DOL-90
+      if (nonblank(RepSpec.f5)) then begin
+        if (ReadFirstMain(LoyaltyCardr,1,true)) then begin
+          if (LoyaltyCardr.LCMLevel!=RepSpec.f5) then begin testf = false; end;
+        end; // :JP 
+      end; 
+      if (testf) then begin 
+        if (nonblank(RepSpec.f3) or nonblank(RepSpec.f4))  then begin 
+          CUr.Code = PHr.CustCode;
+          if (ReadFirstMain(CUr,1,true)) then begin end;
+          if (nonblank(RepSpec.f3)) then begin 
+            if (SetInSet2(RepSpec.f3,CUr.Classification)==false) then begin 
+              testf = false;
+            end;
+          end;  
+          if (nonblank(RepSpec.f4)) then begin 
+            if (CUr.CustCat!=RepSpec.f4) then begin 
+              testf = false;
+            end;
+          end;
+        end;
+      end;
+      // EVS: DOL-90
+      if (testf and RepSpec.ArtMode == 1) then begin
+        if (!v_lccheckedf[PHr.LMCardNr]) then begin
+          if (!CheckLCPointsAndBalance(RepSpec,PHr.LMCardNr)) then begin
+            testf = false;
+            v_pointsfailf[PHr.LMCardNr] = true;
+          end;
+          v_lccheckedf[PHr.LMCardNr] = true;
+        end else begin
+          if (v_pointsfailf[PHr.LMCardNr]) then begin
+            testf = false;
+          end;
+        end;
+      end;
+      // :EVS
+      if (testf) then begin
+        if (blank(card) or (PHr.LMCardNr!=card)) then begin
+          //cust total
+          if (nonblank(card) and printcard==true) then begin 
+            if (RepSpec.ArtMode==0) then begin
+              if (RepSpec.vals1 == blankval or RepSpec.vals1 <= points) then begin // EVS: DOL-90
+                if (RepSpec.vals0 == blankval or RepSpec.vals0 <= (points+startbal)) then begin // EVS: DOL-90
+                  // EVS: DOL-90
+                  if (nonblank(card)) then begin
+                    StartFormat(15);
+                    OutString(0,"DblLCardVc",card,false);
+                    OutString(80,"DblCUVc",customer,false);
+                    LoyaltyCardr.SerNr = card;
+                    if (ReadFirstMain(LoyaltyCardr,1,true)) then begin
+                      OutString(120,0,LoyaltyCardr.CustName,false);
+                    end else begin
+                      OutString(120,0,"---",false);
+                    end;
+                    OutString(x0,0,GetPhone(customer),false);
+                    OutVal(330,0,GetLCardStartBalance(card,RepSpec.AccStr,RepSpec.sStartDate),M4Val,true);
+                    // :EVS
+                    OutVal(380,0,invoices,M4Val,true);
+                    OutVal(435,0,points,M4Val,true);
+                    OutVal(1,0,points+startbal,M4Val,true);
+                    EndFormat;
+                    tbal = tbal + startbal;
+                  end;
+                end;
+              end;
+            end;
+            if (RepSpec.ArtMode==1) then begin
+              Gray_Divider(0,1);
+              StartFormat(15);
+              OutString(100,0,USetStr(19266),false);
+              OutVal(360,0,invoices,M4Val,true);
+              OutVal(1,0,points,M4Val,true);
+              EndFormat;
+              StartFormat(15);
+              EndFormat;
+              Black_Divider(0,1);
+            end;  
+            if (RepSpec.vals1 == blankval or RepSpec.vals1 <= points) then begin // EVS: DOL-90
+              if (RepSpec.vals0 == blankval or RepSpec.vals0 <= (points+startbal)) then begin // EVS: DOL-90s
+                cpoints = cpoints + points;
+                cinvoices = cinvoices + invoices;
+                tpoints = tpoints + points;
+                tinvoices = tinvoices + invoices;
+              end;
+            end;
+            printcard = false;
+          end; 
+          card = PHr.LMCardNr;
+          points   = 0;
+          invoices = 0;
+        end;
+        if (blank(customer) or PHr.CustCode!=customer) then begin
+          //cust total
+          if (nonblank(customer) and RepSpec.ArtMode==1) then begin 
+            StartFormat(15);
+            OutString(100,0,USetStr(19267),false);
+            OutVal (360,0,cinvoices,M4Val,true);
+            OutVal(1,0,cpoints,M4Val,true);
+            EndFormat;
+            StartFormat(15);
+            EndFormat;
+          end;  
+          customer = PHr.CustCode;
+          card = PHr.LMCardNr;          
+          printcard = false;
+          cpoints   = 0;
+          cinvoices = 0;
+        end;
+        PrintLCard(RepSpec,printcard,PHr,points,invoices,startbal);
+      end;
+    end; 
+  end;
+  if (RepSpec.vals1 == blankval or RepSpec.vals1 <= points) then begin // EVS: DOL-90
+    if (RepSpec.vals0 == blankval or RepSpec.vals0 <= (points+startbal)) then begin // EVS: DOL-90
+      // EVS: DOL-90
+      if (RepSpec.ArtMode == 0) then begin
+        // EVS: DOL-90
+        if (nonblank(card)) then begin
+          StartFormat(15);
+          OutString(0,"DblLCardVc",card,false);
+          OutString(80,"DblCUVc",customer,false);
+          LoyaltyCardr.SerNr = card;
+          if (ReadFirstMain(LoyaltyCardr,1,true)) then begin
+            OutString(120,0,LoyaltyCardr.CustName,false);
+          end else begin
+            OutString(120,0,"---",false);
+          end;
+          OutString(x0,0,GetPhone(customer),false);
+          OutVal(330,0,GetLCardStartBalance(card,RepSpec.AccStr,RepSpec.sStartDate),M4Val,true);
+        end;
+      end;
+      if (blank(RepSpec.f1)) then begin
+        tbal = tbal + startbal;
+      end;
+      // :EVS
+      cpoints = cpoints + points;
+      cinvoices = cinvoices + invoices;
+      tpoints = tpoints + points;
+      tinvoices = tinvoices + invoices;
+    end;
+  end;
+  
+  if (RepSpec.ArtMode==1) then begin
+//    if (invoices!=0 or points!=0) then begin 
+      Gray_Divider(0,1);
+      StartFormat(15);
+      OutString(100,0,USetStr(19266),false);
+      OutVal(360,0,invoices,M4Val,true);
+      OutVal(1,0,points,M4Val,true);
+      EndFormat;
+//    end;
+//    if (cinvoices!=0 or cpoints!=0) then begin 
+      Black_Divider(0,1);
+      StartFormat(15);
+      OutString(100,0,USetStr(19267),false);
+      OutVal(360,0,cinvoices,M4Val,true);
+      OutVal(1,0,cpoints,M4Val,true);
+      EndFormat;
+      //StartFormat(15);
+      //EndFormat;
+//    end;  
+  end; 
+  
+//  if (invoices!=0 or points!=0 or startbal!=0) then begin 
+    if (RepSpec.ArtMode==0) then begin
+      if (RepSpec.vals1 == blankval or RepSpec.vals1 <= points) then begin // EVS: DOL-90
+        if (RepSpec.vals0 == blankval or RepSpec.vals0 <= (points+startbal)) then begin // EVS: DOL-90
+          if (nonblank(card)) then begin
+            OutVal(380,0,invoices,M4Val,true);
+            OutVal(435,0,points,M4Val,true);
+            OutVal(1,0,points+startbal,M4Val,true);
+            EndFormat;
+          end;
+        end;
+      end;
+    end;
+//    EndFormat;
+//  end; 
+  
+  // EVS: DOL-155 display all the cards that have no actions in the database at all
+  if (RepSpec.flags[1] == 0 or RepSpec.flags[1] == 2) then begin
+    ResetLoop(LoyaltyCard2r);
+    while (LoopMain(LoyaltyCard2r,1,true)) begin
+      testf = true;
+      if (RepSpec.flags[2] == 1 and LoyaltyCard2r.Closed == 1) then begin
+        testf = false;
+      end;
+      if (RepSpec.flags[3] == 1) then begin
+        CUr.Code = LoyaltyCard2r.CustCode;
+        if (ReadFirstMain(CUr,1,true)) then begin
+          if (CUr.NoLetterPosting == 1) then begin
+            testf = false;
+          end;
+        end;
+      end;
+      
+      if (nonblank(RepSpec.f5)) then begin
+        if (LoyaltyCard2r.LCMLevel!=RepSpec.f5) then begin testf = false; end;
+      end; 
+      if (testf) then begin 
+        if (nonblank(RepSpec.f3) or nonblank(RepSpec.f4))  then begin 
+          CUr.Code = LoyaltyCard2r.CustCode;
+          if (ReadFirstMain(CUr,1,true)) then begin end;
+          if (nonblank(RepSpec.f3)) then begin 
+            if (SetInSet2(RepSpec.f3,CUr.Classification)==false) then begin 
+              testf = false;
+            end;
+          end;  
+          if (nonblank(RepSpec.f4)) then begin 
+            if (CUr.CustCat!=RepSpec.f4) then begin 
+              testf = false;
+            end;
+          end;
+        end;
+      end;
+      
+      if (nonblank(RepSpec.f1) and LoyaltyCard2r.SerNr != RepSpec.f1) then begin
+        testf = false;
+      end;
+      if (nonblank(RepSpec.f2) and LoyaltyCard2r.CustCode != RepSpec.f2) then begin
+        testf = false;
+      end;
+      
+      if (testf) then begin
+        PHr.LMCardNr = LoyaltyCard2r.SerNr;
+        if (!ReadFirstKey("CardDate",PHr,1,true)) then begin
+          StartFormat(15);
+          OutString(0,"DblLCardVc",LoyaltyCard2r.SerNr,false);
+          OutString(80,"DblCUVc",LoyaltyCard2r.CustCode,false);
+          OutString(120,0,LoyaltyCard2r.CustName,false);
+          OutString(x0,0,GetPhone(LoyaltyCard2r.CustCode),false);
+          OutVal(330,0,0.00,M4Val,true);
+          // :EVS
+          OutVal(380,0,0.00,M4Val,true);
+          OutVal(435,0,0.00,M4Val,true);
+          OutVal(1,0,0.00,M4Val,true);
+          EndFormat;
+        end;
+      end;
+    end;
+  end;
+  // :EVS 
+ 
+  if (RepSpec.ArtMode==1) then begin
+//    if (tinvoices!=0 or tpoints!=0) then begin
+      Black_Divider(0,1);
+      StartFormat(15);
+      OutString(100,0,USetStr(19268),false);
+      OutVal(360,0,tinvoices,M4Val,true);
+      OutVal(1,0,tpoints,M4Val,true);
+      EndFormat;
+//    end;  
+  end;   
+  if (RepSpec.ArtMode==0) then begin
+//    if (tinvoices!=0 or tpoints!=0 or tbal!=0) then begin
+      Black_Divider(0,1);
+      StartFormat(15);
+      OutString(100,0,USetStr(19268),false);
+      OutString(x0,0,"",true);
+      OutVal(330,0,tbal,M4Val,true);
+      OutVal(380,0,tinvoices,M4Val,true);
+      OutVal(435,0,tpoints,M4Val,true);
+      OutVal(1,0,tpoints+tbal,M4Val,true);
+      EndFormat;
+//    end;
+  end;  
+
+  EndJob;
+  return;
+end;

@@ -1,0 +1,17 @@
+
+global
+procedure DOLPOSPasteStandProblemWClassPasteProblem()
+begin
+  record RcVc RepSpec;
+  integer wn;
+  string 20 probcode;
+  
+  wn = CurWindow;
+  DeselectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  probcode = PushButtonTag;
+  RepSpec.f1 = probcode;  
+  PutWindowRecord(wn,RepSpec);
+
+return;
+end;

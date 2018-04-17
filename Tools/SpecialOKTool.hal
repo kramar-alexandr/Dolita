@@ -1,0 +1,52 @@
+// EVS: DOL-13
+procedure PasteRowsToNPTSVarEnqWClassDo(var record RcVc RepSpec,array string incode,array val qty,Integer pos)
+begin
+  
+  if (pos > 0) then begin
+    RepSpec.f4 = incode[0];
+  end;
+  
+  return;
+end;
+
+global
+procedure DOLPasteRowsToNPTSVarEnqWClass(Integer wn,array string incode,array val qty,Integer pos)
+begin
+  record RcVc RepSpec;
+  
+  GetWindowRecord(wn,RepSpec);
+  DeselectWindow(wn,false);
+  PasteRowsToNPTSVarEnqWClassDo(RepSpec,incode,qty,pos);
+  PutWindowRecord(wn,RepSpec);
+  WindowFieldGoto(wn,RepSpec,-1,"f4",true);
+  
+  return;
+end;
+
+// :EVS
+
+// EVS: DOL-49
+procedure PasteRowsToNPTSInvValWClassDo(var record RcVc RepSpec,array string incode,array val qty,Integer pos)
+begin
+  
+  if (pos > 0) then begin
+    RepSpec.f4 = incode[0];
+  end;
+  
+  return;
+end;
+
+global
+procedure DOLPasteRowsToNPTSInvValWClass(Integer wn,array string incode,array val qty,Integer pos)
+begin
+  record RcVc RepSpec;
+  
+  GetWindowRecord(wn,RepSpec);
+  DeselectWindow(wn,false);
+  PasteRowsToNPTSInvValWClassDo(RepSpec,incode,qty,pos);
+  PutWindowRecord(wn,RepSpec);
+  WindowFieldGoto(wn,RepSpec,-1,"f4",true);
+  
+  return;
+end;
+// :EVS

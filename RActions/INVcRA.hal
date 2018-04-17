@@ -1,0 +1,81 @@
+external inner function RoundMode SetRoundModeD(integer);
+external function string 20 BuildINBarCode(string,date,string);
+external function string 100 BuildINName(string);
+external updating procedure DOLUpsertItemShopify(var record INVc);
+external procedure DOLUpdateItemPriceShopify(record INVc);
+
+global updating 
+function LongInt INVcRecordSave(var record INVc INr,record INVc IN2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  
+  res = inner.INVcRecordSave(INr,IN2r,stat,long4);
+  
+  INr.CreateDate = CurrentDate;
+  INr.BarCode = BuildINBarCode(INr.Code,INr.CreateDate,INr.DispGroups);
+  if INr.DoNotUpdName==0 then begin
+    INr.Name = BuildINName(INr.DispGroups) & INr.Name;
+  end;
+  INr.InitDisc = 100 - Round((INr.UPrice1 / INr.InitPrice) * 100,SetRoundModeD(2));
+
+  DOLUpsertItemShopify(INr); // EVS: DOL-166
+
+  INVcRecordSave = res; 
+  return;
+end;
+
+global
+updating function LongInt INVcRecordUpdate(var record INVc INr,record INVc IN2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  string 255 tstr;
+  
+  res = inner.INVcRecordUpdate(INr,IN2r,stat,long4);
+  
+  INr.BarCode = BuildINBarCode(INr.Code,INr.CreateDate,INr.DispGroups);
+  if INr.DoNotUpdName==0 then begin
+    tstr = BuildINName(INr.DispGroups);
+    if nonblank(tstr) then begin
+      INr.Name = tstr;
+    end;
+  end;
+  INr.InitDisc = 100 - Round((INr.UPrice1 / INr.InitPrice) * 100,SetRoundModeD(2));
+
+  DOLUpsertItemShopify(INr); // EVS: DOL-166
+
+  INVcRecordUpdate = res; 
+  return;
+end;
+
+global
+function LongInt INVcRecordDuplicate(var record INVc INr,record INVc IN2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  date blankd;
+
+  res = inner.INVcRecordDuplicate(INr,IN2r,stat,long4);
+
+  INr.ShopifyID = ""; // EVS: DOL-166
+
+  INVcRecordDuplicate = res;
+  return;
+end;
+
+global
+updating function LongInt INVcRecordUpdateAfter(record INVc curINr,record INVc prevINr,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+
+  res = inner.INVcRecordUpdateAfter(curINr,prevINr,stat,long4);
+
+  // EVS: DOL-167
+  if (!IsMaintenance) then begin
+    if (curINr.ShopifyPrice != prevINr.ShopifyPrice) then begin
+      DOLUpdateItemPriceShopify(curINr);
+    end;
+  end;
+  // :EVS
+
+  INVcRecordUpdateAfter = res; 
+  return;
+end;

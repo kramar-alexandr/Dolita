@@ -1,0 +1,398 @@
+// EVS: auth DOL-122
+external inner procedure HT2Per(Date, Date , var string);
+external inner procedure HTClasses(string,string,var string);
+external inner procedure HTITs(string,string,var string);
+external inner procedure HTItems(string,var string);
+external inner procedure HTVends(string, string, var string);
+external inner function Boolean ReadFirstItem(string,var record INVc,Boolean,Boolean);
+external inner function Boolean FindItemVAR(string,var string,var string,var string,var string);
+external inner procedure SplitVars(string,Array string,Array string,Array string);
+
+function boolean POShipped(record POVc POr)
+begin
+  row POVc POrw;
+  integer i,rwc;
+  boolean res;
+  
+  res = true;
+  
+  rwc = MatRowCnt(POr);
+  for (i = 0; i < rwc; i = i + 1) begin
+    MatRowGet(POr,i,POrw);
+    if (POrw.Quant > POrw.Shipd2) then begin
+      res = false;
+      i = rwc;
+    end;
+  end;
+
+  POShipped = res;
+return;
+end;
+
+function boolean PORowShipped(row POVc POrw)
+begin
+  boolean res;
+    
+  res = true;
+  
+  if (POrw.Quant > POrw.Shipd2) then begin
+    res = false;
+  end;
+
+  PORowShipped = res;
+return;
+end;
+
+procedure SetReportHeader(record RcVc RepSpec)
+begin
+  integer i,rw;
+  string 20 tstr;
+  
+  rw = 1;
+
+  HT2Per(RepSpec.sStartDate,RepSpec.sEndDate,tstr);
+  Header(rw,tstr,1);
+  rw = rw + 1;
+  
+  if (nonblank(RepSpec.f1)) then begin
+    tstr = "";
+    HTItems(RepSpec.f1,tstr);
+    Header(rw,tstr,1);
+    rw = rw + 1;
+  end;
+  
+  if (nonblank(RepSpec.f2)) then begin
+    tstr = "";
+    HTITs(RepSpec.f2,RepSpec.f2,tstr);
+    Header(rw,tstr,1);
+    rw = rw + 1;
+  end;
+  
+  if (nonblank(RepSpec.f3)) then begin
+    tstr = "";
+    HTClasses(RepSpec.f3,RepSpec.f3,tstr);
+    Header(rw,tstr,1);
+    rw = rw + 1;
+  end;
+  
+  if (nonblank(RepSpec.f4)) then begin
+    tstr = "";
+    HTVends(RepSpec.f4,RepSpec.f4,tstr);
+    Header(rw,tstr,1);
+    rw = rw + 1;
+  end;
+  
+  if (nonblank(RepSpec.f5)) then begin
+    tstr = RepSpec.f5;
+    Header(rw,tstr,1);
+    rw = rw + 1;
+  end;
+  
+  if (nonblank(RepSpec.f6)) then begin
+    tstr = RepSpec.f6;
+    Header(rw,tstr,1);
+    rw = rw + 1;
+  end;
+  
+  if (RepSpec.flags[1] == 1 or RepSpec.flags[2] == 1) then begin
+    tstr = USetStr(1000092) & ": ";
+    if (RepSpec.flags[1] == 1) then begin
+      tstr = tstr & USetStr(1000093);
+    end;
+    if (RepSpec.flags[2] == 1) then begin
+      if (RepSpec.flags[1] == 1) then begin
+        tstr = tstr & ", ";
+      end;
+      tstr = tstr & USetStr(1000094);
+    end;
+    Header(rw,tstr,1);
+    rw = rw + 1;
+  end;
+  
+  tstr = USetStr(1000095) & ": ";
+  switch (RepSpec.flags[3]) begin
+    case 0: tstr = tstr & USetStr(1000096);
+    case 1: tstr = tstr & USetStr(1000097);
+    case 2: tstr = tstr & USetStr(1000098);
+  end;
+    
+  Header(rw,tstr,1);
+  rw = rw + 1;
+  
+  EndHeader;
+return;
+end;
+
+procedure SetXCol(var array integer a_xcol)
+begin
+  
+  a_xcol[0] = 50;
+  a_xcol[1] = 100;
+  a_xcol[2] = 140;
+  a_xcol[3] = 180;
+  a_xcol[4] = 220;
+  a_xcol[5] = 260;
+  a_xcol[6] = 280;
+  a_xcol[7] = 310;
+  a_xcol[8] = 340;
+  a_xcol[9] = 380;
+  a_xcol[10] = 410;
+  a_xcol[11] = 440;
+//  a_xcol[12] = 450;
+  
+return;
+end;
+
+procedure SetReportDispStruct()
+begin
+  array integer a_xcol;
+
+  SetXCol(a_xcol);  
+  
+  StartFormat(15);
+  OutString(0,0,USetStr(1000099),false);
+  OutString(a_xcol[0],0,USetStr(1000100),false);
+  OutString(a_xcol[1],0,USetStr(1000101),false);
+  OutString(a_xcol[2],0,USetStr(1000102),false);
+  OutString(a_xcol[3],0,USetStr(1000103),false);
+  OutString(a_xcol[4],0,USetStr(1000104),false);
+  OutString(a_xcol[5],0,USetStr(1000105),false);
+  OutString(a_xcol[6],0,USetStr(1000106),false);
+  OutString(a_xcol[7],0,USetStr(1000107),false);
+  OutString(a_xcol[8],0,USetStr(1000108),false);
+  OutString(a_xcol[9],0,USetStr(1000109),false);
+  OutString(a_xcol[10],0,USetStr(1000110),false);
+  OutString(a_xcol[11],0,USetStr(1000111),false);
+  OutString(1,0,USetStr(1000112),true);
+  EndFormat;
+  
+  Gray_Divider(0,1);
+  
+  return;
+end;
+
+function string 255 GetItemDispGroupWithCtypeName(string dispgroups, string ctype)
+begin
+  longint pos;
+  boolean loopf;
+  record DIVc DIr;
+  string 20 oclass,res;
+  
+  if (nonblank(dispgroups) and nonblank(ctype)) then begin
+    pos = 0;
+    loopf = true;
+    while (GetNextSubstring(dispgroups,pos,",",oclass) and loopf) begin
+      DIr.Code = oclass;
+      if (ReadFirstMain(DIr,1,true)) then begin
+        if (DIr.CType == ctype) then begin
+          res = DIr.Name;
+          loopf = false;
+        end;
+      end;
+    end;
+  end;
+  
+  GetItemDispGroupWithCtypeName = res;
+return;
+end;
+
+procedure PrintPORow(record POVc POr,row POVc POrw,record INVc INr)
+begin
+  record DOLSetBlock setbl;
+  record UnitVc Unitr;
+  record ItemSettingBlock ISbl;
+  record VARVc VARr;
+  string 255 tstr,mask,itemsize,varsubset,mskrep;
+  array integer a_xcol;
+  Array string 255 maskvar,maskvarsz,amsk;
+  
+  BlockLoad(ISbl);
+  BlockLoad(setbl);
+
+  SetXCol(a_xcol);  
+  
+  StartFormat(15);
+  OutString(0,0,POrw.PlanShipRowDate,false);
+  
+  if (POrw.Quant == POrw.Shipd2 and POrw.Quant > 0) then begin // fully delivered
+    tstr = USetStr(1000097);
+  end;
+  if (POrw.Quant > POrw.Shipd2 and POrw.Shipd2 > 0) then begin // partly delivered
+    tstr = USetStr(1000098);
+  end;
+  if (POrw.Shipd2 == 0) then begin // not delivered at all
+    tstr = USetStr(1000113);
+  end;
+  OutString(a_xcol[0],0,tstr,false);
+  
+  OutString(a_xcol[1],0,GetItemDispGroupWithCtypeName(INr.DispGroups,setbl.SeasonCType),false);
+  
+  OutString(a_xcol[2],0,GetItemDispGroupWithCtypeName(INr.DispGroups,ISbl.ItemLabelCTypeCode),false);
+  
+  OutString(a_xcol[3],0,POr.Addr0,false);
+  
+  OutString(a_xcol[4],0,INr.Code,false);
+  
+  OutString(a_xcol[5],0,INr.Group,false);
+
+  Unitr.Code = INr.Unittext;
+  if (ReadFirstMain(Unitr,1,true)) then begin
+    OutString(a_xcol[6],0,Unitr.Comment,false);
+  end;
+  
+  OutString(a_xcol[7],0,GetItemDispGroupWithCtypeName(INr.DispGroups,setbl.TypeCType),false);
+  
+  if (FindItemVAR(POrw.ArtCode,itemsize,mask,mskrep,varsubset)) then begin
+    SplitVars(POrw.ArtCode,maskvar,maskvarsz,amsk);
+//    amsk[0]; // item code
+    VARr.Code = amsk[1];
+    if (!ReadFirstMain(VARr,1,true)) then begin
+      VARr.Comment = amsk[1];
+    end;
+  end else begin
+    RecordClear(VARr);
+  end;
+  OutString(a_xcol[8],0,VARr.Comment,false);
+  
+  OutString(a_xcol[9],0,POrw.Quant,false);
+  
+  OutString(a_xcol[10],0,POrw.Quant - POrw.Shipd2,false);
+  
+  if (POr.Closed == 1) then begin
+    OutString(a_xcol[11],0,POrw.Quant - POrw.Shipd2,false);
+  end else begin
+    OutString(a_xcol[11],0,"",false);
+  end;
+  
+  OutString(1,0,POrw.Sum,true);
+  EndFormat;
+  
+return;
+end;
+
+function boolean CheckPORow(record RcVc RepSpec,row POVc POrw, var record INVc INr)
+begin
+  boolean res;
+  date shdate;
+  boolean osflag;
+  
+  RecordClear(INr);
+  
+  res = true;
+  if (blank(POrw.ArtCode) or POrw.stp != 1) then begin
+    res = false;
+  end;
+  shdate = POrw.PlanShipRowDate;//StringToDate(POrw.PlanShipRow);
+  if (nonblankdate(shdate)) then begin
+    if (!DateInRange(shdate,RepSpec.sStartDate,RepSpec.sEndDate)) then begin
+      res = false;
+    end;
+  end else begin
+    res = false;
+  end;
+  osflag = PORowShipped(POrw);
+  if (RepSpec.flags[3] == 1 and !osflag) then begin // only shipped
+    res = false;
+  end;
+  if (RepSpec.flags[3] == 2 and osflag) then begin // only unshipped
+    res = false;
+  end;
+  if (ReadFirstItem(POrw.ArtCode,INr,true,false) and res) then begin
+    if (nonblank(RepSpec.f1) and RepSpec.f1 != left(POrw.ArtCode,len(RepSpec.f1))) then begin // checks both 1234 and 1234.360
+      res = false;
+    end;
+    if (nonblank(RepSpec.f2) and RepSpec.f2 != INr.Group) then begin
+      res = false;
+    end;
+    if (nonblank(RepSpec.f3) and nonblank(INr.DispGroups)) then begin
+      if (!SetInSet(RepSpec.f3,INr.DispGroups)) then begin
+        res = false;
+      end;
+    end;
+    if (nonblank(RepSpec.f5) and INr.Unittext != RepSpec.f5) then begin
+      res = false;
+    end;
+    if (nonblank(RepSpec.f6) and ("." & RepSpec.f6) != right(POrw.ArtCode,len("." & RepSpec.f6))) then begin
+      res = false;
+    end;
+  end else begin
+    res = false;
+  end;
+  
+  CheckPORow = res;
+return;
+end;
+
+procedure GetAndPrintPORows(record RcVc RepSpec,record POVc POr)
+begin
+  row POVc POrw;
+  record INVc INr;
+  integer i,rwc;
+  
+  rwc = MatRowCnt(POr);
+  for (i = 0; i < rwc; i = i + 1) begin
+    MatRowGet(POr,i,POrw);
+    if (CheckPORow(RepSpec,POrw,INr)) then begin
+      PrintPORow(POr,POrw,INr);
+    end;
+  end;
+  
+return;
+end;
+
+procedure LoopAndPrintPO(record RcVc RepSpec)
+begin
+  record POVc POr;
+  boolean trhs,testf;
+  string 20 key;
+  
+  key = "SerNr";
+  if (RepSpec.flags[1] == 0) then begin // do not include closed
+    POr.Closed = 0;
+    key = "Closed";
+  end;
+  trhs = true;
+  while (LoopKey(key,POr,1,trhs)) begin
+    if (POr.Closed != 0 and key == "Closed") then begin
+      trhs = false;
+    end else begin
+      testf = true;
+      if (nonblank(RepSpec.f4) and POr.VECode != RepSpec.f4) then begin
+        testf = false;
+      end;
+      if (RepSpec.flags[2] == 0 and POr.OKFlag == 0) then begin
+        testf = false;
+      end;
+//      osflag = POShipped(POr);
+//      if (RepSpec.flags[3] == 1 and !osflag) then begin // only shipped
+//        testf = false;
+//      end;
+//      if (RepSpec.flags[3] == 2 and osflag) then begin // only unshipped
+//        testf = false;
+//      end;
+      if (testf) then begin
+        GetAndPrintPORows(RepSpec,POr);
+      end;
+    end;
+  end;
+  
+return;
+end;
+
+
+global
+procedure DOLPOItemsRn(record RcVc RepSpec)
+begin
+  integer solditems_cnt;
+  array string 20 a_solditems;
+  
+  StartReportJob(USetStr(1000091));
+  SetReportHeader(RepSpec);
+  SetReportDispStruct;
+  
+  LoopAndPrintPO(RepSpec);
+  
+  EndJob;
+  
+return;
+end;

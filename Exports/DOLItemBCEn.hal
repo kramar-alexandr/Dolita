@@ -1,0 +1,63 @@
+// EVS: DOL-120
+
+procedure ExportOneField(string str)
+begin
+  
+  ExportPadString(str,len(str),"",false);
+  ExportPadString(";",1,"",false);
+  
+return;
+end;
+
+procedure ExportOneItemInfo(record INVc INr)
+begin
+  
+  ExportOneField(INr.Name);
+  ExportOneField("0.0000"); // placeholder
+  ExportPadString("0.0000",len("0.0000"),"",false); // placeholder, no semicolon
+  
+return;
+end;
+
+procedure ExportBarcodesForItem(record INVc pINr)
+begin
+  record INVc INr;
+  record BarcodeVc BCr;
+  boolean trhs;
+  
+  RecordCopy(INr,pINr);
+  
+  BCr.Itemcode = INr.Code;
+  trhs = true;
+  while (LoopKey("Itemcode",BCr,1,trhs)) begin
+    if ((INr.Code & ".") != left(BCr.Itemcode,len(INr.Code)+1) and
+        INr.Code != BCr.Itemcode) then begin
+      trhs = false;
+    end else begin
+      ExportOneField(BCr.Barcode);
+      INr.Name = BCr.Comment;
+      ExportOneItemInfo(INr);
+      NewLine;
+    end;
+  end;
+  
+end;
+  
+global
+procedure DOLItemBCEn(record RcVc RepSpec)
+begin
+  record INVc INr;
+  boolean trhs;
+  
+  trhs = true;
+  while (LoopKey("ActCodeForSale",INr,1,trhs)) begin
+    if (nonblank(INr.BarCode)) then begin
+      ExportOneField(INr.BarCode);
+      ExportOneItemInfo(INr);
+      NewLine;
+    end;
+    ExportBarcodesForItem(INr);
+  end;
+  
+return;
+end;

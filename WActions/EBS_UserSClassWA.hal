@@ -1,0 +1,28 @@
+external inner procedure PasteFromSysList(Integer,Integer);
+remote procedure EBS_UserSClassOnOpenRemote(record LocalMachineBlock,var array string,var array string,var integer);
+
+global
+function boolean EBS_UserSClassOnOpenWindow(integer wn) begin
+  array string 255 arrStringList;
+  array string 255 arrCodes;
+  integer size,i,cnt,mwn,currow;
+  record LocalMachineBlock LocalMachineBl;
+  
+  BlockLoad(LocalMachineBl);
+  EBS_UserSClassOnOpenRemote(LocalMachineBl,arrCodes,arrStringList,size);
+  for(i=0;i<size;i=i+1)begin
+    SetListString(wn,cnt,arrCodes[i] & "   " & arrStringList[i],false);
+    cnt = cnt + 1;
+  end;
+    
+return;
+end;
+
+global
+function Boolean EBS_UserSClassOnOKWindow(Integer wn)
+begin
+
+  PasteFromSysList(wn,-2);
+  EBS_UserSClassOnOKWindow = false;
+  return;
+end;

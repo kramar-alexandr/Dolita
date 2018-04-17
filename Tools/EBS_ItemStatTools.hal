@@ -1,0 +1,275 @@
+external inner procedure FindStockValue(string,string,var record ItemStatusVc);
+external inner procedure ItemDateTurnover(string,string,string,string,string,string,Date,Date,string,var val);
+external inner function Boolean ReadFirstItem(string,var record INVc,Boolean,Boolean);
+external inner function Boolean TestArtCodeMatch(string,string);
+
+procedure EBS_ItemDateTurnover(string item,boolean varf,string cust,string branchid,string class,string colsname,Date sdp,Date edp,string location,var val vp)
+begin
+  record INVc INr;
+  record ItemHistVc IHr;
+  Boolean TrHs,locationf,foundf,testf;
+  Integer i,rwcnt,keycnt;
+  record IVVc IVr;
+  row IVVc IVrw;  
+  record IVCashVc IVCashr;
+  row IVCashVc IVCashrw;  
+  LongInt oldserno;
+  val v,v2;
+  string 255 key;
+  record TaxMatrixVc TMr;
+
+//IVCashVc,RestAccVc ? 
+  ReadFirstItem(item,INr,true,true);
+  // LogText(0,"item=" & item & " code=" & INr.Code & " sdp=" & sdp & " edp=" & edp);
+
+  oldserno = -1;
+  vp = 0;
+  locationf = nonblank(location);
+  if (locationf) then begin
+    IHr.ArtCode = INr.Code;
+    IHr.Location = location;
+    IHr.TransDate = sdp;
+    keycnt = 3;
+    key = "ArtCodeLoc";
+  end else begin    
+    IHr.ArtCode = INr.Code;
+    IHr.TransDate = sdp;
+    keycnt = 2;
+    key = "ArtCode";
+  end;
+  TrHs = true;
+  while (LoopKey(key,IHr,keycnt,TrHs)) begin
+    if (IHr.TransDate>edp) then begin
+      TrHs = false;
+    end;
+    if (TrHs) then begin
+      if (IHr.ArtCode<>INr.Code) then begin
+        TrHs = false;
+      end;  
+    end;
+    if (locationf==true) then begin
+      if (TrHs) then begin
+        if (IHr.Location<>location) then begin
+          TrHs = false;
+        end;  
+      end;
+    end;
+    if (TrHs) then begin
+      if ((IHr.FileName=="IVVc") and (IHr.TransNr!=oldserno)) then begin
+        IVr.SerNr = IHr.TransNr;
+        if (ReadFirstMain(IVr,1,false)) then begin          
+          oldserno = IVr.SerNr;
+          testf = true;
+          if (IVr.Invalid!=0) then begin testf = false; end;
+          if ((nonblank(cust)) and (IVr.CustCode!=cust)) then begin testf = false; end;
+          if ((nonblank(branchid)) and (IVr.BranchID!=branchid)) then begin testf = false; end;
+          if (testf) then begin
+              rwcnt = MatRowCnt(IVr);
+              for (i=0;i<rwcnt;i=i+1) begin
+                MatRowGet(IVr,i,IVrw);
+                if (IVrw.ovst==0) then begin
+                  if (locationf==true) then begin
+                    foundf = (IVrw.Location==location);
+                    if (foundf==false) then begin
+                      foundf = (IVr.Location==location);
+                    end;
+                  end else begin
+                    foundf = true;
+                  end;
+                  if (foundf) then begin
+                    switch (IVrw.stp) begin
+                      case kInvoiceRowTypeStructuredItemComponent:
+                        goto LkInvoiceRowTypeNormal;
+                      case kInvoiceRowTypeNormal:
+LkInvoiceRowTypeNormal:;
+                        //if (TestArtCodeMatch(IVrw.ArtCode,item)) then begin
+                        if (IVrw.ArtCode==item and varf) or (TestArtCodeMatch(IVrw.ArtCode,item) and !varf) then begin
+                          v = 0;
+                          if (colsname=="quant") then begin
+                            v = IVrw.Quant;
+                          end;  
+                          // if ((colsname=="salesexvatbase") or (colsname=="salesexclvat")) then begin
+                          //   UnpackRowFieldMatrix(IVrw,"TaxMatrix",TMr);
+                          //   FindSalesExVat(TMr,IVrw.VATCode,IVrw.Sum,IVr.InclVAT,IVr.NoTAXonVAT,v);
+                          //   v = MulRateToBase1(IVr.CurncyCode,v,IVr.FrRate,IVr.ToRateB1,IVr.ToRateB2,IVr.BaseRate1,IVr.BaseRate2,DefaultCurRoundOff);
+                          // end;  
+                          // if ((colsname=="gpbase") or (colsname=="grossprofit")) then begin
+                          //   v = IVrw.rowGP;
+                          // end;  
+                          if (IVr.InvType==kInvoiceTypeCredit or IVr.InvType==kInvoiceTypeCreditSpecialSales) then begin
+                            vp = vp - v;
+                          end else begin
+                            vp = vp + v; 
+                          end;
+                        end;
+                      case kInvoiceRowTypeCorrection:
+                        // if (TestArtCodeMatch(IVrw.ArtCode,item)) then begin
+                        if IVrw.ArtCode==item then begin
+                          v = 0;
+                          if (colsname=="quant") then begin
+                            v = IVrw.Quant;
+                          end;  
+                          // if ((colsname=="salesexvatbase") or (colsname=="salesexclvat")) then begin
+                          //   UnpackRowFieldMatrix(IVrw,"TaxMatrix",TMr);
+                          //   FindSalesExVat(TMr,IVrw.VATCode,IVrw.Sum,IVr.InclVAT,IVr.NoTAXonVAT,v);
+                          //   v = MulRateToBase1(IVr.CurncyCode,v,IVr.FrRate,IVr.ToRateB1,IVr.ToRateB2,IVr.BaseRate1,IVr.BaseRate2,DefaultCurRoundOff);
+                          // end;  
+                          // if ((colsname=="gpbase") or (colsname=="grossprofit")) then begin
+                          //   v = IVrw.rowGP;
+                          // end;  
+                          if (IVr.InvType==kInvoiceTypeCredit or IVr.InvType==kInvoiceTypeCreditSpecialSales) then begin
+                            vp = vp + v;
+                          end else begin
+                            vp = vp - v; 
+                          end;
+                        end;
+                    end;
+                  end;
+                end;
+              end; //for 
+          end;
+        end;
+      end;
+    end;//TrHs
+  end;
+  if (locationf) then begin
+    keycnt = 2;
+    key = "Location";
+  end else begin
+    keycnt = 1;
+    key = "ArtCode:" & item;
+  end;
+  TrHs = true;
+  IVCashr.Location = location;
+  IVCashr.TransDate = sdp;
+  while (LoopKey(key,IVCashr,keycnt,TrHs)) begin
+    if (locationf) then begin
+      if (IVCashr.Location!=location) then begin TrHs = false; end;
+    end;
+    if (DateInRange(IVCashr.TransDate,sdp,edp)==false) then begin TrHs = false; end;
+    if (TrHs) then begin
+      testf = true;
+      if (nonblank(cust)) then begin
+        if (IVCashr.CustCode!=cust) then begin testf = false; end;
+      end;
+      if (nonblank(branchid)) then begin
+        if (IVCashr.BranchID!=branchid) then begin testf = false; end;
+      end;
+      if (testf) then begin
+        rwcnt = MatRowCnt(IVCashr);
+        for (i=0;i<rwcnt;i=i+1) begin
+          MatRowGet(IVCashr,i,IVCashrw);
+          testf = true;
+          if (nonblank(item)) then begin
+            // if (TestArtCodeMatch(IVCashrw.ArtCode,item)==false) then begin testf = false; end;
+            if !TestArtCodeMatch(IVCashrw.ArtCode,item) and !varf then begin
+              testf = false;
+            end;
+            if IVCashrw.ArtCode!=item and varf then begin
+              testf = false;
+            end;
+          end;
+          if (IVCashrw.stp!=kInvoiceRowTypeStructuredItemComponent and IVCashrw.stp!=kInvoiceRowTypeNormal) then begin
+            testf = false;
+          end;
+          if (testf) then begin
+            switch (colsname) begin
+              case "quant": v = IVCashrw.Quant;
+              // case "grossprofit": v = IVCashrw.rowGP;
+              // case "salesexclvat": v = MulRateToBase1(IVCashr.CurncyCode,IVCashrw.Sum,IVCashr.FrRate,IVCashr.ToRateB1,IVCashr.ToRateB2,IVCashr.BaseRate1,IVCashr.BaseRate2,DefaultCurRoundOff);
+            end;
+            vp = vp + v;                                        
+          end;
+        end;
+      end;
+    end;
+  end;
+  return;
+end;
+
+global
+procedure FillLocNameArray(string LocClass,var array string LocNames,var integer size) begin
+  record LocationVc Locr;
+  
+  if nonblank(LocClass) then begin
+    While LoopKey("Classification:" & LocClass,Locr,1,true) begin
+      LocNames[size] = Locr.Code;
+      size = size + 1;
+    end;
+  end;
+  
+return;
+end;
+
+procedure FillLocValArray(string item,boolean varf,string LocClass,var array val arrLocVals,var integer size) begin
+  record LocationVc Locr;
+  record ItemStatusVc ISr;
+  date sd,ed;
+  val res;
+  
+  if nonblank(LocClass) then begin
+    ed = CurrentDate;
+    // ed = AddDay(ed,-1);
+    sd = AddYear(ed,-1);
+    sd = AddDay(sd,1);
+  
+    While LoopKey("Classification:" & LocClass,Locr,1,true) begin
+      EBS_ItemDateTurnover(item,varf,"","","","quant",sd,ed,Locr.Code,res);
+      FindStockValue(item,Locr.Code,ISr);
+      // LogText(0,"item=" & item & " sd=" & sd & " ed=" & ed & " loc=" & Locr.Code & " res=" & res & " varf=" & varf);
+      arrLocVals[size*2] = ISr.Instock; 
+      arrLocVals[size*2+1] = res;
+      size = size + 1;
+      if size==7 then begin
+        GoTo LExitLocLoop;
+      end;
+    end;
+    
+LExitLocLoop:;
+    //Add total
+    EBS_ItemDateTurnover(item,varf,"","","","quant",sd,ed,"",res);
+    FindStockValue(item,"",ISr);
+    arrLocVals[size*2] = ISr.Instock; 
+    arrLocVals[size*2+1] = res;
+    // size = size + 1;
+    
+  end;
+return;
+end;
+
+function string 50 GetItemStatLocClass(string usercode) begin
+  record ItemStatusSettBlock ISSb;
+  record ItemStatUserVc ISUr;
+  string 50 res;
+  
+  res = "";
+  ISUr.Signature = usercode;
+  if (ReadFirstMain(ISUr,1,true)) then begin
+    if ISUr.LocBalf==1 or ISUr.LocTOf==1 then begin
+      res = ISUr.LocClass;
+    end;
+  end else begin
+    BlockLoad(ISSb);
+    if ISSb.LocBalf==1 or ISSb.LocTOf==1 then begin
+      res = ISSb.LocClass;
+    end;
+  end;
+  
+  GetItemStatLocClass = res;
+return;
+end;
+
+global
+procedure BuildLocValArray(string item,var array val arrLocVals,var integer size,string user,record INVc INr) begin
+  integer i;
+  string 20 locClass;
+  boolean varf;
+  array string 20 arrLocCodes;
+  
+  varf = (INr.Code!=item);
+  
+  locClass = GetItemStatLocClass(user);
+  FillLocValArray(item,varf,locClass,arrLocVals,size);
+  
+return;
+end;

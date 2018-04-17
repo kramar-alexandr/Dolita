@@ -1,0 +1,57 @@
+remote function val DOLGetUserMaxRebate(string);
+external inner procedure AmendLineNPTSSClassSumup(Integer,record RcVc);
+
+function Boolean AmendLineNPTSSClassvRebateEFAfter(Integer wn,Integer rownr,Boolean changedf)
+begin
+  record IVCashVc IVCashr;
+  row IVCashVc IVCashrw;
+  Boolean res;
+  record RcVc RepSpec;
+  val max_rebate;
+  integer mwn;
+  string 20 user;
+  
+  if (changedf) then begin
+    DeselectWindow(wn,false);
+    GetWindowRecord(wn,RepSpec);
+    mwn = MotherWindow(wn);
+    if (mwn > 0 and RepSpec.long1 > -1) then begin
+      if (GetWindowClass(mwn) == "NPTSIVCashDClass") then begin
+        GetWindowRecord(mwn,IVCashr);
+        
+        MatRowGet(IVCashr,RepSpec.long1,IVCashrw);
+        
+        user = IVCashr.SalesMan;
+        if (nonblank(IVCashrw.Salesmen)) then begin
+          user = IVCashrw.Salesmen;
+        end;
+        max_rebate = DOLGetUserMaxRebate(user);
+        if (max_rebate != -1 and RepSpec.vals2 > max_rebate) then begin
+          RepSpec.vals2 = StringToVal(RepSpec.f4,M4Val); // EVS: DOL-84
+          PutWindowRecord(wn,RepSpec);
+          GetWindowRecord(wn,RepSpec);
+          AmendLineNPTSSClassSumup(wn,RepSpec);
+          PutWindowRecord(wn,RepSpec);
+          MessageBox(1000015,"");
+        end;
+      end;
+    end;
+    res = true;
+  end;
+  AmendLineNPTSSClassvRebateEFAfter = res;
+  return;
+end;
+
+global
+function Boolean AmendLineNPTSSClassAfterEditField(Integer wn,string fieldname,Integer fn, Integer rownr,Integer changed)
+begin
+  Boolean res;
+  
+  res = inner.AmendLineNPTSSClassAfterEditField(wn,fieldname,fn,rownr,changed);
+  
+  switch (fieldname) begin
+    case "vals2": res = AmendLineNPTSSClassvRebateEFAfter(wn,rownr,changed!=0); // EVS: DOL-21
+  end;
+  AmendLineNPTSSClassAfterEditField = res;
+  return;
+end;

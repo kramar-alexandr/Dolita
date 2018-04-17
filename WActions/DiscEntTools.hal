@@ -1,0 +1,183 @@
+external inner function Boolean IVCashDchrsum(record IVCashVc,Integer,Integer);
+external inner procedure IVCashDchsum(record IVCashVc,Integer);
+external inner procedure IVCashDClass_RefreshStringList(Integer,record IVCashVc);
+external inner function roundmode SetRoundModeD(Integer);
+remote inner procedure IVCashSumup(var record IVCashVc,Boolean);
+remote function val DOLGetUserMaxRebate(string);
+
+procedure DiscEntToolKeyPad_Numbers(string numberstr)
+begin
+  Integer wn;
+  record RcVc RepSpec;
+  
+  wn = CurWindow;
+  GetWindowRecord(wn,RepSpec);
+  PasteString(wn,numberstr);
+  RepSpec.frc = StringToInt(RepSpec.frc & numberstr);
+  PutWindowRecord(wn,RepSpec);
+  DeselectWindow(wn,false);
+  return;
+end;
+
+global 
+procedure DiscEntToolKeyPad0()
+begin
+  DiscEntToolKeyPad_Numbers("0");
+  return;
+end;  
+
+global
+procedure DiscEntToolKeyPad1()
+begin
+  DiscEntToolKeyPad_Numbers("1");
+  return;
+end;  
+
+global
+procedure DiscEntToolKeyPad2()
+begin
+  DiscEntToolKeyPad_Numbers("2");
+  return;
+end;  
+
+global
+procedure DiscEntToolKeyPad3()
+begin
+  DiscEntToolKeyPad_Numbers("3");
+  return;
+end;  
+
+global
+procedure DiscEntToolKeyPad4()
+begin
+  DiscEntToolKeyPad_Numbers("4");
+  return;
+end;  
+
+global
+procedure DiscEntToolKeyPad5()
+begin
+  DiscEntToolKeyPad_Numbers("5");
+  return;
+end;  
+
+global
+procedure DiscEntToolKeyPad6()
+begin
+  DiscEntToolKeyPad_Numbers("6");
+  return;
+end;  
+
+global
+procedure DiscEntToolKeyPad7()
+begin
+  DiscEntToolKeyPad_Numbers("7");
+  return;
+end;  
+
+global
+procedure DiscEntToolKeyPad8()
+begin
+  DiscEntToolKeyPad_Numbers("8");
+  return;
+end;  
+
+global
+procedure DiscEntToolKeyPad9()
+begin
+  DiscEntToolKeyPad_Numbers("9");
+  return;
+end;  
+
+global
+procedure DiscEntToolKeyCancel()
+begin
+  Integer wn;
+  
+  wn = CurWindow;
+  CloseWindow(wn);
+  
+  return;
+end; 
+
+global updating
+procedure DiscEntToolKeyOK()
+begin
+  Integer wn,mwn,rownr,discountprc;
+  record GeneralOptionBlock GenOptRec;
+  record RcVc RepSpec;
+  record IVCashVc IVCashr;
+  row IVCashVc IVCashrw;
+  val price;
+  string 20 user;
+  
+  
+  wn = CurWindow;
+  DeselectWindow(wn,true);
+  GetWindowRecord(wn,RepSpec);
+  if RepSpec.frc<0 or RepSpec.frc>100 then begin
+    MessageBox(1000007,"");
+    GoTo LDiscEntToolKeyOK;
+  end;
+  
+  mwn = MotherWindow(wn);
+  CloseWindow(wn);
+  
+  if WindowValid(mwn) and RepSpec.toc>-1 then begin 
+    BlockLoad(GenOptRec);
+    SelectWindow(mwn);
+    rownr = RepSpec.toc;
+    discountprc = RepSpec.frc;
+    GetWindowRecord(mwn,IVCashr);
+    
+    MatRowGet(IVCashr,rownr,IVCashrw);
+    
+    // EVS: DOL-84
+    user = IVCashr.SalesMan;
+    if (nonblank(IVCashrw.Salesmen)) then begin
+      user = IVCashrw.Salesmen;
+    end;
+    if (RepSpec.frc > DOLGetUserMaxRebate(user)) then begin
+      MessageBox(1000015,"");
+      goto LDiscEntToolKeyOK; 
+    end;
+    // :EVS
+    
+    if IVCashrw.vRebate!=0 then begin
+      price = IVCashrw.Sum / IVCashrw.Quant;
+      IVCashrw.Price = Round(price,SetRoundModeD(3));
+      MatRowPut(IVCashr,rownr,IVCashrw);
+      if (IVCashDchrsum(IVCashr,rownr,GenOptRec.UseDiscount)) then begin
+        IVCashDchsum(IVCashr,rownr);
+        IVCashSumup(IVCashr,true);
+      end;
+    end;
+    
+    IVCashrw.vRebate = discountprc;
+    MatRowPut(IVCashr,rownr,IVCashrw);
+    if (IVCashDchrsum(IVCashr,rownr,GenOptRec.UseDiscount)) then begin
+      IVCashDchsum(IVCashr,rownr);
+      IVCashSumup(IVCashr,true);
+    end;
+    PutWindowRecord(mwn,IVCashr);
+    IVCashDClass_RefreshStringList(mwn,IVCashr);
+  end;
+  
+LDiscEntToolKeyOK:;
+  return;
+end;  
+
+global
+procedure DiscEntToolKeyPadDelete()
+begin
+  integer wn;
+  record RcVc RepSpec;
+  
+  wn = CurWindow;
+  GetWindowRecord(wn,RepSpec);
+  WindowFieldGoto(wn,RepSpec,-1,"frc",false);
+  KeyPadSelectAll(CurWindow);
+  KeyPadDelete(CurWindow);
+  
+  return;
+end;  

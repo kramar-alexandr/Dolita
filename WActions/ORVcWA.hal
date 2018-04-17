@@ -1,0 +1,115 @@
+remote function string 20 ConvertItemCode(string);
+remote updating function longint DOLPasteORInIVCash(record ORVc,var record IVCashVc,string,string);
+remote inner function string 20 AddObjectToObjectList(string, string);
+
+// JP: DOL-87
+function Boolean ORDClassEFAfter(Integer wn,Integer rownr,Integer changed)
+begin
+  boolean res;
+  record ORVc ORr;
+  record OrderClassVc OCr;
+  
+  res = true;
+  if (changed!=0) then begin
+    DeselectWindow(wn,false);
+    GetWindowRecord(wn,ORr);
+    OCr.Code = ORr.OrderClass;
+    if (ReadFirstMain(OCr,1,true)) then begin
+      ORr.Objects = AddObjectToObjectList(ORr.Objects,OCr.Object);
+    end;
+    PutWindowRecord(wn,ORr);
+  end;
+  
+  ORDClassEFAfter = res;                    
+  return;
+end;
+// : JP
+
+procedure ORConvertItemCode(integer wn,integer rownr,integer changed) begin
+  record ORVc ORr;
+  row ORVc ORrw;  
+  
+  if changed!=0 then begin
+    GetWindowRecord(wn,ORr);
+    if MatRowCnt(ORr)>rownr then begin
+      MatRowGet(ORr,rownr,ORrw);
+      ORrw.ArtCode = ConvertItemCode(ORrw.ArtCode);
+      MatRowPut(ORr,rownr,ORrw);
+      PutWindowRecord(wn,ORr);
+    end;
+  end;
+  
+return;
+end;
+
+global
+function Boolean ORDClassAfterEditField(Integer wn,string fieldname,Integer fn, Integer rownr,Integer changed)
+BEGIN
+  Boolean res;
+
+  switch (fieldname) begin
+    case "ArtCode": ORConvertItemCode(wn,rownr,changed);
+    case "OrderClass": ORDClassEFAfter(wn,rownr,changed); // JP: DOL-87
+  end;
+  
+  res = inner.ORDClassAfterEditField(wn,fieldname,fn,rownr,changed);
+  
+  ORDClassAfterEditField = res;
+  RETURN;
+END;
+
+// EVS: DOL-23
+global
+procedure DOLORDClassNumpadOpen()
+begin
+  record RcVc RepSpec;
+  integer wn;
+  
+  wn = CurWindow;
+  
+  DeselectWindow(wn,true);
+  
+  OpenWindow("DOLOrdNumpadWClass",0,wn,"","",RepSpec);
+  
+return;
+end;
+// :EVS
+
+// EVS: DOL-68
+global
+updating procedure DOLORDClassCreateIVCashRec()
+begin
+  record ORVc ORr;
+  record IVCashVc IVCashr;
+  integer wn;
+  longint r;
+  record LocalMachineBlock LMb;
+  
+  wn = CurWindow;
+  BlockLoad(LMb);
+  
+  if (WindowState(wn) == Rs_normal) then begin
+    DeselectWindow(wn,false);
+    GetWindowRecord(wn,ORr);
+    if (nonblank(ORr.CustCode) and MatRowCnt(ORr) > 0) then begin
+      r = DOLPasteORInIVCash(ORr,IVCashr,LMb.DefLocation,LMb.PLCode);
+      if (r == 0) then begin
+        CloseWindow(wn);
+        OpenWindow("NPTSIVCashDClass",1,0,"","",IVCashr);
+      end else begin
+        if (r == -1) then begin
+          beep;
+        end else begin
+          MessageBox(r,"");
+        end;
+      end;
+    end else begin
+      MessageBox(1796,"");
+    end;
+  end else begin
+    MessageBox(22902,"");
+  end;
+  
+return;
+end;
+// :EVS

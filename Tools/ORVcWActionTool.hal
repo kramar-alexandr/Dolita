@@ -1,0 +1,259 @@
+external inner function Boolean PasteCustInCashInv(var record IVCashVc,string,string,var string);
+external inner function Boolean IVCashVc_PasteQuant(var record IVCashVc,Integer);
+external inner procedure IVCashDchsum(record IVCashVc,Integer);
+external inner function Boolean IVCashDchrsum(record IVCashVc,Integer,Integer);
+external inner procedure IVCashSumup(var record IVCashVc,Boolean);
+external inner procedure RemoveOldCustObjects(string,var string);
+// EVS: DOL-23
+
+//procedure NPTSPaymentToolKeyPad_Numbers(string anumberstr)
+//begin
+//  Integer wn;
+//  record RcVc RepSpec;
+//  string 255 tstr;
+//  string 255 pmfield,numberstr;
+//  val sign;
+//  
+//  wn = CurWindow;
+//  numberstr = anumberstr;
+//  pmfield = GetWindowString(wn,"PLUSorMINUS");
+//  tstr = GetWindowString(wn,WindowActiveField(wn));
+//  if (nonblank(tstr)) then begin
+//    pmfield = "";
+//  end;
+//  numberstr = pmfield & numberstr;
+//  GetWindowRecord(wn,RepSpec);
+//  PasteString(wn,numberstr);
+//  tstr = GetWindowString(wn,WindowActiveField(wn)) & numberstr;
+//  PutWindowString(wn,WindowActiveField(wn),tstr);
+//  return;
+//end;
+
+procedure PasteValueToOrderWindow(string value)
+begin
+  record ORVc ORr;
+  integer wn,mwn;
+  
+  wn = CurWindow;
+  mwn = MotherWindow(wn);
+  GetWindowRecord(mwn,ORr);
+  if (len(StripNonDigits(ORr.PlanShip)) < len(ORr.PlanShip)) then begin
+    ORr.PlanShip = "";
+  end;
+  ORr.PlanShip = ORr.PlanShip & value;
+  PutWindowRecord(mwn,ORr);
+  
+return;
+end;
+
+global
+procedure DOLOrdNumpadNum1()
+begin
+  PasteValueToOrderWindow("1");
+return;
+end;
+
+global
+procedure DOLOrdNumpadNum2()
+begin
+  PasteValueToOrderWindow("2");
+return;
+end;
+
+global
+procedure DOLOrdNumpadNum3()
+begin
+  PasteValueToOrderWindow("3");
+return;
+end;
+
+global
+procedure DOLOrdNumpadNum4()
+begin
+  PasteValueToOrderWindow("4");
+return;
+end;
+
+global
+procedure DOLOrdNumpadNum5()
+begin
+  PasteValueToOrderWindow("5");
+return;
+end;
+
+global
+procedure DOLOrdNumpadNum6()
+begin
+  PasteValueToOrderWindow("6");
+return;
+end;
+
+global
+procedure DOLOrdNumpadNum7()
+begin
+  PasteValueToOrderWindow("7");
+return;
+end;
+
+global
+procedure DOLOrdNumpadNum8()
+begin
+  PasteValueToOrderWindow("8");
+return;
+end;
+
+global
+procedure DOLOrdNumpadNum9()
+begin
+  PasteValueToOrderWindow("9");
+return;
+end;
+
+global
+procedure DOLOrdNumpadNum0()
+begin
+  PasteValueToOrderWindow("0");
+return;
+end;
+
+
+global
+procedure DOLOrdNumpadDel()
+begin
+  record ORVc ORr;
+  integer wn,mwn;
+  
+  wn = CurWindow;
+  mwn = MotherWindow(wn);
+  GetWindowRecord(mwn,ORr);
+  ORr.PlanShip = "";
+  PutWindowRecord(mwn,ORr);
+return;
+end;
+
+global
+procedure DOLOrdNumpadOK()
+begin
+  record ORVc ORr;
+  integer wn,mwn;
+  
+  wn = CurWindow;
+  mwn = MotherWindow(wn);
+  GetWindowRecord(mwn,ORr);
+  ORr.PlanShip = StringToDate(ORr.PlanShip);
+  PutWindowRecord(mwn,ORr);
+return;
+end;
+
+
+global
+updating procedure DOLOrdNumpadOKOrder()
+begin
+  record ORVc ORr;
+  record IVCashVc IVCashr;
+  integer wn,mwn;
+  
+  wn = CurWindow;
+  mwn = MotherWindow(wn);
+  CloseWindow(wn);
+  GetWindowRecord(mwn,ORr);
+  ORr.OKFlag = 1;
+  ORr.Reserved = 1;
+  ORr.PlanShip = StringToDate(ORr.PlanShip);
+  PutWindowRecord(mwn,ORr);
+  if (WindowDoOK(mwn,0)) then begin
+    CloseWindow(mwn);
+    RecordNew(IVCashr);
+    OpenWindow("NPTSIVCashDClass",1,0,"","",IVCashr);
+  end;
+  
+return;
+end;
+// :EVS
+
+// EVS: DOL-68
+global
+updating function longint DOLPasteORInIVCash(record ORVc ORr,var record IVCashVc IVCashr, string DefLocation,string DefPLCode)
+begin
+  longint res;
+  integer rwc,i,rownr,curcomp;
+  row IVCashVc IVCashrw;
+  row ORVc ORrw;
+  string 255 warning;
+  longint r;
+  record GeneralOptionBlock GenOptRec;
+  record LocationVc Locr;
+  
+  BlockLoad(GenOptRec);
+  
+  res = 0;
+  curcomp = CurrentCompany;
+  
+  IVCashr.SrcORNr = ORr.SerNr;
+  if (ReadFirstKey("SrcORNr",IVCashr,1,true)) then begin
+    res = 20252;
+  end;
+  
+  if (res == 0) then begin  
+    RecordNew(IVCashr);
+    
+    // paste header
+    IVCashr.SrcORNr = ORr.SerNr;
+    
+    if ((IVCashr.CustCode != ORr.CustCode) and (nonblank(IVCashr.CustCode))) then begin
+      RemoveOldCustObjects(IVCashr.CustCode,IVCashr.Objects);
+    end;
+    IVCashr.CustCode = ORr.CustCode;
+    if (PasteCustInCashInv(IVCashr,DefLocation,DefPLCode,warning)) then begin end;
+    
+    IVCashr.SalesMan = ORr.SalesMan;  
+  
+    Locr.Code = IVCashr.Location;
+    if (ReadFirstMain(Locr,1,true)) then begin
+      if (nonblank(Locr.Objects) and !SetInSet(Locr.Objects,IVCashr.Objects)) or blank(IVCashr.Objects) then begin
+        if (nonblank(IVCashr.Objects)) then begin
+          IVCashr.Objects = IVCashr.Objects & ",";
+        end;
+        IVCashr.Objects = IVCashr.Objects & Locr.Objects;
+      end;
+    end;
+  
+    // paste rows
+    rwc = MatRowCnt(ORr);
+    for (i = 0; i < rwc; i = i + 1) begin
+      MatRowGet(ORr,i,ORrw);
+      if (nonblank(ORrw.ArtCode) and ORrw.stp == kInvoiceRowTypeNormal) then begin
+        ClearRow(IVCashr,IVCashrw,kInvoiceRowTypeNormal);
+        IVCashrw.ArtCode = ORrw.ArtCode;
+        IVCashrw.Spec = ORrw.Spec;
+        IVCashrw.Price = ORrw.Price;
+        IVCashrw.VATCode = ORrw.VATCode;
+        IVCashrw.Quant = ORrw.Quant;
+        MatRowPut(IVCashr,rownr,IVCashrw);
+        IVCashVc_PasteQuant(IVCashr,i);
+        MatRowGet(IVCashr,rownr,IVCashrw);
+      
+        IVCashrw.vRebate = ORrw.vRebate;
+        MatRowPut(IVCashr,rownr,IVCashrw);
+      
+        if (IVCashDchrsum(IVCashr,rownr,GenOptRec.UseDiscount)) then begin
+          IVCashDchsum(IVCashr,rownr);
+          IVCashSumup(IVCashr,true);
+        end;
+      
+        rownr = rownr + 1;
+      end;
+    end;
+  
+    IVCashr.SerNr = NextSerNr("IVCashVc",IVCashr.TransDate,-1,false,"");
+    if (IVCashr.SerNr > -1) then begin
+      RecordStore(IVCashr,false);
+      CreateRecordLink(IVCashr,curcomp,ORr,curcomp); 
+      CreateRecordLink(ORr,curcomp,IVCashr,curcomp); 
+    end;
+  end;
+  
+  DOLPasteORInIVCash = res;
+return;
+end;
+// :EVS

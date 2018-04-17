@@ -1,0 +1,119 @@
+remote function string 20 ConvertItemCode(string);
+remote function integer LookForItemInOtherRecStockTakeVc(record StockTakeVc,string,var record StockTakeVc);
+
+procedure LookForItemInWindow(integer wn,integer changed)
+begin
+  record RcVc RepSpec,RepSpec2;
+  record StockTakeVc StockTaker,res_StockTaker;
+  row StockTakeVc StockTakerw;  
+  boolean foundf;
+  integer i,rwc,mwn,nwn,twn;
+  string 40 searchitem;
+  
+  if (changed != 0) then begin
+  
+    GetWindowRecord(wn,RepSpec);
+    mwn = RepSpec.long1;
+    searchitem = RepSpec.f1;
+    
+    if (GetWindowClass(mwn) == "StockTakeDClass") then begin
+      GetWindowRecord(mwn,StockTaker);
+      rwc = MatRowCnt(StockTaker);
+      for (i = 0; i < rwc; i = i + 1) begin
+        MatRowGet(StockTaker,i,StockTakerw);
+        if (StockTakerw.ArtCode == searchitem or (left(StockTakerw.ArtCode,len(searchitem)+1) == (searchitem & "."))
+            ) then begin
+          WindowFieldGoto(mwn,StockTaker,i,"ArtCode",true);
+          i = rwc;
+          foundf = true;
+        end;
+      end;
+      if (!foundf) then begin
+        i = LookForItemInOtherRecStockTakeVc(StockTaker,searchitem,res_StockTaker);
+        if (i > -1) then begin
+          CloseWindow(mwn);
+          nwn = OpenWindow("StockTakeDClass",1,0,"","nowin",res_StockTaker);
+          RepSpec.long1 = nwn;
+          PutWindowRecord(wn,RepSpec);
+          SelectWindow(wn);
+          WindowFieldGoto(nwn,res_StockTaker,i,"ArtCode",true);
+        end;
+      end;
+    end;
+  
+  end;
+  
+return;
+end;
+
+global
+procedure DOLFindItemInWinDsm()
+begin
+  record RcVc RepSpec;
+  integer wn;
+  
+  wn = FindWindow("DOLFindItemInWinWClass");
+  if (wn > 0) then begin
+    CloseWindow(wn);
+  end;
+  RepSpec.long1 = CurWindow;
+  OpenWindow("DOLFindItemInWinWClass",1,0,"","",RepSpec);
+  
+return;
+end;
+
+procedure DOLFindItemInWinDsm2(integer mwn)
+begin
+  record RcVc RepSpec;
+  integer wn;
+  
+  wn = FindWindow("DOLFindItemInWinWClass");
+  if (wn > 0) then begin
+    CloseWindow(wn);
+  end;
+  RepSpec.long1 = mwn;
+  OpenWindow("DOLFindItemInWinWClass",1,0,"","",RepSpec);
+  
+return;
+end;
+
+global
+function Boolean StockTakeDClassOnOpenWindow(Integer wn)
+begin
+  
+  if (FindWindow("DOLFindItemInWinWClass") <= 0) then begin
+    DOLFindItemInWinDsm2(wn);
+  end;
+  
+  return;
+end;
+
+global
+updating function Boolean StockTakeDClassOnClose(Integer wn,Integer wn2)
+begin
+  integer twn;
+  
+  twn = FindWindow("DOLFindItemInWinWClass");
+  if (twn > 0) then begin
+    CloseWindow(twn);
+  end;
+  
+  CloseWindow(wn);
+  
+  StockTakeDClassOnClose = true;
+  return;
+end;
+
+
+global
+function Boolean DOLFindItemInWinWClassAfterEditField(Integer wn,string fieldname,Integer fn, Integer rownr,Integer changed)
+BEGIN
+  Boolean res;
+  
+  switch (fieldname) begin
+    case "f1": LookForItemInWindow(wn,changed); res = true;
+  end;
+  
+  DOLFindItemInWinWClassAfterEditField = res;
+  RETURN;
+END;

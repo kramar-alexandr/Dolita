@@ -1,0 +1,15 @@
+
+global updating
+procedure EBS_HALDailyRoutine() begin
+  date td;
+  Record RcVc RepSpec;
+  
+  LogText(0,"EBS_HALDailyRoutine run at " & CurrentTime & " on " & CurrentDate);
+  ReportDefaults(RepSpec,"RemoveORReservVClass");
+  RepSpec.d1 = AddDay(CurrentDate,-1);
+  RepSpec.repname = "RemoveORReservMn";
+  RepSpec.critname = "RemoveORReservVClass";
+  RunMaintenance(RepSpec);
+  
+return;
+end;

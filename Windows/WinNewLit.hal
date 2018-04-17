@@ -1,0 +1,1203 @@
+external procedure DrawUserButtons(real,real,real,real,integer);
+remote procedure DOLGetSalesmen(string, var array string, var integer);
+remote procedure LoadStdProblemsToArray(var array string,var array string,var integer);
+remote procedure LoadLocationsToArray(record LocalMachineBlock,var array string,var array string,var integer);
+external inner function string 60 UserDefined(string,string);
+
+SetLangMode(LangLithuanian,"LIT",2);
+
+window DiscEntTouchScreenDClass:1
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,h2,hm,v,v2,v3,vs,l;
+
+  WindowBegin("Nuolaida",DiscEntTouchScreenDClass,CGother,RcType);
+    Modality(kModalityGlobal);
+    UseView(RcVc);
+    ActiveFieldOnNew("frc");
+    SetWRect(80,200,400,300);
+    Sizeable(-1,-1,0,0);
+    h = 120; h2 = 170; v=40;
+    EditFieldTL(h,v=6, 100,"Nuolaida %",M4Int,Normal,0,frc,false,0);
+
+    v = 40; h2 = 55; v3 = 48; vs = 52; hm = 40; l = 57;
+    h = hm-2; ColourPushButton(h,v,h+h2,v+v3,"DiscEntToolKeyPad1","1_",2);
+    h = h+l; ColourPushButton(h,v,h+h2,v+v3,"DiscEntToolKeyPad2","2_",2);
+    h = h+l; ColourPushButton(h,v,h+h2,v+v3,"DiscEntToolKeyPad3","3_",2);
+    v = v+vs;
+    h = hm-2; ColourPushButton(h,v,h+h2,v+v3,"DiscEntToolKeyPad4","4_",2);
+    h = h+l; ColourPushButton(h,v,h+h2,v+v3,"DiscEntToolKeyPad5","5_",2);
+    h = h+l; ColourPushButton(h,v,h+h2,v+v3,"DiscEntToolKeyPad6","6_",2);
+    v = v+vs;
+    h = hm-2; ColourPushButton(h,v,h+h2,v+v3,"DiscEntToolKeyPad7","7_",2);
+    h = h+l; ColourPushButton(h,v,h+h2,v+v3,"DiscEntToolKeyPad8","8_",2);
+    h = h+l; ColourPushButton(h,v,h+h2,v+v3,"DiscEntToolKeyPad9","9_",2);
+    v = v+vs;
+    h = hm-2; ColourPushButton(h,v,h+h2,v+v3,"DiscEntToolKeyPadDelete","Del",2);
+    h = h+l; ColourPushButton(h,v,h+h2,v+v3,"DiscEntToolKeyPad0","0_",2);
+    v = v+vs+10;
+    h = hm; ColourPushButton(h,v,h+2*h2,v+v3,"DiscEntToolKeyCancel","Nutraukti",2);
+    h = h+(2*h2)+2; ColourPushButton(h,v,h+2*h2,v+v3,"DiscEntToolKeyOK","Pridėti",2);
+  EndWindow;
+
+  return;
+end;
+
+window PriceChTouchScreenDClass:1
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,h2,hm,v,v2,v3,vs,l;
+
+  WindowBegin("Pakeisti prekės kainą",PriceChTouchScreenDClass,CGother,RcType);
+    Modality(kModalityGlobal);
+    UseView(RcVc);
+    ActiveFieldOnNew("vals0");
+    SetWRect(80,200,400,340);
+    Sizeable(-1,-1,0,0);
+    h = 120; h2 = 170; v=40; vs=20;
+    EditFieldTL(h,v=6, 100,"Prekė",M4Str,ViewOnly,100,f1,false,0);
+    EditFieldTL(h,v+=vs,-20,"Aprašymas",M4Str,ViewOnly,200,f2,false,0);
+    EditFieldTL(h,v+=vs,100,"Kaina su nuolaida",M423Val,Normal,0,vals0,true,0);
+
+    v = 80; h2 = 55; v3 = 48; vs = 52; hm = 40; l = 57;
+    h = hm-2; ColourPushButton(h,v,h+h2,v+v3,"PriceChToolKeyPad1","1_",2);
+    h = h+l; ColourPushButton(h,v,h+h2,v+v3,"PriceChToolKeyPad2","2_",2);
+    h = h+l; ColourPushButton(h,v,h+h2,v+v3,"PriceChToolKeyPad3","3_",2);
+    v = v+vs;
+    h = hm-2; ColourPushButton(h,v,h+h2,v+v3,"PriceChToolKeyPad4","4_",2);
+    h = h+l; ColourPushButton(h,v,h+h2,v+v3,"PriceChToolKeyPad5","5_",2);
+    h = h+l; ColourPushButton(h,v,h+h2,v+v3,"PriceChToolKeyPad6","6_",2);
+    v = v+vs;
+    h = hm-2; ColourPushButton(h,v,h+h2,v+v3,"PriceChToolKeyPad7","7_",2);
+    h = h+l; ColourPushButton(h,v,h+h2,v+v3,"PriceChToolKeyPad8","8_",2);
+    h = h+l; ColourPushButton(h,v,h+h2,v+v3,"PriceChToolKeyPad9","9_",2);
+    v = v+vs;
+    h = hm-2; ColourPushButton(h,v,h+h2,v+v3,"PriceChToolKeyPadDelete","Del",2);
+    h = h+l; ColourPushButton(h,v,h+h2,v+v3,"PriceChToolKeyPad0","0_",2);
+    h = h+l; ColourPushButton(h,v,h+h2,v+v3,"PriceChToolKeyPadPoint",".",2);
+    v = v+vs+10;
+    h = hm; ColourPushButton(h,v,h+2*h2,v+v3,"PriceChToolKeyCancel","Nutraukti",2);
+    h = h+(2*h2)+2; ColourPushButton(h,v,h+2*h2,v+v3,"PriceChToolKeyOK","Pridėti",2);
+  EndWindow;
+
+  return;
+end;
+
+window DOLPOSCrossSalesWClass:1
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,h2,hm,v,v2,v3,vs,l;
+
+  WindowBegin("Parduodama prekė",DOLPOSCrossSalesWClass,CGother,-);
+  Modality(kModalityGlobal);
+  UseView(INVc);
+  SetWRect(20,80,500,400);
+  Sizeable(-1,-1,0,0);
+  h = 120; h2 = 170; v = 20;
+  Pict_Field(h,v,h+150,160,"");
+  EditFieldTL(h,v+=170, 200,"Prekė",M4Str,ViewOnly,100,Name,false,0);
+  EditFieldTL(h,v+=22, 80,"Kaina",M4Val,ViewOnly,0,UPrice1,true,0);
+  v = v - 30; h = 80; v3 = 50; h2 = 85;
+  ColourPushButton(h=h-20,v+=80,h+2*h2,v+v3,"DOLPOSCrossSalesCancel","Atšaukti",1);
+  h = h+(2*h2)+20; ColourPushButton(h,v,h+2*h2,v+v3,"DOLPOSCrossSalesNext","Pridėti",2);
+  EndWindow;
+
+  return;
+end;
+
+window NPTSVarEnqWClass:1
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,h2,hm,v,v2,v3,vs,l;
+
+  WindowBegin("Įvairovių užklausa",NPTSVarEnqWClass,CGother,-);
+  UseView(RcVc);
+  SetWRect(20,80,520,420);
+  Sizeable(-1,-1,0,0);
+
+  EditFieldTL(h=270,v=140, 150,"Prekė",M4UStr,Normal,60,f4,false,0);
+  h = 120; v = 30; h2 = 55; v3 = 48; vs = 52; hm = 40; l = 57;
+  h = hm-2; ColourPushButton(h,v,h+h2,v+v3,"PriceChToolKeyPad1","1_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"PriceChToolKeyPad2","2_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"PriceChToolKeyPad3","3_",2);
+  v = v+vs;
+  h = hm-2; ColourPushButton(h,v,h+h2,v+v3,"PriceChToolKeyPad4","4_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"PriceChToolKeyPad5","5_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"PriceChToolKeyPad6","6_",2);
+  v = v+vs;
+  h = hm-2; ColourPushButton(h,v,h+h2,v+v3,"PriceChToolKeyPad7","7_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"PriceChToolKeyPad8","8_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"PriceChToolKeyPad9","9_",2);
+  v = v+vs;
+  h = hm-2; ColourPushButton(h,v,h+h2,v+v3,"PriceChToolKeyPadDelete","Del",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"PriceChToolKeyPad0","0_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"PriceChToolKeyPadPoint",".",2);
+  v = v+vs+10;
+  h = hm-2; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyC","C",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyV","V",2);
+//  ColourPushButton(h=h-2*l,v,h=h+2*h2+30,v+v3,"PriceChToolKeyOK","Pridėti",2);
+
+//  v = v - 30; v3 = 50; h2 = 85;
+  ColourPushButton(h=h+130,v,h+2*h2+20,v+v3,"DOLNPTSVarEnqRnRun","Vykdyti",2);
+  EndWindow;
+
+  return;
+end;
+
+window DOLPOSGCPriceUpWClass:1
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real v,vs;
+
+  WindowBegin("Pasirinkimas",DOLPOSGCPriceUpWClass,CGother,-);
+  SetWRect(20,80,450,300);
+  Modality(kModalityGlobal);
+  UseView(RcVc);
+  v = 20;  vs = 45;
+  StaticText(20,v+=vs,"Padidinti kvito viso sumą, kad jinai sutaptu su Dovanų kupono suma?",false);
+  v = v + vs;
+  ColourPushButton(100,v,200,v+40,"DOLDialogDoNothing","Ne",1);
+  ColourPushButton(-200,v,-100,v+40,"DOLDialogPOSAutoAdjustPrice","Taip",2);
+  EndWindow;
+
+  return;
+end;
+
+window DOLOrdNumpadWClass:1
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,h2,hm,v,v2,v3,vs,l;
+
+  WindowBegin("Nurodykite datą - Plan. siuntimas",DOLOrdNumpadWClass,CGother,-);
+  SetWRect(20,80,400,350);
+  UseView(RcVc);
+  v = 20; h2 = 55; v3 = 48; vs = 52; hm = 40; l = 57;
+  h = hm-2; ColourPushButton(h,v,h+h2,v+v3,"DOLOrdNumpadNum1","1_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"DOLOrdNumpadNum2","2_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"DOLOrdNumpadNum3","3_",2);
+  v = v+vs;
+  h = hm-2; ColourPushButton(h,v,h+h2,v+v3,"DOLOrdNumpadNum4","4_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"DOLOrdNumpadNum5","5_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"DOLOrdNumpadNum6","6_",2);
+  v = v+vs;
+  h = hm-2; ColourPushButton(h,v,h+h2,v+v3,"DOLOrdNumpadNum7","7_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"DOLOrdNumpadNum8","8_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"DOLOrdNumpadNum9","9_",2);
+  v = v+vs;
+  h = hm-2; ColourPushButton(h,v,h+h2,v+v3,"DOLOrdNumpadDel","Del",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"DOLOrdNumpadNum0","0_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"DOLOrdNumpadOK","OK",2);
+  h = h+100; ColourPushButton(h,v,h+h2*2,v+v3,"DOLOrdNumpadOKOrder","Ok ir išsaugoti",2);
+  EndWindow;
+
+  return;
+end;
+
+window EBS_ChooseSalesManVClass:1
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,h2,hm,v,v2,v3,vs,l;
+  integer wn;
+  longint bm,lt,rt,tp;
+  record RcVc RepSpec;
+
+  WindowBegin("Pasirinkti Pardavėją",EBS_ChooseSalesManVClass,CGOther,RcType);
+    Modality(kModalityGlobal);
+    wn = CurWindow;
+    GetScreenSize(wn,tp,lt,bm,rt);
+    switch (GuiType) begin
+      case kGuiCocoa:
+        bm = bm - 80;
+      case kGuiWindowsDesktop:
+        tp = tp + 30;
+        bm = bm - 40;
+        rt = rt - 55;
+        lt = lt - 45;
+      case kGuiGDI:
+        tp = tp + 30;
+        bm = bm - 40;
+        rt = rt - 55;
+        lt = lt - 45;
+      case kGuiWPF:
+        tp = tp + 30;
+        bm = bm - 40;
+        rt = rt - 55;
+        lt = lt - 45;
+    end;
+
+  SetWRect(lt,tp,rt,bm); // SetWRect(64,80,409,210);
+  FullscreenWindow;
+  Sizeable(-1,-1,0,0);
+  UseView(RcVc);
+
+  hm = 280; v = 60;
+  vs = 52; h2 = 55; v3 = 48; l = 57;
+  h = hm;
+  EditFieldTLX(h+l+30,20,120,"Grąža",M4Val,ViewOnly,100,25,patM4black,vals0,true,0);
+  EditFieldTL(h+l+30,v,120,"Pardavėjąs",M4UStr,Normal,10,f1,false,0);
+  EditFieldTL(h+l+30,v+=20,120,"Slaptažodis",M4Star,Normal,20,f2,false,0);
+  v=v+29;
+  h = hm; ColourPushButton(h,v,h+h2*3,v+v3,"SalesAssistantVClassUserListBtn","Pard. sąrašas",2);
+  v = v+vs;
+  h = hm-2; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad1","1_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad2","2_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad3","3_",2);
+  h = h + h2 + 10; ColourPushButton(h,v,h+h2,v+v3*3+8,"EBS_ChooseSalesManVClassOKBtn","OK",2);
+  v = v+vs;
+  h = hm-2; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad4","4_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad5","5_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad6","6_",2);
+  v = v+vs;
+  h = hm-2; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad7","7_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad8","8_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad9","9_",2);
+  v = v+vs;
+  h = hm-2+l; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad0","0_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyDel","Del",2);
+
+  // ColourPushButton(300,40,400,88,"TEST","TEST",2);
+  DrawUserButtons(50,40,vs,v3,10);
+  EndWindow;
+
+  return;
+end;
+
+window NPTSInvValWClass:1
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,h2,hm,l,v,v3,vs;
+
+  WindowBegin("Prekių likučiai",NPTSInvValWClass,CGother,-);
+  UseView(RcVc);
+  SetWRect(20,80,520,420);
+  Sizeable(-1,-1,0,0);
+
+  EditFieldTL(h=270,v=140, 150,"Prekė",M4UStr,Normal,60,f4,false,0);
+  h = 120; v = 30; h2 = 55; v3 = 48; vs = 52; hm = 40; l = 57;
+  h = hm-2; ColourPushButton(h,v,h+h2,v+v3,"PriceChToolKeyPad1","1_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"PriceChToolKeyPad2","2_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"PriceChToolKeyPad3","3_",2);
+  v = v+vs;
+  h = hm-2; ColourPushButton(h,v,h+h2,v+v3,"PriceChToolKeyPad4","4_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"PriceChToolKeyPad5","5_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"PriceChToolKeyPad6","6_",2);
+  v = v+vs;
+  h = hm-2; ColourPushButton(h,v,h+h2,v+v3,"PriceChToolKeyPad7","7_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"PriceChToolKeyPad8","8_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"PriceChToolKeyPad9","9_",2);
+  v = v+vs;
+  h = hm-2; ColourPushButton(h,v,h+h2,v+v3,"PriceChToolKeyPadDelete","Del",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"PriceChToolKeyPad0","0_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"PriceChToolKeyPadPoint",".",2);
+  v = v+vs+10;
+  h = hm-2; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyC","C",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyV","V",2);
+//  ColourPushButton(h=h-2*l,v,h=h+2*h2+30,v+v3,"PriceChToolKeyOK","Pridėti",2);
+
+//  v = v - 30; v3 = 50; h2 = 85;
+  ColourPushButton(h=h+130,v,h+2*h2+20,v+v3,"DOLNPTSInvValRnRun","Vykdyti",2);
+  EndWindow;
+
+  return;
+end;
+
+window DOLNPTSIVCashListNumWClass:1
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,h2,hm,l,v,v3,vs;
+
+  WindowBegin("Nurodyti skaičių",DOLNPTSIVCashListNumWClass,CGother,-);
+  SetWRect(20,80,400,350);
+  UseView(RcVc);
+  v = 20; h2 = 55; v3 = 48; vs = 52; hm = 40; l = 57;
+  h = hm-2; ColourPushButton(h,v,h+h2,v+v3,"DOLNPTSIVCashListNumNum1","1_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"DOLNPTSIVCashListNumNum2","2_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"DOLNPTSIVCashListNumNum3","3_",2);
+  v = v+vs;
+  h = hm-2; ColourPushButton(h,v,h+h2,v+v3,"DOLNPTSIVCashListNumNum4","4_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"DOLNPTSIVCashListNumNum5","5_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"DOLNPTSIVCashListNumNum6","6_",2);
+  v = v+vs;
+  h = hm-2; ColourPushButton(h,v,h+h2,v+v3,"DOLNPTSIVCashListNumNum7","7_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"DOLNPTSIVCashListNumNum8","8_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"DOLNPTSIVCashListNumNum9","9_",2);
+  v = v+vs;
+  h = hm-2; ColourPushButton(h,v,h+h2,v+v3,"DOLNPTSIVCashListNumDel","Del",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"DOLNPTSIVCashListNumNum0","0_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"DOLNPTSIVCashListNumOK","OK",2);
+  EndWindow;
+
+  return;
+end;
+
+window UpdateItemNameVClass:1
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+
+  WindowBegin("Item name update",UpdateItemNameVClass,CGMnt,RcType);
+    SetWRect(100,120,400,278);
+    StaticText(20,40, "Maintenance updates all item names.",0);
+    StaticText(20,60, "After maintenance check log file for errors.",0);
+  EndWindow;
+
+  return;
+end;
+
+window AddCUObjVClass:1
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+
+  WindowBegin("Add objects to contacts",AddCUObjVClass,CGMnt,RcType);
+    SetWRect(100,120,400,278);
+    StaticText(20,40, "Adds objects to all contact cards",0);
+    StaticText(20,60, "After maintenance check log file for errors",0);
+  EndWindow;
+
+  return;
+end;
+
+window EBS_UserSClass:1
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+
+  WindowBegin("Įstatyti asmenį",EBS_UserSClass,CGother,HBlRecType);
+    Modality(kModalityAboveParent);
+    SetWRect(240,80,500,299);
+    HalPushButton(10,10,100,30,"EBS_CloseWindowBtn","Nutraukti");
+    Sizeable(-1,-1,0,0);
+    StringList(9,39,-40,-10);
+  EndWindow;
+
+  return;
+end;
+
+window RemoveORReservVClass:1
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v;
+
+  WindowBegin("Atšaukti negaliojančias rezervacijas",RemoveORReservVClass,CGMnt,RcType);
+    SetWRect(100,120,400,278);
+    EditField(h=100,v=10,100,"Data",Normal,d1,false,PasteCurDate);
+  EndWindow;
+
+  return;
+end;
+
+window UserPOSGroupTClass:1
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v;
+
+  WindowBegin("User POS groups",UserPOSGroupTClass,CGHbl,HBlRecType);
+    SetWRect(20,80,532,357);
+    Sizeable(-1,-1,0,0);
+    SetBlid(UserPOSGroupBlock);
+    MatrixBegin(h=8,v=20,-31,-20,-,99);
+    MatCol(1,24,"Asmuo",0,UserCode,false,UserSClass);
+    MatCol(1,84,"POS grupė",0,POSGroups,false,EGSClass);
+    EndMatrix;
+  EndWindow;
+
+  return;
+end;
+
+window EBS_GenBarCodesVClass:1
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+
+  WindowBegin("Kurti bar kodus",EBS_GenBarCodesVClass,CGMnt,RcType);
+    SetWRect(100,120,400,278);
+  EndWindow;
+
+  return;
+end;
+
+window DOLTSPIVGPWClass:1
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vm,vs;
+  real h2,v3;
+  record LocalMachineBlock lmb;
+  integer i,usrcnt;
+  array string 20 a_usrcodes;
+
+  BlockLoad(lmb);
+  DOLGetSalesmen(lmb.POSGroup,a_usrcodes,usrcnt);
+
+  WindowBegin("BP, POS faktūros",DOLTSPIVGPWClass,CGOther,-);
+  if (usrcnt <= 3) then begin
+    SetWRect(20,80,450,330);
+  end else begin
+    SetWRect(20,80,450,330+((usrcnt/3)*(40+20)));
+  end;
+  UseView(RcVc);
+  vs = 20;
+  PeriodField(h=155,v=6,"Periodas");
+//  EditFieldTL(h,v+=vs, 150,"Faktūros nr.",   M4Str,Normal,30,f1,false,0);
+//  EditFieldTL(h,v+=vs ,150,"Pirkėjas",M4UStr,Normal,50,f2,false,CUSClass);
+  EditFieldTL(h,v+=vs ,100,"Pardavėjas",M4UStr,Normal,10,AccStr,false,UserSClass);
+//  EditFieldTL(h,v+=vs ,150,"Prekė",M4UStr,Normal,20,FirstAcc,false,INSClass);
+//  EditFieldTL(h,v+=vs ,80,"Prekės grupė",M4UStr,Normal,5,LastAcc,false,ITSClass);
+//  EditFieldTL(h,v+=vs ,150,"Prekės klasė",M4UStr,Normal,200,f6,false,DISClass);
+//  EditFieldTL(h,v+=vs ,150,"Objektas",M4UStr,Normal,60,ObjStr,false,ObjSClass);
+//  EditFieldTL(h,v+=vs ,150,"Objektas iš eilutės (Detaliai)",M4UStr,Normal,60,f3,false,ObjSClass);
+//  EditFieldTL(h,v+=vs ,50,"Mokėjimo tipas",M4UStr,Normal,5,TransStr,false,PDSClass);
+//  EditFieldTL(h,v+=vs,50,"Lokalus kompiuteris",M4UStr,Normal,5,f7,false,0);
+//  EditFieldTL(h,v+=vs,80,"Patalpa",M4UStr,Normal,5,f4,false,LocationSClass);
+//  EditFieldTL(h,v+=vs,50,"Stalčius",M4UStr,Normal,5,f5,false,DrawerSClass);
+//  ButtonFrame(h,vm=(v+=41),140,3,"Funkcija");
+//  RadioButton(h,v,0,0,"Peržiūra",ArtMode);
+//  RadioButton(h,v+=16,2,0,"Peržiūra per valandą",ArtMode); // EVS: DOL-5
+//  RadioButton(h,v+=16,1,0,"Detaliai",ArtMode);
+//  CheckBox(h+15,v+=16,0,"Tik su Nuol.",flags[3]); // EVS: DOL-5
+//  EndFrame;
+  h = 20; v = v + 30; h2 = 100; v3 = 40;
+  vs = 60;
+  ColourPushButtonTag(h,v,h+h2,v+v3,"DOLTSPIVGPWClassSetPer","Šiandien",4,0);
+  ColourPushButtonTag(h=h+h2+20,v,h+h2,v+v3,"DOLTSPIVGPWClassSetPer","Šią savaitę",4,1);
+  ColourPushButtonTag(h=h+h2+20,v,h+h2,v+v3,"DOLTSPIVGPWClassSetPer","Šį mėnesį",4,2);
+  v = v + vs;
+  for (i = 0; i < usrcnt; i = i + 1) begin
+    if (i == 0) then begin
+      ColourPushButtonTag(h=20,v,h+h2,v+v3,"DOLTSPIVGPWClassPasteUser",a_usrcodes[i],7,a_usrcodes[i]);
+    end else begin
+      if (i < 3) then begin
+        ColourPushButtonTag(h=h+110,v,h+h2,v+v3,"DOLTSPIVGPWClassPasteUser",a_usrcodes[i],7,a_usrcodes[i]);
+      end else begin
+        if (mod(i,3)==0) then begin
+          ColourPushButtonTag(h=20,v+=vs,h+h2,v+v3,"DOLTSPIVGPWClassPasteUser",a_usrcodes[i],7,a_usrcodes[i]);
+        end else begin
+          ColourPushButtonTag(h=h+110,v,h+h2,v+v3,"DOLTSPIVGPWClassPasteUser",a_usrcodes[i],7,a_usrcodes[i]);
+        end;
+      end;
+    end;
+  end;
+  v = v + vs;
+  v3 = 45; h2 = 100;
+  ColourPushButtonTag(h=20,v,h+h2,v+v3,"DOLTSPIVGPWClassRunRep","Peržiūra",2,4);
+  h=h+(h2+20);
+  ColourPushButtonTag(h=h+(h2+20),v,h+h2,v+v3,"DOLTSPIVGPWClassRunRep","Tik Viso",2,3);
+  EndWindow;
+end;
+
+
+window StockMovFrLClass:1
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Sandėlio perkėlimai",StockMovFrLClass,CGmlist,-);
+  SpawnClass(StockMovDClass);
+  SetWRect(64,80,800,298);
+  Sizeable(-1,-1,0,0);
+  UseView(StockMovVc);
+  FormName(PrintStockMovL);
+  if (GuiType == kGuiCocoa) then begin
+    // EVS: DOL-27
+    ToolBar;
+    HalPushButton(50,6,50+140,6+20,"DOLOpenAllFilterLClassBtn","VISI");
+    HalPushButton(200,6,200+140,6+20,"DOLOpenToFilterLClassBtn","Į");
+    EndToolBar;
+    // :EVS
+    RecordList(4,17,-21,-39);
+  end else begin
+    // EVS: DOL-27
+//    ToolBar;
+    HalPushButton(50,6,50+140,6+20,"DOLOpenAllFilterLClassBtn","VISI");
+    HalPushButton(200,6,200+140,6+20,"DOLOpenToFilterLClassBtn","Į");
+//    EndToolBar;
+    // :EVS
+    RecordList(4,50,-21,-39);
+  end;
+  RlColKey(4,4,  "Nr.",SerNr,false,FrSerNr);
+  RlColKey(71,71,"Išsiųsta",SentOKFlag,false,FrSentOKFlag);
+  RlColKey(111,111,"Gauta",OKFlag,false,FrOKFlag);
+  RlColKey(151,151,"Siuntimo data",SentTransDate,false,FrSentTransDate);
+  RlColKey(223,223,"Data",TransDate,false,FrTransDate);
+  RlColKey(295,295,"Fr. patalpa",FrLocation,false,FrFrLocOK);
+  RlColKey(370,370,"Per patalpą",ThrouLocation,false,FrToThrouLocOK);
+  RlColKey(450,450,"Į patalpą",ToLocation,false,FrToLocOK);
+  RlColKey(530,530, "Komentaras",Comment,false,FrComment);
+  SpecialMenu("Gauti",'G',0,"OKStockMovLsm");
+  SearchField("Ieškoti");
+  EndWindow;
+end;
+
+window StockMovToLClass:1 // the real stockmovlclass
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Sandėlio perkėlimai",StockMovToLClass,CGmlist,-);
+  SpawnClass(StockMovDClass);
+  SetWRect(64,80,800,298);
+  Sizeable(-1,-1,0,0);
+  UseView(StockMovVc);
+  FormName(PrintStockMovL);
+  if (GuiType == kGuiCocoa) then begin
+    // EVS: DOL-27
+    ToolBar;
+    HalPushButton(50,6,50+140,6+20,"DOLOpenFrFilterLClassBtn","IŠ");
+    HalPushButton(200,6,200+140,6+20,"DOLOpenToFilterLClassBtn","Į");
+    EndToolBar;
+    // :EVS
+    RecordList(4,17,-21,-39);
+  end else begin
+    // EVS: DOL-27
+    //ToolBar;
+    HalPushButton(50,6,50+140,6+20,"DOLOpenFrFilterLClassBtn","IŠ");
+    HalPushButton(200,6,200+140,6+20,"DOLOpenToFilterLClassBtn","Į");
+    //EndToolBar;
+    // :EVS
+    RecordList(4,50,-21,-39);
+  end;
+  RlColKey(4,4,  "Nr.",SerNr,false,SerNr);
+  RlColKey(71,71,"Išsiųsta",SentOKFlag,false,SentOKFlag);
+  RlColKey(111,111,"Gauta",OKFlag,false,OKFlag);
+  RlColKey(151,151,"Siuntimo data",SentTransDate,false,SentTransDate);
+  RlColKey(223,223,"Data",TransDate,false,TransDate);
+  RlColKey(295,295,"Fr. patalpa",FrLocation,false,FrLocOK);
+  RlColKey(370,370,"Per patalpą",ThrouLocation,false,ToThrouLocOK);
+  RlColKey(450,450,"Į patalpą",ToLocation,false,ToLocOK);
+  RlColKey(530,530, "Komentaras",Comment,false,Comment);
+  SpecialMenu("Gauti",'G',0,"OKStockMovLsm");
+  SearchField("Ieškoti");
+  EndWindow;
+end;
+
+// EVS: DOL-79
+window DOLSoldINBalRClass:1
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vm,vs;
+  WindowBegin("DOL - Parduotų prekių likučiai",DOLSoldINBalRClass,CGRcW,RcType);
+  SetWRect(20,80,400,220);
+  vs = 20; h = 130; v = 6;
+  PeriodField(h,v,"Periodas");
+  EditFieldTL(h,v+=vs,70,"Grupė",M4Code,Normal,5,f1,false,ITSClass);
+  EditFieldTL(h,v+=vs, 70,"Patalpa 1",M4Code,Normal,10,f2,false,LocationSClass);
+  EditFieldTL(h,v+=vs, 70,"Per patalpą",M4Code,Normal,10,f3,false,LocationSClass);
+  EditFieldTL(h,v+=vs, 70,"Patalpa 2",M4Code,Normal,10,f4,false,LocationSClass);
+  EditFieldTL(h,v+=vs, 50,"Minimalus lygis",M4UVal,Normal,10,vals0,true,0);
+  EndWindow;
+end;
+// :EVS
+
+window DOLPOSPasteStandProblemWClass:1
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vm,vs;
+  integer probcnt,i;
+  array string 20 a_probcodes;
+  array string 100 a_probnames;
+
+  LoadStdProblemsToArray(a_probcodes,a_probnames,probcnt);
+
+  WindowBegin("Pasirinkimas",DOLPOSPasteStandProblemWClass,CGother,-);
+  DynamicWindow;
+  SetWRect(20,80,450,250 + (probcnt*50));
+  UseView(RcVc);
+  v = 20;  vs = 45;
+  EditFieldTL(140,v,80,"Priežastis",M4Code,Normal,20,f1,false,StandProblemsSClass);
+  v = v + vs;
+  for(i=0;i<probcnt;i=i+1)begin
+    ColourPushButtonTag(100,v,-100,v+40,"DOLPOSPasteStandProblemWClassPasteProblem",a_probnames[i],7,a_probcodes[i]);
+    v=v+50;
+  end;
+
+  ColourPushButton(100,v,200,v+40,"DOLDialogDoNothing","Atšaukti",1);
+  ColourPushButton(-200,v,-100,v+40,"DOLDialogPOSPasteStandProblem","Tęsti",2);
+  EndWindow;
+
+end;
+
+window RetInvoiceRunRepWClass:1
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,h2,hm,v,v3,l,vm,vs;
+  integer loccnt,i;
+  record LocalMachineBlock lmb;
+  array string 20 a_loccodes;
+  array string 100 a_locnames;
+
+  BlockLoad(lmb);
+  LoadLocationsToArray(lmb,a_loccodes,a_locnames,loccnt);
+
+  i = (loccnt+mod(loccnt,2))/2 - 2;
+  if i<0 then begin
+    i = 0;
+  end;
+
+  WindowBegin("Pardavimo paieška",RetInvoiceRunRepWClass,CGother,-);
+  DynamicWindow;
+  SetWRect(20,80,720,400 + (i * 50));
+  UseView(RcVc);
+  v = 20;  vs = 45;
+  EditFieldTLX(h=200,v,150,"Data",M4Date,Normal,0,25,patM4black,d1,false,PasteCurDate);
+  EditFieldTLX(h,v+=40,150,"Mokėta kort.",M4Val,Normal,0,25,patM4black,vals1,true,0);
+  EditFieldTLX(h,v+=40,150,"Prekės kodas",M4Code,Normal,20,25,patM4black,f1,false,0);
+  EditFieldTLX(h,vm=(v+=40),150,"Parduotuvė",M4Code,Normal,20,25,patM4black,f2,false,0);
+
+  v = 20; h2 = 55; v3 = 48; vs = 52; hm = 370; l = 57;
+  h = hm-2; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad1","1_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad2","2_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad3","3_",2);
+  v = v+vs;
+  h = hm-2; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad4","4_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad5","5_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad6","6_",2);
+  v = v+vs;
+  h = hm-2; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad7","7_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad8","8_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad9","9_",2);
+  v = v+vs;
+  h = hm-2; ColourPushButton(h,v,h+h2,v+v3,"PriceChToolKeyPadDelete","Del",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad0","0_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"PriceChToolKeyPadPoint",".",2);
+
+  ColourPushButton(h = hm-2,v+=80,h+=100,v+40,"DOLDialogDoNothing","Atšaukti",1);
+  ColourPushButton(h+=10,v,h+100,v+40,"RetInvoiceRunRepWClassRunReport","Tęsti",2);
+
+  v = vm + 60;
+  for(i=0;i<loccnt;i=i+2)begin
+    ColourPushButtonTag(20,v,175,v+40,"RetInvoiceRunRepWClassPasteLocation",a_locnames[i],7,a_loccodes[i]);
+    if ((i+1)<loccnt) then begin //for last row
+      ColourPushButtonTag(195,v,350,v+40,"RetInvoiceRunRepWClassPasteLocation",a_locnames[i+1],7,a_loccodes[i+1]);
+    end;
+    v=v+50;
+  end;
+
+  EndWindow;
+
+end;
+
+//VITO: DOL-91
+window DOL_SoldINStatRClass:1
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vm,vs,vt;
+
+  WindowBegin("DOL - Prekių pardavimų statistika",DOL_SoldINStatRClass,CGRcW,RcType);
+  SetWRect(20,80,440,320);
+  v = 6; h = 130; vs = 20; vm = 16;
+  PeriodField(h,v,"Periodas");
+  EditFieldTL(h,v+=vs,50,"Laikas",M4STime,Normal,0,sStartTime,false,PasteCurTime);
+  StaticText(h+52,v+12,":",false);
+  EditFieldTL(h+63,v,50,"",M4STime,Normal,0,sEndTime,false,PasteCurTime);
+  EditFieldTL(h,v+=vs,150,"Prekė",M4Str,Normal,50,f1,false,INSClass);
+  EditFieldTL(h,v+=vs,100,"Pirkėjas",M4Code,Normal,20,f10,false,CUSClass);
+  EditFieldTL(h,v+=vs,100,"Pirkejo klase",M4UStr,Normal,60,f12,false,CClassSClass);
+  EditFieldTL(h,v+=vs,100,"Prekės grupė",M4Code,Normal,5,f2,false,ITSClass);
+  EditFieldTL(h,v+=vs,150,"Prekės klasifikacija",M4UStr,Normal,200,f3,false,DISClass);
+  EditFieldTL(h,v+=vs,100,"Patalpa",M4Code,Normal,10,f4,false,LocationSClass);
+  EditFieldTL(h,v+=vs,100,"Pagrindinis tiekėjas",M4Code,Normal,20,f5,false,VESClass);
+  EditFieldTL(h,v+=vs,100,"Prekių įvairovė",M4Code,Normal,20,f6,false,VARSClass);
+  EditFieldTL(h,v+=vs,100,"Pardavėjas",M4Code,Normal,10,f7,false,UserSClass);
+  EditFieldTL(h,v+=vs,100,"Lojalumo kort.",M4Str,Normal,50,f11,false,LoyaltyCardSClass);
+  EditFieldTL(h,v+=vs,100,"Narystes lygis",M4Code,Normal,20,f13,false,LCMemberLevelSClass);
+  EditFieldTL(h,v+=vs,100,"Nuolaida (detaliai)",M4Val,Normal,0,vals0,false,0);
+  EditFieldTL(h,v+=vs,100,"Vienetai",M4Code,Normal,5,f9,false,UnitSClass);
+  CheckBox(h,v+=vs,0,"Tik Patvirtintos",flags[1]);
+  CheckBox(h,v+=vs,0,"Įskaitant pardavimų knygos duomenis",flags[2]);
+  CheckBox(h,v+=vs,0,"Įtraukti visas gautas prekes",flags[3]);
+  CheckBox(h,v+=vs,0,"Neįtraukti uždarytų",flags[4]);
+  ButtonFrame(h=30,vt=(v+=(2*vs+7)),130,3,"Funkcija");
+  RadioButton(h,v,2,0,"Peržiūra",ArtMode);
+  RadioButton(h,v+=vm,0,0,"Peržiūra su įvairoves",ArtMode);
+  RadioButton(h,v+=vm,1,0,"Detaliai",ArtMode);
+  EndFrame;
+  ButtonFrame(h,v+=(2*vs+7),130,3,"Operacijos tipas");
+  RadioButton(h,v,0,0,"Visi",Priority);
+  RadioButton(h,v+=vm,1,0,"Tik pardavimai",Priority);
+  RadioButton(h,v+=vm,2,0,"Tik grąžinimai",Priority);
+  EndFrame;
+  ButtonFrame(h=200,v=vt,130,3,"Rūšiavimas");
+  RadioButton(h,v,0,0,"Prekės kodas",Comparison);
+  RadioButton(h,v+=vm,1,0,"Aukščiausi pardavimai",Comparison);
+  RadioButton(h,v+=vm,2,0,"Žemiausi pardavimai",Comparison);
+  RadioButton(h,v+=vm,3,0,"Didžiausia %",Comparison);
+  RadioButton(h,v+=vm,4,0,"Mažiausia %",Comparison);
+  EndFrame;
+  EndWindow;
+
+end;
+//:VITO
+
+//EVS: DOL-93
+window DOLShopSalesRClass:1
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vm,vs;
+
+  WindowBegin("DOL - Parduotuvės pardavimai",DOLShopSalesRClass,CGRcW,RcType);
+  SetWRect(20,80,400,220);
+  v = 6; h = 130; vs = 20; vm = 16;
+  EditFieldTL(h,v+=vs,80,"Periodas iki",M4Date,Normal,0,d1,false,PasteCurDate);
+  EditFieldTL(h,v+=vs,100,"Patalpa",M4Code,Normal,10,f1,false,LocationSClass);
+  EditFieldTL(h,v+=vs,100,"Patalpos grupė",M4Code,Normal,10,f2,false,LocGrSClass);
+  EditFieldTL(h,v+=vs,100,"Vienetas",M4Code,Normal,10,f3,false,UnitSClass);
+  CheckBox(h,v+=vs,0,"Įskaitant pardavimų knygos duomenis",flags[3]); // EVS: DOL-152
+  ButtonFrame(h,v+=(2*vs+7),123,5,"Funkcija");
+  RadioButton(h,v,0,0,"Pardavimai su PVM",flags[0]);
+  RadioButton(h,v+=vm,1,0,"Pardavimai be PVM",flags[0]);
+  RadioButton(h,v+=vm,2,0,"Kiekiai",flags[0]);
+  RadioButton(h,v+=vm,3,0,"BP",flags[0]);
+  RadioButton(h,v+=vm,4,0,"BP %",flags[0]);
+  EndFrame;
+  ButtonFrame(h,v+=(2*vs+7),123,3,"Įtraukti");
+  RadioButton(h,v,0,0,"Viskas",flags[1]);
+  RadioButton(h,v+=vm,1,0,"Tik pardavimai",flags[1]);
+  RadioButton(h,v+=vm,2,0,"Tik grąžinimai",flags[1]);
+  EndFrame;
+  ButtonFrame(h,v+=(2*vs+7),123,5,"Periodo tipas");
+  RadioButton(h,v,0,0,"Diena",flags[2]);
+  RadioButton(h,v+=vm,1,0,"Savaitė",flags[2]);
+  RadioButton(h,v+=vm,2,0,"Mėnuo",flags[2]);
+  RadioButton(h,v+=vm,3,0,"Ketvirtis",flags[2]);
+  RadioButton(h,v+=vm,4,0,"Metai",flags[2]);
+  EndFrame;
+  EndWindow;
+
+end;
+//:EVS
+
+//VITO: DOL-89
+window StandProblemVClass:1
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vm,vs;
+  integer probcnt,i;
+  array string 20 a_probcodes;
+  array string 100 a_probnames;
+
+  LoadStdProblemsToArray(a_probcodes,a_probnames,probcnt);
+
+  WindowBegin("Pasirinkimas",StandProblemVClass,CGother,-);
+  DynamicWindow;
+  SetWRect(20,80,450,250 + (probcnt*50));
+  UseView(RcVc);
+  v = 20;  vs = 45;
+  EditFieldTL(140,v,80,"Priežastis",M4Code,Normal,20,f1,false,StandProblemsSClass);
+  v = v + vs;
+  for(i=0;i<probcnt;i=i+1)begin
+    ColourPushButtonTag(100,v,-100,v+40,"DOLPOSPasteStandProblemWClassPasteProblem",a_probnames[i],7,a_probcodes[i]);
+    v=v+50;
+  end;
+
+  ColourPushButton(100,v,200,v+40,"DOLDialogDoNothing","Atšaukti",1);
+  ColourPushButton(-200,v,-100,v+40,"DOLDialogPOSStandProblemVClassOnOKWindow","Tęsti",2);
+  EndWindow;
+
+end;
+//:VITO
+
+window EBS_ChangeINVarVClass:1
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vm,vs;
+
+  WindowBegin("Dydžio keitimas",EBS_ChangeINVarVClass,CGMnt,RcType);
+  SetWRect(20,80,370,240);
+  v = 30; h = 137; vs=20;
+  EditFieldTL(h,v,100,"Pašalinti",M4Code,Normal,20,f1,false,INSClass);
+  EditFieldTL(h,v+=vs,100,"Pridėti",M4Code,Normal,20,f2,false,INSClass);
+  EditFieldTL(h,v+=vs,100,"Patalpa",M4Code,Normal,20,f3,false,LocationSClass);
+  EndWindow;
+
+end;
+
+// EVS: DOL-90
+window DOLRemoveDIINVClass:2
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vs;
+  WindowBegin("Išmesti klasę iš prekė",DOLRemoveDIINVClass,CGMnt,RcType);
+  SetWRect(20,80,500,215);
+  vs = 20;h = 160; v = 6;
+  EditFieldTL(h,v+=vs,150,"Prekės",M4UStr,Normal,41,f1,false,INSClass);
+  EditFieldTL(h,v+=vs,80,"Grupė",M4UStr,Normal,20,f2,false,ITSClass);
+  EditFieldTL(h,v+=vs,80,"Klasė",M4UStr,Normal,20,FirstAcc,false,DISClass);
+  EndWindow;
+end;
+// :EVS
+
+// EVS: DOL-120
+window DOLItemBCEClass:1
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vs;
+  WindowBegin("DOL - Barkodai skeneriui",DOLItemBCEClass,CGEcW,RcType);
+  SetWRect(20,80,350,160);
+  EndWindow;
+end;
+// :EVS
+
+// EVS: DOL-111
+window DOLGenLCVClass:2
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vs;
+  WindowBegin("DOL - Lojalumo kortelių kūrimas",DOLGenLCVClass,CGMnt,RcType);
+  SetWRect(20,80,500,215);
+  vs = 20;h = 160; v = 6;
+  EditFieldTL(h,v+=vs,80,"Kurti nuo",M4Str,Normal,41,f3,false,0);
+  EditFieldTL(h,v+=vs,60,"Kiekis",M4Long,Normal,20,long2,false,0);
+  EditFieldTL(h,v+=vs,80,"Pirkėjas",M4Code,Normal,20,f1,false,AllCUSClass);
+  EditFieldTL(h,v+=vs,80,"Narystės lygis",M4Code,Normal,10,f2,false,LCMemberLevelSClass);
+  EndWindow;
+end;
+// :EVS
+
+// EVS: DOL-125
+window DOLClearOffNoIVCashVClass:2
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vs;
+  WindowBegin("DOL - Clear Official Nr. from POS Inv",DOLClearOffNoIVCashVClass,CGMnt,RcType);
+  SetWRect(20,80,500,215);
+  StaticText(20,v=20,"Warning: this will clear ALL Official Numbers from POS Invoices",false);
+  EndWindow;
+end;
+// :EVS
+
+window DOLFindItemInWinWClass:1
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vm,vs;
+
+  WindowBegin("Prekės paieška",DOLFindItemInWinWClass,CGOther,-);
+  SetWRect(20,80,330,200);
+  UseView(RcVc);
+//  Modality(1);
+
+  h = 100; v = 10;
+  EditFieldTL(h,v,100,"Prekė",M4Code,Normal,20,f1,false,INSClass);
+  EndWindow;
+
+end;
+
+// EVS: DOL-122
+window DOLPOItemsRClass:1
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vm,vs;
+  WindowBegin("DOL - Prekių užsakymo iš tiekėjų",DOLPOItemsRClass,CGRcW,RcType);
+  SetWRect(20,80,400,220);
+  vs = 20; h = 130; v = 6;
+  PeriodField(h,v,"Periodas");
+  EditFieldTL(h,v+=vs,100,"Prekė",M4Code,Normal,20,f1,false,INSClass);
+  EditFieldTL(h,v+=vs,100,"Prekės grupė",M4Code,Normal,5,f2,false,ITSClass);
+  EditFieldTL(h,v+=vs,150,"Prekės klasifikacija",M4UStr,Normal,200,f3,false,DISClass);
+  EditFieldTL(h,v+=vs,100,"Tiekėjas",M4Code,Normal,20,f4,false,VESClass);
+  EditFieldTL(h,v+=vs,100,"Vienetas",M4Code,Normal,10,f5,false,UnitSClass);
+  EditFieldTL(h,v+=vs,80,"Dydis",M4Code,Normal,20,f6,false,VARSClass);
+
+  ButtonFrame(h,v+=40,123,2,"Įtraukti");
+  CheckBox(h,v,0,"Uždarytus",flags[1]);
+  CheckBox(h,v+=16,0,"Nepatvirtintus",flags[2]);
+  EndFrame;
+  ButtonFrame(h,v+=40,123,3,"Būklė");
+  RadioButton(h,v,0,0,"Visi",flags[3]);
+  RadioButton(h,v+=16,1,0,"Pristatyta",flags[3]);
+  RadioButton(h,v+=16,2,0,"Nepristatyta",flags[3]);
+  EndFrame;
+  EndWindow;
+end;
+// :EVS
+
+
+window DOLRenewOffNrIVCashVClass:2
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vs;
+  WindowBegin("DOL - Fill POS Inv. Missing Official Nr. from Support Reg.",DOLRenewOffNrIVCashVClass,CGMnt,RcType);
+  SetWRect(20,80,500,215);
+  StaticText(20,v=20,"This will renew Official numbers only for POS invoices which have none",false);
+  EndWindow;
+end;
+
+window DOLSetTClass:1
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vm,vs;
+  v = 6; vs = 20; h = 150;
+
+  WindowBegin("Dolita - Sistema Parametrai",DOLSetTClass,CGSbl,ItemSettingType);
+  SetWRect(20,80,480,320);
+  SetBlid(DOLSetBlock);
+  Tile(0,20,false,"",SeasonCType);
+  TileButton(1,"Prekės");
+  Tile(1,120,true,"",SeasonCType);
+  EditField(h,v = 10,80,"Sezonas klasifikacijos tipas",Normal,SeasonCType,false,CTypeSClass);
+  EditField(h,v += vs,80,"Tipas klasifikacijos tipas",Normal,TypeCType,false,CTypeSClass);
+  EndWindow;
+end;
+
+window DOLCUClassSClass:1
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vs;
+  string 255 label;
+  WindowBegin("Klasių įvedimas",DOLCUClassSClass,CGother,RcType);
+  ToolBar;
+  PushButton(-70,5,-10,22,ToolOK,"OK");
+  HalPushButton(-140,5,-80,22,"CUClassReplace","Pakeisti");
+  EndToolBar;
+  DynamicWindow;
+  UseView(RcVc);
+  SetWRect(164,80,524,344);
+  h = 130; vs=20;
+  StaticText(h-8,v=16,"Kategorija",true);
+  label = UserDefined("CUClassSClass","0");
+  StaticText(h+60,v,label,true);
+  StaticText(h-8,v+=20,"Reikiamos",true);
+//  StaticText(12,v+=20,"Required Types",false);
+  StaticText(h,v,"Klasės",false);
+  label = UserDefined("CUClassSClass","1");
+  if (nonblank(label)) then begin
+    EditField(h,v+=vs,-20,label,Normal,f1,false,CClassBTSClass);
+  end;
+  label = UserDefined("CUClassSClass","2");
+  if (nonblank(label)) then begin
+    EditField(h,v+=vs,-20,label,Normal,f2,false,CClassBTSClass);
+  end;
+  label = UserDefined("CUClassSClass","3");
+  if (nonblank(label)) then begin
+    EditField(h,v+=vs,-20,label,Normal,f3,false,CClassBTSClass);
+  end;
+  label = UserDefined("CUClassSClass","4");
+  if (nonblank(label)) then begin
+    EditField(h,v+=vs,-20,label,Normal,f4,false,CClassBTSClass);
+  end;
+  label = UserDefined("CUClassSClass","5");
+  if (nonblank(label)) then begin
+    EditField(h,v+=vs,-20,label,Normal,f5,false,CClassBTSClass);
+  end;
+  label = UserDefined("CUClassSClass","6");
+  if (nonblank(label)) then begin
+    EditField(h,v+=vs,-20,label,Normal,ObjStr,false,CClassBTSClass);
+  end;
+  label = UserDefined("CUClassSClass","7");
+  if (nonblank(label)) then begin
+    EditField(h,v+=vs,-20,label,Normal,Stext,false,CClassBTSClass);
+  end;
+  label = UserDefined("CUClassSClass","8");
+  if (nonblank(label)) then begin
+    EditField(h,v+=vs,-20,label,Normal,LastAcc,false,CClassBTSClass);
+  end;
+  EditField(h,v+=30,-20,"Papildomos",Normal,f6,false,CClassSClass);
+  EndWindow;
+end;
+
+window EBS_AddDiscountWClass:1
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vs;
+
+  WindowBegin("Paskirstyti nuolaidą",EBS_AddDiscountWClass,CGother,-);
+  Modality(kModalityGlobal);
+  UseView(RcVc);
+  SetWRect(20,80,400,200);
+  Sizeable(-1,-1,0,0);
+  EditFieldTL(h=150,v=10, 60,"Visa nuolaida",M4Val,Normal,0,vals0,true,0);
+  EditFieldTL(h,v+=20, 60,"Procentinė nuolaida",M4Val,Normal,0,vals1,true,0);
+  HalPushButton(h,v+=25,h+140,v+20,"EBS_AddDiscountBtn","Pridėti");
+  EndWindow;
+
+  return;
+end;
+
+window DOLFixGPRetIVCashVClass:1
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vm,vs;
+
+  WindowBegin("DOL - Fix GP in POS Invoices (Inv No. Returns)",DOLFixGPRetIVCashVClass,CGMnt,RcType);
+  SetWRect(20,80,370,240);
+  v = 30; h = 137; vs=20;
+  PeriodField(h,v,"Period");
+  EndWindow;
+
+end;
+
+
+
+window EBS_AddUserFieldLClass:1
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vm,vs;
+
+  WindowBegin("Additional user fields",EBS_AddUserFieldLClass,CGmlist,-);
+    SpawnClass(EBS_AddUserFieldDClass);
+    SetWRect(20,80,390,298);
+    Sizeable(-1,-1,0,0);
+    UseView(EBS_AddUserFieldVc);
+    RecordList(4,17,-21,-39);
+    RlColKey(4,4,"Parašas",Code,false,Code);
+    RlCol(90,90,"Maks. nuolaida",MaxvRebate,false);
+    SearchField("Ieškoti");
+  EndWindow;
+
+  return;
+end;
+
+window EBS_AddUserFieldDClass:1
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vm,vs;
+
+  WindowBegin("Additional user fields",EBS_AddUserFieldDClass,CGview,-);
+    SetWRect(64,80,580,200);
+    UseView(EBS_AddUserFieldVc);
+    h=100;
+    vs = 20;
+    EditField(h,v=12,100,"Parašas",Normal,Code,false,UserSClass);
+    EditField(h,v+=vs,100,"Maks. nuolaida",Normal,MaxvRebate,true,0);
+    CheckBox(h,v+=vs,0,"Siūlyti prekę",ShowCrossSalesFlag); // EVS: DOL-2
+  EndWindow;
+
+  return;
+end;
+
+window EBS_StockRecalcVClass:1
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real v,vs,h,vm;
+
+  WindowBegin("Stock recalc (EBS)",EBS_StockRecalcVClass,CGMnt,RcType);
+    SetWRect(20,80,350,240);
+    v= 6; vs = 20; h=100;
+    // EditField(h,v,100,"Date",Normal,d1,false,PasteCurDate);
+    ButtonFrame(h,vm=(v+=45),100,2,"Action");
+    RadioButton(h,v,0,0,"Unok",ArtMode);
+    RadioButton(h,v+=16,1,0,"Ok",ArtMode);
+  EndWindow;
+
+  return;
+end;
+
+// EVS: DOL-166
+window DOLShopifyTClass:1
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vm,vs;
+  v = 6; vs = 20; h = 90;
+
+  WindowBegin("Dolita - Shopify Settings",DOLShopifyTClass,CGSbl,ItemSettingType);
+  SetWRect(20,80,480,420);
+  SetBlid(DOLShopifyBlock);
+  Sizeable(-1,-1,0,0);
+  Tile(0,20,false,"",APIUser);
+  TileButton(1,"API Access");
+  TileButton(2,"Automatic Sync (SERP -> Shopify)");
+  TileButton(3,"Special options");
+  Tile(1,120,true,"",APIUser);
+  EditField(h,v = 10,-20,"API Key",Normal,APIUser,false,0);
+  EditField(h,v += vs,-20,"API Password",Normal,APIPass,false,0);
+  EditField(h,v += vs,200,"Shopify URL",Normal,ShopifyURL,false,0);
+  EditField(h,v += vs,80,"Shopify Port",Normal,ShopifyPort,true,0);
+  Tile(2,120,true,"",UpdStockInertval);
+  CheckBox(h,v=20,0,"Update Items (!for testing only!) (restart required)",UpdItems);
+  ButtonFrame(h,v+=30,270,5,"");
+  CheckBox(h,v+=1,0,"Update Stock Levels (restart required)",UpdStock);
+  EditField(h+100,v+=vs,60,"Every",Normal,UpdStockInertval,false,0);
+  StaticText(h+155,v+10,"minutes",false);
+  EditField(h+100,v+=vs,60,"Location class",Normal,StockClass,false,LocClSClass);
+  EditField(h+100,v+=vs,60,"Inch variety group",Normal,InchVARGCode,false,VARGSClass);
+  ButtonFrame(h,v+=50,270,2,"Effective immediately");
+  CheckBox(h,v+=1,0,"Update Stock Levels when Stock level Changes",UpdStockAlways);
+  CheckBox(h,v+=20,0,"Update Price When Item is Updated",UpdPriceAlways); // EVS: DOL-167
+  EndFrame;
+  Tile(3,120,true,"",SaveReqResp);
+  StaticText(h,v=20,"NOTE: Do not change anything unless insctructed",false);
+  CheckBox(h,v+=20,0,"Save request and response data",SaveReqResp);
+  SpecialMenu("Send Stock Levels Once",' ',0,"DOLShopifySendStockSm");
+  EndWindow;
+
+end;
+
+window DOLGetShopifyProdIDVClass:1
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real v,vs,h,vm;
+
+  WindowBegin("Dolita - Load Shopify Product IDs",DOLGetShopifyProdIDVClass,CGMnt,RcType);
+  SetWRect(20,80,350,240);
+  ButtonFrame(h=80,v=20,200,3,"Action");
+  RadioButton(h,v,0,0,"Download Shopify IDs",ArtMode);
+  RadioButton(h,v+=16,2,0,"Download Shopify Prices",ArtMode); // EVS: DOL-167
+  RadioButton(h,v+=16,1,0,"Clear All Shopify IDs",ArtMode);
+  EndFrame;
+  // EVS: DOL-167
+  ButtonFrame(h=80,v+=60,200,2,"Include Products");
+  RadioButton(h,v,0,0,"Published only",flags[0]);
+  RadioButton(h,v+=16,1,0,"All",flags[0]);
+  EndFrame;
+  // :EVS
+  EndWindow;
+
+  return;
+end;
+
+window DOLSzConvTClass:1
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v;
+
+  WindowBegin("Dolita - Inch to CM conversion (Shopify)",DOLSzConvTClass,CGHbl,HBlRecType);
+  SetWRect(20,80,532,357);
+  Sizeable(-1,-1,0,0);
+  SetBlid(DOLSzConvBlock);
+  MatrixBegin(h=8,v=20,-31,-20,-,99);
+  MatCol(1,24,"Inch",0,Inch,true,0);
+  MatCol(1,84,"CM",0,CM,true,0);
+  EndMatrix;
+  EndWindow;
+
+  return;
+end;
+// :EVS
+
+window EBS_NewCUFieldsTClass:1
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v;
+  WindowBegin("DOL - Laukai naujo kliento sukūrimui",EBS_NewCUFieldsTClass,CGHbl,HBlRecType);
+  SetBlid(EBS_NewCUFieldsBlock);
+  SetWRect(20,80,520,300);
+  h = 8; v = 20;
+  MatrixBegin(h,v,-25,-1,-,99);
+  MatCol(1,24,"Lauko tipas",0,FieldType,false,SetSClass);
+  MatCol(1,144,"Tipas",0,EditState,false,SetSClass);
+  MatCol(1,224,"Kortelė",0,Label,false,0);
+  MatCol(1,324,"Default value",0,DefValue,false,0);
+  EndMatrix;
+  EndWindow;
+end;
+
+window EBS_ScanLoyCardWClass:1
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vs;
+
+  WindowBegin("Skenuoti anketos barkodą",EBS_ScanLoyCardWClass,CGother,-);
+  Modality(kModalityGlobal);
+  UseView(RcVc);
+  SetWRect(20,80,650,200);
+  EditFieldTLX(h=360,v=20,-20,"Skenuoti anketos barkodą",M4Str,Normal,100,25,patM4black,f2,false,0);
+  ColourPushButton(40,v+=40,240,v+40,"EBS_ScanLoyCardCancelBtn","Nutraukti",20);
+  ColourPushButton(270,v,470,v+40,"EBS_ScanLoyCardOkBtn","Gerai",20);
+  EndWindow;
+
+  return;
+end;
+
+window EBS_TempWClass:1
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vs;
+
+  WindowBegin("Temp",EBS_TempWClass,CGother,-);
+  UseView(RcVc);
+  SetWRect(20,80,20,90);
+  EndWindow;
+
+  return;
+end;

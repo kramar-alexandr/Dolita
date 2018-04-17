@@ -1,0 +1,52 @@
+external inner function Integer CheckObjs(string,string,var string);
+external updating procedure AddObjectToRec(string,var string,string,string,string,string);
+external procedure AddFieldsFromCCat(var record CUVc);
+
+global updating
+function LongInt CUVcRecordCheck(var record CUVc CUr,record CUVc CU2r,LongInt stat,LongInt long4)
+BEGIN
+  LongInt res;
+  string 255 tstr;
+  integer errcode;
+
+  res = 0;     
+  //insertmode = 1;
+  //updatemode = 2;
+  
+  res = inner.CUVcRecordCheck(CUr,CU2r,stat,long4);
+  if res==0 then begin
+    AddFieldsFromCCat(CUr);
+    
+    if (CUr.CUType == 1) then begin
+      tstr=CUr.Objects;
+      AddObjectToRec(CUr.Code,tstr,"D","D",CUr.Code & " " & CUr.Name,"");
+      CUr.Objects=tstr;
+    end;
+    if (CUr.VEType == 1) then begin
+      tstr=CUr.VEObjects;
+      AddObjectToRec(CUr.Code,tstr,"C","C",CUr.Code & " " & CUr.Name,"");
+      CUr.VEObjects=tstr;
+    end;
+    
+    if (nonblank(CUr.VEObjects)) then begin
+      errcode = CheckObjs("",CUr.VEObjects,tstr);
+      if (errcode!=0) then begin
+        RecordCheckError(errcode,tstr,-1,"VEObjects");      
+        res = -1; 
+        goto LCUVcRecordCheck;
+      end;
+    end;
+    if (nonblank(CUr.Objects)) then begin
+      errcode = CheckObjs("",CUr.Objects,tstr);
+      if (errcode!=0) then begin
+        RecordCheckError(errcode,tstr,-1,"Objects");      
+        res = -1; 
+        goto LCUVcRecordCheck;
+      end;
+    end;
+  end;
+  
+LCUVcRecordCheck:;
+  CUVcRecordCheck = res;
+  RETURN;
+END;

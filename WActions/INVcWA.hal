@@ -1,0 +1,119 @@
+external inner function RoundMode SetRoundModeD(integer);
+remote procedure DOLUpdShopifyStock(string);
+
+global
+function Boolean INDClassActiveEditField(Integer wn,string fieldname,Integer fn,Integer wnst,Integer rownr,Integer changed)
+begin
+  Boolean res;
+  record ItemSettingBlock ItemRec;
+  record INVc INr;
+  
+  res = inner.INDClassActiveEditField(wn,fieldname,fn,wnst,rownr,changed);
+  
+  if (wnst==2) and res then begin//Rs_update
+    switch (fieldname) begin
+      case "InitPrice":
+        if (UserCanAction("AllowINInitPriceChange",false)==false) then begin 
+          GetWindowRecord(wn,INr);
+          if INr.InitPrice!=0 and INr.InitPrice!=blankval then begin
+            res = false;
+          end;
+        end;
+    end;
+  end;
+      
+  INDClassActiveEditField = res;
+  return;
+end;
+
+procedure CalcInitDiscount(record INVc INr) begin
+  
+  INr.InitDisc = 100 - Round((INr.UPrice1 / INr.InitPrice) * 100,SetRoundModeD(2));
+  
+return;
+end;
+
+procedure CalcINPrice(record INVc INr) begin
+  
+  INr.UPrice1 = Round((((100-INr.InitDisc) * INr.InitPrice)) / 100,SetRoundModeD(2));
+  
+return;
+end;
+
+function Boolean INDClassUPrice1EFAfter(Integer wn,Integer changed)
+begin
+  Boolean res;
+  record INVc INr;
+  
+  if (changed!=0) then begin
+    res = true;
+    DeselectWindow(wn,false);
+    GetWindowRecord(wn,INr);
+    CalcInitDiscount(INr);    
+    PutWindowRecord(wn,INr);        
+  end;
+  INDClassUPrice1EFAfter = res;
+  return;
+end;
+
+function Boolean INDClassInitDiscEFAfter(Integer wn,Integer changed)
+begin
+  Boolean res;
+  record INVc INr;
+  
+  if (changed!=0) then begin
+    res = true;
+    DeselectWindow(wn,false);
+    GetWindowRecord(wn,INr);
+    CalcINPrice(INr);    
+    PutWindowRecord(wn,INr);        
+  end;
+  INDClassInitDiscEFAfter = res;
+  return;
+end;
+
+global
+function Boolean INDClassAfterEditField(Integer wn,string fieldname,Integer fn, Integer rownr,Integer changed)
+begin
+  Boolean res;
+
+  res = inner.INDClassAfterEditField(wn,fieldname,fn,rownr,changed);
+  
+  switch (fieldname) begin
+    case "InitDisc": res = INDClassInitDiscEFAfter(wn,changed);
+    case "UPrice1": res = INDClassUPrice1EFAfter(wn,changed);
+  end;
+  
+  INDClassAfterEditField = res;
+  return;
+end;
+
+// EVS: DOL-166
+global
+updating procedure DOLShopifySendStockSm()
+begin
+  
+  DOLUpdShopifyStock(CurrentCompany & ";*");
+
+  return;
+end;
+
+global
+procedure DOLUpdItemStockDsm()
+begin
+  record INVc INr;
+  integer wn;
+  
+  wn = CurWindow;
+
+  DeselectWindow(wn,false);
+  if (WindowState(wn) == Rs_normal) then begin
+    GetWindowRecord(wn,INr);
+    DOLUpdShopifyStock(CurrentCompany & ";" & Inr.Code);
+  end else begin
+    beep;
+  end;
+
+  return;
+end;
+// :EVS
