@@ -715,6 +715,11 @@ begin
   RadioButton(h,v+=vm,3,0,"Didžiausia %",Comparison);
   RadioButton(h,v+=vm,4,0,"Mažiausia %",Comparison);
   EndFrame;
+  
+  ButtonFrame(h,v+=vm*2+10,130,3,"Esama prekės nuolaida");// Edit ************************** BPI Ukraine - KramarAlexandr - Tuesday, 20 November 2018 17:00:42
+  RadioButton(h,v,0,0,"Didžiausia nuolaida",flags[5]);
+  RadioButton(h,v+=vm,1,0,"Mažiausia nuolaida",flags[5]);
+  EndFrame;
   EndWindow;
 
 end;
