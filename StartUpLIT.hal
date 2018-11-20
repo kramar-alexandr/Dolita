@@ -43,6 +43,7 @@ begin
   Setting("Dolita - Shopify",DOLShopifyTClass,modSY); // EVS: DOL-166
   Setting("Dolita - Inch to CM conversion (Shopify)",DOLSzConvTClass,modSY); // EVS: DOL-166
   Maintenance("Dolita - Load Shopify Product IDs",DOLGetShopifyProdIDVClass,DOLGetShopifyProdIDMn,modSY); // EVS: DOL-166
+  Report("Idle užduočių sąr.",IdleTaskListRClass,IdleTaskListRn,0,modSY); //Edit-------------------Vitalii 13:59 06.08.2018
 
   return;
 end;
