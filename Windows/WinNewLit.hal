@@ -694,6 +694,7 @@ begin
   EditFieldTL(h,v+=vs,100,"Narystes lygis",M4Code,Normal,20,f13,false,LCMemberLevelSClass);
   EditFieldTL(h,v+=vs,100,"Nuolaida (detaliai)",M4Val,Normal,0,vals0,false,0);
   EditFieldTL(h,v+=vs,100,"Vienetai",M4Code,Normal,5,f9,false,UnitSClass);
+  EditFieldTL(h,v+=vs,100,"Nuolaida",M4Val,Normal,5,vals1,false,0);// Edit ************************** BPI Ukraine - KramarAlexandr - Monday, 26 November 2018 13:21:18
   CheckBox(h,v+=vs,0,"Tik Patvirtintos",flags[1]);
   CheckBox(h,v+=vs,0,"Įskaitant pardavimų knygos duomenis",flags[2]);
   CheckBox(h,v+=vs,0,"Įtraukti visas gautas prekes",flags[3]);

@@ -918,10 +918,10 @@ begin
   if (testf and nonblank(RepSpec.f5) and !ItemFromDefaultVendor(IVCashrw.ArtCode,RepSpec.f5)) then begin
     testf = false;
   end;
+  
 
   if (testf) then begin
     if (ReadFirstItem(IVCashrw.ArtCode,INr,false,true)) then begin
-			
 			v_artrebatebpi[INr.Code] = INr.InitDisc;// Edit ************************** BPI Ukraine - KramarAlexandr - Tuesday, 20 November 2018 17:16:01
       if (testf and RepSpec.flags[4]==1 and INr.Terminated == 1) then begin
         testf = false;
@@ -944,6 +944,10 @@ begin
           testf = false;
         end;
       end;
+      
+      if (testf and RepSpec.vals1!=blankval and RepSpec.vals1!=INr.InitDisc) then begin// Edit ************************** BPI Ukraine - KramarAlexandr - Monday, 26 November 2018 13:25:01
+				testf = false;
+			end;
 
       if (testf) then begin
 
@@ -1102,9 +1106,14 @@ begin
   if (testf and nonblank(RepSpec.f5) and !ItemFromDefaultVendor(IVrw.ArtCode,RepSpec.f5)) then begin
     testf = false;
   end;
+  
 
   if (testf) then begin
     if (ReadFirstItem(IVrw.ArtCode,INr,false,true)) then begin
+    	if (testf and RepSpec.vals1!=blankval and RepSpec.vals1!=INr.InitDisc) then begin// Edit ************************** BPI Ukraine - KramarAlexandr - Monday, 26 November 2018 13:25:01
+				testf = false;
+			end;
+
 			v_artrebatebpi[INr.Code] = INr.InitDisc;// Edit ************************** BPI Ukraine - KramarAlexandr - Tuesday, 20 November 2018 17:22:23
       if (testf and RepSpec.flags[4]==1 and INr.Terminated == 1) then begin
         testf = false;
