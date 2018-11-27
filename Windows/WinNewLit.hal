@@ -675,7 +675,7 @@ begin
   real h,v,vm,vs,vt;
 
   WindowBegin("DOL - Prekių pardavimų statistika",DOL_SoldINStatRClass,CGRcW,RcType);
-  SetWRect(20,80,440,320);
+  SetWRect(20,80,640,320);
   v = 6; h = 130; vs = 20; vm = 16;
   PeriodField(h,v,"Periodas");
   EditFieldTL(h,v+=vs,50,"Laikas",M4STime,Normal,0,sStartTime,false,PasteCurTime);
@@ -695,11 +695,14 @@ begin
   EditFieldTL(h,v+=vs,100,"Nuolaida (detaliai)",M4Val,Normal,0,vals0,false,0);
   EditFieldTL(h,v+=vs,100,"Vienetai",M4Code,Normal,5,f9,false,UnitSClass);
   EditFieldTL(h,v+=vs,100,"Nuolaida",M4Val,Normal,5,vals1,false,0);// Edit ************************** BPI Ukraine - KramarAlexandr - Monday, 26 November 2018 13:21:18
+  
+  h = 300;
+  v = 6;
   CheckBox(h,v+=vs,0,"Tik Patvirtintos",flags[1]);
   CheckBox(h,v+=vs,0,"Įskaitant pardavimų knygos duomenis",flags[2]);
   CheckBox(h,v+=vs,0,"Įtraukti visas gautas prekes",flags[3]);
   CheckBox(h,v+=vs,0,"Neįtraukti uždarytų",flags[4]);
-  ButtonFrame(h=30,vt=(v+=(2*vs+7)),130,3,"Funkcija");
+  ButtonFrame(h=300,vt=(v+=(2*vs+7)),130,3,"Funkcija");
   RadioButton(h,v,2,0,"Peržiūra",ArtMode);
   RadioButton(h,v+=vm,0,0,"Peržiūra su įvairoves",ArtMode);
   RadioButton(h,v+=vm,1,0,"Detaliai",ArtMode);
@@ -709,7 +712,7 @@ begin
   RadioButton(h,v+=vm,1,0,"Tik pardavimai",Priority);
   RadioButton(h,v+=vm,2,0,"Tik grąžinimai",Priority);
   EndFrame;
-  ButtonFrame(h=200,v=vt,130,3,"Rūšiavimas");
+  ButtonFrame(h=470,v=vt,130,3,"Rūšiavimas");
   RadioButton(h,v,0,0,"Prekės kodas",Comparison);
   RadioButton(h,v+=vm,1,0,"Aukščiausi pardavimai",Comparison);
   RadioButton(h,v+=vm,2,0,"Žemiausi pardavimai",Comparison);
