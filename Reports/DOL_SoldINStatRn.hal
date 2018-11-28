@@ -255,7 +255,8 @@ begin
   SetRepCol(2,60);
   SetRepCol(3,250);
   if (RepSpec.ArtMode == 1) then begin
-    SetRepCol(4,320);
+  	SetRepCol(3,190);// Edit ************************** BPI Ukraine - KramarAlexandr - Wednesday, 28 November 2018 11:01:44
+    SetRepCol(4,260);
   end else begin
     SetRepCol(4,195);
     SetRepCol(8,225);
