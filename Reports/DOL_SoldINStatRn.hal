@@ -869,7 +869,7 @@ begin
   string 255 itsz,mask,mskrep,varsubset;
   array string 255 a_maskvar,a_maskvarsz,a_amsk;
   string 20 artcode,artname;
-  val t;
+  val t,fromreb,toreb;// Edit ************************** BPI Ukraine - KramarAlexandr - Monday, 17 December 2018 10:10:52
 
   infrvarf = false;
   intovarf = false;
@@ -946,9 +946,14 @@ begin
         end;
       end;
       
-      if (testf and RepSpec.vals1!=blankval and RepSpec.vals1!=INr.InitDisc) then begin// Edit ************************** BPI Ukraine - KramarAlexandr - Monday, 26 November 2018 13:25:01
-				testf = false;
-			end;
+      if(nonblank(RepSpec.f14) and testf)then begin
+      	fromreb = stringtoint(firstinrange(RepSpec.f14,4));
+      	toreb = stringtoint(lastinrange(RepSpec.f14,4));
+				if (INr.InitDisc < fromreb or INr.InitDisc > toreb) then begin// Edit ************************** BPI Ukraine - KramarAlexandr - Monday, 26 November 2018 13:25:01
+					testf = false;
+				end;
+      end;
+      
 
       if (testf) then begin
 
@@ -1052,7 +1057,7 @@ begin
   string 255 itsz,mask,mskrep,varsubset;
   string 20 artcode,artname;
   array string 255 a_maskvar,a_maskvarsz,a_amsk;
-  val t;
+  val t,fromreb,toreb;
 
   coef = 1;
   if (creditf) then begin
@@ -1111,9 +1116,14 @@ begin
 
   if (testf) then begin
     if (ReadFirstItem(IVrw.ArtCode,INr,false,true)) then begin
-    	if (testf and RepSpec.vals1!=blankval and RepSpec.vals1!=INr.InitDisc) then begin// Edit ************************** BPI Ukraine - KramarAlexandr - Monday, 26 November 2018 13:25:01
-				testf = false;
-			end;
+    	
+    	if(nonblank(RepSpec.f14) and testf)then begin
+      	fromreb = stringtoint(firstinrange(RepSpec.f14,4));
+      	toreb = stringtoint(lastinrange(RepSpec.f14,4));
+				if (INr.InitDisc < fromreb or INr.InitDisc > toreb) then begin// Edit ************************** BPI Ukraine - KramarAlexandr - Monday, 26 November 2018 13:25:01
+					testf = false;
+				end;
+      end;
 
 			v_artrebatebpi[INr.Code] = INr.InitDisc;// Edit ************************** BPI Ukraine - KramarAlexandr - Tuesday, 20 November 2018 17:22:23
       if (testf and RepSpec.flags[4]==1 and INr.Terminated == 1) then begin
