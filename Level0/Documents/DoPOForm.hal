@@ -1,3 +1,5 @@
+external updating procedure FormSetDocumentFilename(string);
+external function string 60 AddStringToStringList(string,string);
 external procedure PrintCurrencyCode(string,string);
 external procedure PortugueseFormFields(Integer);
 external procedure PrintSignature(string);
@@ -108,7 +110,7 @@ BEGIN
   OUTFORMFIELD("F_SALESMANEMAIL",Userr.emailAddr); 
   
   if (HasLocalization("PRT")) then begin
-    PortugueseFormFields(16149);  
+    PortugueseFormFields(16149);
   end;
   OUTFORMFIELD("F_FAKTURATILL",FactoringVEr.Name);
   OUTFORMFIELD("F_FAKTURATILL",FactoringVEr.InvAddr0);
@@ -313,6 +315,7 @@ BEGIN
     end else begin
       PrintValue("F_UNITPRICE",Round(t,SetRoundModeD(StringToInt(tstr))),M45Val,LangNrr,SysFormatRec,false);
     end;
+    OUTFORMFIELD("F_UNITCODE",POrw.UnitCode);
     SelectUnitText(POr.LangCode,INr.Unittext,tstr);    
     OUTFORMFIELD("F_ENHET",tstr);
     if (FIELDINFORM("F_ENHETLEV")) then begin        
@@ -397,8 +400,10 @@ BEGIN
   row FormDefVc FDrw;
   Boolean printf,langf;
   Integer intdocnr;
-  string 30 formcode,langcode;
+  string 30 formcode,langcode,fname;
   Integer i,rwcnt;
+  transaction Boolean gPDFEmailf;
+  transaction string 255 gaPDFEmailFiles;
     
   FDr.repname = RepSpec.repname;
   FDr.shortname = RepSpec.shortname;
@@ -432,6 +437,15 @@ BEGIN
     end;
 LBREAKPO:;
     if (nonblank(formcode)) then begin
+      if (gPDFEmailf) then begin
+        if (nonblank(gaPDFEmailFiles)) then begin
+          fname = "tmp/" & USetStr(1820) & POr.SerNr & "-" & formcode & ".pdf";
+        end else begin
+          fname = "tmp/" & USetStr(1820) & POr.SerNr & ".pdf";
+        end;
+        gaPDFEmailFiles = AddStringToStringList(gaPDFEmailFiles,fname);
+        qupdating.FormSetDocumentFilename(fname);
+      end;
       if (OpenForm(formcode)) then begin
         PrintPO(RepSpec,POr,formcode);
         CloseForm;

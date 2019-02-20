@@ -1,3 +1,8 @@
+external function val MulRateToBase2(var string,val,val,val,val,val,val,roundmode);
+external function val MulRateToBase1(var string,val,val,val,val,val,val,roundmode);
+external procedure PrintValToTextBaseCur(val,Integer,string,Integer,var string);
+external procedure Val2ToText(string,val,Integer,string,string,var string);
+external procedure OutAddress(string,string,string,string,string,string,string);
 external procedure PrintCurrencyCode(string,string);
 external function roundmode DefaultRoundMode();
 external function roundmode SetRoundModeD(Integer);
@@ -61,6 +66,30 @@ begin
   OUTFORMFIELD("F_KUNDMOMSNR",VEr.VATNr);
   OUTFORMFIELD("F_REGNUMBER1",VEr.RegNr1);
   OUTFORMFIELD("F_REGNUMBER2",VEr.RegNr2);
+  OutAddress("F_ADRESS",VIr.VEName,VIr.Addr1,VIr.Addr2,VIr.Addr3,VIr.InvAddr3,VIr.InvAddr4);
+  OUTFORMFIELD("F_LEVNAMN",VIr.VEName);
+  OUTFORMFIELD("F_ADDR1",VIr.Addr1);
+  OUTFORMFIELD("F_ADDR2",VIr.Addr2);
+  OUTFORMFIELD("F_ADDR3",VIr.Addr3);
+  OUTFORMFIELD("F_ADDR4",VIr.InvAddr3);
+  OUTFORMFIELD("F_INVADDR3",VIr.InvAddr4);
+
+  if (FIELDINFORM("F_AMOUNTINTEXT")) then begin
+    GetFieldArgument(Docr,F_AMOUNTINTEXT,tstr);
+    Val2ToText(tstr,VIr.PayVal,M4Val,VIr.CurncyCode,VIr.LangCode,tstr);
+    OUTFORMFIELD("F_AMOUNTINTEXT",tstr);
+  end;
+  if (FIELDINFORM("F_AMOUNTINTEXTBASECUR1")) then begin
+    t = MulRateToBase1(VIr.CurncyCode,VIr.PayVal,VIr.FrRate,VIr.ToRateB1,VIr.ToRateB2,VIr.BaseRate1,VIr.BaseRate2,DefaultCurRoundOff);
+    PrintValToTextBaseCur(t,M4Val,VIr.LangCode,1,tstr);
+    OUTFORMFIELD("F_AMOUNTINTEXTBASECUR1",tstr);  
+  end;  
+  if (FIELDINFORM("F_AMOUNTINTEXTBASECUR2")) then begin
+    t = MulRateToBase2(VIr.CurncyCode,VIr.PayVal,VIr.FrRate,VIr.ToRateB1,VIr.ToRateB2,VIr.BaseRate1,VIr.BaseRate2,DefaultCurRoundOff);
+    PrintValToTextBaseCur(t,M4Val,VIr.LangCode,2,tstr);
+    OUTFORMFIELD("F_AMOUNTINTEXTBASECUR2",tstr);  
+  end;  
+
   PrintCurrencyCode("F_VALUTA",VIr.CurncyCode);
   if (FIELDINFORM("F_SALESINVNO")) then begin
     if (VIr.IVNr>0)  then begin

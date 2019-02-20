@@ -113,19 +113,7 @@ BEGIN
   end else begin
     OutAddress("F_EGENADRESS",CompYear.CompName,CompYear.Addr0,CompYear.Addr1,CompYear.Addr2,CompYear.Addr3,CompYear.Addr4);
   end;
-/*  
-  OUTFORMFIELD("F_EGENADRESS",CompYear.CompName);
-  OUTFORMFIELD("F_EGENADRESS",CompYear.Addr0);
-  OUTFORMFIELD("F_EGENADRESS",CompYear.Addr1);
-  OUTFORMFIELD("F_EGENADRESS",CompYear.Addr2);
-  OUTFORMFIELD("F_EGENADRESS",CompYear.Addr3);
-  OUTFORMFIELD("F_EGENADRESS",CompYear.Addr4);
-*/  
-  OUTFORMFIELD("F_EGENADRESS2",CompYear.Addr0);
-  OUTFORMFIELD("F_EGENADRESS2",CompYear.Addr1);
-  OUTFORMFIELD("F_EGENADRESS2",CompYear.Addr2);
-  OUTFORMFIELD("F_EGENADRESS2",CompYear.Addr3);
-  OUTFORMFIELD("F_EGENADRESS2",CompYear.Addr4);
+  OutAddress("F_EGENADRESS2",CompYear.Addr0,CompYear.Addr1,CompYear.Addr2,CompYear.Addr3,CompYear.Addr4,"");
   OUTFORMFIELD("F_PRODUCTNAME",USetStr(1802));
   OUTFORMFIELD("F_DATUM",CurrentDate);
   OUTFORMFIELD("F_TID",CurrentTime);
@@ -138,6 +126,7 @@ BEGIN
   OUTFORMFIELD("F_OWNLINEOFBUSINESS",CompYear.LineOfBusiness);    
   OUTFORMFIELD("F_OWNSHARECAPITAL",CompYear.ShareCapital);    
   OUTFORMFIELD("F_OWNANACODE",CompYear.ANACode); 
+  OUTFORMFIELD("F_OWNSORTCODE",CompYear.SortCode); 
   OUTFORMFIELD("F_SHORTUNDERLINE","_______________");
   Bankr.Code = CompYear.BankName;
   if (ReadFirstMain(Bankr,1,true)) then begin
@@ -522,7 +511,7 @@ BEGIN
       end;
     end;
   end;
-  if (kind==1) begin
+  if (kind==1) then begin
     testf = false;
     if (a+b+c==0) then begin
       testf = true;
@@ -662,7 +651,7 @@ BEGIN
       end;
     end;
   end;
-  if (kind==1) begin
+  if (kind==1) then begin
     testf = false;
     if (a+b+c==0) then begin 
       testf = true;
@@ -853,7 +842,7 @@ BEGIN
 */  //AP
   end;
 
-  if (kind==1) begin
+  if (kind==1) then begin
     if (a+b+c==1) then begin
       if (nonblank(res)) then begin        
         res = res & " ";
@@ -1008,10 +997,14 @@ BEGIN
             res = res & " ";
             res = res & LangNrr.Zero;
           end;
+        case 0:
+          if (nonblank(LangNrr.Zero)) then begin
+            res = res & LangNrr.Zero;
+          end;
       end;
     end;
   end;
-  if (kind==1) begin
+  if (kind==1) then begin
     if (a+b+c==1) then begin
       if (nonblank(res)) then begin
         res = res & " ";
@@ -1111,7 +1104,7 @@ BEGIN
     
   if (HasLocalization("RUS,UKR")) then begin
     specialcur =  1;
-  end;    
+  end;  
   if (HasLocalization("LTU")) then begin
 //    LithuanianValToText(LangNrr,np,StrOut,curcode);
 //    goto L88;
@@ -1133,7 +1126,7 @@ BEGIN
   if (rnd.decimals==0) then begin
     subtrahend = 3;
   end;
-  tempstr = ValToString(np,M4Val,"",SysFormatRec.decimalPt,0);      
+  tempstr = ValToString(np,M4Val,"",DecimalSeparator,0);      
   bilval = Get3Val(tempstr,15+(rnd.decimals-subtrahend));
   milval = Get3Val(tempstr,12+(rnd.decimals-subtrahend));
   thuval = Get3Val(tempstr,9+(rnd.decimals-subtrahend));
@@ -1203,6 +1196,7 @@ Lov:
     case 1: GlobalRus999(LangNrr,oneval,0,tempstr,curgender);
     otherwise  Global999(LangNrr,oneval,0,tempstr,curgender,StrOut);
   end;
+
   if (blank(tempstr)) then begin
     if (np==0) then begin
       tempstr = LangNrr.Zero;
@@ -1282,6 +1276,10 @@ BEGIN
   val lp;
   Boolean forced;
   Boolean nodecs;
+  row CurncyCodeVc ccrw;
+  Integer rwcnt,i;
+  Integer curgender,minorcurgender;
+  string 255 curtext,curtext1,curtext2,minorcurtext,minorcurtext1,minorcurtext2;
 
   if (p<0) then begin
     lp = -p;
@@ -1312,6 +1310,32 @@ BEGIN
       end;
     end;  
   end;
+
+  curgender = ccr.CurGender;
+  minorcurgender = ccr.MinorCurGender;
+  curtext = ccr.CurText;
+  curtext1 = ccr.CurText1;
+  curtext2 = ccr.CurText2;
+  minorcurtext = ccr.MinorCurText;
+  minorcurtext1 = ccr.MinorCurText1;
+  minorcurtext2 = ccr.MinorCurText2;
+
+  rwcnt = MatRowCnt(ccr);//should return 0 if currency isn't found
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowGet(ccr,i,ccrw);
+    if (nonblank(ccrw.LangCode) and ccrw.LangCode==LangNrr.LangCode) then begin
+      curgender = ccrw.RowCurGender;
+      minorcurgender = ccrw.RowMinorCurGender;
+      curtext = ccrw.RowCurText;
+      curtext1 = ccrw.RowCurText1;
+      curtext2 = ccrw.RowCurText2;
+      minorcurtext = ccrw.RowMinorCurText;
+      minorcurtext1 = ccrw.RowMinorCurText1;
+      minorcurtext2 = ccrw.RowMinorCurText2;
+      i = rwcnt;
+    end;
+  end;
+
   if (blank(lp)) then begin
     goto LValToText;
   end;  
@@ -1330,7 +1354,7 @@ BEGIN
   if (LangNrr.CutDecimals<>0) then begin
     nodecs = true;
   end;
-  GlobalValToText(LangNrr,ccr.CurncyCode,ccr.CurGender,ccr.MinorCurGender,ccr.CurText,ccr.CurText1,ccr.CurText2,ccr.MinorCurText,ccr.MinorCurText1,ccr.MinorCurText2,lp,res,curncy,lang,forced,nodecs,LangNrr.CutDecimals);
+  GlobalValToText(LangNrr,ccr.CurncyCode,curgender,minorcurgender,curtext,curtext1,curtext2,minorcurtext,minorcurtext1,minorcurtext2,lp,res,curncy,lang,forced,nodecs,LangNrr.CutDecimals);
 LValToText:;
   RETURN;
 END;

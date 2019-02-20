@@ -73,7 +73,7 @@ BEGIN
   BC39(PUrw.SerialNr,tstr);
   OUTFORMFIELD("F_SERIENRBC39",tstr);  
   OUTFORMFIELD("F_ARTNR",PUrw.ArtCode);
-  // OUTFORMFIELD("F_ARTNR2",PUrw.ArtCode); //EBS
+  //OUTFORMFIELD("F_ARTNR2",PUrw.ArtCode);
   PrintValue("F_ANTAL",PUrw.Quant,M4UVal,LangNrr,SysFormatRec,false);
   PrintValue("F_PRIS",PUrw.CostPrice,M4Val,LangNrr,SysFormatRec,false);
   OUTFORMFIELD("F_SERIENR",PUrw.SerialNr);
@@ -109,6 +109,7 @@ BEGIN
 //  PrintValue("F_HALINITPRICE",INr.InitPrice,M4Val,LangNrr,SysFormatRec,false);
   OUTFORMFIELD("F_TRANSDATE",INr.LastBasePriceChange);
   OUTFORMFIELD("F_ITEMCODE",INr.AlternativeCode);
+  OUTFORMFIELD("F_BARCODE",INr.BarCode);
 //EBS-->
   IN2r.Code = INr.Code; //IN2r - without variety
   if (!ReadFirstMain(IN2r,1,true)) then begin
@@ -139,7 +140,6 @@ BEGIN
   end;
   LItemLabel:;
   // :EVS
-
   OUTFORMFIELD("F_SUPPSERIALNRROW",PUrw.SuppSerialNr);
   OUTFORMFIELD("F_MAJORSTONEROW",PUrw.MajStoneDet);
   OUTFORMFIELD("F_COLOURROW",PUrw.Colour);

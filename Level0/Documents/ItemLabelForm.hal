@@ -58,7 +58,8 @@ BEGIN
   PrintValue("F_HALINITPRICE",INr.InitPrice,M4Val,LangNrr,SysFormatRec,false);
   OUTFORMFIELD("F_TRANSDATE",INr.LastBasePriceChange);
   OUTFORMFIELD("F_ITEMCODE",INr.AlternativeCode);
-//EBS-->
+  OUTFORMFIELD("F_BARCODE",INr.BarCode);
+  //EBS-->
   OUTFORMFIELD("F_AVDELNING",INr.Code);
   if nonblank(RepSpec.f12) then begin
     OUTFORMFIELD("F_BARCODE",GetVarietyBarCode(INr.Code,RepSpec.f12));
@@ -177,8 +178,8 @@ BEGIN
 //EBS<--
   fromitem = FirstInRange(RepSpec.f1,20);
   toitem = LastInRange(RepSpec.f1,20);
-  frserialnr = FirstInRange(RepSpec.f3,30);
-  toserialnr = LastInRange(RepSpec.f3,30);
+  frserialnr = FirstInRange(RepSpec.f3,60);
+  toserialnr = LastInRange(RepSpec.f3,60);
   times = RepSpec.long1;
   if (times<1) then begin
     times = 1;

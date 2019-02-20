@@ -1,3 +1,5 @@
+external updating procedure FormSetDocumentFilename(string);
+external function string 60 AddStringToStringList(string,string);
 external function Integer VATCalcRule(string);
 external function Boolean UseTaxTemplatesforTaxCalc();
 external procedure GetVATRowFromBlock(string,record VATCodeBlock,var row VATCodeBlock);
@@ -44,11 +46,12 @@ begin
   for (i=0;i<rwcnt;i=i+1) begin
     MatRowGet(TMr,i,TMrw);
     GetVATRowFromBlock(TMrw.VATCode,VATCodeb,VATCbrw);
-    OUTFORMFIELD("F_MOMSKOD",TMrw.VATCode);    
+    OUTFORMFIELD("F_MOMSKODTOTAL",TMrw.VATCode);    
     OUTFORMFIELD("F_VATCOMMENT",VATCbrw.Comment);
 
 //    GetVATproc(TMrw.VATCode,0,t);
     PrintValueInclZero("F_VATEXCLPRC",TMrw.VATRate,M4Val,LangNrr,SFb,negamountf);    
+
     if (FIELDINFORM("F_VATBASE")) then begin
       valtyp = M4Val;
       GetFieldArgument(Docr,F_VATBASE,tstr);
@@ -88,9 +91,15 @@ begin
       case kInvoiceRowTypeCreditCardPayment:
         vpaymodes[kInvoiceRowTypeCreditCardPayment] = vpaymodes[kInvoiceRowTypeCreditCardPayment] + MulRateToBase1(IVrw.CurncyCode,IVrw.Sum,IVrw.FrRate,IVrw.ToRateB1,IVrw.ToRateB2,IVrw.BaseRate1,IVrw.BaseRate2,DefaultCurRoundOff);
         ivpaymode[kInvoiceRowTypeCreditCardPayment] = IVrw.PayMode;
+      case kInvoiceRowTypeSwishPayment:
+        vpaymodes[kInvoiceRowTypeSwishPayment] = vpaymodes[kInvoiceRowTypeSwishPayment] + MulRateToBase1(IVrw.CurncyCode,IVrw.Sum,IVrw.FrRate,IVrw.ToRateB1,IVrw.ToRateB2,IVrw.BaseRate1,IVrw.BaseRate2,DefaultCurRoundOff);
+        ivpaymode[kInvoiceRowTypeSwishPayment] = IVrw.PayMode;
+      case kInvoiceRowTypeQRPayment:
+        vpaymodes[kInvoiceRowTypeQRPayment] = vpaymodes[kInvoiceRowTypeQRPayment] + MulRateToBase1(IVrw.CurncyCode,IVrw.Sum,IVrw.FrRate,IVrw.ToRateB1,IVrw.ToRateB2,IVrw.BaseRate1,IVrw.BaseRate2,DefaultCurRoundOff);
+        ivpaymode[kInvoiceRowTypeQRPayment] = IVrw.PayMode;
       case kInvoiceRowTypeChequePayment:
         vpaymodes[kInvoiceRowTypeChequePayment] = vpaymodes[kInvoiceRowTypeChequePayment] + MulRateToBase1(IVrw.CurncyCode,IVrw.Sum,IVrw.FrRate,IVrw.ToRateB1,IVrw.ToRateB2,IVrw.BaseRate1,IVrw.BaseRate2,DefaultCurRoundOff);
-        ivpaymode[kInvoiceRowTypeCreditCardPayment] = IVrw.PayMode;
+        ivpaymode[kInvoiceRowTypeChequePayment] = IVrw.PayMode;
       case kInvoiceRowTypeGiftVoucherPayment:
         vpaymodes[kInvoiceRowTypeGiftVoucherPayment] = vpaymodes[kInvoiceRowTypeGiftVoucherPayment] + MulRateToBase1(IVrw.CurncyCode,IVrw.Sum,IVrw.FrRate,IVrw.ToRateB1,IVrw.ToRateB2,IVrw.BaseRate1,IVrw.BaseRate2,DefaultCurRoundOff);
         ivpaymode[kInvoiceRowTypeGiftVoucherPayment] = IVrw.PayMode;
@@ -116,6 +125,18 @@ begin
     GetPM(ivpaymode[kInvoiceRowTypeCreditCardPayment],accstr,tstr);  
     OUTFORMFIELD("F_PAYMODESUMTEXT",tstr);
     tstr = ValToString(vpaymodes[kInvoiceRowTypeCreditCardPayment],M4Val,SysFormatRec.thousSep,SysFormatRec.decimalPt,LangNrr.CutDecimals);
+    OUTFORMFIELD("F_PAYMODESUMAMOUNT",tstr);
+  end;
+  if (nonblank(vpaymodes[kInvoiceRowTypeSwishPayment])) then begin
+    GetPM(ivpaymode[kInvoiceRowTypeSwishPayment],accstr,tstr);  
+    OUTFORMFIELD("F_PAYMODESUMTEXT",tstr);
+    tstr = ValToString(vpaymodes[kInvoiceRowTypeSwishPayment],M4Val,SysFormatRec.thousSep,SysFormatRec.decimalPt,LangNrr.CutDecimals);
+    OUTFORMFIELD("F_PAYMODESUMAMOUNT",tstr);
+  end;
+  if (nonblank(vpaymodes[kInvoiceRowTypeQRPayment])) then begin
+    GetPM(ivpaymode[kInvoiceRowTypeQRPayment],accstr,tstr);  
+    OUTFORMFIELD("F_PAYMODESUMTEXT",tstr);
+    tstr = ValToString(vpaymodes[kInvoiceRowTypeQRPayment],M4Val,SysFormatRec.thousSep,SysFormatRec.decimalPt,LangNrr.CutDecimals);
     OUTFORMFIELD("F_PAYMODESUMAMOUNT",tstr);
   end;
   if (nonblank(vpaymodes[kInvoiceRowTypeChequePayment])) then begin
@@ -201,10 +222,19 @@ BEGIN
       totcost = totcost + IVrw.Quant*IVrw.BasePrice;
       totreb = totreb + (IVrw.Quant*IVrw.Price - IVrw.Sum);
       if (VATCalcRule(IVrw.VATCode)!=kVATCalcRuleSkip) then begin
-        AddVATBase(VATr,IVrw.VATCode,IVrw.Sum,blankval,vatcnt,IVr.InclVAT,IVr.NoTAXonVAT);      
-        AddVATBase(VATWDr,IVrw.VATCode,IVrw.Sum,blankval,vatcnt,IVr.InclVAT,IVr.NoTAXonVAT);
+        if (nonblank(IVrw.RvrsVATCode)) then begin
+          AddVATBase(VATr,IVrw.RvrsVATCode,IVrw.Sum,blankval,vatcnt,IVr.InclVAT,IVr.NoTAXonVAT);      
+          AddVATBase(VATWDr,IVrw.RvrsVATCode,IVrw.Sum,blankval,vatcnt,IVr.InclVAT,IVr.NoTAXonVAT);
+        end else begin
+          AddVATBase(VATr,IVrw.VATCode,IVrw.Sum,blankval,vatcnt,IVr.InclVAT,IVr.NoTAXonVAT);      
+          AddVATBase(VATWDr,IVrw.VATCode,IVrw.Sum,blankval,vatcnt,IVr.InclVAT,IVr.NoTAXonVAT);
+        end;
       end else begin
-        AddVATBase(VATSkipCalcr,IVrw.VATCode,IVrw.Sum,blankval,vatcnt,IVr.InclVAT,IVr.NoTAXonVAT);      
+        if (nonblank(IVrw.RvrsVATCode)) then begin
+          AddVATBase(VATSkipCalcr,IVrw.RvrsVATCode,IVrw.Sum,blankval,vatcnt,IVr.InclVAT,IVr.NoTAXonVAT);      
+        end else begin
+          AddVATBase(VATSkipCalcr,IVrw.VATCode,IVrw.Sum,blankval,vatcnt,IVr.InclVAT,IVr.NoTAXonVAT);      
+        end;
       end;
       if (IVrw.vRebate!=0) then begin
         if (IVrw.stp==kInvoiceRowTypeVoid) then begin
@@ -214,35 +244,34 @@ BEGIN
         end;
       end;
     end;      
-    if (IVrw.stp==kInvoiceRowTypeCorrection) then begin
-      totsubtotwdisc = totsubtotwdisc - IVrw.Quant*IVrw.Price;
-      totcost = totcost - IVrw.Quant*IVrw.BasePrice;
-      if (VATCalcRule(IVrw.VATCode)!=kVATCalcRuleSkip) then begin
-        AddVATBase(VATr,IVrw.VATCode,-IVrw.Sum,blankval,vatcnt,IVr.InclVAT,IVr.NoTAXonVAT);
-        AddVATBase(VATWDr,IVrw.VATCode,-IVrw.Sum,blankval,vatcnt,IVr.InclVAT,IVr.NoTAXonVAT);
-      end else begin
-        AddVATBase(VATSkipCalcr,IVrw.VATCode,IVrw.Sum,blankval,vatcnt,IVr.InclVAT,IVr.NoTAXonVAT);      
-      end;
+    switch (IVrw.stp) begin
+      case kInvoiceRowTypeDownpayment:
+        AddVATBase(VATr,IVrw.VATCode,IVrw.Sum,blankval,vatcnt,IVr.InclVAT,IVr.NoTAXonVAT);
+      case kInvoiceRowTypeGiftVoucherPayment:
+        totgcr = totgcr + IVrw.Sum;
+      case kInvoiceRowTypeCashPayment:
+        totcash = totcash + MulRateToBase1(IVrw.CurncyCode,IVrw.Sum,IVrw.FrRate,IVrw.ToRateB1,IVrw.ToRateB2,IVrw.BaseRate1,IVrw.BaseRate2,DefaultCurRoundOff);
+      case kInvoiceRowTypeLoyaltyPointsPayment:
+        totcash = totcash + MulRateToBase1(IVrw.CurncyCode,IVrw.Sum,IVrw.FrRate,IVrw.ToRateB1,IVrw.ToRateB2,IVrw.BaseRate1,IVrw.BaseRate2,DefaultCurRoundOff);
+      case kInvoiceRowTypeChequePayment:
+        totcash = totcash + MulRateToBase1(IVrw.CurncyCode,IVrw.Sum,IVrw.FrRate,IVrw.ToRateB1,IVrw.ToRateB2,IVrw.BaseRate1,IVrw.BaseRate2,DefaultCurRoundOff);
+      case kInvoiceRowTypeCreditCardPayment:
+        totcc = totcc + IVrw.Sum;
+      case kInvoiceRowTypeSwishPayment:
+        totcc = totcc + IVrw.Sum;
+      case kInvoiceRowTypeQRPayment:
+        totcc = totcc + IVrw.Sum;
+      case kInvoiceRowTypeCorrection:
+        totsubtotwdisc = totsubtotwdisc - IVrw.Quant*IVrw.Price;
+        totcost = totcost - IVrw.Quant*IVrw.BasePrice;
+        if (VATCalcRule(IVrw.VATCode)!=kVATCalcRuleSkip) then begin
+          AddVATBase(VATr,IVrw.VATCode,-IVrw.Sum,blankval,vatcnt,IVr.InclVAT,IVr.NoTAXonVAT);
+          AddVATBase(VATWDr,IVrw.VATCode,-IVrw.Sum,blankval,vatcnt,IVr.InclVAT,IVr.NoTAXonVAT);
+        end else begin
+          AddVATBase(VATSkipCalcr,IVrw.VATCode,IVrw.Sum,blankval,vatcnt,IVr.InclVAT,IVr.NoTAXonVAT);      
+        end;
     end;
-    if (IVrw.stp==kInvoiceRowTypeDownpayment) then begin
-      AddVATBase(VATr,IVrw.VATCode,IVrw.Sum,blankval,vatcnt,IVr.InclVAT,IVr.NoTAXonVAT);
-    end;
-    if (IVrw.stp==kInvoiceRowTypeGiftVoucherPayment) then begin
-      totgcr = totgcr + IVrw.Sum;
-    end;
-    if (IVrw.stp==kInvoiceRowTypeCashPayment) then begin
-      totcash = totcash + MulRateToBase1(IVrw.CurncyCode,IVrw.Sum,IVrw.FrRate,IVrw.ToRateB1,IVrw.ToRateB2,IVrw.BaseRate1,IVrw.BaseRate2,DefaultCurRoundOff);
-    end;
-    if (IVrw.stp==kInvoiceRowTypeLoyaltyPointsPayment) then begin
-      totcash = totcash + MulRateToBase1(IVrw.CurncyCode,IVrw.Sum,IVrw.FrRate,IVrw.ToRateB1,IVrw.ToRateB2,IVrw.BaseRate1,IVrw.BaseRate2,DefaultCurRoundOff);
-    end;
-    if (IVrw.stp==kInvoiceRowTypeChequePayment) then begin
-      totcash = totcash + MulRateToBase1(IVrw.CurncyCode,IVrw.Sum,IVrw.FrRate,IVrw.ToRateB1,IVrw.ToRateB2,IVrw.BaseRate1,IVrw.BaseRate2,DefaultCurRoundOff);
-    end;
-    if (IVrw.stp==kInvoiceRowTypeCreditCardPayment) then begin
-      totcc = totcc + IVrw.Sum;
-    end;
-  end;    
+  end;
   AddVATBase(VATr,IVr.FrVATCode,IVr.FrPrice,blankval,vatcnt,IVr.InclVAT,IVr.NoTAXonVAT);
   AddVATBase(VATWDr,IVr.FrVATCode,IVr.FrPrice,blankval,vatcnt,IVr.InclVAT,IVr.NoTAXonVAT);
 
@@ -323,7 +352,7 @@ BEGIN
       if (tstr=="-") then begin
         valtyp = M4NegVal;
       end;
-      PrintValue("F_SECCOMMISSION",cdiscvat,valtyp,LangNrr,SysFormatRec,negamountf);
+      PrintValueInclZero("F_SECCOMMISSION",cdiscvat,valtyp,LangNrr,SysFormatRec,negamountf);
     end;
     if (nonblank(vatval)) then begin
     if (FIELDINFORM("F_BASE1VATVAL")) then begin
@@ -663,6 +692,12 @@ BEGIN
       if (IVrw.stp==kInvoiceRowTypeCreditCardPayment) then begin
         totcc = totcc + IVrw.Sum;
       end;
+      if (IVrw.stp==kInvoiceRowTypeSwishPayment) then begin
+        totcc = totcc + IVrw.Sum;
+      end;
+      if (IVrw.stp==kInvoiceRowTypeQRPayment) then begin
+        totcc = totcc + IVrw.Sum;
+      end;
     end;    
     AddVATBase(VATr,IVr.FrVATCode,IVr.FrPrice,blankval,vatcnt,IVr.InclVAT,IVr.NoTAXonVAT);
     AddVATBase(VATWDr,IVr.FrVATCode,IVr.FrPrice,blankval,vatcnt,IVr.InclVAT,IVr.NoTAXonVAT);
@@ -907,9 +942,12 @@ BEGIN
   row FormDefVc FDrw;
   Boolean printf,langf;
   Integer intdocnr;
-  string 30 formcode,langcode,langcod2;
-  Integer i,rwcnt,inv_rowcnt;
+  string 30 formcode,langcode,langcod2,fname;
+  Integer i,rwcnt;
   record IVVc realIVr;
+  transaction Boolean gPDFEmailf;
+  transaction string 255 gaPDFEmailFiles;
+  Integer inv_rowcnt;//EBS
 
   realIVr.SerNr = IVr.SerNr;
   if (ReadFirstMain(realIVr,1,true)) then begin end;//for some reason we change OKFlag status in ivdclassprint
@@ -975,6 +1013,15 @@ LFINDFORMCOCEInv:;
     end;  
 LInvBREAK:;
     if (nonblank(formcode)) then begin
+      if (gPDFEmailf) then begin
+        if (nonblank(gaPDFEmailFiles)) then begin
+          fname = "tmp/" & USetStr(1820) & IVr.SerNr & "-" & formcode & ".pdf";
+        end else begin
+          fname = "tmp/" & USetStr(1820) & IVr.SerNr & ".pdf";
+        end;
+        gaPDFEmailFiles = AddStringToStringList(gaPDFEmailFiles,fname);
+        qupdating.FormSetDocumentFilename(fname);
+      end;
       if (OpenForm(formcode)) then begin
         printf = PrintInvoiceWatermarks(IVr,true,-1);
         PrintInvoice(RepSpec,IVr,formcode,langcode);
@@ -1002,9 +1049,11 @@ BEGIN
   row FormDefVc FDrw;
   Boolean printf,langf;
   Integer intdocnr;
-  string 30 formcode,langcode,langcod2;
+  string 30 formcode,langcode,langcod2,fname;
   Integer i,rwcnt;
   record IVVc realIVr;
+  transaction Boolean gPDFEmailf;
+  transaction string 255 gaPDFEmailFiles;
     
   realIVr.SerNr = IVr.SerNr;
   if (ReadFirstMain(realIVr,1,true)) then begin end;//for some reason we change OKFlag status in ivdclassprint
@@ -1047,6 +1096,15 @@ LFINDFORMCOCEInv1:;
     end;  
 LInv1BREAK:;
     if (nonblank(formcode)) then begin
+      if (gPDFEmailf) then begin
+        if (nonblank(gaPDFEmailFiles)) then begin
+          fname = "tmp/" & USetStr(1820) & IVr.SerNr & "-" & formcode & ".pdf";
+        end else begin
+          fname = "tmp/" & USetStr(1820) & IVr.SerNr & ".pdf";
+        end;
+        gaPDFEmailFiles = AddStringToStringList(gaPDFEmailFiles,fname);
+        qupdating.FormSetDocumentFilename(fname);
+      end;
       if (OpenForm(formcode)) then begin
         printf = PrintInvoiceWatermarks(IVr,false,-1);
         PrintInvoice(RepSpec,IVr,formcode,langcode);
@@ -1074,9 +1132,11 @@ BEGIN
   row FormDefVc FDrw;
   Boolean printf,langf;
   Integer intdocnr;
-  string 30 formcode,langcode,langcod2;
+  string 30 formcode,langcode,langcod2,fname;
   Integer i,rwcnt;
   record IVVc realIVr;
+  transaction Boolean gPDFEmailf;
+  transaction string 255 gaPDFEmailFiles;
     
   realIVr.SerNr = IVr.SerNr;
   if (ReadFirstMain(realIVr,1,true)) then begin end;//for some reason we change OKFlag status in ivdclassprint
@@ -1125,6 +1185,15 @@ LFINDFORMCOCEProjInv:;
     end;  
 LProjInvBREAK:;
     if (nonblank(formcode)) then begin
+      if (gPDFEmailf) then begin
+        if (nonblank(gaPDFEmailFiles)) then begin
+          fname = "tmp/" & USetStr(1820) & IVr.SerNr & "-" & formcode & ".pdf";
+        end else begin
+          fname = "tmp/" & USetStr(1820) & IVr.SerNr & ".pdf";
+        end;
+        gaPDFEmailFiles = AddStringToStringList(gaPDFEmailFiles,fname);
+        qupdating.FormSetDocumentFilename(fname);
+      end;
       if (OpenForm(formcode)) then begin
         printf = PrintInvoiceWatermarks(IVr,true,-1);
         PrintInvoice(RepSpec,IVr,formcode,langcode);
@@ -1152,10 +1221,12 @@ BEGIN
   row FormDefVc FDrw;
   Boolean printf,langf;
   Integer intdocnr;
-  string 30 formcode,langcode,langcod2;
+  string 30 formcode,langcode,langcod2,fname;
   Integer i,rwcnt;
   record IVVc realIVr;
   record AccBlock ARAccb;
+  transaction Boolean gPDFEmailf;
+  transaction string 255 gaPDFEmailFiles;
     
   realIVr.SerNr = IVr.SerNr;
   if (ReadFirstMain(realIVr,1,true)) then begin end;//for some reason we change OKFlag status in ivdclassprint    
@@ -1205,6 +1276,15 @@ LFINDFORMCOCECashInv:;
     end;  
 LCashInvBREAK:;
     if (nonblank(formcode)) then begin
+      if (gPDFEmailf) then begin
+        if (nonblank(gaPDFEmailFiles)) then begin
+          fname = "tmp/" & USetStr(1820) & IVr.SerNr & "-" & formcode & ".pdf";
+        end else begin
+          fname = "tmp/" & USetStr(1820) & IVr.SerNr & ".pdf";
+        end;
+        gaPDFEmailFiles = AddStringToStringList(gaPDFEmailFiles,fname);
+        qupdating.FormSetDocumentFilename(fname);
+      end;
       if (OpenForm(formcode)) then begin
         if (ARAccb.CashSalesToFiscalControlUnit==0) then begin
           printf = PrintInvoiceWatermarks(IVr,true,-1);
@@ -1236,10 +1316,12 @@ BEGIN
   row FormDefVc FDrw;
   Boolean printf,langf;
   Integer intdocnr;
-  string 30 formcode,langcode,langcod2;
+  string 30 formcode,langcode,langcod2,fname;
   Integer i,rwcnt;
   record IVVc realIVr;
   record AccBlock ARAccb;
+  transaction Boolean gPDFEmailf;
+  transaction string 255 gaPDFEmailFiles;
     
   realIVr.SerNr = IVr.SerNr;
   if (ReadFirstMain(realIVr,1,true)) then begin end;//for some reason we change OKFlag status in ivdclassprint    
@@ -1283,6 +1365,15 @@ LFINDFORMCOCECashInvRec:;
     end;  
 LCashInvRecBREAK:;
     if (nonblank(formcode)) then begin
+      if (gPDFEmailf) then begin
+        if (nonblank(gaPDFEmailFiles)) then begin
+          fname = "tmp/" & USetStr(1820) & IVr.SerNr & "-" & formcode & ".pdf";
+        end else begin
+          fname = "tmp/" & USetStr(1820) & IVr.SerNr & ".pdf";
+        end;
+        gaPDFEmailFiles = AddStringToStringList(gaPDFEmailFiles,fname);
+        qupdating.FormSetDocumentFilename(fname);
+      end;
       if (OpenForm(formcode)) then begin
         if (ARAccb.CashSalesToFiscalControlUnit==0) then begin
           printf = PrintInvoiceWatermarks(IVr,true,-1);
@@ -1314,11 +1405,13 @@ BEGIN
   row FormDefVc FDrw;
   Boolean printf,langf;
   Integer intdocnr;
-  string 30 formcode,langcode,langcod2;
+  string 30 formcode,langcode,langcod2,fname;
   Integer i,rwcnt;
   record IVVc realIVr;
   record IVVc orgIVr;
   record AccBlock ARAccb;
+  transaction Boolean gPDFEmailf;
+  transaction string 255 gaPDFEmailFiles;
     
   realIVr.SerNr = IVr.SerNr;
   if (ReadFirstMain(realIVr,1,true)) then begin end;//for some reason we change OKFlag status in ivdclassprint        
@@ -1368,6 +1461,15 @@ LFINDFORMCOCECredInv:;
     end;  
 LCredInvBREAK:;
     if (nonblank(formcode)) then begin
+      if (gPDFEmailf) then begin
+        if (nonblank(gaPDFEmailFiles)) then begin
+          fname = "tmp/" & USetStr(1820) & IVr.SerNr & "-" & formcode & ".pdf";
+        end else begin
+          fname = "tmp/" & USetStr(1820) & IVr.SerNr & ".pdf";
+        end;
+        gaPDFEmailFiles = AddStringToStringList(gaPDFEmailFiles,fname);
+        qupdating.FormSetDocumentFilename(fname);
+      end;
       if (OpenForm(formcode)) then begin
         if (ARAccb.CashSalesToFiscalControlUnit==0) then begin
           printf = PrintInvoiceWatermarks(IVr,true,-1);
@@ -1412,9 +1514,11 @@ BEGIN
   row FormDefVc FDrw;
   Boolean printf,langf;
   Integer intdocnr;
-  string 30 formcode,langcode,langcod2;
+  string 30 formcode,langcode,langcod2,fname;
   Integer i,rwcnt;
   record IVVc realIVr;
+  transaction Boolean gPDFEmailf;
+  transaction string 255 gaPDFEmailFiles;
     
   realIVr.SerNr = IVr.SerNr;
   if (ReadFirstMain(realIVr,1,true)) then begin end;//for some reason we change OKFlag status in ivdclassprint        
@@ -1457,6 +1561,15 @@ LFINDFORMCOCEIIInv:;
     end;  
 LIIInvBREAK:;
     if (nonblank(formcode)) then begin
+      if (gPDFEmailf) then begin
+        if (nonblank(gaPDFEmailFiles)) then begin
+          fname = "tmp/" & USetStr(1820) & IVr.SerNr & "-" & formcode & ".pdf";
+        end else begin
+          fname = "tmp/" & USetStr(1820) & IVr.SerNr & ".pdf";
+        end;
+        gaPDFEmailFiles = AddStringToStringList(gaPDFEmailFiles,fname);
+        qupdating.FormSetDocumentFilename(fname);
+      end;
       if (OpenForm(formcode)) then begin
         printf = PrintInvoiceWatermarks(IVr,true,-1);
         PrintInvoice(RepSpec,IVr,formcode,langcode);

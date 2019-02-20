@@ -20,7 +20,10 @@ external function Boolean Getformcode(Integer,Integer,string,string,string,LongI
 external function Integer NumberofDocumentPages(string,Integer);
 external procedure GetLangNr(string,var record LangNrVc);
 external procedure PrintCountryCode(string,string);
+external procedure GetLegalInvNrRow(string,var row LegalInvNrBlock);
+external function string 255 OfficialNumberReformatFromSeries(string,string,string);
 external outer procedure PrepStockMovForPrinting(var record StockMovVc); //EBS
+
 
 procedure StockMovPrintNote(record StockMovVc StockMovr,string argumentstr)
 begin
@@ -237,12 +240,13 @@ BEGIN
   record CUVc CUr;
   record ORVc ORr;
   record eShipTaxAuthReplyVc eSTARr;
-  
+  row LegalInvNrBlock LINrbrw;
+    
+   
   // EVS: DOL-140  
   RecordCopy(StockMovr,StockMovp);
   PrepStockMovForPrinting(StockMovr);
   // :EVS
-  
   realStockMovr.SerNr = StockMovr.SerNr;
   if (ReadFirstMain(realStockMovr,1,true)) then begin end;//for some reason we change OKFlag status in ivdclassprint
   BlockLoad(MainStockRec);
@@ -384,7 +388,19 @@ LBREAKStockMov:;
         end;            
         OUTFORMFIELD("F_SAFTHASHCONTROL",SAFTHashControl(StockMovr.Hash));
         if (HasLocalization("PRT")) then begin
-          OUTFORMFIELD("F_OFFICIALSERNO",GetOffSerNrIVJournalID(StockMovr.SerNr,"StockMovVc",StockMovr.OfficialSerNr) & " " & StockMovr.OfficialSerNrSerie & "/" & Right(StockMovr.OfficialSerNr,len(StockMovr.OfficialSerNr)-len(StockMovr.OfficialSerNrSerie)));
+          GetLegalInvNrRow(StockMovr.OfficialSerNr,LINrbrw);
+          switch (StockMovr.StockMovType) begin
+            case kStockMovTypeNormal:
+              OUTFORMFIELD("F_OFFICIALSERNO","MOVST" & " " & OfficialNumberReformatFromSeries(StockMovr.OfficialSerNr,StockMovr.OfficialSerNrSerie,"/"));        
+            case kStockMovTypeOwnGoodsTransport:
+              OUTFORMFIELD("F_OFFICIALSERNO","MOVGA" & " " & OfficialNumberReformatFromSeries(StockMovr.OfficialSerNr,StockMovr.OfficialSerNrSerie,"/"));        
+            case kStockMovTypeConsigment:
+              OUTFORMFIELD("F_OFFICIALSERNO","MOVGC" & " " & OfficialNumberReformatFromSeries(StockMovr.OfficialSerNr,StockMovr.OfficialSerNrSerie,"/"));        
+            case kStockMovTypeThirdEntGoodsTransport:
+              OUTFORMFIELD("F_OFFICIALSERNO","MOVGT" & " " & OfficialNumberReformatFromSeries(StockMovr.OfficialSerNr,StockMovr.OfficialSerNrSerie,"/"));        
+            case kStockMovTypeGlobalTransport:
+              OUTFORMFIELD("F_OFFICIALSERNO","MOVGL" & " " & OfficialNumberReformatFromSeries(StockMovr.OfficialSerNr,StockMovr.OfficialSerNrSerie,"/"));        
+          end;
         end else begin
           OUTFORMFIELD("F_OFFICIALSERNO",StockMovr.OfficialSerNr);
         end;

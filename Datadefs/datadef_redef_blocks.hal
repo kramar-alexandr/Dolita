@@ -27,6 +27,7 @@ begin
   RecordField(Withholdings,M4Int,0,0);
   RecordField(UseSupersessionIN,M4Int,0,0);
   RecordField(MultiBuyDiscount,M4Int,0,0); // not used
+  RecordField(ShowItemPicture,M4Int,0,0);//8.5
   RecordField(DescrClassTypes,M4List,60,DIVc); //EBS
   RecordField(ItemLabelCTypeCode,M4Code,10,CTypeVc); // EVS: DOL-33
   EndBlock;
@@ -131,6 +132,26 @@ begin
   RecordField(PreferredCallingMethod,M4Int,0,0);
   RecordField(MachineType,M4Int,0,0);
   RecordField(MatEditing,M4Int,0,0);
+  RecordField(POSButtonWidth,M4Long,0,0);//8.5
+  RecordField(POSButtonHeight,M4Long,0,0);//8.5//8.5
+  RecordField(POSShowButtonPictures,M4Int,0,0);//8.5
+  RecordField(BluetoothName,M4Str,40,0);//8.5
+  RecordField(BluetoothMACAddr,M4UStr,17,0);//8.5
+  RecordField(POSLabelFontSize,M4Long,0,0);//8.5
+  RecordField(CustomerDisplayFontSize,M4Long,0,0);//8.5
+  RecordField(PanelFontSize,M4Long,0,0);//8.5
+  RecordField(UseNumPad,M4Int,0,0);//8.5
+  RecordField(SelectRowPage,M4Int,0,0);//8.5
+  RecordField(IVCashPOSDisplayFontSize1,M4Long,0,0);//8.5
+  RecordField(IVCashPOSDisplayFontSize2,M4Long,0,0);//8.5
+  RecordField(CUDisplayFontSize1,M4Long,0,0);//8.5
+  RecordField(CUDisplayFontSize2,M4Long,0,0);//8.5
+  RecordField(HideArtCode,M4Int,0,0);//8.5
+  RecordField(BackgroundOrderSync,M4Int,0,0);//8.5
+  RecordField(BeepOnMessage,M4Int,0,0);//8.5
+  RecordField(DarkMode,M4Int,0,0);//8.5
+  RecordField(POSLabelFontSizeWIN,M4Long,0,0);//8.5
+  RecordField(Paired,M4Int,0,0);//8.5
   RecordField(POSGroup,M4Code,5,0); //EBS
 //update POSServToOffLine_SaveLocalMachineSettings
   EndBlock;
@@ -168,6 +189,13 @@ begin
   RecordField(RestOKSD,M4Int,0,0);
   RecordField(RestBasePriceInclVAT,M4Int,0,0);
   RecordField(POSOKSD,M4Int,0,0);
+  RecordField(ItemPictureCashier,M4Int,0,0);//8.5
+  RecordField(ItemPictureCustomer,M4Int,0,0);//8.5
+  RecordField(NoZeroQty,M4Int,0,0);//8.5
+  RecordField(CheckVATNo,M4Int,0,0);//8.5
+  RecordField(NoZeroSum,M4Int,0,0);//8.5
+  RecordField(PrintZReportatCashup,M4Int,0,0);//8.5
+  RecordField(CashWithdrawalAcc,M4Code,10,AccVc);//8.5
   RecordField(TRObjects,M4UStr,60,0); // EVS: DOL-88
   RecordField(UpdateCustDisplay,M4Int,0,0); //EBS
   RecordField(CushUpOnCloseSession,M4Int,0,0); //EBS
@@ -326,6 +354,10 @@ begin
   RecordField(ExportFlagfromDelAddr,M4Int,0,0);
   RecordField(RequireCreditNoteReason,M4Int,0,0);
   RecordField(CreditIVTotNotExceedInvCheck,M4Int,0,0);
+  RecordField(SalesAccSeparateRows,M4Int,0,0);//8.5
+  RecordField(CashWithdrawalAcc,M4Code,10,AccVc);//8.5
+  RecordField(VATBase,M4Code,10,AccVc);//8.5
+  RecordField(VATBaseOppositeAcc,M4Code,10,AccVc);//8.5
   RecordField(POSRetAcc,M4Code,10,AccVc); // EVS: DOL-89
   RecordField(VATCodeEUWithVAT,M4Code,10,VATCodeBlock); //EBS
   EndBlock;
