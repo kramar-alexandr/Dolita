@@ -1,11 +1,13 @@
 external function roundmode DefaultRoundMode();
 external procedure AddCalcPrice(record INVc,record CPMVc,string,val,string,Integer,var val);
 external procedure GetUserObject(string,var string);
-remote procedure EBS_SendArtStatServer(string,string,string,Integer,
-                                   var val,var val,var val,var val,var val,var val,var val,var val,var Date,var val,var string,var array val,var integer,string); //EBS edit
+remote procedure SendArtStatServer2(string,string,string,Integer,
+                                   var val,var val,var val,var val,var val,var val,var val,var val,var Date,var val,var record INVc);
 external procedure ExtractObj(string,var Integer,var string);
 remote procedure GetFullCurncyRate (var string,Date,var val,var val,var val,var val,var val);
 remote procedure COSumup(var record COVc);
+remote procedure EBS_SendArtStatServer(string,string,string,Integer,
+                                   var val,var val,var val,var val,var val,var val,var val,var val,var Date,var val,var string,var array val,var integer,string); //EBS edit
 
 global
 procedure IVVcGetCalcItemPrice(record INVc INr,record IVVc IVp,Integer rownr,var val pricep)
@@ -14,7 +16,7 @@ BEGIN
   record CPMVc CPr;
   Integer i,rwcnt;
   val price;
-
+  
   rwcnt = MatRowCnt(IVp);
   MatRowGet(IVp,rownr,IVrw);
   IVrw.Price = blankval;
@@ -28,7 +30,7 @@ BEGIN
         if (IVrw.stp==kInvoiceRowTypeNormal) or (IVrw.stp==kInvoiceRowTypeStructuredItemComponent) then begin
           AddCalcPrice(INr,CPr,IVrw.ArtCode,IVrw.Sum,IVrw.VATCode,IVp.InclVAT,price);
         end;
-      end;
+      end;  
     end;
     price = Round(price,DefaultRoundMode);
     MatRowGet(IVp,rownr,IVrw);
@@ -36,9 +38,9 @@ BEGIN
     MatRowPut(IVp,rownr,IVrw);
   end;
   if (pricep!=-1) then begin pricep = price; end;
-
+      
   RETURN;
-END;
+END; 
 
 global
 procedure SendArtStat(string artcode,string location,string recepy,val gpp,val procp,val unitprp,Date td,Integer inclsupersessin)
@@ -50,9 +52,10 @@ begin
   val shpble;
   val purch,unitcoef,prodord,rsrv;
   record SysFormatBlock SFb;
+  record INVc INr;
   string 255 class; //EBS
   array val arrLocVals; //EBS
-
+  
   wn = FindWindow("ArtStatIClass");
   if (wn>0) and (nonblank(artcode)) then begin
     BlockLoad(SFb);
@@ -112,7 +115,13 @@ begin
     rc.f5 = ValToString(prodord,M4UVal,SFb.thousSep,SFb.decimalPt,0);
     rc.Stext = ValToString(stock-rsrv,M4UVal,SFb.thousSep,SFb.decimalPt,0);
     rc.d1 = td;
+    rc.AccSpec = INr.ItemType;
     PutWindowRecord(wn,rc);
+    wn = FindWindow("ItemPictureOClass");
+    if (wn>0) and (nonblank(INr.Code)) then begin
+      PutWindowRecord(wn,INr);
+      ReRunWindowDef(wn);
+    end;
   end;
   return;
 end;
@@ -121,7 +130,7 @@ global
 procedure GetRecepy(string artcode,var string recepy)
 BEGIN
   record INVc INr;
-
+   
   recepy = "";
   INr.Code = artcode;
   if (ReadFirstMain(INr,1,true)) then begin
@@ -150,7 +159,7 @@ begin
       oldpos = 0;
       ExtractObj(CUr.Objects,oldpos,oldostr);
       while (nonblank(oldostr)) begin
-        if (ostr==oldostr) then begin
+        if (ostr==oldostr) then begin 
           goto LRemoveOldCustObjects;
         end;
         ExtractObj(CUr.Objects,oldpos,oldostr);
@@ -161,7 +170,7 @@ begin
       res = res & ostr;
 LRemoveOldCustObjects:;
       ExtractObj(objstr,pos,ostr);
-    end;
+    end;    
   end;
   objstr = res;
   return;
@@ -176,7 +185,7 @@ begin
   string 60 userobj;
 
   res = objstr;
-  GetUserObject(oldsalesman,userobj);
+  GetUserObject(oldsalesman,userobj);    
   if (nonblank(userobj)) then begin
     res = "";
     pos = 0;
@@ -185,7 +194,7 @@ begin
       oldpos = 0;
       ExtractObj(userobj,oldpos,oldostr);
       while (nonblank(oldostr)) begin
-        if (ostr==oldostr) then begin
+        if (ostr==oldostr) then begin 
           goto LRemoveOldPersObjects;
         end;
         ExtractObj(userobj,oldpos,oldostr);
@@ -196,7 +205,7 @@ begin
       res = res & ostr;
 LRemoveOldPersObjects:;
       ExtractObj(objstr,pos,ostr);
-    end;
+    end;    
   end;
   objstr = res;
   return;
@@ -213,13 +222,13 @@ BEGIN
   oldATCatr.Code = oldcatcode;
   if (ReadFirstMain(oldATCatr,1,true)) then begin
     res = "";
-    pos = 0;
+    pos = 0;        
     ExtractObj(objstr,pos,ostr);
     while (nonblank(ostr)) begin
       oldpos = 0;
       ExtractObj(oldATCatr.Objects,oldpos,oldostr);
       while (nonblank(oldostr)) begin
-        if (ostr==oldostr) then begin
+        if (ostr==oldostr) then begin 
           goto L88RemoveoldATCatObjects;
         end;
         ExtractObj(oldATCatr.Objects,oldpos,oldostr);
@@ -230,7 +239,7 @@ BEGIN
       res = res & ostr;
 L88RemoveoldATCatObjects:;
       ExtractObj(objstr,pos,ostr);
-    end;
+    end;    
   end;
   objstr = res;
   RETURN;
@@ -247,13 +256,13 @@ BEGIN
   oldUserr.Code = oldusercode;
   if (ReadFirstMain(oldUserr,1,true)) then begin
     res = "";
-    pos = 0;
+    pos = 0;        
     ExtractObj(objstr,pos,ostr);
     while (nonblank(ostr)) begin
       oldpos = 0;
       ExtractObj(oldUserr.PersObjx,oldpos,oldostr);
       while (nonblank(oldostr)) begin
-        if (ostr==oldostr) then begin
+        if (ostr==oldostr) then begin 
           goto L88RemoveOldUserObjects;
         end;
         ExtractObj(oldUserr.PersObjx,oldpos,oldostr);
@@ -264,7 +273,7 @@ BEGIN
       res = res & ostr;
 L88RemoveOldUserObjects:;
       ExtractObj(objstr,pos,ostr);
-    end;
+    end;    
   end;
   objstr = res;
   RETURN;
@@ -281,13 +290,13 @@ BEGIN
   oldResTyper.Code = oldrestype;
   if (ReadFirstMain(oldResTyper,1,true)) then begin
     res = "";
-    pos = 0;
+    pos = 0;        
     ExtractObj(objstr,pos,ostr);
     while (nonblank(ostr)) begin
       oldpos = 0;
       ExtractObj(oldResTyper.Objects,oldpos,oldostr);
       while (nonblank(oldostr)) begin
-        if (ostr==oldostr) then begin
+        if (ostr==oldostr) then begin 
           goto L88RemoveOldResTypeObjects;
         end;
         ExtractObj(oldResTyper.Objects,oldpos,oldostr);
@@ -298,7 +307,7 @@ BEGIN
       res = res & ostr;
 L88RemoveOldResTypeObjects:;
       ExtractObj(objstr,pos,ostr);
-    end;
+    end;    
   end;
   objstr = res;
   RETURN;
@@ -315,13 +324,13 @@ BEGIN
   oldResUsager.Code = oldresusage;
   if (ReadFirstMain(oldResUsager,1,true)) then begin
     res = "";
-    pos = 0;
+    pos = 0;        
     ExtractObj(objstr,pos,ostr);
     while (nonblank(ostr)) begin
       oldpos = 0;
       ExtractObj(oldResUsager.Objects,oldpos,oldostr);
       while (nonblank(oldostr)) begin
-        if (ostr==oldostr) then begin
+        if (ostr==oldostr) then begin 
           goto L88RemoveOldResUsageObjects;
         end;
         ExtractObj(oldResUsager.Objects,oldpos,oldostr);
@@ -332,7 +341,7 @@ BEGIN
       res = res & ostr;
 L88RemoveOldResUsageObjects:;
       ExtractObj(objstr,pos,ostr);
-    end;
+    end;    
   end;
   objstr = res;
   RETURN;
@@ -355,13 +364,13 @@ BEGIN
     MatRowGet(BOr,i,oldBOrw);
     if (oldBOrw.Code==oldbookorig) then begin
       res = "";
-      pos = 0;
+      pos = 0;        
       ExtractObj(objstr,pos,ostr);
       while (nonblank(ostr)) begin
         oldpos = 0;
         ExtractObj(oldBOrw.Objects,oldpos,oldostr);
         while (nonblank(oldostr)) begin
-          if (ostr==oldostr) then begin
+          if (ostr==oldostr) then begin 
             goto L88RemoveOldBookOriginObjects;
           end;
           ExtractObj(oldBOrw.Objects,oldpos,oldostr);
@@ -373,7 +382,7 @@ BEGIN
 L88RemoveOldBookOriginObjects:;
         ExtractObj(objstr,pos,ostr);
       end;
-    end;
+    end;    
   end;
   objstr = res;
   RETURN;
@@ -396,13 +405,13 @@ begin
     MatRowGet(PRCb,i,oldPRCbw);
     if (oldPRCbw.Code==oldprclass) then begin
       res = "";
-      pos = 0;
+      pos = 0;        
       ExtractObj(objstr,pos,ostr);
       while (nonblank(ostr)) begin
         oldpos = 0;
         ExtractObj(oldPRCbw.DefObject,oldpos,oldostr);
         while (nonblank(oldostr)) begin
-          if (ostr==oldostr) then begin
+          if (ostr==oldostr) then begin 
             goto L88RemoveOldPRClassinObjects;
           end;
           ExtractObj(oldPRCbw.DefObject,oldpos,oldostr);
@@ -414,7 +423,7 @@ begin
 L88RemoveOldPRClassinObjects:;
         ExtractObj(objstr,pos,ostr);
       end;
-    end;
+    end;    
   end;
   objstr = res;
   return;
@@ -437,13 +446,13 @@ begin
     MatRowGet(CCb,i,oldCCbw);
     if (oldCCbw.Code==oldcclass) then begin
       res = "";
-      pos = 0;
+      pos = 0;        
       ExtractObj(objstr,pos,ostr);
       while (nonblank(ostr)) begin
         oldpos = 0;
         ExtractObj(oldCCbw.DefObject,oldpos,oldostr);
         while (nonblank(oldostr)) begin
-          if (ostr==oldostr) then begin
+          if (ostr==oldostr) then begin 
             goto L88RemoveOldContractClassinObjects;
           end;
           ExtractObj(oldCCbw.DefObject,oldpos,oldostr);
@@ -455,7 +464,7 @@ begin
 L88RemoveOldContractClassinObjects:;
         ExtractObj(objstr,pos,ostr);
       end;
-    end;
+    end;    
   end;
   objstr = res;
   return;
@@ -478,13 +487,13 @@ begin
     MatRowGet(CCb,i,oldCCbw);
     if (oldCCbw.ProgType==progtype) then begin
       res = "";
-      pos = 0;
+      pos = 0;        
       ExtractObj(objstr,pos,ostr);
       while (nonblank(ostr)) begin
         oldpos = 0;
         ExtractObj(oldCCbw.Classification,oldpos,oldostr);
         while (nonblank(oldostr)) begin
-          if (ostr==oldostr) then begin
+          if (ostr==oldostr) then begin 
             goto L88RemoveOldCCandClassinObjects;
           end;
           ExtractObj(oldCCbw.Classification,oldpos,oldostr);
@@ -496,7 +505,7 @@ begin
 L88RemoveOldCCandClassinObjects:;
         ExtractObj(objstr,pos,ostr);
       end;
-    end;
+    end;    
   end;
   objstr = res;
   return;
@@ -519,13 +528,13 @@ begin
     MatRowGet(CCb,i,oldCCbw);
     if (oldCCbw.ControlCode==oldcclass) then begin
       res = "";
-      pos = 0;
+      pos = 0;        
       ExtractObj(objstr,pos,ostr);
       while (nonblank(ostr)) begin
         oldpos = 0;
         ExtractObj(oldCCbw.Classification,oldpos,oldostr);
         while (nonblank(oldostr)) begin
-          if (ostr==oldostr) then begin
+          if (ostr==oldostr) then begin 
             goto L88RemoveOldVersionClassinObjects;
           end;
           ExtractObj(oldCCbw.Classification,oldpos,oldostr);
@@ -537,7 +546,7 @@ begin
 L88RemoveOldVersionClassinObjects:;
         ExtractObj(objstr,pos,ostr);
       end;
-    end;
+    end;    
   end;
   objstr = res;
   return;
@@ -560,7 +569,7 @@ begin
       oldpos = 0;
       ExtractObj(PRr.Objects,oldpos,oldostr);
       while (nonblank(oldostr)) begin
-        if (ostr==oldostr) then begin
+        if (ostr==oldostr) then begin 
           goto LRemoveOldProjectObjects;
         end;
         ExtractObj(PRr.Objects,oldpos,oldostr);
@@ -571,7 +580,7 @@ begin
       res = res & ostr;
 LRemoveOldProjectObjects:;
       ExtractObj(objstr,pos,ostr);
-    end;
+    end;    
   end;
   objstr = res;
   return;

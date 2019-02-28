@@ -1,5 +1,5 @@
 external procedure IVOpenPrepExists(string);
-remote updating function Integer PasteSHInInvoice(record SHVc,var record IVVc);
+remote updating function LongInt PasteSHInInvoice2(record SHVc,var record IVVc);
 remote updating function Boolean CheckEShipPRTItems(record RcVc,var LongInt,var string,
                                                   var integer,var string);
 external function Boolean IsStandardUnused();
@@ -151,13 +151,14 @@ updating procedure IVFromSHDsm()
 begin
   record SHVc SHr;
   record IVVc IVr;
-  Integer err,wn,nwn;
+  Integer wn,nwn;
+  LongInt err;
   
   wn = CurWindow;
   GetWindowRecord(wn,SHr);
   if (UserCanAction("SHToInv",true)) then begin
     if ((WindowState(wn)==Rs_normal) and (SHr.OKFlag!=0)) then begin
-      err = PasteSHInInvoice(SHr,IVr);
+      err = PasteSHInInvoice2(SHr,IVr);
       switch (err) begin
         case 0:
           if (MatRowCnt(IVr)!=0) then begin

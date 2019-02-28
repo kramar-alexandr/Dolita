@@ -1,3 +1,5 @@
+external function Boolean SetInSet2(string,string);
+external procedure GetVATRow(string,var row VATCodeBlock);
 external function Boolean HasContactClassification();
 external function Boolean HasCategories();
 external procedure HTLevCat(string,var string);
@@ -31,11 +33,11 @@ external procedure HTCustClassType(string,var string);
 external function Boolean SetInSet2(string,string);
 external procedure ClassTypef(string,string,var Boolean);
 external function Boolean HasObjects();
-external function Boolean HasModNL();
-external function Boolean HasIncomeAndExpenseBook();
+external function Boolean HasPLIntegratedWithNL();
+external function Boolean HasIntegratedNL();
 
-function Boolean CheckAllInvoiceLines(string rowobj,string prcode,record VIVc VIr,Integer vivt,var val invval,var val vatval,var val ivnovat)
-BEGIN
+function Boolean CheckAllInvoiceLines(string costacc,string rowobj,string prcode,record VIVc VIr,Integer vivt,var val invval,var val vatval,var val ivnovat)
+begin
   row VIVc VIrw;
   Boolean res,rowf,prf;
   Integer i,rwcnt;
@@ -51,10 +53,17 @@ BEGIN
     rwcnt = MatRowCnt(VIr);
     for (i=0;i<rwcnt;i=i+1) begin
       MatRowGet(VIr,i,VIrw);
-      rowf = false;
-      prf = false;
-      if (SetInSet(rowobj,VIrw.Objects)) then begin rowf = true; end;
-      if ((prcode==VIrw.PRCode) or (blank(prcode))) then begin prf = true; end;
+      rowf = true;
+      prf = true;
+      if (nonblank(costacc)) then begin
+        if (costacc!=VIrw.AccNumber) then begin rowf = false; end;
+      end;
+      if (nonblank(rowobj)) then begin
+        if (SetInSet(rowobj,VIrw.Objects)==false) then begin rowf = false; end;
+      end;
+      if (nonblank(prcode)) then begin
+        if (prcode!=VIrw.PRCode) then begin rowf = false; end;
+      end;
       if (rowf and prf) then begin
         switch (VIr.InvType) begin
           case 3:
@@ -123,8 +132,8 @@ BEGIN
     ivnovat = ivnovat - vatval;
   end;
   CheckAllInvoiceLines = res;
-  RETURN;
-END;
+  return;
+end;
 
 global
 procedure VIJRn(record RcVc RepSpec)
@@ -137,7 +146,7 @@ begin
   Boolean testf;
   LongInt afr,ato;
   String 255 tstr;
-  Integer rw, rwcnt, i,vatcnt,cnt;
+  Integer rw, rwcnt, i,vatcnt,cnt,vcnt;
   Row VIVc VIrw;
   val invval;
   array val av1;
@@ -153,6 +162,7 @@ begin
   record SMVc TotVATr;
   row SMVc VATrw;
   val vatv,t1;
+  row VATCodeBlock VATbrw;
 
   RecordClear(TotVATr);
   SetupVATBase(TotVATr,vatcnt);          
@@ -271,15 +281,35 @@ begin
     EndFormat;
     Gray_Divider(0,1);
   end;
-  if (RepSpec.ArtMode==2 or RepSpec.ArtMode==3) then begin
+  if (RepSpec.ArtMode==3) then begin
+    SetRepColBiDi(5,300,350);
+    SetRepColBiDi(6,350,420);
+    SetRepColBiDi(7,410,470);
+
     StartFormat(15);
     OutString(0,0,USetStr(4002),false);
     OutString(55,0,USetStr(4003),false);
-    OutString(110,0,USetStr(4007),false);//140
-    OutString(200,0,USetStr(4004),false);//200
-    OutStringAdjust(5,0,USetStr(2356),true,M4Val);//400
-    OutStringAdjust(6,0,USetStr(2328),true,M4Val);//400
-    OutStringAdjust(7,0,USetStr(2329),true,M4Val);//430
+    OutString(100,0,USetStr(4007),false);
+    OutString(160,0,USetStr(4004),false);
+    OutStringAdjust(5,0,USetStr(2356),true,M4Val);
+    OutStringAdjust(6,0,USetStr(2328),true,M4Val);
+    OutStringAdjust(7,0,USetStr(2329),true,M4Val);
+    EndFormat;
+    Gray_Divider(0,1);
+  end;
+  if (RepSpec.ArtMode==2) then begin
+    SetRepColBiDi(5,310,360);
+    SetRepColBiDi(6,370,440);
+    SetRepColBiDi(7,430,490);
+
+    StartFormat(15);
+    OutString(0,0,USetStr(4002),false);
+    OutString(55,0,USetStr(4003),false);
+    OutString(105,0,USetStr(4007),false);
+    OutString(165,0,USetStr(4004),false);
+    OutStringAdjust(5,0,USetStr(2356),true,M4Val);
+    OutStringAdjust(6,0,USetStr(2328),true,M4Val);
+    OutStringAdjust(7,0,USetStr(2329),true,M4Val);
     EndFormat;
     Gray_Divider(0,1);
   end;
@@ -298,7 +328,7 @@ begin
     end;
     StartFormat(15);
     EndFormat;
-    if (HasModNL or HasIncomeAndExpenseBook) then begin
+    if (HasIntegratedNL) then begin
       OutString(20,0,USetStr(7065),false);
     end;
     if (HasObjects) then begin
@@ -327,7 +357,7 @@ begin
       if (blank(RepSpec.f2) or (RepSpec.f2==VIr.VECode)) then begin
         if ((RepSpec.flags[1]<>0 and (VIr.OKFlag==0)) or (RepSpec.flags[2]<>0 and (VIr.OKFlag<>0))) then begin
           if ((RepSpec.flags[3]<>0 and (VIr.InvType==kInvoiceTypeNormal or VIr.InvType==kInvoiceTypeNormalSpecialSales)) or 
-          (RepSpec.flags[4]<>0 and (VIr.InvType==kInvoiceTypeCash or VIr.InvType==kInvoiceTypeCashInvoiceReceiptPRT)) or (RepSpec.flags[5]<>0 and (VIr.InvType==kInvoiceTypeCredit or VIr.InvType==kInvoiceTypeCreditSpecialSales))) then begin
+          (RepSpec.flags[4]<>0 and (VIr.InvType==kInvoiceTypeEmployee or VIr.InvType==kInvoiceTypeCash or VIr.InvType==kInvoiceTypeCashInvoiceReceiptPRT)) or (RepSpec.flags[5]<>0 and (VIr.InvType==kInvoiceTypeCredit or VIr.InvType==kInvoiceTypeCreditSpecialSales))) then begin
             testf = true;
           end;
         end;
@@ -367,7 +397,7 @@ begin
         testf = ContactInGroupClass2(VIr.VECode,RepSpec.f9,RepSpec.f4,RepSpec.f5,"SUPP","","");
       end;
       if (nonblank(RepSpec.ObjStr)) then begin    
-        if (SetInSet(RepSpec.ObjStr,VIr.Objects)==false) then begin        
+        if (SetInSet2(RepSpec.ObjStr,VIr.Objects)==false) then begin        
           testf = false; 
         end; 
       end;  
@@ -426,10 +456,14 @@ begin
             if (VIrw.ovst==0) then begin
               if (VIr.InvType==kInvoiceTypeCredit or VIr.InvType==kInvoiceTypeCreditSpecialSales) then begin
                 AddVATBase(VATr,VIrw.VATCode,-VIrw.Sum,blankval,vatcnt,0,0);
-                AddVATBase(TotVATr,VIrw.VATCode,-VIrw.Sum,blankval,vatcnt,0,0);
+                if (VIr.Invalid==0) then begin
+                  AddVATBase(TotVATr,VIrw.VATCode,-VIrw.Sum,blankval,vatcnt,0,0);
+                end;
               end else begin
                 AddVATBase(VATr,VIrw.VATCode,VIrw.Sum,blankval,vatcnt,0,0);
-                AddVATBase(TotVATr,VIrw.VATCode,VIrw.Sum,blankval,vatcnt,0,0);
+                if (VIr.Invalid==0) then begin
+                  AddVATBase(TotVATr,VIrw.VATCode,VIrw.Sum,blankval,vatcnt,0,0);
+                end;
               end;
               vivt = VATType(VIrw.VATCode);
               if (vivt==kVATTypeReversed) then begin
@@ -453,7 +487,7 @@ begin
            ivnovat = -ivnovat;
            vatval = -vatval;
         end;
-        test2f = CheckAllInvoiceLines(RepSpec.f6,RepSpec.TransStr,VIr,vivt,iv,vatval,ivnovat);        
+        test2f = CheckAllInvoiceLines(RepSpec.f7,RepSpec.f6,RepSpec.TransStr,VIr,vivt,iv,vatval,ivnovat);        
         if ((nonblank(RepSpec.f6)) or (nonblank(RepSpec.TransStr))) then begin
           if (test2f==false) then begin
             goto L77;
@@ -483,13 +517,31 @@ begin
           StartFormat(15);
           OutLongIntOvst(0,"DblVIVc",VIr.SerNr,false,VIr.Invalid);
           OutDateOvst(55,0,VIr.InvDate,false,VIr.Invalid);
-          OutStringOvst(110,0,VIr.InvoiceNr,false,VIr.Invalid);
-          OutStringOvst(170,0,VIr.VEName,false,VIr.Invalid);
+          OutStringOvst(105,0,VIr.InvoiceNr,false,VIr.Invalid);
+          OutStringOvst(165,0,VIr.VEName,false,VIr.Invalid);
           OutValOvstBiDi(5,0,vatval,M4Val,true,VIr.Invalid,5);
           OutValOvstBiDi(6,0,ivnovat,M4Val,true,VIr.Invalid,6);
           OutValOvstBiDi(7,0,iv,M4Val,true,VIr.Invalid,7);
           OutStringOvst(1,0,VIr.CurncyCode,true,VIr.Invalid);
           EndFormat;
+/*          
+          if (RepSpec.flags[15]!=0) then begin
+            vcnt = MatRowCnt(VATr);
+            for (i=0;i<vcnt;i=i+1) begin
+              MatRowGet(VATr,i,VATrw);
+              if (blank(VATrw.DebVal)==false) then begin
+                GetVATRow(VATrw.VATCode,VATbrw);
+                StartFormat(15);
+                 MulVATIV(VATrw.VATCode,VATrw.DebVal,vatv,t1,0,0);
+                 OutString(165,0,VATbrw.Comment,false);
+                 OutVal(5,0,vatv,M4Val,true);
+                 OutVal(6,0,VATrw.DebVal,M4Val,true);
+                 OutVal(7,0,VATrw.DebVal+vatv,M4Val,true);
+                EndFormat;
+              end;
+            end;
+          end;
+*/          
           if (VIr.Invalid==0) then begin
             AddCurncyTotals(acur,av1,curcnt,VIr.CurncyCode,ivnovat);
             AddCurncyTotals(acur,av2,curcnt,VIr.CurncyCode,iv);
@@ -497,34 +549,27 @@ begin
           end;
         end;
         if (RepSpec.ArtMode==3) then begin
-          StartFormat(15);
-          OutLongIntOvst(0,"DblVIVc",VIr.SerNr,false,VIr.Invalid);
-          OutDateOvst(55,0,VIr.InvDate,false,VIr.Invalid);
-          OutStringOvst(110,0,VIr.InvoiceNr,false,VIr.Invalid);
-          OutStringOvst(170,0,VIr.VEName,false,VIr.Invalid);
           cnt = 0;
           testf = true;
           rwcnt = MatRowCnt(VATr);
           for (i=0;i<rwcnt;i=i+1) begin
             MatRowGet(VATr,i,VATrw);
             if (VATrw.DebVal!=0) then begin
+              GetVATRow(VATrw.VATCode,VATbrw);
+              StartFormat(15);
+              OutLongIntOvst(0,"DblVIVc",VIr.SerNr,false,VIr.Invalid);
+              OutDateOvst(55,0,VIr.InvDate,false,VIr.Invalid);
+              OutStringOvst(100,0,VIr.InvoiceNr,false,VIr.Invalid);
+              OutStringOvst(160,0,Left(VIr.VEName,30),false,VIr.Invalid);
               MulVATIV(VATrw.VATCode,VATrw.DebVal,vatv,t1,0,0);
               OutValOvstBiDi(5,0,vatv,M4Val,true,VIr.Invalid,5);
               OutValOvstBiDi(6,0,VATrw.DebVal,M4Val,true,VIr.Invalid,6);
               OutValOvstBiDi(7,0,VATrw.DebVal+vatv,M4Val,true,VIr.Invalid,7);
-              if (testf) then begin
-                OutStringOvst(1,0,VIr.CurncyCode,true,VIr.Invalid);
-                if (cnt>1) then begin
-                  EndFormat;
-                end;
-                testf = false;
-              end;
-              if (cnt>1) then begin
-                StartFormat(15);
-              end;
+              OutString(415,0,VATbrw.Comment,false);
+//              OutStringOvst(1,0,VIr.CurncyCode,true,VIr.Invalid);
+              EndFormat;
             end;
           end;
-          EndFormat;
           if (VIr.Invalid==0) then begin
             AddCurncyTotals(acur,av1,curcnt,VIr.CurncyCode,ivnovat);
             AddCurncyTotals(acur,av2,curcnt,VIr.CurncyCode,iv);
@@ -555,6 +600,8 @@ begin
           switch (VIr.InvType) begin
             case kInvoiceTypeCredit:
               OutStringOvst(4,0,USetStr(4013),false,VIr.Invalid);
+            case kInvoiceTypeEmployee:
+              OutStringOvst(4,0,USetStr(4012),false,VIr.Invalid);
             case kInvoiceTypeCash:
               OutStringOvst(4,0,USetStr(4012),false,VIr.Invalid);
             otherwise
@@ -568,7 +615,7 @@ begin
             MatRowGet(VIr,i,VIrw);
             if (VIrw.stp==1) then begin
               testf = true;
-              if ((nonblank(RepSpec.f6)) and (SetInSet(RepSpec.f6,VIrw.Objects)==false)) then begin 
+              if ((nonblank(RepSpec.f6)) and (SetInSet2(RepSpec.f6,VIrw.Objects)==false)) then begin 
                 testf = false;
               end;
               if ((nonblank(RepSpec.TransStr)) and (SetInSet(RepSpec.TransStr,VIrw.PRCode)==false)) then begin 
@@ -581,7 +628,7 @@ begin
               end;              
               if (testf) then begin
                 StartFormat(15);
-                if (HasModNL or HasIncomeAndExpenseBook) then begin
+                if (HasIntegratedNL) then begin
                   OutStringOvst(20,0,VIrw.AccNumber,false,VIr.Invalid);
                 end;
                 if (HasObjects) then begin

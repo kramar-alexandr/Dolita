@@ -1,3 +1,8 @@
+external function string 255 LocalMachinePaymentMode(string,Integer,string,string,string);
+external procedure IVUpdateFIFO(record IVVc,Boolean);
+external function val MulWithRateToBase1(var string,Date,val,roundmode);
+external updating procedure StorePOSJournalInvoiceEntry2(string,string,string,string,string,LongInt,LongInt,string,string,Integer);
+external procedure PrintSMRecord(record SMVc,Integer);
 external function roundmode SetRoundModeD(Integer);
 external procedure AddVATVat(var record SMVc,string,val,Integer);
 external procedure GetCurncyRoundoff(string,string,string,var roundmode,var roundmode,var roundmode);
@@ -10,6 +15,7 @@ external procedure SetupVATBase(var record SMVc,var Integer);
 external procedure AddVATBase(var record SMVc,string,val,val,Integer,Integer,Integer);
 external function Boolean DateTimeInsidePeriod(Date,Time,Date,Time,Date,Time);
 external procedure CalcSum(val,val,val,val,var val,Integer);
+external function val FormulaDiscountCalcSum(val,val,val,string);
 external function Boolean ReadFirstItemInclClosed(string,var record INVc,Boolean,Boolean);
 external function string 5 AddVATCodeToVATAccRows(string);
 external procedure ConvertSalesAcc(var string,Integer);
@@ -98,7 +104,7 @@ begin
   end else begin
     locdefcode = defcode;
   end;
- 
+
   for (i=0;i<acnt;i=i+1) begin
     if (locdefcode==aivcode[i]) and (lcrncy==aivcrncy[i]) then begin
       if (lcashinf==false) then begin
@@ -113,6 +119,7 @@ begin
       goto LAddCashupToIVArray;
     end;
   end;
+
   aivcode[acnt] = locdefcode;
   aivcrncy[acnt] = lcrncy;
   atipsum[acnt] = tip;
@@ -531,7 +538,6 @@ begin
     end else begin
       maxsum = maxsum - (sumexclvat+tvat);
     end;
-
     if (addtoit) then begin
       for (i2=0;i2<avatcnt;i2=i2+1) begin
         if (vatcode==avatcode[i2]) then begin
@@ -1077,7 +1083,6 @@ begin
   BlockLoad(VATCodeRec);
   BlockLoad(RoundRec);  
   SetupVATBase(VATr,vcrwcnt);  
-
   for (i=0;i<asalescnt;i=i+1) begin
     RecordCopy(TMr,aTMr[i]);
     salessum = asalessum[i];
@@ -1139,9 +1144,9 @@ begin
         end;
         switch (RoundRec.VATCalcWay) begin
           case 0:
-            AddVATBase(VATr,vatcod,rowsum,blankval,vcrwcnt,IVCashr.InclVAT,IVCashr.NoTAXonVAT); //EBS salessum -> rowsum, otherwise vat is incorect if discount is added to TR
+            AddVATBase(VATr,vatcod,salessum,blankval,vcrwcnt,IVCashr.InclVAT,IVCashr.NoTAXonVAT);
           case 1:
-            AddVATBase(VATr,vatcod,rowsum,blankval,vcrwcnt,IVCashr.InclVAT,IVCashr.NoTAXonVAT); //EBS salessum -> rowsum, otherwise vat is incorect if discount is added to TR
+            AddVATBase(VATr,vatcod,salessum,blankval,vcrwcnt,IVCashr.InclVAT,IVCashr.NoTAXonVAT);
             AddVATVat(VATr,vatcod,tvat,vcrwcnt);
         end;
       end else begin
@@ -1276,9 +1281,9 @@ LAddIVCashTransRowsNew:;
   return;
 end;
 
-procedure AttToIVCashSpecArrays(record AccBlock Accb,Integer itemstat,record IVCashVc IVCashr,string defmode,var array string aitcode,var array val aitsum,var array val aitvat,var array val aitqty,var Integer aitcnt,var val totsum,var val totvat,var array string avatcode,var array val avatsum,Integer avatcnt,var val maxsum,Boolean addtoit,var record SMVc SMr)
+procedure AddToIVCashSpecArrays(record AccBlock Accb,Integer itemstat,record IVCashVc IVCashr,string defmode,var array string aitcode,var array val aitsum,var array val aitvat,var array val aitqty,var Integer aitcnt,var val totsum,var val totvat,var array string avatcode,var array val avatsum,Integer avatcnt,var val maxsum,Boolean addtoit,var record SMVc SMr)
 begin
-  Integer rwcnt,i,lasti,vatcnt;
+  Integer rwcnt,i,lasti,k,vatcnt,krwcnt;
   row IVCashVc IVCashrw;
   val s,smsum,ivtotsum,ivvatsum;
   record TaxMatrixVc TMr;
@@ -1298,7 +1303,7 @@ begin
   Array val asalestax2;
   Array val asalestax2reb;
   Integer asalescnt;
-  boolean UseTaxTemplatesforTaxCalcf,RetValueAddedf;
+  boolean UseTaxTemplatesforTaxCalcf,RetValueAddedf,creditf;
   Array string 10 aitemgroup;
   Array string 10 aitemgroupvatcode;
   Array val aitemgroupqty;
@@ -1306,6 +1311,8 @@ begin
   Integer aitemgroupcnt;
   roundmode rndtotal,roundlines,rndvat;
   record DefCashBlock DCb;
+  record SMVc dummySMr;
+  transaction Integer gCashupReportMode;
   
   UseTaxTemplatesforTaxCalcf = UseTaxTemplatesforTaxCalc;
 /*  
@@ -1323,10 +1330,15 @@ begin
   rwcnt = MatRowCnt(IVCashr);
   for(i=0;i<rwcnt;i=i+1) begin
     MatRowGet(IVCashr,i,IVCashrw);
+    if (IVCashr.InvType==kPOSInvoiceTypeCredit) then begin
+      IVCashrw.Sum = -IVCashrw.Sum;
+    end;
     switch (IVCashrw.stp) begin
       case kInvoiceRowTypeGiftVoucherSold:
         s = IVCashrw.Sum;
         AddPMPOSToSMSales(IVCashrw.PayMode,IVCashrw.PayMode,IVCashrw.SalesAcc,"IVCash " & IVCashr.SerNr & IVCashrw.Spec,IVCashr.Objects,s,SMr);
+        AddToITARray("GV-SOLD",IVCashrw.Sum,blankval,blankval,1,aitcode,aitsum,aitvat,aitqty,aitcnt);
+        ivtotsum = ivtotsum + IVCashrw.Sum;
       case kInvoiceRowTypeCashPayment:
         s = MulRateToBase1(IVCashrw.CurncyCode,IVCashrw.Sum,IVCashrw.FrRate,IVCashrw.ToRateB1,IVCashrw.ToRateB2,IVCashrw.BaseRate1,IVCashrw.BaseRate2,DefaultCurRoundOff);
         AddPMPOSToSM(IVCashrw.PayMode,IVCashrw.PayMode,"IVCash " & IVCashr.SerNr & IVCashrw.Spec,IVCashr.Objects,s,SMr);
@@ -1338,6 +1350,36 @@ begin
           end;
         end;
       case kInvoiceRowTypeCreditCardPayment:
+        s = MulRateToBase1(IVCashrw.CurncyCode,IVCashrw.Sum,IVCashrw.FrRate,IVCashrw.ToRateB1,IVCashrw.ToRateB2,IVCashrw.BaseRate1,IVCashrw.BaseRate2,DefaultCurRoundOff);
+        AddPMPOSToSM(IVCashrw.PayMode,IVCashrw.PayMode,"IVCash " & IVCashr.SerNr & IVCashrw.Spec,IVCashr.Objects,s,SMr);
+        if (blank(Accb.CashBackAcc)) then begin
+          if (RetValueAddedf==false) then begin
+            s = -MulRateToBase1(IVCashr.CurncyCode,IVCashr.RetValue,IVCashr.FrRate,IVCashr.ToRateB1,IVCashr.ToRateB2,IVCashr.BaseRate1,IVCashr.BaseRate2,DefaultCurRoundOff);
+            AddPMPOSToSM(IVCashrw.PayMode,IVCashrw.PayMode,"IVCash " & IVCashr.SerNr & IVCashrw.Spec,IVCashr.Objects,s,SMr);
+            RetValueAddedf = true;
+          end;
+        end;
+      case kInvoiceRowTypeSwishPayment:
+        s = MulRateToBase1(IVCashrw.CurncyCode,IVCashrw.Sum,IVCashrw.FrRate,IVCashrw.ToRateB1,IVCashrw.ToRateB2,IVCashrw.BaseRate1,IVCashrw.BaseRate2,DefaultCurRoundOff);
+        AddPMPOSToSM(IVCashrw.PayMode,IVCashrw.PayMode,"IVCash " & IVCashr.SerNr & IVCashrw.Spec,IVCashr.Objects,s,SMr);
+        if (blank(Accb.CashBackAcc)) then begin
+          if (RetValueAddedf==false) then begin
+            s = -MulRateToBase1(IVCashr.CurncyCode,IVCashr.RetValue,IVCashr.FrRate,IVCashr.ToRateB1,IVCashr.ToRateB2,IVCashr.BaseRate1,IVCashr.BaseRate2,DefaultCurRoundOff);
+            AddPMPOSToSM(IVCashrw.PayMode,IVCashrw.PayMode,"IVCash " & IVCashr.SerNr & IVCashrw.Spec,IVCashr.Objects,s,SMr);
+            RetValueAddedf = true;
+          end;
+        end;
+      case kInvoiceRowTypeQRPayment:
+        s = MulRateToBase1(IVCashrw.CurncyCode,IVCashrw.Sum,IVCashrw.FrRate,IVCashrw.ToRateB1,IVCashrw.ToRateB2,IVCashrw.BaseRate1,IVCashrw.BaseRate2,DefaultCurRoundOff);
+        AddPMPOSToSM(IVCashrw.PayMode,IVCashrw.PayMode,"IVCash " & IVCashr.SerNr & IVCashrw.Spec,IVCashr.Objects,s,SMr);
+        if (blank(Accb.CashBackAcc)) then begin
+          if (RetValueAddedf==false) then begin
+            s = -MulRateToBase1(IVCashr.CurncyCode,IVCashr.RetValue,IVCashr.FrRate,IVCashr.ToRateB1,IVCashr.ToRateB2,IVCashr.BaseRate1,IVCashr.BaseRate2,DefaultCurRoundOff);
+            AddPMPOSToSM(IVCashrw.PayMode,IVCashrw.PayMode,"IVCash " & IVCashr.SerNr & IVCashrw.Spec,IVCashr.Objects,s,SMr);
+            RetValueAddedf = true;
+          end;
+        end;
+      case kInvoiceRowTypeCashWithdrawal:
         s = MulRateToBase1(IVCashrw.CurncyCode,IVCashrw.Sum,IVCashrw.FrRate,IVCashrw.ToRateB1,IVCashrw.ToRateB2,IVCashrw.BaseRate1,IVCashrw.BaseRate2,DefaultCurRoundOff);
         AddPMPOSToSM(IVCashrw.PayMode,IVCashrw.PayMode,"IVCash " & IVCashr.SerNr & IVCashrw.Spec,IVCashr.Objects,s,SMr);
         if (blank(Accb.CashBackAcc)) then begin
@@ -1392,16 +1434,17 @@ begin
         end;
       otherwise
         if (UseTaxTemplatesforTaxCalcf==false) then begin
-          PrepareAddIVCashTransRowNew(addtoit,itemstat,IVCashr,IVCashrw,IVCashr.Objects,
-                                      asalesacc,asalesobj,asalessum,asalesrowsum,asalesqty,
-                                      asalesvatcode,asalestaxtemplatecode,asalesstp,asalestax2,asalestax2reb,
-                                      aTMr,asalescnt,
-                                      aitemgroup,aitemgroupvatcode,aitemgroupqty,aitemgroupsum,aitemgroupcnt);
-          if (itemstat!=0) then begin
+          if (itemstat!=0 or (addtoit and gCashupReportMode==kCashupReportCleanCash_SameAsInCashupReportFile)) then begin  //addtoit cannot be here, is doubling sales numbers
             AddupPOSLine(true,"IVCashVc",itemstat,IVCashrw.ArtCode,IVCashrw.SalesAcc,IVCashrw.VATCode,IVCashrw.TaxTemplateCode,TMr,IVCashr.Objects,IVCashrw.Objects,IVCashr.InclVAT,IVCashr.NoTAXonVAT,IVCashrw.Sum,IVCashrw.Price,IVCashrw.Quant,aitcode,aitsum,aitvat,aitqty,aitcnt,ivtotsum,ivvatsum,avatcode,avatsum,avatcnt,maxsum,addtoit,SMr);
             if (nonblank(IVCashrw.ArtCode)) then begin
               lasti = i;
             end;
+          end else begin
+            PrepareAddIVCashTransRowNew(addtoit,itemstat,IVCashr,IVCashrw,IVCashr.Objects,
+                                        asalesacc,asalesobj,asalessum,asalesrowsum,asalesqty,
+                                        asalesvatcode,asalestaxtemplatecode,asalesstp,asalestax2,asalestax2reb,
+                                        aTMr,asalescnt,
+                                        aitemgroup,aitemgroupvatcode,aitemgroupqty,aitemgroupsum,aitemgroupcnt);
           end;
         end else begin
           UnpackRowFieldMatrix(IVCashrw,"TaxMatrix",TMr);
@@ -1446,12 +1489,12 @@ jjtmp
     end;
 //we decided not to post change if CashBackAcc not defined
   end;
-  
+
   BlockLoad(DCb);
   GetCurncyRoundoff(IVCashr.CurncyCode,DCb.DefCashPayMode,"IVCashVc",rndtotal,roundlines,rndvat);
   totsum = totsum + Round(ivtotsum,rndtotal);
   totvat = totvat + Round(ivvatsum,rndtotal);
-  
+
   s = MulRateToBase1(IVCashr.CurncyCode,IVCashr.RecValue,IVCashr.FrRate,IVCashr.ToRateB1,IVCashr.ToRateB2,IVCashr.BaseRate1,IVCashr.BaseRate2,DefaultCurRoundOff);
   AddPMPOSToSM(defmode,IVCashr.PayDeal,"IVCash " & IVCashr.SerNr & IVCashrw.Spec,IVCashr.Objects,s,SMr);
   s = MulRateToBase1(IVCashr.CurncyCode,IVCashr.RecValue2,IVCashr.FrRate,IVCashr.ToRateB1,IVCashr.ToRateB2,IVCashr.BaseRate1,IVCashr.BaseRate2,DefaultCurRoundOff);
@@ -1488,8 +1531,9 @@ begin
       s = -MulRateToBase1(IVCashr.CurncyCode,IVCashrw.Sum,IVCashr.FrRate,IVCashr.ToRateB1,IVCashr.ToRateB2,IVCashr.BaseRate1,IVCashr.BaseRate2,DefaultCurRoundOff);
       vstatussum["negativeinvoicesum"] = vstatussum["negativeinvoicesum"] + s; 
     end else begin
-      CalcSum(IVCashrw.Quant,IVCashrw.Price,IVCashrw.PriceFactor,IVCashrw.vRebate,swreb,GOb.UseDiscount);  
-      CalcSum(IVCashrw.Quant,IVCashrw.Price,IVCashrw.PriceFactor,0.00,sworeb,GOb.UseDiscount);  
+//      CalcSum(IVCashrw.Quant,IVCashrw.Price,IVCashrw.PriceFactor,0.00,sworeb,GOb.UseDiscount);  
+      sworeb = FormulaDiscountCalcSum(IVCashrw.Quant,IVCashrw.Price,IVCashrw.PriceFactor,0.00);  
+      swreb = FormulaDiscountCalcSum(IVCashrw.Quant,IVCashrw.Price,IVCashrw.PriceFactor,IVCashrw.vRebate);  
       if (swreb!=sworeb) then begin
         s = sworeb - swreb;
         s = MulRateToBase1(IVCashr.CurncyCode,s,IVCashr.FrRate,IVCashr.ToRateB1,IVCashr.ToRateB2,IVCashr.BaseRate1,IVCashr.BaseRate2,DefaultCurRoundOff);
@@ -1497,6 +1541,11 @@ begin
         vstatussum["rebateinvoicesum"] = vstatussum["rebateinvoicesum"] + s; 
       end;
     end;
+  end;
+  if (IVCashr.OKFlag!=0) then begin
+    vstatussum["registeredorig_count"] = vstatussum["registeredorig_count"] + 1;
+  end else begin
+//    vstatussum["registeredorig_count"] = vstatussum["registeredorig_count"] + 1;
   end;
   if (negativef) then begin
     vstatussum["negativeinvoicecount"] = vstatussum["negativeinvoicecount"] + 1; 
@@ -1508,24 +1557,26 @@ begin
 end;
 
 global
-updating procedure TransferIVCashVctoIVVc(record IVCashVc IVCashr)
+updating procedure TransferIVCashVctoIVVc(record IVCashVc IVCr)
 begin
   record IVVc IVr;
-  record IVCashVc oldIVCashr;
+  record IVCashVc oldIVCr;
   
   if (IsMaintenance==false) then begin
     goto LTransferIVCashVctoIVVc;
   end;
-  if (ReadFirstMain(IVCashr,1,true)==false) then begin
+  if (ReadFirstMain(IVCr,1,true)==false) then begin
     goto LTransferIVCashVctoIVVc;
   end;
-  RecordCopy(oldIVCashr,IVCashr);
-  IVCashToIV_FromPOS(IVCashr,IVr);
+  RecordCopy(oldIVCr,IVCr);
+  IVCashToIV_FromPOS(IVCr,IVr);
+  IVUpdateFIFO(IVr,true);
   IVr.OKFlag = 1;
   if (RecordStore(IVr,false)) then begin
+    StorePOSJournalInvoiceEntry2(CurrentUser,IVCr.LocalMachineCode,IVCr.DrawerCode,IVCr.TerminalID,"IVCashVc",IVCr.SerNr,IVCr.FiscalDeviceSeqNr,IVCr.OfficialSerNr,"",kPOSActionTransferToSL);
     IVVcGenTrans(IVr.SerNr,IVr.SerNr);
-    IVCashr.IVNr = IVr.SerNr;
-    RecordUpdate(oldIVCashr,IVCashr,false);
+    IVCr.IVNr = IVr.SerNr;
+    RecordUpdate(oldIVCr,IVCr,false);
   end;
 LTransferIVCashVctoIVVc:;  
   return;
@@ -1540,17 +1591,22 @@ begin
   record IVCashVc IVCashr;
   record DefCashBlock DCb;
   Boolean foundf,testf,RetValueAddedf;
-  val s,sb1,maxsum,sum,changev,PaymentValue,RetValue,rv;
+  val s,sb1,maxsum,sum,changev,PaymentValue,RetValue,rv,sign;
   row IVCashVc IVCashrw;
-  Integer i,rwcnt;
+  Integer i,rwcnt,k,krwcnt;
   transaction Integer gCashupReportMode;
   record BaseCurBlock BCb;
   record AccBlock Accb;
   string 255 RetValuePayMode;
+  row SMVc SMrw;
+  string 255 defpaymode;
 
   BlockLoad(DCb);
   BlockLoad(BCb);
   BlockLoad(Accb);
+  
+  defpaymode = LocalMachinePaymentMode(DCb.DefCashPayMode,kInvoiceRowTypeCashPayment,BCb.BaseCur1,machine,drawer);
+  
   foundf = true;
   IVCashr.LocalMachineCode = machine;
   IVCashr.DrawerCode = drawer;
@@ -1594,6 +1650,10 @@ begin
         qupdating.TransferIVCashVctoIVVc(IVCashr);
       end;
     end else begin
+      sign = 1.00;
+      if (IVCashr.InvType==kPOSInvoiceTypeCredit) then begin
+        sign = -1.00;
+      end;
       if (testf) then begin
         if (detail!=0) and (detail!=2) then begin
           changev = blankval;
@@ -1614,7 +1674,7 @@ begin
                 testf = true; 
               end;
             end;
-            if (DCb.DefCashPayMode==paymode) then begin
+            if (defpaymode==paymode) then begin
               if (IVCashr.RetValue<0) then begin
                 s = IVCashr.CashValue - IVCashr.RetValue;
               end else begin
@@ -1628,31 +1688,43 @@ begin
               switch (IVCashrw.stp) begin
                 case kInvoiceRowTypeGiftVoucherPayment: 
                   if (IVCashrw.PayMode==paymode) then begin
-                    s = s + IVCashrw.Sum;
+                    s = s + sign*IVCashrw.Sum;
                   end;
                 case kInvoiceRowTypeChequePayment: 
                   if (IVCashrw.PayMode==paymode) then begin
-                    s = s + IVCashrw.Sum;
+                    s = s + sign*IVCashrw.Sum;
                   end;
                 case kInvoiceRowTypeCashPayment:
                   if (IVCashrw.PayMode==paymode) then begin
                     if (IVCashrw.CurncyCode==BCb.BaseCur1) then begin
-                      s = s + IVCashrw.Sum;
+                      s = s + sign*IVCashrw.Sum;
                     end else begin
-                      s = s + IVCashrw.Sum;
+                      s = s + sign*IVCashrw.Sum;
                     end;
                   end;            
                 case kInvoiceRowTypeLoyaltyPointsPayment:
                   if (IVCashrw.PayMode==paymode) then begin
                     if (IVCashrw.CurncyCode==BCb.BaseCur1) then begin
-                      s = s + IVCashrw.Sum;
+                      s = s + sign*IVCashrw.Sum;
                     end else begin
-                      s = s + IVCashrw.Sum;
+                      s = s + sign*IVCashrw.Sum;
                     end;
                   end;            
                 case kInvoiceRowTypeCreditCardPayment:
                   if (IVCashrw.PayMode==paymode) then begin
-                    s = s + IVCashrw.Sum;
+                    s = s + sign*IVCashrw.Sum;
+                  end;            
+                case kInvoiceRowTypeSwishPayment:
+                  if (IVCashrw.PayMode==paymode) then begin
+                    s = s + sign*IVCashrw.Sum;
+                  end;            
+                case kInvoiceRowTypeQRPayment:
+                  if (IVCashrw.PayMode==paymode) then begin
+                    s = s + sign*IVCashrw.Sum;
+                  end;            
+                case kInvoiceRowTypeCashWithdrawal:
+                  if (IVCashrw.PayMode==paymode) then begin
+                    s = s + sign*IVCashrw.Sum;
                   end;            
               end;
             end;       
@@ -1663,6 +1735,7 @@ begin
       if (testf) then begin
         PaymentValue = blankval;
         RetValue = blankval;
+
         if (IVCashr.TransferToSL!=0) then begin
           
         end else begin      
@@ -1692,15 +1765,21 @@ begin
                 MatRowGet(IVCashr,i,IVCashrw);
                 switch (IVCashrw.stp) begin
                   case kInvoiceRowTypeGiftVoucherPayment:
-                    sb1 = MulRateToBase1(IVCashr.CurncyCode,IVCashrw.Sum,IVCashr.FrRate,IVCashr.ToRateB1,IVCashr.ToRateB2,IVCashr.BaseRate1,IVCashr.BaseRate2,DefaultCurRoundOff);
+                    sb1 = MulRateToBase1(IVCashr.CurncyCode,sign*IVCashrw.Sum,IVCashr.FrRate,IVCashr.ToRateB1,IVCashr.ToRateB2,IVCashr.BaseRate1,IVCashr.BaseRate2,DefaultCurRoundOff);
                   case kInvoiceRowTypeChequePayment:
-                    sb1 = MulRateToBase1(IVCashr.CurncyCode,IVCashrw.Sum,IVCashr.FrRate,IVCashr.ToRateB1,IVCashr.ToRateB2,IVCashr.BaseRate1,IVCashr.BaseRate2,DefaultCurRoundOff);
+                    sb1 = MulRateToBase1(IVCashr.CurncyCode,sign*IVCashrw.Sum,IVCashr.FrRate,IVCashr.ToRateB1,IVCashr.ToRateB2,IVCashr.BaseRate1,IVCashr.BaseRate2,DefaultCurRoundOff);
                   case kInvoiceRowTypeLoyaltyPointsPayment:
-                    sb1 = MulRateToBase1(IVCashrw.CurncyCode,IVCashrw.Sum,IVCashrw.FrRate,IVCashrw.ToRateB1,IVCashrw.ToRateB2,IVCashrw.BaseRate1,IVCashrw.BaseRate2,DefaultCurRoundOff);
+                    sb1 = MulRateToBase1(IVCashrw.CurncyCode,sign*IVCashrw.Sum,IVCashrw.FrRate,IVCashrw.ToRateB1,IVCashrw.ToRateB2,IVCashrw.BaseRate1,IVCashrw.BaseRate2,DefaultCurRoundOff);
                   case kInvoiceRowTypeCashPayment:
-                    sb1 = MulRateToBase1(IVCashrw.CurncyCode,IVCashrw.Sum,IVCashrw.FrRate,IVCashrw.ToRateB1,IVCashrw.ToRateB2,IVCashrw.BaseRate1,IVCashrw.BaseRate2,DefaultCurRoundOff);
+                    sb1 = MulRateToBase1(IVCashrw.CurncyCode,sign*IVCashrw.Sum,IVCashrw.FrRate,IVCashrw.ToRateB1,IVCashrw.ToRateB2,IVCashrw.BaseRate1,IVCashrw.BaseRate2,DefaultCurRoundOff);
                   case kInvoiceRowTypeCreditCardPayment:
-                    sb1 = MulRateToBase1(IVCashrw.CurncyCode,IVCashrw.Sum,IVCashrw.FrRate,IVCashrw.ToRateB1,IVCashrw.ToRateB2,IVCashrw.BaseRate1,IVCashrw.BaseRate2,DefaultCurRoundOff);
+                    sb1 = MulRateToBase1(IVCashrw.CurncyCode,sign*IVCashrw.Sum,IVCashrw.FrRate,IVCashrw.ToRateB1,IVCashrw.ToRateB2,IVCashrw.BaseRate1,IVCashrw.BaseRate2,DefaultCurRoundOff);
+                  case kInvoiceRowTypeSwishPayment:
+                    sb1 = MulRateToBase1(IVCashrw.CurncyCode,sign*IVCashrw.Sum,IVCashrw.FrRate,IVCashrw.ToRateB1,IVCashrw.ToRateB2,IVCashrw.BaseRate1,IVCashrw.BaseRate2,DefaultCurRoundOff);
+                  case kInvoiceRowTypeQRPayment:
+                    sb1 = MulRateToBase1(IVCashrw.CurncyCode,sign*IVCashrw.Sum,IVCashrw.FrRate,IVCashrw.ToRateB1,IVCashrw.ToRateB2,IVCashrw.BaseRate1,IVCashrw.BaseRate2,DefaultCurRoundOff);
+                  case kInvoiceRowTypeCashWithdrawal:
+                    sb1 = MulRateToBase1(IVCashrw.CurncyCode,sign*IVCashrw.Sum,IVCashrw.FrRate,IVCashrw.ToRateB1,IVCashrw.ToRateB2,IVCashrw.BaseRate1,IVCashrw.BaseRate2,DefaultCurRoundOff);
                 end;
               end;  
               sum = sum + s;
@@ -1726,7 +1805,6 @@ begin
             end;
             maxsum = s;
           end else begin
-
             RetValueAddedf = false;
             s = blankval;
             sb1 = blankval;
@@ -1736,48 +1814,47 @@ begin
               MatRowGet(IVCashr,i,IVCashrw);
               switch (IVCashrw.stp) begin
                 case kInvoiceRowTypeGiftVoucherPayment:
-                  s = IVCashrw.Sum;
+                  s = sign*IVCashrw.Sum;
                   sb1 = MulRateToBase1(IVCashr.CurncyCode,s,IVCashr.FrRate,IVCashr.ToRateB1,IVCashr.ToRateB2,IVCashr.BaseRate1,IVCashr.BaseRate2,DefaultCurRoundOff);
                   maxsum = maxsum + s;
                   sum = sum + s;
-                  AddCashupToIVArray(true,DCb.DefCashPayMode,IVCashrw.PayMode,IVCashr.CurncyCode,s,sb1,0,aivcode,aivcrncy,aivval,aivb1val,aivnr,aivoutval,aivb1outval,atipsum,acnt);
+                  AddCashupToIVArray(true,defpaymode,IVCashrw.PayMode,IVCashr.CurncyCode,s,sb1,0,aivcode,aivcrncy,aivval,aivb1val,aivnr,aivoutval,aivb1outval,atipsum,acnt);
                   PaymentValue = PaymentValue + sb1;
                 case kInvoiceRowTypeChequePayment:
-                  s = IVCashrw.Sum;
+                  s = sign*IVCashrw.Sum;
                   sb1 = MulRateToBase1(IVCashr.CurncyCode,s,IVCashr.FrRate,IVCashr.ToRateB1,IVCashr.ToRateB2,IVCashr.BaseRate1,IVCashr.BaseRate2,DefaultCurRoundOff);
                   maxsum = maxsum + s;
                   sum = sum + s;
-                  AddCashupToIVArray(true,DCb.DefCashPayMode,IVCashrw.PayMode,IVCashr.CurncyCode,s,sb1,0,aivcode,aivcrncy,aivval,aivb1val,aivnr,aivoutval,aivb1outval,atipsum,acnt);
+                  AddCashupToIVArray(true,defpaymode,IVCashrw.PayMode,IVCashr.CurncyCode,s,sb1,0,aivcode,aivcrncy,aivval,aivb1val,aivnr,aivoutval,aivb1outval,atipsum,acnt);
                   PaymentValue = PaymentValue + sb1;
                 case kInvoiceRowTypeLoyaltyPointsPayment:
-                  s = IVCashrw.Sum;
+                  s = sign*IVCashrw.Sum;
                   sb1 = MulRateToBase1(IVCashrw.CurncyCode,s,IVCashrw.FrRate,IVCashrw.ToRateB1,IVCashrw.ToRateB2,IVCashrw.BaseRate1,IVCashrw.BaseRate2,DefaultCurRoundOff);
                   maxsum = maxsum + s;
                   sum = sum + s;
-                  AddCashupToIVArray(true,DCb.DefCashPayMode,IVCashrw.PayMode,IVCashrw.CurncyCode,s,sb1,0,aivcode,aivcrncy,aivval,aivb1val,aivnr,aivoutval,aivb1outval,atipsum,acnt);
+                  AddCashupToIVArray(true,defpaymode,IVCashrw.PayMode,IVCashrw.CurncyCode,s,sb1,0,aivcode,aivcrncy,aivval,aivb1val,aivnr,aivoutval,aivb1outval,atipsum,acnt);
                   PaymentValue = PaymentValue + sb1;
                   if (RetValueAddedf==false) then begin
                     if (IVCashrw.CurncyCode==BCb.BaseCur1) or blank(IVCashrw.CurncyCode) then begin
-                      AddCashupToIVArray(false,DCb.DefCashPayMode,IVCashrw.PayMode,IVCashrw.CurncyCode,-IVCashr.RetValue,-IVCashr.RetValue,0,aivcode,aivcrncy,aivval,aivb1val,aivnr,aivoutval,aivb1outval,atipsum,acnt);
+                      AddCashupToIVArray(false,defpaymode,IVCashrw.PayMode,IVCashrw.CurncyCode,-IVCashr.RetValue,-IVCashr.RetValue,0,aivcode,aivcrncy,aivval,aivb1val,aivnr,aivoutval,aivb1outval,atipsum,acnt);
                       RetValueAddedf = true;
                       maxsum = maxsum -IVCashr.RetValue;
                       sum = sum -IVCashr.RetValue;
                     end;
                   end;
                 case kInvoiceRowTypeCashPayment:
-                  s = IVCashrw.Sum;
+                  s = sign*IVCashrw.Sum;
                   sb1 = MulRateToBase1(IVCashrw.CurncyCode,s,IVCashrw.FrRate,IVCashrw.ToRateB1,IVCashrw.ToRateB2,IVCashrw.BaseRate1,IVCashrw.BaseRate2,DefaultCurRoundOff);
                   maxsum = maxsum + s;
                   sum = sum + s;
-                  AddCashupToIVArray(true,DCb.DefCashPayMode,IVCashrw.PayMode,IVCashrw.CurncyCode,s,sb1,0,aivcode,aivcrncy,aivval,aivb1val,aivnr,aivoutval,aivb1outval,atipsum,acnt);
-                  PaymentValue = PaymentValue + sb1;
-                  
+                  AddCashupToIVArray(true,defpaymode,IVCashrw.PayMode,IVCashrw.CurncyCode,s,sb1,0,aivcode,aivcrncy,aivval,aivb1val,aivnr,aivoutval,aivb1outval,atipsum,acnt);
+                  PaymentValue = PaymentValue + sb1;                                  
                   rv = MulRateToBase1(IVCashrw.CurncyCode,IVCashrw.BasePrice,IVCashrw.FrRate,IVCashrw.ToRateB1,IVCashrw.ToRateB2,IVCashrw.BaseRate1,IVCashrw.BaseRate2,DefaultCurRoundOff);
-                  AddCashupToIVArray(false,DCb.DefCashPayMode,IVCashrw.PayMode,IVCashrw.CurncyCode,-IVCashrw.BasePrice,-rv,0,aivcode,aivcrncy,aivval,aivb1val,aivnr,aivoutval,aivb1outval,atipsum,acnt);
+                  AddCashupToIVArray(false,defpaymode,IVCashrw.PayMode,IVCashrw.CurncyCode,-IVCashrw.BasePrice,-rv,0,aivcode,aivcrncy,aivval,aivb1val,aivnr,aivoutval,aivb1outval,atipsum,acnt);
                   RetValue = RetValue + IVCashrw.BasePrice;
                   if (RetValueAddedf==false) then begin
                     if (IVCashrw.CurncyCode==BCb.BaseCur1) or blank(IVCashrw.CurncyCode) then begin
-                      AddCashupToIVArray(false,DCb.DefCashPayMode,IVCashrw.PayMode,IVCashrw.CurncyCode,-IVCashr.RetValue,-IVCashr.RetValue,0,aivcode,aivcrncy,aivval,aivb1val,aivnr,aivoutval,aivb1outval,atipsum,acnt);
+                      AddCashupToIVArray(false,defpaymode,IVCashrw.PayMode,IVCashrw.CurncyCode,-IVCashr.RetValue,-IVCashr.RetValue,0,aivcode,aivcrncy,aivval,aivb1val,aivnr,aivoutval,aivb1outval,atipsum,acnt);
                       RetValueAddedf = true;
                       RetValuePayMode = IVCashrw.PayMode;
                       maxsum = maxsum -IVCashr.RetValue;
@@ -1785,16 +1862,37 @@ begin
                     end;
                   end;
                 case kInvoiceRowTypeCreditCardPayment:
-                  s = IVCashrw.Sum;
+                  s = sign*IVCashrw.Sum;
                   sb1 = MulRateToBase1(IVCashrw.CurncyCode,s,IVCashrw.FrRate,IVCashrw.ToRateB1,IVCashrw.ToRateB2,IVCashrw.BaseRate1,IVCashrw.BaseRate2,DefaultCurRoundOff);
                   maxsum = maxsum + s;
                   sum = sum + s;
-                  AddCashupToIVArray(true,DCb.DefCashPayMode,IVCashrw.PayMode,IVCashrw.CurncyCode,s,sb1,0,aivcode,aivcrncy,aivval,aivb1val,aivnr,aivoutval,aivb1outval,atipsum,acnt);
+                  AddCashupToIVArray(true,defpaymode,IVCashrw.PayMode,IVCashrw.CurncyCode,s,sb1,0,aivcode,aivcrncy,aivval,aivb1val,aivnr,aivoutval,aivb1outval,atipsum,acnt);
+                  PaymentValue = PaymentValue + sb1;
+                case kInvoiceRowTypeSwishPayment:
+                  s = sign*IVCashrw.Sum;
+                  sb1 = MulRateToBase1(IVCashrw.CurncyCode,s,IVCashrw.FrRate,IVCashrw.ToRateB1,IVCashrw.ToRateB2,IVCashrw.BaseRate1,IVCashrw.BaseRate2,DefaultCurRoundOff);
+                  maxsum = maxsum + s;
+                  sum = sum + s;
+                  AddCashupToIVArray(true,defpaymode,IVCashrw.PayMode,IVCashrw.CurncyCode,s,sb1,0,aivcode,aivcrncy,aivval,aivb1val,aivnr,aivoutval,aivb1outval,atipsum,acnt);
+                  PaymentValue = PaymentValue + sb1;
+                case kInvoiceRowTypeQRPayment:
+                  s = sign*IVCashrw.Sum;
+                  sb1 = MulRateToBase1(IVCashrw.CurncyCode,s,IVCashrw.FrRate,IVCashrw.ToRateB1,IVCashrw.ToRateB2,IVCashrw.BaseRate1,IVCashrw.BaseRate2,DefaultCurRoundOff);
+                  maxsum = maxsum + s;
+                  sum = sum + s;
+                  AddCashupToIVArray(true,defpaymode,IVCashrw.PayMode,IVCashrw.CurncyCode,s,sb1,0,aivcode,aivcrncy,aivval,aivb1val,aivnr,aivoutval,aivb1outval,atipsum,acnt);
+                  PaymentValue = PaymentValue + sb1;
+                case kInvoiceRowTypeCashWithdrawal:
+                  s = sign*IVCashrw.Sum;
+                  sb1 = MulRateToBase1(IVCashrw.CurncyCode,s,IVCashrw.FrRate,IVCashrw.ToRateB1,IVCashrw.ToRateB2,IVCashrw.BaseRate1,IVCashrw.BaseRate2,DefaultCurRoundOff);
+                  maxsum = maxsum + s;
+                  sum = sum + s;
+                  AddCashupToIVArray(true,defpaymode,IVCashrw.PayMode,IVCashrw.CurncyCode,s,sb1,0,aivcode,aivcrncy,aivval,aivb1val,aivnr,aivoutval,aivb1outval,atipsum,acnt);
                   PaymentValue = PaymentValue + sb1;
               end;
             end;  
             if (RetValueAddedf) then begin
-              AddCashupToIVArray(false,DCb.DefCashPayMode,RetValuePayMode,BCb.BaseCur1,RetValue,RetValue,0,aivcode,aivcrncy,aivval,aivb1val,aivnr,aivoutval,aivb1outval,atipsum,acnt);
+              AddCashupToIVArray(false,defpaymode,RetValuePayMode,BCb.BaseCur1,RetValue,RetValue,0,aivcode,aivcrncy,aivval,aivb1val,aivnr,aivoutval,aivb1outval,atipsum,acnt);
               maxsum = maxsum + RetValue;
               sum = sum + RetValue;
             end;
@@ -1804,14 +1902,14 @@ begin
               sb1 = MulRateToBase1(IVCashr.CurncyCode,s,IVCashr.FrRate,IVCashr.ToRateB1,IVCashr.ToRateB2,IVCashr.BaseRate1,IVCashr.BaseRate2,DefaultCurRoundOff);
               sum = sum + s;
               maxsum = maxsum + s;
-              AddCashupToIVArray(true,DCb.DefCashPayMode,IVCashr.PayDeal,IVCashr.CurncyCode,s,sb1,0,aivcode,aivcrncy,aivval,aivb1val,aivnr,aivoutval,aivb1outval,atipsum,acnt);
+              AddCashupToIVArray(true,defpaymode,IVCashr.PayDeal,IVCashr.CurncyCode,s,sb1,0,aivcode,aivcrncy,aivval,aivb1val,aivnr,aivoutval,aivb1outval,atipsum,acnt);
             end;
             if (IVCashr.RecValue2!=0) then begin
               s = IVCashr.RecValue2;
               sb1 = MulRateToBase1(IVCashr.CurncyCode,s,IVCashr.FrRate,IVCashr.ToRateB1,IVCashr.ToRateB2,IVCashr.BaseRate1,IVCashr.BaseRate2,DefaultCurRoundOff);
               sum = sum + s;
               maxsum = maxsum + s;
-              AddCashupToIVArray(true,DCb.DefCashPayMode,IVCashr.PayDeal2,IVCashr.CurncyCode,s,sb1,0,aivcode,aivcrncy,aivval,aivb1val,aivnr,aivoutval,aivb1outval,atipsum,acnt);
+              AddCashupToIVArray(true,defpaymode,IVCashr.PayDeal2,IVCashr.CurncyCode,s,sb1,0,aivcode,aivcrncy,aivval,aivb1val,aivnr,aivoutval,aivb1outval,atipsum,acnt);
             end;
             s = blankval;
             sb1 = blankval;
@@ -1826,7 +1924,7 @@ begin
                 if (IVCashr.TendValue!=0) then begin
                   s = IVCashr.TendValue - IVCashr.RetValue - IVCashr.RecValue - IVCashr.RecValue2 - PaymentValue;
                 end else begin
-                  s = IVCashr.CashValue-IVCashr.RetValue;
+                  s = IVCashr.CashValue - IVCashr.RetValue;
                 end;          
               end;
               RetValueAddedf = true;
@@ -1836,7 +1934,7 @@ begin
               sb1 = s;
               sum = sum + s;
               maxsum = maxsum + s;
-              AddCashupToIVArray(true,DCb.DefCashPayMode,DCb.DefCashPayMode,IVCashr.CurncyCode,s,sb1,0,aivcode,aivcrncy,aivval,aivb1val,aivnr,aivoutval,aivb1outval,atipsum,acnt);            
+              AddCashupToIVArray(true,defpaymode,defpaymode,IVCashr.CurncyCode,s,sb1,0,aivcode,aivcrncy,aivval,aivb1val,aivnr,aivoutval,aivb1outval,atipsum,acnt);            
             end;          
           end;
           if (sum!=0) then begin
@@ -1847,7 +1945,7 @@ begin
                 end;
             end;
           end;
-          AttToIVCashSpecArrays(Accb,itemstat,IVCashr,DCb.DefCashPayMode,aitcode,aitsum,aitvat,aitqty,aitcnt,totsum,totvat,avatcode,avatsum,avatcnt,maxsum,addtoit,SMr);
+          AddToIVCashSpecArrays(Accb,itemstat,IVCashr,defpaymode,aitcode,aitsum,aitvat,aitqty,aitcnt,totsum,totvat,avatcode,avatsum,avatcnt,maxsum,addtoit,SMr);
         end;
       end;
     end;
@@ -1855,13 +1953,396 @@ begin
   return;
 end;
 
+procedure PrepareAddIVTransRowNew(Boolean addtoit,Integer itemstat,record IVVc IVr,row IVVc IVrw,string object,
+                                  var array string asalesacc,var array string asalesobj,var array val asalessum,var array val asalesrowsum,var array val asalesqty,
+                                  var array string asalesvatcode,var array string asalestaxtemplatecode,var array integer asalesstp,var array val asalestax2,var array val asalestax2reb,
+                                  array record TaxMatrixVc aTMr,
+                                  var integer asalescnt,
+                                  var array string aitemgroup,var array string aitemgroupvatcode,var array val aitemgroupqty,var array val aitemgroupsum,var Integer aitemgroupcnt)
+begin
+  string 255 objstr;
+  string 10 revacc;
+  string 20 ivraccno;
+  record AccBlock ARAccb;
+  integer i;
+  val salesum,rowsum;
+  integer stp;
+  boolean testf;
+  record TaxMatrixVc TMr;
+  record INVc INr;
+
+  BlockLoad(ARAccb);
+  if (IVrw.ovst!=0) then begin
+    goto LPrepareAddIVTransRowNewItemGroup;
+  end;
+  if (ARAccb.BookedDiscount!=0) then begin
+    salesum = IVrw.Quant*IVrw.Price;
+    if (blank(IVrw.Price)) then begin
+      salesum = IVrw.Sum;
+    end;
+  end else begin
+    salesum = IVrw.Sum;
+  end;
+  rowsum = IVrw.Sum;
+  if (IVrw.stp==kInvoiceRowTypeCredit) then begin
+    goto LPrepareAddIVTransRowNewItemGroup;
+  end;
+  if (IVrw.stp==kInvoiceRowTypeCorrection) then begin
+    salesum = -salesum;
+    rowsum = -rowsum;
+  end;
+  if (ARAccb.SkipObjectsOnIVFromHeader==0) then begin
+    objstr = object;
+  end;
+  if (IVrw.stp==kInvoiceRowTypeNormal or (IVrw.stp==kInvoiceRowTypeStructuredItemComponent) or IVrw.stp==kInvoiceRowTypeLoan or IVrw.stp==kInvoiceRowTypeLoanInterest) or (IVrw.stp==kInvoiceRowTypeCorrection) or (IVrw.stp==kInvoiceRowTypeRetention) or (IVrw.stp==kInvoiceRowTypeMultiBuyDiscount) then begin
+    if (nonblank(IVrw.Objects)) then begin
+      if (nonblank(objstr)) then begin
+        objstr = objstr & ",";
+      end;  
+      objstr = objstr & IVrw.Objects;
+    end;
+  end;
+  switch (IVrw.stp) begin
+    case kInvoiceRowTypeMultiBuyDiscount:
+      revacc = ARAccb.DiscountAcc;
+    otherwise
+      revacc = IVrw.SalesAcc;
+  end;
+  if ((IVrw.stp==kInvoiceRowTypeLoan) or (IVrw.stp==kInvoiceRowTypeLoanInterest) or (IVrw.stp==kInvoiceRowTypeGiftVoucherSold)) then begin 
+    if (blank(IVrw.SalesAcc)) then begin
+      goto LPrepareAddIVTransRowNewItemGroup;
+    end;
+  end else begin
+    if (blank(revacc)) then begin
+      GetItemSalesAcc(IVrw.ArtCode,0,revacc);
+    end;
+    if (blank(revacc)) then begin
+      revacc = ARAccb.DomSalesAcc;
+    end;
+  end;
+  stp = IVrw.stp;
+  if (stp==kInvoiceRowTypeCorrection) then begin
+    stp = 1;
+  end;
+  ConvertSalesAcc(revacc,0);
+  ivraccno = revacc;
+  UnpackRowFieldMatrix(IVrw,"TaxMatrix",TMr);
+  for (i=0;i<asalescnt;i=i+1) begin
+    testf = false;
+    if (UseTaxTemplatesforTaxCalc) then begin
+      if ((asalesacc[i]==ivraccno) and (asalesobj[i]==objstr) and (asalestaxtemplatecode[i]==IVrw.TaxTemplateCode)
+          and (asalesstp[i]==stp)) then begin
+        testf = true;
+      end;
+    end else begin
+      if ((asalesacc[i]==ivraccno) and (asalesobj[i]==objstr) and (asalesvatcode[i]==IVrw.VATCode)
+          and (asalesstp[i]==stp)) then begin
+        testf = true;
+      end;
+    end;
+    if (testf) then begin
+      asalessum[i] = asalessum[i] + salesum;
+      asalesrowsum[i] = asalesrowsum[i] + rowsum;
+      asalesqty[i] = asalesqty[i] + IVrw.Quant;
+      AddRowTaxMatrixToSumTaxMatrix(TMr,aTMr[i],IVr.InclVAT);
+      goto LPrepareAddIVTransRowNewSales;
+    end;
+  end;
+  asalessum[asalescnt] = salesum;
+  asalesrowsum[asalescnt] = rowsum;
+  asalesqty[asalescnt] = IVrw.Quant;
+  asalesacc[asalescnt] = ivraccno;
+  asalesobj[asalescnt] = objstr;
+  asalesvatcode[asalescnt] = IVrw.VATCode;
+  asalestaxtemplatecode[asalescnt] = IVrw.TaxTemplateCode;
+  asalesstp[asalescnt] = stp;
+  asalestax2[asalescnt] = IVrw.TAX2Prc;
+  asalestax2reb[asalescnt] = IVrw.TAX2Reb;
+  aTMr[asalescnt] = TMr;
+  asalescnt = asalescnt + 1;
+LPrepareAddIVTransRowNewSales:;
+  if (addtoit) then begin
+    if (itemstat==0) then begin
+      if (IVrw.stp==kInvoiceRowTypeNormal or (IVrw.stp==kInvoiceRowTypeStructuredItemComponent) or IVrw.stp==kInvoiceRowTypeLoan or IVrw.stp==kInvoiceRowTypeLoanInterest) or (IVrw.stp==kInvoiceRowTypeCorrection) or (IVrw.stp==kInvoiceRowTypeRetention) or (IVrw.stp==kInvoiceRowTypeMultiBuyDiscount) then begin
+        ReadFirstItemInclClosed(IVrw.ArtCode,INr,false,true);
+        for (i=0;i<aitemgroupcnt;i=i+1) begin
+          testf = false;
+          if (aitemgroup[i]==INr.Group) and (aitemgroupvatcode[i]==IVrw.VATCode) then begin testf = true; end;
+          if (testf) then begin
+            aitemgroupsum[i] = aitemgroupsum[i] + rowsum;
+            aitemgroupqty[i] = aitemgroupqty[i] + IVrw.Quant;
+            goto LPrepareAddIVTransRowNewItemGroup;
+          end;
+        end;
+        aitemgroup[aitemgroupcnt] = INr.Group;
+        aitemgroupvatcode[aitemgroupcnt] = IVrw.VATCode;
+        aitemgroupsum[aitemgroupcnt] = rowsum;
+        aitemgroupqty[aitemgroupcnt] = IVrw.Quant;
+        aitemgroupcnt = aitemgroupcnt + 1;
+      end;
+    end;
+  end;
+LPrepareAddIVTransRowNewItemGroup:;
+
+  return;
+end;
+
+procedure IVCalcTotalVatPerLine(string vatcode,record IVVc IVr,var val tvat,val salessum,var val t1)
+begin
+  row IVVc IVrw;
+  integer i,rwcnt,ivrwstp;
+  boolean testf;
+  record DefCashBlock DCb;
+  roundmode roundlines,rndtotal,rndvat,rndnone;
+  val totsum,vatv;
+
+  BlockLoad(DCb);
+  MulVATIV(vatcode,salessum,vatv,t1,IVr.InclVAT,IVr.NoTAXonVAT);  
+  tvat = 0;
+  totsum = 0;
+  GetCurncyRoundoff(IVr.CurncyCode,DCb.DefCashPayMode,"IVVc",rndtotal,roundlines,rndvat);
+  rwcnt = MatRowCnt(IVr);
+  for (i=0; i<rwcnt; i=i+1) begin
+    MatRowGet(IVr,i,IVrw);
+    ivrwstp = IVrw.stp;
+    testf = false;
+    if ((ivrwstp==kInvoiceRowTypeNormal) or (ivrwstp==kInvoiceRowTypeStructuredItemComponent) or (ivrwstp==kInvoiceRowTypeInterest) or 
+    (ivrwstp==kInvoiceRowTypeDownpayment) or (ivrwstp==kInvoiceRowTypeLoan) or (ivrwstp==kInvoiceRowTypeLoanInterest) or 
+    (ivrwstp==kInvoiceRowTypeCorrection) or (ivrwstp==kInvoiceRowTypeGiftVoucherSold) or (ivrwstp==kInvoiceRowTypeRetention) or 
+    (ivrwstp==kInvoiceRowTypeMultiBuyDiscount)) then begin
+      testf = true;
+    end;
+    if (testf and vatcode==IVrw.VATCode) then begin 
+      MulVATIV(IVrw.VATCode,IVrw.Sum,vatv,t1,IVr.InclVAT,IVr.NoTAXonVAT);
+      vatv = Round(vatv,rndvat);
+      tvat = tvat + vatv;
+    end;
+  end;
+  return;
+end;
+
+procedure AddIVTransRowsNew(Boolean addtoit,Integer itemstat,var record SMVc gSMp,record IVVc IVr,var integer vatcnt,
+                            array string asalesacc,array string asalesobj,array val asalessum,array val asalesrowsum,
+                            array val asalesqty,array string asalesvatcode,var array string asalestaxtemplatecode,
+                            array integer asalesstp,array val asalestax2,array val asalestax2reb,
+                            array record TaxMatrixVc aTMr,integer asalescnt,
+                            var array string aitemgroup,var array string aitemgroupvatcode,var array val aitemgroupqty,var array val aitemgroupsum,var Integer aitemgroupcnt,
+                            var val totsum,var val totvat,var array string aitcode,var array val aitsum,var array val aitvat,var array val aitqty,var Integer aitcnt)
+begin
+  record TaxMatrixVc TMr;
+  row TaxMatrixVc TMrw;
+  record AccBlock ARAccb;
+  record RoundBlock RoundRec;
+  record VATCodeBlock VATCodeRec;
+  row VATCodeBlock VATCoderw;
+  string 255 objstr;
+  boolean UseTaxTemplatesforTaxCalcf,testf;
+  string 255 tstr;
+  string 2 vatcod,taxtemplatecode;
+  string 10 revacc;
+  string 20 ivraccno;
+  integer i,rwcnt,i2,i3,rwcnt2,vcrwcnt;
+  integer ivrwstp;
+  val t,salessum,quant,rowsum;
+  val smsum;
+  val tvat,t1;
+  record SMVc VATr;
+  row SMVc VATrw;
+  roundmode rndnone;
+  vector val vitemgroupsum;
+
+  UseTaxTemplatesforTaxCalcf = UseTaxTemplatesforTaxCalc;
+  BlockLoad(ARAccb);
+  BlockLoad(VATCodeRec);
+  BlockLoad(RoundRec);  
+  SetupVATBase(VATr,vcrwcnt);  
+  for (i=0;i<asalescnt;i=i+1) begin
+    RecordCopy(TMr,aTMr[i]);
+    salessum = asalessum[i];
+    rowsum = asalesrowsum[i];
+    quant = asalesqty[i];
+    revacc = asalesacc[i];
+    objstr = asalesobj[i];
+    ivraccno = revacc;
+    if (GetAccName(ivraccno,tstr,60)==false) then begin
+      goto LAddIVTransRowsNew;
+    end;
+    vatcod = asalesvatcode[i];
+    if (blank(vatcod)) then begin
+      vatcod = ARAccb.VATCodeDom;
+    end;
+    taxtemplatecode = asalestaxtemplatecode[i];
+    if (blank(taxtemplatecode)) then begin
+      taxtemplatecode = ARAccb.TaxTemplateCode;
+    end;
+    if (blank(vatcod)) then begin
+      if (UseTaxTemplatesforTaxCalcf) then begin
+      end else begin
+        rwcnt = MatRowCnt(VATCodeRec);
+        if (rwcnt>0) then begin
+          MatRowGet(VATCodeRec,0,VATCoderw);
+          vatcod = VATCoderw.VATCode;
+        end;  
+      end;
+    end;
+    if (blank(taxtemplatecode)) then begin
+      rwcnt = MatRowCnt(VATCodeRec);
+      if (rwcnt>0) then begin
+        MatRowGet(VATCodeRec,0,VATCoderw);
+        taxtemplatecode = VATCoderw.VATCode;
+      end;  
+    end;
+    ivrwstp = asalesstp[i];
+    if ((ivrwstp==kInvoiceRowTypeNormal) or (ivrwstp==kInvoiceRowTypeStructuredItemComponent) or (ivrwstp==kInvoiceRowTypeInterest) or (ivrwstp==kInvoiceRowTypeDownpayment) or (ivrwstp==kInvoiceRowTypeLoan) or (ivrwstp==kInvoiceRowTypeLoanInterest) or (ivrwstp==kInvoiceRowTypeCorrection) or (ivrwstp==kInvoiceRowTypeGiftVoucherSold) or (ivrwstp==kInvoiceRowTypeRetention) or (ivrwstp==kInvoiceRowTypeMultiBuyDiscount)) then begin
+      if (UseTaxTemplatesforTaxCalcf==false) then begin
+        switch (IVr.InclVAT) begin
+           case 2:
+             switch (IVr.NoTAXonVAT) begin
+               case 2:
+                 MulVATIV(vatcod,asalessum[i],tvat,t1,IVr.InclVAT,0);
+               otherwise
+                 MulVATIV(vatcod,asalessum[i],tvat,t1,IVr.InclVAT,IVr.NoTAXonVAT);
+             end;
+           otherwise
+              if (RoundRec.VATCalcWay==1) then begin 
+                IVCalcTotalVatPerLine(vatcod,IVr,tvat,asalessum[i],t1);
+              end else begin
+                MulVATIV(vatcod,asalessum[i],tvat,t1,IVr.InclVAT,IVr.NoTAXonVAT);
+              end;
+        end;
+        if (IVr.InclVAT>0) then begin
+          AddSMRow(gSMp,gSMp.TransDate,revacc,objstr,AddVATCodeToVATAccRows(vatcod),tstr,salessum-tvat,true,false,smsum);
+        end else begin
+          AddSMRow(gSMp,gSMp.TransDate,revacc,objstr,AddVATCodeToVATAccRows(vatcod),tstr,salessum,true,false,smsum);
+        end;
+        switch (RoundRec.VATCalcWay) begin
+          case 0:
+            AddVATBase(VATr,vatcod,salessum,blankval,vcrwcnt,IVr.InclVAT,IVr.NoTAXonVAT);
+          case 1:
+            AddVATBase(VATr,vatcod,salessum,blankval,vcrwcnt,IVr.InclVAT,IVr.NoTAXonVAT);
+            AddVATVat(VATr,vatcod,tvat,vcrwcnt);
+        end;
+      end else begin
+        AddSMRow(gSMp,gSMp.TransDate,revacc,objstr,AddVATCodeToVATAccRows(vatcod),tstr,salessum,true,false,smsum);
+        rwcnt2 = MatRowCnt(TMr);
+        for (i2=0;i2<rwcnt2;i2=i2+1) begin
+          MatRowGet(TMr,i2,TMrw);
+          GetVATCodeSalesVatAcc(TMrw.VATCode,revacc);
+          if (GetAccName(revacc,tstr,60)==false) then begin end;
+          objstr = "";
+          AddSMRow(gSMp,gSMp.TransDate,revacc,objstr,AddVATCodeToVATAccRows(TMrw.VATCode),tstr,TMrw.VATSum,true,false,smsum);
+        end;
+      end;
+    end;
+LAddIVTransRowsNewRow:;    
+  end; 
+  vcrwcnt = MatRowCnt(VATCodeRec);
+  for (i=0;i<vcrwcnt;i=i+1) begin
+    MatRowGet(VATCodeRec,i,VATCoderw);
+    MatRowGet(VATr,i,VATrw);
+    if (VATrw.DebVal!=0) then begin 
+      if (nonblank(VATCoderw.VATCode)) then begin
+        switch (RoundRec.VATCalcWay) begin
+          case 0:    
+            MulVATIV(VATCoderw.VATCode,VATrw.DebVal,tvat,t1,IVr.InclVAT,IVr.NoTAXonVAT);
+          case 1:
+            tvat = VATrw.CredVal;
+            t1 = VATrw.CurCredVal;
+        end;       
+        if (tvat!=0) then begin
+          if (GetAccName(VATCoderw.SalesVATAcc,tstr,60)==false) then begin 
+          end;
+          AddSMRow(gSMp,gSMp.TransDate,VATCoderw.SalesVATAcc,objstr,AddVATCodeToVATAccRows(VATCoderw.VATCode),tstr,tvat,true,false,smsum);
+        end;       
+      end;
+    end;
+  end;
+  if (itemstat==0) then begin
+    RecordClear(TMr);
+    SetupVATBase(VATr,vcrwcnt);
+    for (i=0;i<aitemgroupcnt;i=i+1) begin
+      AddVATBase(VATr,aitemgroupvatcode[i],aitemgroupsum[i],blankval,vcrwcnt,IVr.InclVAT,IVr.NoTAXonVAT);
+      vitemgroupsum[aitemgroupvatcode[i]] = vitemgroupsum[aitemgroupvatcode[i]] + aitemgroupsum[i];
+    end;
+    vcrwcnt = MatRowCnt(VATCodeRec);
+    for (i3=0;i3<vcrwcnt;i3=i3+1) begin
+      MatRowGet(VATCodeRec,i3,VATCoderw);
+      MatRowGet(VATr,i3,VATrw);
+      if (VATrw.DebVal!=0) then begin 
+        if (nonblank(VATCoderw.VATCode)) then begin
+          switch (RoundRec.VATCalcWay) begin
+            case 0:    
+              MulVATIV(VATCoderw.VATCode,VATrw.DebVal,tvat,t1,IVr.InclVAT,IVr.NoTAXonVAT);
+            case 1:
+              tvat = VATrw.CredVal2;
+              t1 = VATrw.CurCredVal;
+          end;
+          if (tvat!=0 or VATrw.DebVal!=0) then begin
+            if (addtoit) then begin
+              switch (itemstat) begin
+                case 0:
+                  for (i=0;i<aitemgroupcnt;i=i+1) begin
+                    for (i2=0;i2<aitcnt;i2=i2+1) begin
+                      testf = true;
+                      if (aitemgroup[i]!=aitcode[i2]) then begin testf = false; end;
+                      if (testf) then begin 
+                        t = (tvat*aitemgroupsum[i])/vitemgroupsum[aitemgroupvatcode[i]];
+                        t = Round(t,SetRoundModeD(2));                            
+                        aitqty[i2] = aitqty[i2] + aitemgroupqty[i];
+                        aitvat[i2] = aitvat[i2] + t;
+                        aitsum[i2] = aitsum[i2] + aitemgroupsum[i];
+                        if (IVr.InclVAT!=0) then begin
+                          aitsum[i2] = aitsum[i2] - t;
+                        end;                      
+                        totsum = totsum + aitemgroupsum[i];
+                        if (IVr.InclVAT!=0) then begin
+                          totsum = totsum - t;
+                        end;
+                        totvat = totvat + t;
+                        i2 = aitcnt;
+                      end;
+                    end;        
+                  end;        
+                case 1:
+                   //other place
+              end;
+            end;
+
+          end;       
+        end;
+      end;
+    end;
+  end;
+LAddIVTransRowsNew:;
+  return;
+end;
+
 procedure AttToSLIVSpecArrays(record AccBlock Accb,Integer itemstat,record IVVc IVr,var array string aitcode,var array val aitsum,var array val aitvat,var array val aitqty,var Integer aitcnt,var val totsum,var val totvat,var array string avatcode,var array val avatsum,Integer avatcnt,var val maxsum,Boolean addtoit,record SMVc SMr)
 begin
   Integer rwcnt,i,lasti;
   row IVVc IVrw;
-  val s;
   record TaxMatrixVc TMr;
   Boolean RetValueAddedf;
+  val s,smsum,ivtotsum,ivvatsum;
+  Array string 2 asalesvatcode;
+  Array string 10 asalestaxtemplatecode;
+  Array record TaxMatrixVc aTMr;
+  Array string 10 asalesacc;
+  Array string 10 asalesperiodcode;
+  Array string 255 asalesobj;
+  Array val asalessum;
+  Array val asalesrowsum;
+  Array val asalesqty;
+  Array Integer asalesstp;  
+  Array val asalestax2;
+  Array val asalestax2reb;
+  Integer asalescnt;
+  Boolean UseTaxTemplatesforTaxCalcf;
+  Array string 10 aitemgroup;
+  Array string 10 aitemgroupvatcode;
+  Array val aitemgroupqty;
+  Array val aitemgroupsum;
+  Integer aitemgroupcnt;
   val coef;
   
   // EVS: DOL-153
@@ -1870,7 +2351,8 @@ begin
     coef = -1;
   end;
   // :EVS
-  
+
+  UseTaxTemplatesforTaxCalcf = UseTaxTemplatesforTaxCalc;
   rwcnt = MatRowCnt(IVr);
   for(i=0;i<rwcnt;i=i+1) begin
     MatRowGet(IVr,i,IVrw);
@@ -1884,6 +2366,7 @@ begin
     switch (IVrw.stp) begin
       case kInvoiceRowTypeCashPayment:
         s = MulRateToBase1(IVrw.CurncyCode,IVrw.Sum,IVrw.FrRate,IVrw.ToRateB1,IVrw.ToRateB2,IVrw.BaseRate1,IVrw.BaseRate2,DefaultCurRoundOff);
+/*        
         AddPMPOSToSM(IVrw.PayMode,IVrw.PayMode,"IV " & IVr.SerNr & IVrw.Spec,"",s,SMr);
         if (blank(Accb.CashBackAcc)) then begin
           if (RetValueAddedf==false) then begin
@@ -1892,7 +2375,17 @@ begin
             RetValueAddedf = true;
           end;
         end;
+*/        
       case kInvoiceRowTypeCreditCardPayment:
+        s = MulRateToBase1(IVrw.CurncyCode,IVrw.Sum,IVrw.FrRate,IVrw.ToRateB1,IVrw.ToRateB2,IVrw.BaseRate1,IVrw.BaseRate2,DefaultCurRoundOff);
+//*        AddPMPOSToSM(IVrw.PayMode,IVrw.PayMode,"IV " & IVr.SerNr & IVrw.Spec,"",s,SMr);
+      case kInvoiceRowTypeSwishPayment:
+        s = MulRateToBase1(IVrw.CurncyCode,IVrw.Sum,IVrw.FrRate,IVrw.ToRateB1,IVrw.ToRateB2,IVrw.BaseRate1,IVrw.BaseRate2,DefaultCurRoundOff);
+        AddPMPOSToSM(IVrw.PayMode,IVrw.PayMode,"IV " & IVr.SerNr & IVrw.Spec,"",s,SMr);
+      case kInvoiceRowTypeQRPayment:
+        s = MulRateToBase1(IVrw.CurncyCode,IVrw.Sum,IVrw.FrRate,IVrw.ToRateB1,IVrw.ToRateB2,IVrw.BaseRate1,IVrw.BaseRate2,DefaultCurRoundOff);
+        AddPMPOSToSM(IVrw.PayMode,IVrw.PayMode,"IV " & IVr.SerNr & IVrw.Spec,"",s,SMr);
+      case kInvoiceRowTypeCashWithdrawal:
         s = MulRateToBase1(IVrw.CurncyCode,IVrw.Sum,IVrw.FrRate,IVrw.ToRateB1,IVrw.ToRateB2,IVrw.BaseRate1,IVrw.BaseRate2,DefaultCurRoundOff);
         AddPMPOSToSM(IVrw.PayMode,IVrw.PayMode,"IV " & IVr.SerNr & IVrw.Spec,"",s,SMr);
       case kInvoiceRowTypeChequePayment:
@@ -1905,18 +2398,35 @@ begin
         s = MulRateToBase1(IVrw.CurncyCode,IVrw.Sum,IVrw.FrRate,IVrw.ToRateB1,IVrw.ToRateB2,IVrw.BaseRate1,IVrw.BaseRate2,DefaultCurRoundOff);
         AddPMPOSToSM(IVrw.PayMode,IVrw.PayMode,"IV " & IVr.SerNr & IVrw.Spec,"",s,SMr);
       otherwise
-        UnpackRowFieldMatrix(IVrw,"TaxMatrix",TMr);
-        AddupPOSLine(false,"IVVc",itemstat,IVrw.ArtCode,IVrw.SalesAcc,IVrw.VATCode,IVrw.TaxTemplateCode,TMr,IVr.Objects,IVrw.Objects,IVr.InclVAT,IVr.NoTAXonVAT,IVrw.Sum,IVrw.Price,IVrw.Quant,aitcode,aitsum,aitvat,aitqty,aitcnt,totsum,totvat,avatcode,avatsum,avatcnt,maxsum,addtoit,SMr);
-        if (nonblank(IVrw.ArtCode)) then begin
-          lasti = i;
+        if (UseTaxTemplatesforTaxCalcf==false) then begin
+          PrepareAddIVTransRowNew(addtoit,itemstat,IVr,IVrw,IVr.Objects,
+                                      asalesacc,asalesobj,asalessum,asalesrowsum,asalesqty,
+                                      asalesvatcode,asalestaxtemplatecode,asalesstp,asalestax2,asalestax2reb,
+                                      aTMr,asalescnt,
+                                      aitemgroup,aitemgroupvatcode,aitemgroupqty,aitemgroupsum,aitemgroupcnt);
+        end else begin
+          UnpackRowFieldMatrix(IVrw,"TaxMatrix",TMr);
+          AddupPOSLine(false,"IVVc",itemstat,IVrw.ArtCode,IVrw.SalesAcc,IVrw.VATCode,IVrw.TaxTemplateCode,TMr,IVr.Objects,IVrw.Objects,IVr.InclVAT,IVr.NoTAXonVAT,IVrw.Sum,IVrw.Price,IVrw.Quant,aitcode,aitsum,aitvat,aitqty,aitcnt,totsum,totvat,avatcode,avatsum,avatcnt,maxsum,addtoit,SMr);
+          if (nonblank(IVrw.ArtCode)) then begin
+            lasti = i;
+          end;
         end;
 //SL INvoice already created transaction for sales and vat
     end;
   end;
-  if (lasti>-1) then begin
-    MatRowGet(IVr,lasti,IVrw);
-    UnpackRowFieldMatrix(IVrw,"TaxMatrix",TMr);
-    AddupPOSLine(false,"IVVc",itemstat,IVrw.ArtCode,IVrw.SalesAcc,IVrw.VATCode,IVrw.TaxTemplateCode,TMr,IVr.Objects,IVrw.Objects,IVr.InclVAT,IVr.NoTAXonVAT,IVr.Sum0,0,0,aitcode,aitsum,aitvat,aitqty,aitcnt,totsum,totvat,avatcode,avatsum,avatcnt,maxsum,addtoit,SMr);
+  if (UseTaxTemplatesforTaxCalcf==false) then begin
+    AddIVTransRowsNew(addtoit,itemstat,SMr,IVr,avatcnt,
+                      asalesacc,asalesobj,asalessum,asalesrowsum,
+                      asalesqty,asalesvatcode,asalestaxtemplatecode,
+                      asalesstp,asalestax2,asalestax2reb,
+                      aTMr,asalescnt,
+                      aitemgroup,aitemgroupvatcode,aitemgroupqty,aitemgroupsum,aitemgroupcnt,
+                      ivtotsum,ivvatsum,aitcode,aitsum,aitvat,aitqty,aitcnt);
+    if (lasti>-1) then begin
+      MatRowGet(IVr,lasti,IVrw);
+      UnpackRowFieldMatrix(IVrw,"TaxMatrix",TMr);
+      AddupPOSLine(false,"IVVc",itemstat,IVrw.ArtCode,IVrw.SalesAcc,IVrw.VATCode,IVrw.TaxTemplateCode,TMr,IVr.Objects,IVrw.Objects,IVr.InclVAT,IVr.NoTAXonVAT,IVr.Sum0,0,0,aitcode,aitsum,aitvat,aitqty,aitcnt,totsum,totvat,avatcode,avatsum,avatcnt,maxsum,addtoit,SMr);
+    end;
   end;
 //SL INvoice already created transaction for sales and vat
   return;
@@ -1960,8 +2470,9 @@ begin
         vstatussum["negativeinvoicesum"] = vstatussum["negativeinvoicesum"] + s; 
         AddVATBase(nVATr,IVrw.VATCode,IVrw.Sum,blankval,nvatcnt,IVr.InclVAT,IVr.NoTAXonVAT);
       end else begin
-        CalcSum(IVrw.Quant,IVrw.Price,IVrw.PriceFactor,IVrw.vRebate,swreb,GOb.UseDiscount);  
-        CalcSum(IVrw.Quant,IVrw.Price,IVrw.PriceFactor,0.00,sworeb,GOb.UseDiscount);  
+//        CalcSum(IVrw.Quant,IVrw.Price,IVrw.PriceFactor,0.00,sworeb,GOb.UseDiscount);  
+        sworeb = FormulaDiscountCalcSum(IVrw.Quant,IVrw.Price,IVrw.PriceFactor,0.00);  
+        swreb = FormulaDiscountCalcSum(IVrw.Quant,IVrw.Price,IVrw.PriceFactor,IVrw.vRebate);  
         if (swreb!=sworeb) then begin
           s = sworeb - swreb;
           s = MulRateToBase1(IVr.CurncyCode,s,IVr.FrRate,IVr.ToRateB1,IVr.ToRateB2,IVr.BaseRate1,IVr.BaseRate2,DefaultCurRoundOff);
@@ -2071,12 +2582,21 @@ begin
       end;
     end;
     testf = foundf;
-    if (IVr.Invalid!=0) then begin
-      testf = false;
-    end;
-    if (IVr.OKFlag==0) then begin
-      testf = false;
-    end;
+    if (IVr.Invalid!=0) then begin testf = false; end;
+    if (IVr.OKFlag==0) then begin testf = false; end;
+    if (testf) then begin
+      if (IVr.InvType!=kInvoiceTypeCash) then begin 
+        testf = false; 
+        rwcnt = MatRowCnt(IVr);
+        for (i=0;i<rwcnt;i=i+1) begin
+          MatRowGet(IVr,i,IVrw);
+          if (IVrw.stp==kInvoiceRowTypeCreditCardPayment or IVrw.stp==kInvoiceRowTypeCashPayment) then begin
+            testf = true;
+            i = rwcnt;
+          end;
+        end;
+      end;  
+    end;  
     rwcnt = MatRowCnt(IVr);
     for (i=0;i<rwcnt;i=i+1) begin
       MatRowGet(IVr,i,IVrw);
@@ -2114,6 +2634,9 @@ begin
           case kInvoiceRowTypeChequePayment: testf = true;
           case kInvoiceRowTypeLoyaltyPointsPayment: testf = true;
           case kInvoiceRowTypeCreditCardPayment: testf = true;
+          case kInvoiceRowTypeSwishPayment: testf = true;
+          case kInvoiceRowTypeQRPayment: testf = true;
+          case kInvoiceRowTypeCashWithdrawal: testf = true;
         end;
         if (testf) then begin
 //          s = IVrw.Sum; //change_1  , we do line below instead
@@ -2271,6 +2794,72 @@ begin
                 end;
               end;
             end;
+          case kInvoiceRowTypeSwishPayment:
+/*          
+            if (IVr.RetnValue<0) then begin // Can happen, cash is used and then rest is left as open invoice
+              s = IVrw.Sum;
+            end else begin
+//              s = IVrw.Sum-IVr.RetnValue;//credit card get entire ampunt from bank acc
+              s = IVrw.Sum;
+            end;
+*/            
+            s = MulRateToBase1(IVrw.CurncyCode,IVrw.Sum,IVrw.FrRate,IVrw.ToRateB1,IVrw.ToRateB2,IVrw.BaseRate1,IVrw.BaseRate2,DefaultCurRoundOff);
+            if (IVr.InvType==kInvoiceTypeCredit or IVr.InvType==kInvoiceTypeCreditSpecialSales) then begin
+              s = -s;
+            end;
+            if (nonblank(IVrw.PayMode)) then begin
+              pmmodtocompare = IVrw.PayMode;
+            end else begin
+              pmmodtocompare = DefCashRec.DefCCPayMode;
+            end;
+            addedf = true;
+            if (pmmodtocompare==paymode) or (blank(paymode)) then begin
+              AddIVPosSum(IVr,s,DefCashRec.DefCashPayMode,pmmodtocompare,aivcode,aivcrncy,aivval,aivb1val,aivnr,aivoutval,aivb1outval,atipsum,acnt,detail,maxsum,SMr,startdat,starttim,enddat,endtim,vstatussum);
+              if (RetnValueAddedf==false) then begin
+                if (IVrw.CurncyCode==BCb.BaseCur1) or blank(IVrw.CurncyCode) then begin
+                  if (alliscash) then begin
+                    s = -MulRateToBase1(IVr.CurncyCode,IVr.RetValue,IVr.FrRate,IVr.ToRateB1,IVr.ToRateB2,IVr.BaseRate1,IVr.BaseRate2,DefaultCurRoundOff);
+//                    AddIVPosSum(IVr,s,DefCashRec.DefCashPayMode,IVrw.PayMode,aivcode,aivcrncy,aivval,aivb1val,aivnr,aivoutval,aivb1outval,atipsum,acnt,detail,maxsum,SMr,startdat,starttim,enddat,endtim,vstatussum);
+                    AddPMPOSToSM(IVrw.PayMode,IVrw.PayMode,"IV " & IVr.SerNr & IVrw.Spec,IVr.Objects,s,SMr);
+                    vopen = vopen - IVr.RetnValue;
+                    RetnValueAddedf = true;
+                  end;
+                end;
+              end;
+            end;
+          case kInvoiceRowTypeQRPayment:
+/*          
+            if (IVr.RetnValue<0) then begin // Can happen, cash is used and then rest is left as open invoice
+              s = IVrw.Sum;
+            end else begin
+//              s = IVrw.Sum-IVr.RetnValue;//credit card get entire ampunt from bank acc
+              s = IVrw.Sum;
+            end;
+*/            
+            s = MulRateToBase1(IVrw.CurncyCode,IVrw.Sum,IVrw.FrRate,IVrw.ToRateB1,IVrw.ToRateB2,IVrw.BaseRate1,IVrw.BaseRate2,DefaultCurRoundOff);
+            if (IVr.InvType==kInvoiceTypeCredit or IVr.InvType==kInvoiceTypeCreditSpecialSales) then begin
+              s = -s;
+            end;
+            if (nonblank(IVrw.PayMode)) then begin
+              pmmodtocompare = IVrw.PayMode;
+            end else begin
+              pmmodtocompare = DefCashRec.DefCCPayMode;
+            end;
+            addedf = true;
+            if (pmmodtocompare==paymode) or (blank(paymode)) then begin
+              AddIVPosSum(IVr,s,DefCashRec.DefCashPayMode,pmmodtocompare,aivcode,aivcrncy,aivval,aivb1val,aivnr,aivoutval,aivb1outval,atipsum,acnt,detail,maxsum,SMr,startdat,starttim,enddat,endtim,vstatussum);
+              if (RetnValueAddedf==false) then begin
+                if (IVrw.CurncyCode==BCb.BaseCur1) or blank(IVrw.CurncyCode) then begin
+                  if (alliscash) then begin
+                    s = -MulRateToBase1(IVr.CurncyCode,IVr.RetValue,IVr.FrRate,IVr.ToRateB1,IVr.ToRateB2,IVr.BaseRate1,IVr.BaseRate2,DefaultCurRoundOff);
+//                    AddIVPosSum(IVr,s,DefCashRec.DefCashPayMode,IVrw.PayMode,aivcode,aivcrncy,aivval,aivb1val,aivnr,aivoutval,aivb1outval,atipsum,acnt,detail,maxsum,SMr,startdat,starttim,enddat,endtim,vstatussum);
+                    AddPMPOSToSM(IVrw.PayMode,IVrw.PayMode,"IV " & IVr.SerNr & IVrw.Spec,IVr.Objects,s,SMr);
+                    vopen = vopen - IVr.RetnValue;
+                    RetnValueAddedf = true;
+                  end;
+                end;
+              end;
+            end;
         end;
         if ((blank(paymode)) or (paymode==pmmodtocompare)) then begin
 //moved code to rows        
@@ -2283,6 +2872,8 @@ begin
           vopen = 0;
         end;
       end;
+/*      
+JW says, this doesnt make sense to include open invoices in cashup , they will be paid by bank transfer one day, not some POS cash 
       if (vopen!=0) then begin
         if (CDb.InclOpenInvCashup!=0) then begin
           if ((blank(paymode)) or (paymode==IVr.PayDeal)) then begin
@@ -2292,6 +2883,7 @@ begin
           end;
         end;
       end;
+*/      
       if (detail!=0) and (detail!=2) then begin
 //        acnt = acnt + 1;
       end;
@@ -2345,7 +2937,10 @@ begin
   vector val ippaymodev;
   Array string 2 ippaymodea;
   Integer ipp,ippcnt;
+  val sb1;
+  record BaseCurBlock BCb;
 
+  BlockLoad(BCb);
   BlockLoad(CDb);
   BlockLoad(DefCashRec);
   foundf = true;
@@ -2415,7 +3010,16 @@ begin
                 if (blank(ippaymode)) then begin
                   ippaymode = IPr.PayMode;
                 end;
-                AddCashupToIVArray(true,ippaymode,ippaymode,"",IPrw.InvVal,IPrw.InvVal,0,aivcode,aivcrncy,aivval,aivb1val,aivnr,aivoutval,aivb1outval,atipsum,acnt);
+                if (IPrw.InvCurncy==BCb.BaseCur1) then begin
+                  sb1 = IPrw.InvVal;
+                end else begin
+                  if (IPrw.BankCurncy==BCb.BaseCur1) then begin
+                    sb1 = IPrw.BankVal;
+                  end else begin
+                    sb1 = MulWithRateToBase1(IPrw.InvCurncy,IPr.TransDate,IPrw.InvVal,DefaultCurRoundOff);
+                  end;
+                end;
+                AddCashupToIVArray(true,ippaymode,ippaymode,"",sb1,sb1,0,aivcode,aivcrncy,aivval,aivb1val,aivnr,aivoutval,aivb1outval,atipsum,acnt);
                 if (detail!=0) and (detail!=2) then begin
                   aivcode[acnt-1] = IPr.SerNr;
                 end;
@@ -2432,7 +3036,16 @@ begin
               if (blank(ippaymode)) then begin
                 ippaymode = IPr.PayMode;
               end;
-              AddCashupToIVArray(true,ippaymode,ippaymode,"",IPrw.InvVal,IPrw.InvVal,0,aivcode,aivcrncy,aivval,aivb1val,aivnr,aivoutval,aivb1outval,atipsum,acnt);
+              if (IPrw.InvCurncy==BCb.BaseCur1) then begin
+                sb1 = IPrw.InvVal;
+              end else begin
+                if (IPrw.BankCurncy==BCb.BaseCur1) then begin
+                  sb1 = IPrw.BankVal;
+                end else begin
+                  sb1 = MulWithRateToBase1(IPrw.InvCurncy,IPr.TransDate,IPrw.InvVal,DefaultCurRoundOff);
+                end;
+              end;
+              AddCashupToIVArray(true,ippaymode,ippaymode,"",sb1,sb1,0,aivcode,aivcrncy,aivval,aivb1val,aivnr,aivoutval,aivb1outval,atipsum,acnt);
               if (detail!=0) and (detail!=2) then begin
                 aivcode[acnt-1] = IPr.SerNr;
               end;

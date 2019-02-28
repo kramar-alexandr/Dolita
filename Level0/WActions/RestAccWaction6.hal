@@ -1,3 +1,8 @@
+external procedure SetPOSWindowDisplayModeFiscalPrinterEPSON81II(record LSerialPortDeviceVc,string,string);
+external procedure SetPOSWindowDisplayModeFiscalPrinterEPSON81IITCPIP(record LSerialPortDeviceVc,string,string);
+external procedure RestAccVc_PrintBixolonSPPR200IIReceipt(record RestAccVc,Boolean);
+external function Integer CheckFM32State(Integer);
+external function Integer PrintFisUSBMItemRow_IVCashVc(Integer,string,record IVCashVc,row IVCashVc,vector val,var Boolean,var Boolean);
 external procedure SetPOSWindowDisplay_PaymentRow(string,val);
 remote updating procedure UpdateAffectedRowsToKitchenOrderFromRestAcc(longint,integer,string);
 external procedure RestAccDClass_RefreshStringList(Integer,record RestAccVc);
@@ -16,7 +21,9 @@ external procedure RestAccBarOrder_PrintEpsonTMU210Receipt(record RestAccVc,var 
 external procedure IVVc_PrintEpsonTMU210Receipt(record IVVc,Boolean,Boolean);
 external function Boolean IVCashVc_PrintEpsonTMU210Receipt(var record IVCashVc,Integer,Boolean,Boolean,Integer);
 external function Boolean IVCashVc_PrintEpsonTMT88IIReceipt(Integer,var record IVCashVc,record IVCashVc,Integer,Boolean,Boolean,Integer,Integer);
+external function Boolean IVCashVc_PrintBixolonSPPR200IIReceipt(Integer,var record IVCashVc,record IVCashVc,Integer,Boolean,Boolean,Integer,Integer);
 external function Boolean IVVc_PrintEpsonTMT88IIReceipt(Integer,var record IVVc,record IVVc,Integer,Boolean,Boolean,Integer,Integer);
+external function Boolean IVCashVc_PrintCHD6800Receipt(Integer,string,var record IVCashVc,record IVCashVc,Integer,Boolean,Boolean,Integer,Integer);
 //external procedure IVCashVc_PrintEpsonReceipt(record IVCashVc,Boolean,Boolean);
 external function Boolean FindLocalSerialPortDevice(Integer,LongInt,string,var record LSerialPortDeviceVc);
 external procedure M4PadString(string,Integer,string,Boolean,var string);
@@ -32,7 +39,7 @@ global
 procedure GetPrintData(string localmachine,var record MachineCashVc MCr)
 begin
   record CashPrintBlock CPb;
-
+  
   MCr.Code = localmachine;
   if (ReadFirstMain(MCr,1,true)==false) then begin
     BlockLoad(CPb);
@@ -77,7 +84,7 @@ begin
   end;
   if (FindLocalSerialPortDevice(kSerialPortDeviceClassDisplay,-1,LMb.LocalMachineCode,LSPDr)==false) then begin
     goto LSetPOSWindowDisplay_SendToSerialPortDevices;
-  end;
+  end;  
   switch (LSPDr.Printer) begin
     case kSerialPortDeviceModelDisplayGeneric:
       SetPOSWindowDisplay_Generic(LSPDr,dispstr,disp2str);
@@ -85,17 +92,27 @@ begin
       SetPOSWindowDisplay_Posiflex(LSPDr,dispstr,disp2str);
     case kSerialPortDeviceModelFiscPrinterFB05:
       SetPOSWindowDisplay_Generic(LSPDr,dispstr,disp2str);
+    case kSerialPortDeviceModelFiscPrinterFB15:
+      SetPOSWindowDisplay_Generic(LSPDr,dispstr,disp2str);
+    case kSerialPortDeviceModelFiscPrinterFB15dll:
+//      SetPOSWindowDisplay_Generic(LSPDr,dispstr,disp2str);
     case kSerialPortDeviceModelFiscPrinterST05:
       SetPOSWindowDisplay_ST05(LSPDr,dispstr,disp2str);
-   case kSerialPortDeviceModelFiscPrinterPOSNET:
+    case kSerialPortDeviceModelFiscPrinterPOSNET:
       SetPOSWindowDisplayModeFiscalPrinterPOSNETLCD(LSPDr,dispstr,disp2str);
-   case kSerialPortDeviceModelFiscPrinterPOSNETwVATNr:
+    case kSerialPortDeviceModelFiscPrinterPOSNETTCPIP:
+//      SetPOSWindowDisplayModeFiscalPrinterPOSNETLCD(LSPDr,dispstr,disp2str);
+    case kSerialPortDeviceModelFiscPrinterPOSNETwVATNr:
       SetPOSWindowDisplayModeFiscalPrinterPOSNETLCD(LSPDr,dispstr,disp2str);
+    case kSerialPortDeviceModelFiscPrinterEPSON81II:
+      SetPOSWindowDisplayModeFiscalPrinterEPSON81II(LSPDr,dispstr,disp2str);
+    case kSerialPortDeviceModelFiscPrinterEPSON81IITCPIP:
+      SetPOSWindowDisplayModeFiscalPrinterEPSON81IITCPIP(LSPDr,dispstr,disp2str);
   end;
-LSetPOSWindowDisplay_SendToSerialPortDevices:;
+LSetPOSWindowDisplay_SendToSerialPortDevices:;  
   return;
 end;
-
+ 
 global
 procedure SetPOSWindowDisplay(string pass_dispstr,string disp2str) //ebs dispstr > pass_dispstr
 begin
@@ -114,39 +131,49 @@ begin
     DeselectWindow(wn,false);
     PutWindowString(wn,"CustomerDisplayData_Line1",Left(dispstr,40));
     PutWindowString(wn,"CustomerDisplayData_Line2",Left(disp2str,30));
+//  SelectWindow(wn);
 
     SetPOSWindowDisplay_SendToSerialPortDevices(pass_dispstr,disp2str);   //EBS dispstr > pass_dispstr
   end;
 
   wn = FindWindow("NPTSIVCashCUDisplayDClass");
-
+  
   if (wn>0) then begin
     DeselectWindow(wn,false);
     PutWindowString(wn,"CustomerDisplayData_Line1",Left(dispstr,40));
     PutWindowString(wn,"CustomerDisplayData_Line2",Left(disp2str,30));
   end;
-
+  
   wn = FindWindow("RestAccDClass");
-
+  
   if (wn>0) then begin
     DeselectWindow(wn,false);
     PutWindowString(wn,"CustomerDisplayData_Line1",Left(dispstr,40));
     PutWindowString(wn,"CustomerDisplayData_Line2",Left(disp2str,30));
+//    SelectWindow(wn);
 
-    SetPOSWindowDisplay_SendToSerialPortDevices(dispstr,disp2str);
+    SetPOSWindowDisplay_SendToSerialPortDevices(dispstr,disp2str);    
+  end;  
+
+  wn = FindWindow("RestAccCUDisplayDClass");
+  
+  if (wn>0) then begin
+    DeselectWindow(wn,false);
+    PutWindowString(wn,"CustomerDisplayData_Line1",Left(dispstr,40));
+    PutWindowString(wn,"CustomerDisplayData_Line2",Left(disp2str,30));
   end;
-
+/* If this is reconnected, the findwindow must be replaced/complemented so that it won't screw up having 2 IVDClass windows open at the same time
   wn = FindWindow("IVDClass");
-
+  
   if (wn>0) then begin
     DeselectWindow(wn,false);
 
     PutWindowString(wn,"CustomerDisplayData_Line1",Left(dispstr,40));
     PutWindowString(wn,"CustomerDisplayData_Line2",Left(disp2str,30));
 
-    SetPOSWindowDisplay_SendToSerialPortDevices(dispstr,disp2str);
-  end;
-
+    SetPOSWindowDisplay_SendToSerialPortDevices(dispstr,disp2str);    
+  end;  
+*/
   return;
 end;
 
@@ -154,13 +181,13 @@ global
 procedure SetPOSWindowDisplayAmount(string s,val total)
 begin
   Integer wn;
-
+  
   if (total>0) then begin
     SetPOSWindowDisplay(s & " " & ValToString(total,M4Val,ThousandSeparator,DecimalSeparator,0),"");
   end else begin
     SetPOSWindowDisplay(s & " " & ValToString(0.00,M4Val,ThousandSeparator,DecimalSeparator,0),"");
   end;
-
+  
   return;
 end;
 
@@ -174,7 +201,7 @@ begin
   end else begin
     SetPOSWindowDisplay(USetStr(11205) & " " & ValToString(0.00,M4Val,ThousandSeparator,DecimalSeparator,0),"");
   end;
-*/
+*/  
   return;
 end;
 
@@ -185,16 +212,16 @@ begin
   record MachineCashVc MCr;
   record LSerialPortDeviceVc LSPDr;
   string 255 dispstr;
-
+  
   BlockLoad(LMb);
   if (LMb.UseDisplay!=0) then begin
     GetPrintData(LMb.LocalMachineCode,MCr);
-
+    
     if (nonblank(MCr.DisplayText)) then begin
       dispstr = MCr.DisplayText;
     end else begin
       dispstr = USetStr(1802);
-    end;
+    end;       
 LResetDisplayDsm:;
     SetPOSWindowDisplay(dispstr,"");
   end;
@@ -212,18 +239,18 @@ begin
   record LSerialPortDeviceVc LSPDr;
   string 255 dispstr;
   string 255 disp2str;
-
+  
   BlockLoad(LMb);
   if (i<MatRowCnt(RestAccr)) then begin
     MatRowGet(RestAccr,i,RestAccrw);
     if (RestAccrw.stp==1) then begin
-/*
+/*      
       M4PadString(RestAccrw.Spec,13," ",false,tstr);
       tstr = tstr & " ";
       M4PadString(ValToString(RestAccrw.Price,M4UVal,"",",",0) & ":-",6," ",true,t2);
       dispstr = tstr & t2;
-
-
+      
+      
       tstr = "TOTAL";
       M4PadString(ValToString(RestAccr.Sum4,M4UVal,"",",",0) & ":-",14," ",true,t2);
       disp2str = tstr & t2;
@@ -232,9 +259,9 @@ begin
       disp2str = ValToString(RestAccrw.Quant,M4UVal,ThousandSeparator,DecimalSeparator,0) & "*" & ValToString(RestAccrw.Price,M4Val,ThousandSeparator,DecimalSeparator,0);
       M4PadString(ValToString(RestAccrw.Sum,M4Val,ThousandSeparator,DecimalSeparator,0),30-len(disp2str)," ",true,t2);
       disp2str = disp2str & t2;
-LDisplayRestAccItem:;
+LDisplayRestAccItem:;  
       SetPOSWindowDisplay(dispstr,disp2str);
-
+      
     end;
   end;
   return;
@@ -246,14 +273,14 @@ begin
   row IVVc IVrw;
   string 200 tstr,t2;
   record LocalMachineBlock LMb;
-
+  
   BlockLoad(LMb);
   if (LMb.UseDisplay!=0) then begin
     tstr = "SUBTOTAL";
     M4PadString(ValToString(IVr.Sum4,M4Val,ThousandSeparator,DecimalSeparator,0) & ":-",12," ",true,t2);
     SetPOSWindowDisplay_SendToSerialPortDevices("                    ",tstr & t2);
   end;
-LDisplayIVSubTotalAction:;
+LDisplayIVSubTotalAction:;  
   return;
 end;
 
@@ -262,13 +289,13 @@ procedure DisplayIVThankYouAction()
 begin
   string 200 tstr;
   record LocalMachineBlock LMb;
-
+  
   BlockLoad(LMb);
   if (LMb.UseDisplay!=0) then begin
     M4PadString("THANK YOU",20," ",false,tstr);
     SetPOSWindowDisplay_SendToSerialPortDevices("                    ",tstr);
   end;
-LDisplayIVThankYouAction:;
+LDisplayIVThankYouAction:;  
   return;
 end;
 
@@ -280,24 +307,24 @@ begin
 
   BlockLoad(SFb);
   eol = chr(13) & chr(10);
-  M4PadString("001",3," ",false,tstr);
+  M4PadString("001",3," ",false,tstr);      
   AddTextToArea(tstr,outa);
   AddTextToArea(eol,outa);
 
-  M4PadString("002",3," ",false,tstr);
+  M4PadString("002",3," ",false,tstr);      
   AddTextToArea(tstr,outa);
-  M4PadString(artcode,20," ",false,tstr);
+  M4PadString(artcode,20," ",false,tstr);      
   AddTextToArea(tstr,outa);
   AddTextToArea(eol,outa);
   if (delf) then begin
-    M4PadString("003STORNO",9," ",false,tstr);
+    M4PadString("003STORNO",9," ",false,tstr);      
     AddTextToArea(tstr,outa);
     AddTextToArea(eol,outa);
   end else begin
-    M4PadString("003Cena",7," ",false,tstr);
+    M4PadString("003Cena",7," ",false,tstr);      
     AddTextToArea(tstr,outa);
     tstr = ValToString(sum,M4Val,SFb.thousSep,SFb.decimalPt,0);
-    M4PadString(tstr,16," ",true,tstr);
+    M4PadString(tstr,16," ",true,tstr);      
     AddTextToArea(tstr,outa);
     AddTextToArea(eol,outa);
   end;
@@ -344,19 +371,19 @@ begin
   record LocalMachineBlock LMb;
   record SerPrintBlock SPb;
   string 255 port,device;
-  record CashPrintBlock CPb;
+  record CashPrintBlock CPb;  
   record MachineCashVc MCr;
   Integer FiscalPrinter;
 
-  BlockLoad(LMb);
+  BlockLoad(LMb);  
   if (LMb.UseDisplay!=0) then begin
     BlockLoad(SPb);
-    BlockLoad(CPb);
+    BlockLoad(CPb);  
     MCr.Code = LMb.LocalMachineCode;
     if (ReadFirstMain(MCr,1,true)) then begin
       device = MCr.CommPort;
       FiscalPrinter = MCr.FiscalPrinter;
-    end;
+    end;  
     if (FiscalPrinter==0) then begin
       FiscalPrinter = CPb.FiscalPrinter;
     end;
@@ -373,7 +400,7 @@ begin
           if (IVr.FiscalFlag!=0) then begin
             DisplayItem_FI550(IVr.SerNr,IVrw.ArtCode,IVrw.Spec,IVrw.Price,0,device,true);
           end;
-      end;
+      end;      
     end;
   end;
   return;
@@ -388,25 +415,25 @@ begin
   record LocalMachineBlock LMb;
   record SerPrintBlock SPb;
   string 255 port,device;
-  record CashPrintBlock CPb;
+  record CashPrintBlock CPb;  
   record MachineCashVc MCr;
   Integer FiscalPrinter;
-
+  
   MatRowGet(IVr,i,IVrw);
-  BlockLoad(LMb);
-  if (serportf) then begin
+  BlockLoad(LMb);  
+  if (serportf) then begin 
     if (SetComPortCodepage(StringSetFromString(89,LSPDr.Codepage))) then begin end;
     FiscalPrinter = LSPDr.Printer - 10;
     device = LSPDr.Port;
   end else begin
     if (LMb.LocalMachineCode<>"") then begin
       BlockLoad(SPb);
-      BlockLoad(CPb);
+      BlockLoad(CPb);  
       MCr.Code = LMb.LocalMachineCode;
       if (ReadFirstMain(MCr,1,true)) then begin
         device = MCr.CommPort;
         FiscalPrinter = MCr.FiscalPrinter;
-      end;
+      end;  
       if (FiscalPrinter==0) then begin
         FiscalPrinter = CPb.FiscalPrinter;
       end;
@@ -422,7 +449,7 @@ begin
   end;
   if (blank(port)) then begin
     port = "COM2";
-  end;
+  end;  
   if (LMb.UseDisplay!=0) then begin
     switch (FiscalPrinter) begin
       case 8:
@@ -435,9 +462,9 @@ begin
         if(IVrw.stp==kInvoiceRowTypeNormal) or (IVrw.stp==kInvoiceRowTypeStructuredItemComponent) then begin
           tstr = "TOTAL ";
           M4PadString(ValToString(IVrw.Sum,M4Val,ThousandSeparator,DecimalSeparator,0) & ":-",14," ",true,t2);
-          SetPOSWindowDisplay_SendToSerialPortDevices("                    ",tstr & t2);
+          SetPOSWindowDisplay_SendToSerialPortDevices("                    ",tstr & t2);   
         end;
-        if ((IVrw.stp==kInvoiceRowTypeCashPayment) or (IVrw.stp==kInvoiceRowTypeCreditCardPayment) or (IVrw.stp==kInvoiceRowTypeChequePayment) or (IVrw.stp==kInvoiceRowTypeLoyaltyPointsPayment)) then begin
+        if ((IVrw.stp==kInvoiceRowTypeCashPayment) or (IVrw.stp==kInvoiceRowTypeCreditCardPayment) or (IVrw.stp==kInvoiceRowTypeSwishPayment) or (IVrw.stp==kInvoiceRowTypeQRPayment) or (IVrw.stp==kInvoiceRowTypeCashWithdrawal) or (IVrw.stp==kInvoiceRowTypeChequePayment) or (IVrw.stp==kInvoiceRowTypeLoyaltyPointsPayment)) then begin
           tstr = "CASH BACK";
           M4PadString(ValToString(IVr.RetnValue,M4Val,ThousandSeparator,DecimalSeparator,0) & ":-",11," ",true,t2);
           SetPOSWindowDisplay_SendToSerialPortDevices("                    ",tstr & t2);
@@ -447,7 +474,7 @@ begin
   tstr = ValToString(IVrw.Quant,M4UVal,ThousandSeparator,DecimalSeparator,0) & "*" & ValToString(IVrw.Price,M4Val,ThousandSeparator,DecimalSeparator,0);
   M4PadString(ValToString(IVrw.Sum,M4Val,ThousandSeparator,DecimalSeparator,0),30-len(tstr)," ",true,t2);
   tstr = tstr & t2;
-
+  
   SetPOSWindowDisplay(IVrw.ArtCode & " " & IVrw.Spec,tstr);
   return;
 end;
@@ -458,13 +485,13 @@ begin
   Boolean serportf;
   record LSerialPortDeviceVc LSPDr;
   record LocalMachineBlock LMb;
-
+  
   BlockLoad(LMb);
-
+  
   if (FindLocalSerialPortDevice(kSerialPortDeviceClassDisplay,-1,LMb.LocalMachineCode,LSPDr)) then begin
     serportf = true;
   end;
-
+  
   DisplayIVItem2(IVr,i,serportf,LSPDr);
 end;
 
@@ -475,20 +502,20 @@ begin
   record LocalMachineBlock LMb;
   record SerPrintBlock SPb;
   string 255 port,device;
-  record CashPrintBlock CPb;
+  record CashPrintBlock CPb;  
   record MachineCashVc MCr;
   Integer FiscalPrinter;
 
-  BlockLoad(LMb);
+  BlockLoad(LMb);  
   MatRowGet(IVCashr,rownr,IVCashrw);
   if (LMb.UseDisplay!=0) then begin
     BlockLoad(SPb);
-    BlockLoad(CPb);
+    BlockLoad(CPb);  
     MCr.Code = LMb.LocalMachineCode;
     if (ReadFirstMain(MCr,1,true)) then begin
       device = MCr.CommPort;
       FiscalPrinter = MCr.FiscalPrinter;
-    end;
+    end;  
     if (FiscalPrinter==0) then begin
       FiscalPrinter = CPb.FiscalPrinter;
     end;
@@ -505,7 +532,7 @@ begin
             DisplayItem_FI550(IVCashr.SerNr,IVCashrw.ArtCode,IVCashrw.Spec,IVCashrw.Price,0,device,true);
           end;
       end;
-
+      
     end;
   end;
   SetPOSWindowDisplay(IVCashrw.ArtCode & " " &IVCashrw.Spec &  " " & IVCashrw.Price,"");
@@ -521,24 +548,24 @@ begin
   record LocalMachineBlock LMb;
   record SerPrintBlock SPb;
   string 255 port,device;
-  record CashPrintBlock CPb;
+  record CashPrintBlock CPb;  
   record MachineCashVc MCr;
   Integer FiscalPrinter;
   record LSerialPortDeviceVc LSPDr;
-
-  BlockLoad(LMb);
-  if (FindLocalSerialPortDevice(kSerialPortDeviceClassDisplay,-1,LMb.LocalMachineCode,LSPDr)) then begin
+  
+  BlockLoad(LMb);  
+  if (FindLocalSerialPortDevice(kSerialPortDeviceClassDisplay,-1,LMb.LocalMachineCode,LSPDr)) then begin 
     if (SetComPortCodepage(StringSetFromString(89,LSPDr.Codepage))) then begin end;
     FiscalPrinter = LSPDr.Printer - 10;
     device = LSPDr.Port;
-  end else begin
+  end else begin 
     BlockLoad(SPb);
-    BlockLoad(CPb);
+    BlockLoad(CPb);  
     MCr.Code = LMb.LocalMachineCode;
     if (ReadFirstMain(MCr,1,true)) then begin
       device = MCr.CommPort;
       FiscalPrinter = MCr.FiscalPrinter;
-    end;
+    end;  
     if (FiscalPrinter==0) then begin
       FiscalPrinter = CPb.FiscalPrinter;
     end;
@@ -559,7 +586,7 @@ begin
   port = SPb.Port;
   if (blank(port)) then begin
     port = "COM2";
-  end;
+  end;  
   MatRowGet(IVCashr,rownr,IVCashrw);
   if (LMb.UseDisplay!=0) then begin
     switch (FiscalPrinter) begin
@@ -569,7 +596,7 @@ begin
             DisplayItem_FI550(IVCashr.SerNr,IVCashrw.ArtCode,IVCashrw.Spec,IVCashrw.Price,0,device,false);
           end;
         end;
-    end;
+    end;    
   end;
 
   // EVS: DOL-30
@@ -579,12 +606,8 @@ begin
    t2 = "";
    // :EVS
   tstr = tstr & t2;
-
-  t2 = IVCashrw.ArtCode & " " & IVCashrw.Spec;
-  if (len(t2) > 35) then begin
-    t2 = left(t2,35) & "(..)";
-  end;
-  SetPOSWindowDisplay(t2,tstr);
+  
+  SetPOSWindowDisplay(IVCashrw.ArtCode & " " & IVCashrw.Spec,tstr);
   return;
 end;
 
@@ -608,7 +631,7 @@ begin
   Integer rwcnt,i;
   Integer resrwcnt,resi;
   Boolean treatedf;
-
+  
   RecordCopy(resCashR,CashR);
   rwcnt = MatRowCnt(CashR);
   while (MatRowCnt(resCashR)>0) begin
@@ -638,30 +661,39 @@ begin
 end;
 
 global
-updating procedure RestAccReceiptPrint(record RestAccVc incomingCashR,Boolean okf,Boolean opendrawerf)
+updating procedure RestAccReceiptPrint(record RestAccVc incomingRAr,Boolean okf,Boolean opendrawerf)
 begin
-  record RestAccVc CashR;
+  record RestAccVc RAr;
   record LSerialPortDeviceVc LSPDr;
   record LocalMachineBlock LMb;
+  record SuggestedTipVc STr;
+  row SuggestedTipVc STrw;
   Integer Error;
-
-  BlockLoad(LMb);
-  ConsolidateRestAccr(incomingCashR,CashR);
+  
+  BlockLoad(LMb);  
+  STr.MachineCode = incomingRAr.MachineName;
+  if (ReadFirstMain(STr,1,true)) then begin
+    if (STr.ChargeType==1) then begin
+      MatRowGet(STr,0,STrw);
+      incomingRAr.TipValue = ((incomingRAr.Sum4-incomingRAr.TipValue)*STrw.ChargePrc)/100.00;
+    end;
+  end;
+  ConsolidateRestAccr(incomingRAr,RAr);
   if (okf==true) then begin
-    if (CashR.Closed==0) then begin
+    if (RAr.Closed==0) then begin
       goto LRestAccReceiptPrint;
     end;
   end;
-  if (FindLocalSerialPortDevice(kSerialPortDeviceClassReceiptPrinter,-1,LMb.LocalMachineCode,LSPDr)==false) then begin
+  if (FindLocalSerialPortDevice(kSerialPortDeviceClassReceiptPrinter,-1,LMb.LocalMachineCode,LSPDr)==false) then begin  
     goto LRestAccReceiptPrint;
   end;
-  Error = OpenComPort(0,LSPDr.Port,LSPDr.BaudRate,LSPDr.Parity,LSPDr.ByteSize,LSPDr.StopBits,LSPDr.FlowControl);
+  Error = OpenComPort(0,LSPDr.Port,LSPDr.BaudRate,LSPDr.Parity,LSPDr.ByteSize,LSPDr.StopBits,LSPDr.FlowControl);   
   if (Error==0) then begin
     if (nonblank(LSPDr.FailureCode)) then begin
       LSPDr.Code = LSPDr.FailureCode;
       if (ReadFirstMain(LSPDr,1,true)) then begin
         if (SetComPortCodepage(StringSetFromString(89,LSPDr.Codepage))) then begin end;
-        Error = OpenComPort(0,LSPDr.Port,LSPDr.BaudRate,LSPDr.Parity,LSPDr.ByteSize,LSPDr.StopBits,LSPDr.FlowControl);
+        Error = OpenComPort(0,LSPDr.Port,LSPDr.BaudRate,LSPDr.Parity,LSPDr.ByteSize,LSPDr.StopBits,LSPDr.FlowControl);   
       end;
     end;
   end;
@@ -671,10 +703,12 @@ begin
   if (SetComPortCodepage(StringSetFromString(89,LSPDr.Codepage))) then begin end;
   switch (LSPDr.Printer) begin
     case kSerialPortDeviceModelPrinterEPSONTMU210:
-      RestAccVc_PrintEpsonTMU210Receipt(CashR,okf,opendrawerf);
+      RestAccVc_PrintEpsonTMU210Receipt(RAr,okf,opendrawerf);
+    case kSerialPortDeviceModelPrinterBixolonSPPR200II:
+//      RestAccVc_PrintBixolonSPPR200IIReceipt(CashR,okf);
     otherwise
       Error = CloseComPort(1);
-  end;
+  end;   
 LRestAccReceiptPrint:;
   return;
 end;
@@ -685,24 +719,24 @@ begin
   record LSerialPortDeviceVc LSPDr;
   record LocalMachineBlock LMb;
   Integer Error;
-
+  
   if (CashR.Closed!=0) then begin
     goto LRestAccBarOrder;
   end;
   if (bari<=0) then begin
     goto LRestAccBarOrder;
   end;
-  if (FindLocalSerialPortDevice(kSerialPortDeviceClassReceiptPrinter,-1,LMb.LocalMachineCode,LSPDr)==false) then begin
+  if (FindLocalSerialPortDevice(kSerialPortDeviceClassReceiptPrinter,-1,LMb.LocalMachineCode,LSPDr)==false) then begin  
     goto LRestAccBarOrder;
   end;
   if (SetComPortCodepage(StringSetFromString(89,LSPDr.Codepage))) then begin end;
-  Error = OpenComPort(0,LSPDr.Port,LSPDr.BaudRate,LSPDr.Parity,LSPDr.ByteSize,LSPDr.StopBits,LSPDr.FlowControl);
+  Error = OpenComPort(0,LSPDr.Port,LSPDr.BaudRate,LSPDr.Parity,LSPDr.ByteSize,LSPDr.StopBits,LSPDr.FlowControl);   
   if (Error==0) then begin
     if (nonblank(LSPDr.FailureCode)) then begin
       LSPDr.Code = LSPDr.FailureCode;
       if (ReadFirstMain(LSPDr,1,true)) then begin
         if (SetComPortCodepage(StringSetFromString(89,LSPDr.Codepage))) then begin end;
-        Error = OpenComPort(0,LSPDr.Port,LSPDr.BaudRate,LSPDr.Parity,LSPDr.ByteSize,LSPDr.StopBits,LSPDr.FlowControl);
+        Error = OpenComPort(0,LSPDr.Port,LSPDr.BaudRate,LSPDr.Parity,LSPDr.ByteSize,LSPDr.StopBits,LSPDr.FlowControl);   
       end;
     end;
   end;
@@ -712,7 +746,7 @@ begin
   switch (LSPDr.Printer) begin
     case 1:
       RestAccBarOrder_PrintEpsonTMU210Receipt(CashR,bararr,bari);
-  end;
+  end;  
   Error = CloseComPort(1);
 LRestAccBarOrder:;
   return;
@@ -725,7 +759,7 @@ begin
   record LocalMachineBlock LMb;
   Integer Error;
   Boolean res;
-
+  
   res = true;
   BlockLoad(LMb);
   if (okf==true) then begin
@@ -733,17 +767,17 @@ begin
       goto LIVPrintReceipt;
     end;
   end;
-  if (FindLocalSerialPortDevice(kSerialPortDeviceClassReceiptPrinter,-1,LMb.LocalMachineCode,LSPDr)==false) then begin
+  if (FindLocalSerialPortDevice(kSerialPortDeviceClassReceiptPrinter,-1,LMb.LocalMachineCode,LSPDr)==false) then begin  
     goto LIVPrintReceipt;
   end;
   if (SetComPortCodepage(StringSetFromString(89,LSPDr.Codepage))) then begin end;
-  Error = OpenComPort(0,LSPDr.Port,LSPDr.BaudRate,LSPDr.Parity,LSPDr.ByteSize,LSPDr.StopBits,LSPDr.FlowControl);
+  Error = OpenComPort(0,LSPDr.Port,LSPDr.BaudRate,LSPDr.Parity,LSPDr.ByteSize,LSPDr.StopBits,LSPDr.FlowControl);   
   if (Error==0) then begin
     if (nonblank(LSPDr.FailureCode)) then begin
       LSPDr.Code = LSPDr.FailureCode;
       if (ReadFirstMain(LSPDr,1,true)) then begin
         if (SetComPortCodepage(StringSetFromString(89,LSPDr.Codepage))) then begin end;
-        Error = OpenComPort(0,LSPDr.Port,LSPDr.BaudRate,LSPDr.Parity,LSPDr.ByteSize,LSPDr.StopBits,LSPDr.FlowControl);
+        Error = OpenComPort(0,LSPDr.Port,LSPDr.BaudRate,LSPDr.Parity,LSPDr.ByteSize,LSPDr.StopBits,LSPDr.FlowControl);   
       end;
     end;
   end;
@@ -772,7 +806,11 @@ begin
   Integer noError;
   record IVVc IVp;
   Boolean found;
-
+  row IVCashVc IVCrw;
+  vector val vatrates;
+  Boolean printslipf,creditnotef;
+  string 255 codepage;
+  
   res = true;
   BlockLoad(LMb);
   if (okf==true) then begin
@@ -783,16 +821,16 @@ begin
       goto LIVCashPrintReceipt;
     end;
   end;
-  if (FindLocalSerialPortDevice(kSerialPortDeviceClassReceiptPrinter,-1,LMb.LocalMachineCode,LSPDr)) then begin
+  if (FindLocalSerialPortDevice(kSerialPortDeviceClassReceiptPrinter,-1,LMb.LocalMachineCode,LSPDr)) then begin  
     found = true;
     if (SetComPortCodepage(StringSetFromString(89,LSPDr.Codepage))) then begin end;
-    noError = OpenComPort(0,LSPDr.Port,LSPDr.BaudRate,LSPDr.Parity,LSPDr.ByteSize,LSPDr.StopBits,LSPDr.FlowControl);
+    noError = OpenComPort(0,LSPDr.Port,LSPDr.BaudRate,LSPDr.Parity,LSPDr.ByteSize,LSPDr.StopBits,LSPDr.FlowControl);   
     if (noError==0) then begin
       if (nonblank(LSPDr.FailureCode)) then begin
         LSPDr.Code = LSPDr.FailureCode;
         if (ReadFirstMain(LSPDr,1,true)) then begin
           if (SetComPortCodepage(StringSetFromString(89,LSPDr.Codepage))) then begin end;
-          noError = OpenComPort(0,LSPDr.Port,LSPDr.BaudRate,LSPDr.Parity,LSPDr.ByteSize,LSPDr.StopBits,LSPDr.FlowControl);
+          noError = OpenComPort(0,LSPDr.Port,LSPDr.BaudRate,LSPDr.Parity,LSPDr.ByteSize,LSPDr.StopBits,LSPDr.FlowControl);   
         end;
       end;
     end;
@@ -803,12 +841,18 @@ begin
       case kSerialPortDeviceModelPrinterEPSONTMU210:
         res = IVCashVc_PrintEpsonTMU210Receipt(IVCashp,rownr,okf,opendrawerf,IncrementalPrint);
         if (nonblank(LSPDr.EscSeqAfter)) then begin
-          noError = OpenComPort(0,LSPDr.Port,LSPDr.BaudRate,LSPDr.Parity,LSPDr.ByteSize,LSPDr.StopBits,LSPDr.FlowControl);
+          noError = OpenComPort(0,LSPDr.Port,LSPDr.BaudRate,LSPDr.Parity,LSPDr.ByteSize,LSPDr.StopBits,LSPDr.FlowControl);   
         end;
       case kSerialPortDeviceModelPrinterEPSONTMT88II:
         res = IVCashVc_PrintEpsonTMT88IIReceipt(wn,IVCashp,prevIVCashp,rownr,okf,opendrawerf,IncrementalPrint,wnst);
+      case kSerialPortDeviceModelPrinterBixolonSPPR200II:
+//        res = IVCashVc_PrintBixolonSPPR200IIReceipt(wn,IVCashp,prevIVCashp,rownr,okf,opendrawerf,IncrementalPrint,wnst);
       case kSerialPortDeviceModelPrinterAxiohmA777:
         res = IVCashVc_PrintEpsonAxiohmA777Receipt(wn,IVCashp,prevIVCashp,rownr,okf,opendrawerf,IncrementalPrint,wnst);
+      case kSerialPortDeviceModelPrinterCHD6800:
+        if (IncrementalPrint==0 and rownr<0) or (IncrementalPrint!=0) then begin
+          res = IVCashVc_PrintCHD6800Receipt(wn,LSPDr.Codepage,IVCashp,prevIVCashp,rownr,okf,opendrawerf,IncrementalPrint,wnst);
+        end;
       otherwise
         noError = CloseComPort(1);
     end;
@@ -825,6 +869,19 @@ begin
           res = PMsg_PrintReceipt(LSPDr,IVp);
           PMsg_OpenCashDrawer(LSPDr,opendrawerf);
           IVCashp.OfficialSerNr = IVp.OfficialSerNr;
+        end;
+      case kSerialPortDeviceModelFiscPrinterFisUSBMDLL:
+        if (LMb.IncrementalReceiptPrinting!=0) then begin
+          switch (CheckFM32State(LSPDr.Printer)) begin
+            case kFiscalPrinterStateFIS:
+              if (rownr>=0) then begin
+                MatRowGet(IVCashp,rownr,IVCrw);    
+                codepage = StringSetFromString(89,LSPDr.Codepage);
+                res = PrintFisUSBMItemRow_IVCashVc(LSPDr.Printer,codepage,IVCashp,IVCrw,vatrates,printslipf,creditnotef)==0;
+              end;
+            otherwise
+              goto LIVCashPrintReceipt;
+          end;
         end;
     end;
   end;
@@ -849,19 +906,19 @@ begin
   record LSerialPortDeviceVc LSPDr;
   record LocalMachineBlock LMb;
   Integer noError;
-
+  
   BlockLoad(LMb);
-  if (FindLocalSerialPortDevice(kSerialPortDeviceClassReceiptPrinter,-1,LMb.LocalMachineCode,LSPDr)==false) then begin
+  if (FindLocalSerialPortDevice(kSerialPortDeviceClassReceiptPrinter,-1,LMb.LocalMachineCode,LSPDr)==false) then begin  
     goto LGiftReceiptPrint;
   end;
   if (SetComPortCodepage(StringSetFromString(89,LSPDr.Codepage))) then begin end;
-  noError = OpenComPort(0,LSPDr.Port,LSPDr.BaudRate,LSPDr.Parity,LSPDr.ByteSize,LSPDr.StopBits,LSPDr.FlowControl);
+  noError = OpenComPort(0,LSPDr.Port,LSPDr.BaudRate,LSPDr.Parity,LSPDr.ByteSize,LSPDr.StopBits,LSPDr.FlowControl);   
   if (noError==0) then begin
     if (nonblank(LSPDr.FailureCode)) then begin
       LSPDr.Code = LSPDr.FailureCode;
       if (ReadFirstMain(LSPDr,1,true)) then begin
         if (SetComPortCodepage(StringSetFromString(89,LSPDr.Codepage))) then begin end;
-        noError = OpenComPort(0,LSPDr.Port,LSPDr.BaudRate,LSPDr.Parity,LSPDr.ByteSize,LSPDr.StopBits,LSPDr.FlowControl);
+        noError = OpenComPort(0,LSPDr.Port,LSPDr.BaudRate,LSPDr.Parity,LSPDr.ByteSize,LSPDr.StopBits,LSPDr.FlowControl);   
       end;
     end;
   end;
@@ -888,9 +945,9 @@ begin
   record IVVc prtIVr;
   record IVVc IVr;
   integer wn;
-
+  
   wn = CurWindow;
-
+ 
   DeselectWindow(wn,false);
   GetWindowRecord(wn,IVr);
   if (WindowState(wn)==0)  then begin
@@ -910,7 +967,7 @@ begin
   Integer wn;
   record RestAccVc RestAccr;
   record SoftFVc PriceLookupr;
-
+  
   GetWindowRecord(CurWindow,RestAccr);
   RecordClear(PriceLookupr);
   PriceLookupr.CustCode = RestAccr.CUCode;
@@ -922,14 +979,14 @@ end;
 global
 procedure RestAccPriceLookupClose()
 begin
-  CloseWindow(CurWindow);
+  CloseWindow(CurWindow);      
   return;
 end;
 
 global
 updating procedure RestAccDClassTouchScreenPrintPreview()
 begin
-  record RestAccVc RestAccr;
+  record RestAccVc RAr;
   Boolean testf;
 
   testf = true;
@@ -937,8 +994,8 @@ begin
     testf = WindowDoOK(CurWindow,0);
   end;
   if (testf) then begin
-    GetWindowRecord(CurWindow,RestAccr);
-    RecordActionRestAcc_Print(RestAccr,"1","RestAccForm",true);
+    GetWindowRecord(CurWindow,RAr); 
+    RecordActionRestAcc_Print(RAr,"1","RestAccForm",true);
   end;
   return;
 end;
@@ -955,11 +1012,11 @@ begin
   end;
   if (testf) then begin
     GetWindowRecord(CurWindow,RestAccr);
-    // if (SystemMode==kSystemModeRestricted) then begin
-    //   MessageBox(1581,"");
-    // end else begin
-      RecordActionRestAcc_Print(RestAccr,"","RestAccForm",true);
-    // end;
+    if (SystemMode==kSystemModeRestricted) then begin 
+      MessageBox(1581,"");
+    end else begin
+      RecordActionRestAcc_Print(RestAccr,"","RestAccForm",true);      
+    end;    
   end;
   return;
 end;
@@ -973,11 +1030,11 @@ begin
   val prevRetValue;
 
   RestAccDClassTouchScreenFromFinishAndPrintButton;
-//  if (SystemMode==kSystemModeRestricted) then begin
-//    MessageBox(1581,"");
-//  end else begin
-    RestAccDClassTouchScreenPrint;
-
+  if (SystemMode==kSystemModeRestricted) then begin 
+    MessageBox(1581,"");
+  end else begin
+    RestAccDClassTouchScreenPrint;    
+    
     wn = CurWindow;
     GetWindowRecord(wn,RestAccr);
     prevRetValue =  RestAccr.RetValue;
@@ -988,13 +1045,13 @@ begin
     PutWindowString(wn,"touchscreenwindowpagestack","1");
     PutWindowString(wn,"touchscreenwindowprinterstack","*");
     PutWindowString(wn,"CustomerDisplayData_Line1","");
-    PutWindowString(wn,"CustomerDisplayData_Line2","");
-    tstr = USetStr(1000132) & "  ";
+    PutWindowString(wn,"CustomerDisplayData_Line2","");    
+    tstr = USetStr(24172) & "  ";
     tstr = tstr & ValToString(prevRetValue,M4Val,ThousandSeparator,DecimalSeparator,0);
     SetPOSWindowDisplay("",tstr);
     RestAccDClass_RefreshStringList(wn,RestAccr);
     PutWindowRecord(wn,RestAccr);
-//  end;
+  end;
   return;
 end;
 
@@ -1047,7 +1104,7 @@ begin
     gTransferRestAccToKitchenOrder = 1;
     if (srlRestAccLPrint(RestAccr,"","RestAccKitchenForm")) then begin
       PutWindowRecord(wn,RestAccr);
-      WindowDoOK(wn,0);
+      WindowDoOK(wn,0);    
     end;
 //    RecordActionRestAcc_Print(RestAccr,"","RestAccKitchenForm",true);
   end;
@@ -1064,7 +1121,7 @@ begin
   array Integer bararr;
   Integer kitchi,bari;
   Boolean updf;
-
+  
   updf = false;
   wn = CurWindow;
   DeselectWindow(wn,false);
@@ -1101,19 +1158,19 @@ begin
   row RestAccVc RestAccrw;
   Integer nwn;
   record CUVc CUr;
-
+  
   switch (fieldname) begin
     case "GuestCode":
-      GetWindowRecord(wn,RestAccr);
+      GetWindowRecord(wn,RestAccr);  
       CUr.Code = RestAccr.GuestCode;
       if (ReadFirstMain(CUr,1,true)) then begin
-        nwn = OpenWindow("CUDClass",0,0,"","",CUr);
+        nwn = OpenWindow("CUDClass",0,0,"","",CUr);    
       end;
     case "CUCode":
-      GetWindowRecord(wn,RestAccr);
+      GetWindowRecord(wn,RestAccr);  
       CUr.Code = RestAccr.GuestCode;
       if (ReadFirstMain(CUr,1,true)) then begin
-        nwn = OpenWindow("CUDClass",0,0,"","",CUr);
+        nwn = OpenWindow("CUDClass",0,0,"","",CUr);    
       end;
   end;
   RestAccDClassOpenRecord = res;
@@ -1127,7 +1184,7 @@ begin
   row RestAccVc RestAccrw;
   record RcVc RepSpec;
   integer nwn;
-
+  
   GetWindowRecord(wn,RestAccr);
   MatRowGet(RestAccr,rwn,RestAccrw);
   RepSpec.long1 = rwn;
@@ -1136,7 +1193,7 @@ begin
   RepSpec.vals2 = RestAccrw.Price;
   RepSpec.f2 = RestAccrw.Spec;
   RepSpec.vals3 = RestAccrw.SplitQty;
-
+  
   nwn = OpenWindow("RestAccRowDClass",0,wn,"","",RepSpec);
 end;
 
@@ -1163,24 +1220,24 @@ begin
   record RcVc RepSpec;
   integer mwn;
   integer rwn;
-
+  
   mwn = MotherWindow(wn);
   GetWindowRecord(wn,RepSpec);
   GetWindowRecord(mwn,RestAccr);
   rwn = RepSpec.long1;
-
+  
   MatRowGet(RestAccr,rwn,RestAccrw);
-
+  
   RestAccrw.ArtCode = RepSpec.f1;
   RestAccrw.Quant = RepSpec.vals1;
   RestAccrw.Price = RepSpec.vals2;
   RestAccrw.Spec = RepSpec.f2;
   RestAccrw.SplitQty = RepSpec.vals3;
-
+  
   MatRowPut(RestAccr,rwn,RestAccrw);
   PutWindowRecord(mwn,RestAccr);
   CloseWindow(wn);
-
+  
   RestAccRowDClassOnOKWindow = true;
 end;
 
@@ -1193,26 +1250,26 @@ begin
   integer wn;
   integer mwn;
   integer rwn;
-
+  
   wn = CurWindow;
   mwn = MotherWindow(wn);
-
+  
   GetWindowRecord(wn,RepSpec);
   GetWindowRecord(mwn,RestAccr);
-
+  
   rwn = RepSpec.long1;
-
+  
   MatRowDelete(RestAccr,rwn);
-
+  
   PutWindowRecord(mwn,RestAccr);
-
+  
   CloseWindow(wn);
 end;
 
 global
 procedure CancelEnterFreeTextNPTSOClass()
 begin
-
+  
   CloseWindow(CurWindow);
   return;
 end;
@@ -1224,38 +1281,61 @@ begin
   row RestAccVc RestAccrw;
   record RcVc RepSpec;
   integer rwn,wn,mwn,line;
-
+  
   wn = CurWindow;
   mwn = MotherWindow(wn);
-  if (wn>0) then begin
+  if (wn>0) then begin 
     DeselectWindow(wn,false);
     GetWindowRecord(wn,RepSpec);
   end;
-  if (mwn>0) then begin
+  if (mwn>0) then begin 
     GetWindowRecord(mwn,RestAccr);
   end;
-  if (blank(RepSpec.f1)) then begin
+  if (blank(RepSpec.f1)) then begin 
     goto LLProceedEnterFreeTextNPTSOClass;
   end;
   line = SelectedListLine(mwn);
-  if (line<0) then begin
+  if (line<0) then begin 
     goto LLProceedEnterFreeTextNPTSOClass;
-  end;
+  end;  
 
   ClearRow(RestAccr,RestAccrw,kInvoiceRowTypeNormal);
   RestAccrw.Spec = RepSpec.f1;
   RestAccrw.AlreadyPrintedToKitchen = 0;
   RestAccrw.KitchenStatus=kRestAccRowStatusNormal;
-
+  
   MatRowInsert(RestAccr,line+1,RestAccrw);
   PutWindowRecord(mwn,RestAccr);
   RestAccDClass_RefreshStringList(mwn,RestAccr);
   DeselectWindow(mwn,false);
-  if (WindowDoOK(mwn,0)) then begin
+  if (WindowDoOK(mwn,0)) then begin   
     UpdateAffectedRowsToKitchenOrderFromRestAcc(RestAccr.SerNr,line,RepSpec.f1);
-  end;
+  end;    
   CloseWindow(wn);
-
+  
 LLProceedEnterFreeTextNPTSOClass:;
+  return;
+end;
+
+global 
+updating procedure RestAccDClassTouchScreenSaveInvoice()
+begin
+  Integer wn,nwn;
+  record RestAccVc RestAccr;
+  Integer wnst;
+  LongInt printrownr;
+
+  wn = CurWindow;
+  wnst = WindowState(wn);
+  GetWindowRecord(wn,RestAccr);
+  if (MatRowCnt(RestAccr)==0) then begin
+    goto LRestAccDClassTouchScreenSaveInvoice;
+  end;
+//  RestAccr.Suspended = 1;
+  PutWindowRecord(wn,RestAccr);
+  if (WindowDoOK(wn,0)) then begin
+    WindowDoNew(wn,0);
+  end;
+LRestAccDClassTouchScreenSaveInvoice:;  
   return;
 end;

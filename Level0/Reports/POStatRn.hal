@@ -1,3 +1,4 @@
+external function Boolean SetInSet2(string,string);
 external procedure HTSuppGroup(string,var string);
 external procedure HTVendClass(string,var string);
 external function Boolean ContactInGroupClass2(string,string,string,string,string,string,string);
@@ -58,7 +59,7 @@ begin
      end;
 
      StartFormat(15);
-     OutDate(0,0,Actr.TransDate,false);
+     OutDateID(0,"DblActVc",Actr.TransDate,false,Actr.SerNr);
      OutString(80,0,Actr.MainPersons,false);
      if (blank(Actr.ActResult)) or (Actr.OKFlag==0) then begin
        OutString(150,0,USetStr(28345),false);
@@ -288,33 +289,37 @@ BEGIN
   record VIVc VIr;
   row VIVc VIrw;
   integer rwcnt, i;
-  boolean TrHs2;
+  boolean found,testf;
   val invd;
   
   invd = 0;
 
   ResetLoop(VIr);
   VIr.POSerNr = POr.SerNr;
-  TrHs2 = true;
-  while (LoopKey("POSerNr",VIr,1,TrHs2)) begin
+  found = true;
+  while (LoopKey("POSerNr",VIr,1,found)) begin
     if (VIr.POSerNr<>POr.SerNr) then begin
-      TrHs2 = false;
+      found = false;
     end;
-    if (TrHs2) then begin    
-      if (VIr.TransDate <= effective and (VIr.OKFlag<>0)) then begin
-        rwcnt = MatRowCnt(VIr);
-        for(i=0;i<rwcnt;i=i+1) begin
-          MatRowGet(VIr,i,VIrw);
-          if (VIrw.Item == ArtCode) then begin
-            invd = invd + VIrw.qty;
-            if (VIrw.qty==0) then begin
-              invd = invd + 1;
-            end;  
+    if (found) then begin    
+      testf = true;
+      if (VIr.Invalid!=0) then begin testf = false; end;
+      if (testf) then begin
+        if (VIr.TransDate <= effective and (VIr.OKFlag<>0)) then begin
+          rwcnt = MatRowCnt(VIr);
+          for(i=0;i<rwcnt;i=i+1) begin
+            MatRowGet(VIr,i,VIrw);
+            if (VIrw.Item == ArtCode) then begin
+              invd = invd + VIrw.qty;
+              if (VIrw.qty==0) then begin
+                invd = invd + 1;
+              end;  
+            end;
           end;
         end;
       end;
     end;
-  end;  //TrHs2
+  end;  //found
   GetInvd = invd;
   RETURN;
 END;
@@ -474,7 +479,7 @@ BEGIN
       end;
     end;
     if (nonblank(RepSpec.ObjStr)) then begin
-      if (SetInSet(RepSpec.ObjStr,POr.Objects)==false) then begin
+      if (SetInSet2(RepSpec.ObjStr,POr.Objects)==false) then begin
         testf = false;
       end;
     end else begin
@@ -1150,7 +1155,7 @@ BEGIN
       end;
     end;
     if (nonblank(RepSpec.ObjStr)) then begin
-      if (SetInSet(RepSpec.ObjStr,POr.Objects)==false) then begin
+      if (SetInSet2(RepSpec.ObjStr,POr.Objects)==false) then begin
         testf = false;
       end;
     end else begin

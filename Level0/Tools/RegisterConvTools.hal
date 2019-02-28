@@ -1,3 +1,4 @@
+external function val CalculateDiscountPercentage(val,val,val);
 external procedure GetCurncyRoundoff(string,string,string,var roundmode,var roundmode,var roundmode);
 external procedure AddVATBase(var record SMVc,string,val,val,Integer,Integer,Integer);
 external procedure SetupVATBase(var record SMVc,var Integer);
@@ -6,6 +7,7 @@ external procedure RowCalculateTaxMatrix_IVVc(var record IVVc,Integer,row IVVc);
 remote procedure IVSumup(var record IVVc,Boolean);
 external procedure ORVc_PastePayDeal(var record ORVc);
 external procedure IVVc_PastePayDeal(var record IVVc,string,string);
+remote function Boolean PasteCustInInv(var record IVVc);
 
 global
 procedure IVCash2IV(record IVCashVc IVCashr, var record IVVc IVr)
@@ -111,7 +113,7 @@ begin
     IVrw.Quant = IVCashrw.Quant;
     IVrw.Price = IVCashrw.Price;
     IVrw.Sum = IVCashrw.Sum;
-    IVrw.vRebate = IVCashrw.vRebate;
+    IVrw.vRebate = CalculateDiscountPercentage(IVCashrw.Quant,IVCashrw.Price,IVCashrw.Sum);
     IVrw.SalesAcc = IVCashrw.SalesAcc;
     IVrw.Objects = IVCashrw.Objects;
     IVrw.BasePrice = IVCashrw.BasePrice;
@@ -188,11 +190,13 @@ begin
   IVr.SerNr = NextSerNr("IVVc",IVr.TransDate,-1,false,"");
   IVr.InvDate = IVCashr.InvDate;
   IVr.CustCode = IVCashr.CustCode;
+  if (PasteCustInInv(IVr)) then begin
+  end;
   IVr.PayDate = IVCashr.PayDate;
-  IVr.Addr0 = IVCashr.Addr0;
-  IVr.Addr1 = IVCashr.Addr1;
-  IVr.Addr2 = IVCashr.Addr2;
-  IVr.Addr3 = IVCashr.Addr3;
+//  IVr.Addr0 = IVCashr.Addr0;
+//  IVr.Addr1 = IVCashr.Addr1;
+//  IVr.Addr2 = IVCashr.Addr2;
+//  IVr.Addr3 = IVCashr.Addr3;
   IVr.OurContact = IVCashr.OurContact;
   IVr.ClientContact = IVCashr.ClientContact;
   IVr.CustCat = IVCashr.CustCat;
@@ -271,7 +275,7 @@ begin
         IVrw.Quant = IVCashrw.Quant;
         IVrw.Price = IVCashrw.Price;
         IVrw.Sum = IVCashrw.Sum;
-        IVrw.vRebate = IVCashrw.vRebate;
+        IVrw.vRebate = CalculateDiscountPercentage(IVCashrw.Quant,IVCashrw.Price,IVCashrw.Sum);
         IVrw.SalesAcc = IVCashrw.SalesAcc;
         IVrw.Objects = IVCashrw.Objects;
         IVrw.BasePrice = IVCashrw.BasePrice;
@@ -362,6 +366,7 @@ begin
   IVr.Sum3 = RestAccr.Sum3;
   IVr.Sum4 = RestAccr.Sum4;
   IVr.VATNr = CUr.VATNr;
+  IVr.RegNr1 = CUr.RegNr1;
   IVr.CreditCard = RestAccr.CreditCard;
   IVr.AuthorizationCode = RestAccr.AuthorizationCode;
 //  IVr.RecValue = RestAccr.RecValue;
@@ -720,7 +725,7 @@ begin
         ORrw.Quant = IVCashrw.Quant;
         ORrw.Price = IVCashrw.Price;
         ORrw.Sum = IVCashrw.Sum;
-        ORrw.vRebate = IVCashrw.vRebate;
+        ORrw.vRebate = CalculateDiscountPercentage(IVCashrw.Quant,IVCashrw.Price,IVCashrw.Sum);
         ORrw.SalesAcc = IVCashrw.SalesAcc;
         ORrw.Objects = IVCashrw.Objects;
         ORrw.BasePrice = IVCashrw.BasePrice;
@@ -845,7 +850,7 @@ begin
         QTrw.Quant = IVCashrw.Quant;
         QTrw.Price = IVCashrw.Price;
         QTrw.Sum = IVCashrw.Sum;
-        QTrw.vRebate = IVCashrw.vRebate;
+        QTrw.vRebate = CalculateDiscountPercentage(IVCashrw.Quant,IVCashrw.Price,IVCashrw.Sum);
         QTrw.SalesAcc = IVCashrw.SalesAcc;
         QTrw.Objects = IVCashrw.Objects;
         QTrw.BasePrice = IVCashrw.BasePrice;
@@ -886,13 +891,19 @@ begin
   Integer i,rwcnt;
   row RestAccVc RArw;
   record RestBlock Restb;
+  Date td;
+  Time tt;
   
   BlockLoad(Restb);
+  td = KOr.TransDate;
+  tt = KOr.TransTime;
   RecordNew(KOr);
-  KOr.TransDate = CurrentDate;
-  KOr.TransTime = CurrentTime;
+  KOr.TransDate = td;
+  KOr.TransTime = tt;
   KOr.CUCode = RAr.CUCode;
   KOr.CUName = RAr.CUName;
+  KOr.Waiter = RAr.Cashier;
+  KOr.Table = RAr.CustCode;
   KOr.SerNr = NextSerNr("KitchenOrderVc",KOr.TransDate,-1,false,"");
   KOr.RestAccSerNr = RAr.SerNr;
   rwcnt = MatRowCnt(RAr);

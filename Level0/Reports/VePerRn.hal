@@ -265,13 +265,13 @@ LVendHeadtoFile2:;
       OutVal(2,0,startbalp,M4Val,true);
       EndFormat;  
   end;
-  RETURN;
-END;
+  return;
+end;
 
 global
 procedure VendListTrans(var array string acur,var array val av1,var array val av2,var array val av3,var Integer curcnt,record CUVc VEr,var val balp,record RcVc RepSpec,
                         Boolean reportf)
-BEGIN
+begin
   record OPrsVc OPrsr;
   record BaseCurBlock bascur;
   val StartBal;
@@ -493,6 +493,8 @@ begin
   val v,t;
   record RcVc oldRepSpec;
   Date td;
+  transaction string 255 gPdfEmailRecipient;
+  transaction string 255 gPdfEmailSubject;
 
   frcc = FirstInRange(RepSpec.f1,20);
   tocc = LastInRange(RepSpec.f1,20);
@@ -527,6 +529,8 @@ begin
       end;
     end;
     if (testf) then begin
+      gPdfEmailRecipient = VEr.eMail;
+      gPdfEmailSubject = USetStr(4180) & " " & VEr.Code & " " & VEr.Name;
       VSr.VECode = VEr.Code;
       stfound = ReadFirstMain(VSr,1,true);
       if (stfound==true) then begin
@@ -632,7 +636,7 @@ end;
 
 global
 procedure VePerRn(record RcVc RepSpec)
-BEGIN
+begin
   record VSVc VSr;
   Boolean TrHs,stfound,testf;
   val sum1;
@@ -806,5 +810,5 @@ LVEPer_PrintTotalstoFile5:;
   end;
 L99:;  
   EndJob;
-  RETURN;
-END;
+  return;
+end;

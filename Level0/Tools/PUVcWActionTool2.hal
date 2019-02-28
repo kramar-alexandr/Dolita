@@ -1,5 +1,4 @@
 forward function Boolean PUDchrsum(record PUVc,Integer);
-external function Boolean PUDchrsum(record PUVc,Integer);
 external function string 255 NextSerialNumber(string,string,record SerNrTrackBlock);
 external procedure RowCalculateTaxMatrix_PUVc(var record PUVc,Integer,row PUVc,Integer);
 external function string 255 FillupTaxMatrix(Integer,string,string,string,string,string,var record TaxMatrixVc);
@@ -564,10 +563,10 @@ begin
     if (nonblank(aserialnr)) then begin
       if (calcqtyf) then begin
         if (InString(aserialnr,":")!=0) then begin
-          qty = StringToLongInt(LastInRange(aserialnr,30)) - StringToLongInt(FirstInRange(aserialnr,30)) + 1;
+          qty = StringToLongInt(LastInRange(aserialnr,60)) - StringToLongInt(FirstInRange(aserialnr,60)) + 1;
         end;
       end;
-      firstserialnr = FirstInRange(aserialnr,30);
+      firstserialnr = FirstInRange(aserialnr,60);
       serialnr = firstserialnr;
       serqty = 1;
       while (nonblank(serialnr)) begin
@@ -596,14 +595,14 @@ begin
 
   BlockLoad(SNrb);
   if (SNrb.BulkSerialNos!=0) then begin
-    serialnr = FirstInRange(testserialnr,30);
+    serialnr = FirstInRange(testserialnr,60);
     while (nonblank(serialnr)) begin
-      if ((serialnr>=FirstInRange(inserialnr,30)) and (serialnr<=FirstInRange(inserialnr,30))) then begin
+      if ((serialnr>=FirstInRange(inserialnr,60)) and (serialnr<=FirstInRange(inserialnr,60))) then begin
         res = true;
         goto LSerialNrInSerialNr;
       end;
       serialnr = NextSerialNumber(artcode,serialnr,SNrb);
-      if (serialnr>LastInRange(testserialnr,30)) then begin
+      if (serialnr>LastInRange(testserialnr,60)) then begin
         serialnr = "";
       end;
     end;

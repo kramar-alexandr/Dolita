@@ -18,11 +18,11 @@ begin
   record CustomerSettingBlock CSb;
   boolean res;
   integer regincountry;
-
+  
   BlockLoad(CSb);
-
+  
   if (CSb.DontUseAddrLookup==0) then begin
-    if (HasLocalization("EST,GBR,LVA")) then begin
+    if (HasLocalization("EST,GBR,LTU,LVA")) then begin
       res = true;
     end else begin
       res = false;
@@ -59,7 +59,7 @@ begin
   return;
 end;
 
-global
+global 
 function boolean CUDClassBeforeEditField(integer wn,string fieldname,integer fn,integer rownr)
 begin
   if (fieldname=="Code" and WindowState(wn)==Rs_insert) then begin
@@ -68,6 +68,7 @@ begin
       OpenAddressLookupHelper(wn);
     end;
   end;
+  CUDClassBeforeEditField = false;
   return;
 end;
 
@@ -76,7 +77,7 @@ procedure Routines()
 begin
   Record RcVc RepSpec;
   Integer nwn;
-
+  
   RecordNew(RepSpec);
   nwn = OpenWindow("RoutinesWClass",1,0,"","",RepSpec);
   return;
@@ -87,7 +88,7 @@ procedure CreditInfoCUDsm()
 begin
   record RcVc RepSpec;
   record CUVc CUr;
-
+  
   GetWindowRecord(CurWindow,CUr);
   if (nonblank(CUr.Code)) then begin
     ReportDefaults(RepSpec,"KrediidiinfoRClass");
@@ -109,12 +110,12 @@ end;
 
 global
 procedure CallHistoryCUDsm()
-begin
+begin 
   Record RcVc RepSpec;
   record CustPSVc CuPSr;
   Record CUVc CUr;
   Date d,td;
-
+  
   GetWindowrecord(CurWindow,CUr);
   CuPSr.Signature = CurrentUser;
   if (ReadFirstMain(CuPSr,1,true)) then begin
@@ -133,13 +134,13 @@ begin
       td.month = 12;
       td.day = 31;
       RepSpec.sEndDate = td;
-    end;
+    end;  
     RepSpec.Media = mtScreen;
     RepSpec.repname = "CallHistRn";
     RepSpec.f1 = CUr.Code;
   end;
   RunReport(RepSpec,0);
-  return;
+  return; 
 end;
 
 global
@@ -151,10 +152,10 @@ begin
   Integer wn,nwn;
   string 200 tstr;
   record RcVc RepSpec;
-
+  
   wn = CurWindow;
   GetWindowRecord(wn,CUr);
-  nwn = OpenWindow("AddContactCUDClass",1,wn,"","",RepSpec);
+  nwn = OpenWindow("AddContactCUDClass",1,wn,"","",RepSpec);  
   return;
 end;
 
@@ -164,7 +165,7 @@ begin
   record RcVc RepSpec;
   Integer nwn;
   record CUVc CUr;
-
+  
   GetWindowRecord(wn,RepSpec);
   nwn = MotherWindow(wn);
   GetWindowRecord(nwn,CUr);
@@ -197,20 +198,20 @@ procedure CUNPTSSClassNewCustomer()
 begin
   Integer wn,mwn,nwn;
   record CUVc CUr;
-
+  
   if (UserCanAction("AllowNewCustomerfromNPTS",true)) then begin
     wn = CurWindow;
     mwn = MotherWindow(wn);
     CloseWindow(wn);
     RecordNew(CUr);
-    EBS_LoadDefaultValuesFromSet(CUr);
+    EBS_LoadDefaultValuesFromSet(CUr);//EBS
     nwn = OpenWindow("CUNPTDSClass",1,mwn,"","",CUr);
     SetWindowState(nwn,Rs_insert);
     WindowFieldGoto(nwn,CUr,-1,"Name",true);
   end else begin
     MessageBox(1274,StringFromStringSet(3,"AllowNewCustomerfromNPTS"));
   end;
-
+  
   return;
 end;
 
@@ -219,19 +220,19 @@ procedure CUNPTS2SClassNewCustomer()
 begin
   Integer wn,mwn,nwn;
   record CUVc CUr;
-
+  
   if (UserCanAction("AllowNewCustomerfromNPTS",true)) then begin
     wn = CurWindow;
     mwn = MotherWindow(wn);
     CloseWindow(wn);
     RecordNew(CUr);
-    EBS_LoadDefaultValuesFromSet(CUr);
+    EBS_LoadDefaultValuesFromSet(CUr);//EBS
     nwn = OpenWindow("CUNPTDSClass",1,mwn,"","",CUr);
     WindowFieldGoto(nwn,CUr,-1,"Name",true);
   end else begin
     MessageBox(1274,StringFromStringSet(3,"AllowNewCustomerfromNPTS"));
   end;
-
+  
   return;
 end;
 
@@ -316,8 +317,8 @@ function Boolean CUDClassOpenRecord(Integer wn,string fieldname,Integer fn,Integ
 begin
   Boolean res;
   record CUVc CUr;
-
-  GetWindowRecord(wn,CUr);
+  
+  GetWindowRecord(wn,CUr);  
   switch (fieldname) begin
     case "Person":
       res = OpenContactRecord(CUr.Person,CUr.Code);
@@ -343,7 +344,7 @@ begin
   record CUVc CUr;
   Integer wn;
   record RcVc RepSpec;
-
+  
   wn = CurWindow;
   GetWindowRecord(wn,CUr);
   if (CUr.CUType!=0) then begin
@@ -367,7 +368,7 @@ begin
   record CUVc CUr;
   Integer wn;
   record RcVc RepSpec;
-
+  
   wn = CurWindow;
   GetWindowRecord(wn,CUr);
   if (CUr.VEType!=0) then begin

@@ -1,3 +1,5 @@
+external function string 255 StripCharacter(string,string);
+external function Boolean SetInSet2(string,string);
 external function Integer InString2(string,string);
 external procedure MulVATIV(string,val,var val,var val,Integer,Integer);
 external procedure SetupVATBase(var record SMVc,var Integer);
@@ -110,7 +112,7 @@ BEGIN
         if (RepSpec.flags[10]!=1) then begin 
           OutString(5,0,USetStr(2627),true);
         end else begin 
-          OutString(5,0,USetStr(15160),true);
+          OutString(1,0,USetStr(15158),true);
         end;          
       end else begin
         if (RepSpec.flags[10]!=1) then begin 
@@ -527,7 +529,7 @@ BEGIN
         end else begin
           OutVal(155,0,qty,M4UVal,true);
         end;
-        OutString(170,0,Left(ORrw.Spec,20),false);
+        OutString(170,0,Left(ORrw.Spec,33),false);
         if (ORp.InclVAT>0) then begin
           MulVATIV(ORrw.VATCode,ORrw.Price,vatval,tax1,ORp.InclVAT,ORp.NoTAXonVAT);
         end;
@@ -673,18 +675,21 @@ begin
   string 200 varsubset;
   record CUVc CUr;
   Boolean cuf;
-  Boolean printedf;
+  Boolean printedf,showorderf;
   val invgp;
   Integer sorting;
   record SMVc VATr;
   Integer vatcnt;
-  val tax1,vatval;
+  val tax1,vatval,recqty;
+  record RecVc Recr;
+  row RecVc Recrw;
+  Integer recrwcnt,j;
 
-  BlockLoad(GenOptRec);
   if (RepSpec.ArtMode==3) then begin
     OrderStockComp(RepSpec);
     goto LOrderStockRn;
   end;
+  BlockLoad(GenOptRec);
   BlockLoad(MSb);
   afr = FirstInRange(RepSpec.f1,10);
   ato = LastInRange(RepSpec.f1,10);
@@ -881,7 +886,7 @@ begin
         if (RepSpec.flags[18]==0) then begin testf = false; end;
       end;      
       if (nonblank(RepSpec.ObjStr)) then begin
-        if (SetInSet(RepSpec.ObjStr,ORr.Objects)==false) then begin testf = false; end;
+        if (SetInSet2(RepSpec.ObjStr,ORr.Objects)==false) then begin testf = false; end;
       end;
       if (nonblank(RepSpec.f2)) then begin//OSCU key used
         if (RepSpec.f2!=ORr.CustCode) then begin
@@ -941,7 +946,7 @@ begin
           if (CheckPlanShipRows(RepSpec.Stext,ORr)==false) then begin testf = false; end;
         end;  
       end;
-      if ((nonblank(RepSpec.ObjStr)) and (SetInSet(RepSpec.ObjStr,ORr.Objects)==false)) then begin
+      if ((nonblank(RepSpec.ObjStr)) and (SetInSet2(RepSpec.ObjStr,ORr.Objects)==false)) then begin
         testf = false;
       end;  
 //beacause of above : the  same as ....
@@ -955,6 +960,7 @@ begin
         if (ORr.Closed==0) then begin testf = false; end;
       end;
       if (testf) then begin
+        recqty = 1;
         if (nonblank(RepSpec.f3) or nonblank(RepSpec.f9)) then begin
           testf = false;
         end;
@@ -987,6 +993,23 @@ begin
               if (nonblank(RepSpec.f9)) then begin
                 if (SetInSet(RepSpec.f9,INr.DispGroups)) then begin
                   testf = true;
+                end;
+              end;
+            end;
+          end;
+          if (item==false and nonblank(ORrw.Recepy) and nonblank(RepSpec.LastAcc)) then begin
+            Recr.Code = ORrw.Recepy;
+            if (ReadFirstMain(Recr,1,true)) then begin
+              recrwcnt = MatRowCnt(Recr);
+              for (j=0;j<recrwcnt;j=j+1) begin
+                MatRowGet(Recr,j,Recrw);
+                if (Recrw.Item>=frin and Recrw.Item<=toin) then begin
+                  if (Recrw.InQty!=0) then begin
+                    recqty = Recrw.InQty;
+                  end;                
+                  testf = true;
+                  item = true;
+                  j = recrwcnt;
                 end;
               end;
             end;
@@ -1055,8 +1078,12 @@ begin
                       t3 = t2 - t3;
                       gp = gp + t3;
                       invgp = invgp + t * (ORrw.rowGP/ORrw.Quant);
+                      showorderf = iv!=0;
                     end;
                   end;
+                end;
+                if (showorderf==false) then begin
+                  showorderf = blank(ORrw.ArtCode) and nonblank(StripCharacter(ORrw.Spec," ")) and ORrw.stp==kInvoiceRowTypeNormal;
                 end;
               end else begin
                 if (RepSpec.flags[6]==1) then begin
@@ -1086,6 +1113,7 @@ begin
                 t3 = t2 - t3;
                 gp = gp + t3;
                 invgp = invgp + t * (ORrw.rowGP/ORrw.Quant);
+                showorderf = iv!=0;
               end;
             end;
           end;
@@ -1111,7 +1139,8 @@ begin
           end;
         end;    
         if (RepSpec.ArtMode==0) then begin
-          if (iv!=0) then begin
+//           if (iv!=0) then begin
+          if (showorderf) then begin // Orders with zero value should show. e.g: Free product to ship to customer.
             if (printedf==false) then begin
               OrderStockHeader(RepSpec);
               printedf = true;
@@ -1122,7 +1151,7 @@ begin
               OutString(60,0,ORr.Objects,false);
               OutDate(130,0,ORr.OrdDate,false);
               OutString(190,0,ORr.Addr0,false);
-              if (HasMultiCurrency) then begin
+              if (HasMultiCurrency and RepSpec.flags[10]==0) then begin
                 OutVal(5,0,iv,M4Val,true);
                 OutString(1,0,ORr.CurncyCode,true);
               end else begin
@@ -1168,6 +1197,19 @@ begin
                 end else begin
                   if (ORrw.ArtCode==RepSpec.LastAcc) then begin
                     test2f = true;
+                  end;
+                end;
+                if (test2f==false) then begin
+                  Recr.Code = ORrw.Recepy;
+                  if (ReadFirstMain(Recr,1,true)) then begin
+                    recrwcnt = MatRowCnt(Recr);
+                    for (j=0;j<recrwcnt;j=j+1) begin
+                      MatRowGet(Recr,j,Recrw);
+                      if (Recrw.Item>=frin and Recrw.Item<=toin) then begin
+                        test2f = true;
+                        j = recrwcnt;
+                      end;
+                    end;
                   end;
                 end;
               end;
@@ -1259,11 +1301,11 @@ begin
                         MulVATIV(ORrw.VATCode,ORrw.Price,vatval,tax1,ORr.InclVAT,ORr.NoTAXonVAT);
                       end;
                       if (RepSpec.flags[11]!=0) then begin
-                        OutVal(250,0,t,M4UVal,true);
+                        OutVal(250,0,t*recqty,M4UVal,true);
                         OutVal(310,0,ORrw.Price-vatval,M4Val,true);
                         OutVal(400,0,ORrw.rowGP,M4Val,true); // changed during OrderSetup 
                       end else begin
-                        OutVal(310,0,t,M4UVal,true);
+                        OutVal(310,0,t*recqty,M4UVal,true);
                         OutVal(400,0,ORrw.Price-vatval,M4Val,true);
                       end;
                       if (ORr.InclVAT>0) then begin
@@ -1276,27 +1318,27 @@ begin
                         OutVal(1,0,t2-vatval,M4Val,true);
                       end;
                       EndFormat;
-                      TotQty = TotQty + t;
+                      TotQty = TotQty + t*recqty;
                     case 1:
-                      OutVal(280,0,ORrw.Quant,M4UVal,true);
-                      OutVal(320,0,ORrw.Shipd1-ORrw.Shipd2,M4UVal,true);
-                      TotQty = TotQty + ORrw.Quant;
+                      OutVal(280,0,ORrw.Quant*recqty,M4UVal,true);
+                      OutVal(320,0,(ORrw.Shipd1-ORrw.Shipd2)*recqty,M4UVal,true);
+                      TotQty = TotQty + ORrw.Quant*recqty;
                       shipd1 = ORrw.Shipd1;
-                      OutVal(360,0,ORrw.Shipd2,M4UVal,true);
+                      OutVal(360,0,ORrw.Shipd2*recqty,M4UVal,true);
                       if (RepSpec.flags[11]!=0) then begin
                         OutVal(400,0,ORrw.rowGP,M4UVal,true);
                       end;                    
-                      TotLev = TotLev + ORrw.Shipd2;
-                      TotinPick = TotinPick + (ORrw.Shipd1-ORrw.Shipd2);
+                      TotLev = TotLev + ORrw.Shipd2*recqty;
+                      TotinPick = TotinPick + (ORrw.Shipd1-ORrw.Shipd2)*recqty;
                       t = ORrw.Quant - shipd1;
                       if (t<0) then begin
                         t = 0;
                       end;                    
-                      OutVal(440,0,t,M4UVal,true);
-                      TotNotLev = TotNotLev + t;
+                      OutVal(440,0,t*recqty,M4UVal,true);
+                      TotNotLev = TotNotLev + t*recqty;
                       t = shipd1 - ORrw.Invd;
-                      OutVal(480,0,t,M4UVal,true);
-                      TotInv = TotInv + t;
+                      OutVal(480,0,t*recqty,M4UVal,true);
+                      TotInv = TotInv + t*recqty;
                       EndFormat;
                   end;
                 end;
@@ -1326,11 +1368,7 @@ begin
         OutVal(1,0,TotSum,M4Val,true);
       end;
     end else begin
-      if (HasMultiCurrency) then begin
-        OutVal(430,0,TotQty,M4Qty,true);
-      end else begin
-        OutVal(1,0,TotQty,M4Qty,true);
-      end;
+      OutVal(1,0,TotQty,M4Qty,true);
     end;
     EndFormat;
     Gray_Divider(0,1);

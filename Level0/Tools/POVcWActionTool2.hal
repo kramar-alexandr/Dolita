@@ -1,3 +1,7 @@
+external updating function Boolean FormLinkDocumentFilenames(record MailVc,string);
+external function string 10 GetItemCostAcc(record INVc,string);
+external procedure VIDDefault(Integer,string,var record VIVc);
+external procedure ICPOItemPriceWarning(record POVc,Integer);
 external procedure FindSalesExVat(record TaxMatrixVc,string,val,Integer,Integer,var val);
 external procedure GetItemSalesAcc(string,Integer,var string);
 external procedure RowCalculateTaxMatrix_VIVc(var record VIVc,Integer,row VIVc,Integer);
@@ -59,7 +63,7 @@ external outer function string 60 AddLocationObject(string,string,boolean); //EB
 
 global
 function Boolean PODchrsum(record POVc POp,Integer rownr)
-BEGIN
+begin
   Boolean res;
   row POVc POrwp;
   val s;
@@ -74,12 +78,12 @@ BEGIN
   RowCalculateTaxMatrix_POVc(POp,rownr,POrwp);
   MatRowPut(POp,rownr,POrwp);
   PODchrsum = res;
-  RETURN;
-END;
+  return;
+end;
 
 global
 procedure POSumup_TaxTemplate(var record POVc POp)
-BEGIN
+begin
   row POVc POrw;
   val s,ms,ms2,taxsum;
   Integer i,rwcnt;
@@ -163,12 +167,12 @@ BEGIN
   POp.Sum4 = ms2;
   if (POp.TAX1Sum==0) then begin POp.TAX1Sum = blankval; end;
 LPOSumup_TaxTemplate:;  
-  RETURN;
-END;
+  return;
+end;
 
 global
 procedure POSumup(var record POVc POp)
-BEGIN
+begin
   row POVc POrw;
   val s,ms,ms2,taxsum,q;
   Integer i,rwcnt;
@@ -203,7 +207,6 @@ BEGIN
     AddVATBase(SMr,POrw.VATCode,POrw.Sum,blankval,vatcnt,POp.InclVAT,POp.NoTAXonVAT);
 
     POp.TotPalletNr = POp.TotPalletNr + POrw.PalletNr;
-    POp.TotQty = POp.TotQty + POrw.Quant; 
 
 //    DivPIFactor(POrw.Quant,POrw.PIFactor,q); //why extra cost should be per supplier unit not ours ? 
     q = POrw.Quant;
@@ -261,13 +264,13 @@ BEGIN
   POp.Sum4 = ms2;
   if (POp.TAX1Sum==0) then begin POp.TAX1Sum = blankval; end;
 LPOSumup:;  
-  RETURN;
-END;
+  return;
+end;
 
 /*
 global  
 procedure POVc_PasteSum(var record POVc POp,Integer rownr)
-BEGIN
+begin
   row POVc POrw;
   val s;
 
@@ -284,14 +287,14 @@ BEGIN
   if (PODchrsum(POp,rownr)) then begin
   end;
   POSumup(POp);
-  RETURN;
-END;
+  return;
+end;
 //below code is same as Sales Order
 */
 
 global  
 procedure POVc_PasteSum(var record POVc POp,Integer rownr)
-BEGIN
+begin
   row POVc POrw;
   val s,t;
   record GeneralOptionBlock GenOptr;
@@ -311,21 +314,21 @@ BEGIN
     MatRowPut(POp,rownr,POrw);
   end;  
   POSumup(POp);
-  RETURN;
-END;
+  return;
+end;
 
 global  
 procedure POVc_PasteVATCode(var record POVc POp,Integer rownr)
-BEGIN
+begin
   if (PODchrsum(POp,rownr)) then begin
   end;
   POSumup(POp);
-  RETURN;
-END;
+  return;
+end;
 
 global  
 procedure POVc_PasteTaxTemplateCode(var record POVc POp,Integer rownr,var Boolean chsum)
-BEGIN
+begin
   row POVc POrwp;
   record TaxMatrixVc TMr;
 
@@ -336,12 +339,12 @@ BEGIN
   RowCalculateTaxMatrix_POVc(POp,rownr,POrwp);
   MatRowPut(POp,rownr,POrwp);
   chsum = PODchrsum(POp,rownr);
-  RETURN;
-END;
+  return;
+end;
 
 global
 function Boolean POVc_PasteLocation(var record POVc POp)
-BEGIN
+begin
   Boolean res;
   record LocationVc locR;
 
@@ -355,15 +358,13 @@ BEGIN
     POp.DelAddr4 = locR.Addr4;
     res = true;
   end;
-  POp.Objects = AddLocationObject(POp.Objects,POp.Location,true); //EBS
-  
   POVc_PasteLocation = res;
-  RETURN;
-END;
+  return;
+end;
 
 global
 procedure GetINPurchaseControlAcc(record INVc INp,var string purchacc,string vecode,string location,Integer stocktype)
-BEGIN
+begin
   record CostAccBlock CAb;
   record AccBlock ARb;
   string 255 purchaccname;
@@ -415,12 +416,12 @@ BEGIN
   end;
 */  
  LGetINPurchaseControlAcc:; 
-  RETURN;
-END;
+  return;
+end;
 
 global
 updating function Integer CreateMailFromPOD(record POVc POr,var record MailVc Mailr,var string warning,string pdfform)
-BEGIN
+begin
   Integer res;
   record MailVc Mail2r;
   record LTxtVc LTxtr;
@@ -437,6 +438,8 @@ BEGIN
   string 100 supplemail;
   row MailTextVc MTrw;
   Integer IgnoreRecordDetails;
+  transaction Boolean gPDFEmailf;
+  transaction string 255 gaPDFEmailFiles;
   
   BlockLoad(SFb);
   res = 0;
@@ -594,24 +597,21 @@ LCreateMailFromPOD01:;
   if (blank(docname)) then begin
     docname = "POForm";
   end;
-  fname = "tmp/" & USetStr(2062) & " " & POr.SerNr & ".pdf";
-  SetDocumentFilename(fname);
+  gPDFEmailf = true;
   SetMedia(mtPdf);
   PrintDocument(POr,docname,false);
-  if (FileExists(fname)) then begin
-    RecordLinkFile(fname,0,Mailr,CurrentCompany);
-  end;
-  SetDocumentFilename("");
-  Delete_File(fname);
+  FormLinkDocumentFilenames(Mailr,gaPDFEmailFiles);
+  SetDocumentFilename("");  
+  gPDFEmailf = false;
 
 LCreateMailFromPOD:;  
   CreateMailFromPOD = res;
-  RETURN;
-END;
+  return;
+end;
 
 global
 function val CalcPalletsNr(val Quant,string artcode)
-BEGIN
+begin
   val res;
   record INVc INr;
   Boolean itemfound;
@@ -624,12 +624,12 @@ BEGIN
     res = Round(Quant/INr.QtyonPallet+49999.00/100000.00,SetRoundModeD(0));
   end;
   CalcPalletsNr = res;
-  RETURN;
-END;
+  return;
+end;
 
 global  
 procedure POVc_PasteVEQuant(var record POVc POp,Integer rownr)
-BEGIN
+begin
   val t;
   row POVc POrw;
   
@@ -641,30 +641,31 @@ BEGIN
   if (PODchrsum(POp,rownr)) then begin
     POSumup(POp);
   end;
-  RETURN;
-END;
+  return;
+end;
 
 global  
 procedure POVc_PastePrice(var record POVc POp,Integer rownr)
-BEGIN
+begin    
+  ICPOItemPriceWarning(POp,rownr);
   if (PODchrsum(POp,rownr)) then begin
     POSumup(POp);
   end;
-  RETURN;
-END;
+  return;
+end;
 
 global  
 procedure POVc_PastevRebate(var record POVc POp,Integer rownr)
-BEGIN
+begin
   if (PODchrsum(POp,rownr)) then begin
     POSumup(POp);
   end;
-  RETURN;
-END;
+  return;
+end;
 
 global
 procedure GetPIPurchseCost(string artcode,string vecode,string veartcode,var val resp)
-BEGIN
+begin
   record PIVc PIr;
       
   resp = blankval;
@@ -675,11 +676,11 @@ BEGIN
   if (ReadFirstMain(PIr,4,true)) then begin
     resp = StringToVal(PIr.PurchaseCost,M4Val);
   end;
-  RETURN;
-END;
+  return;
+end;
 
 procedure GetVITaxCode(record VIVc VIp,Integer ExportFlag,string accnumber,var string vatcode,var string taxtemplatecode)
-BEGIN
+begin
   record AccVc Accr;
   record APAccBlock APAccRec;
   
@@ -708,12 +709,12 @@ BEGIN
       case 4: taxtemplatecode = APAccRec.TaxTemplateCodeExp;
     end;
   end;
-  RETURN;
-END;
+  return;
+end;
 
 global
 procedure AddExtraCostRow(record AccBlock ARAccRec,record BaseCurBlock BCb,record VIVc VIp,string costtype,val costamount,Integer InclVAT,Integer ExportFlag,Integer OrgExportFlag,string pocurncy,var record SMVc VATr,Integer vatcnt)
-BEGIN
+begin
   row VIVc VIrw;
   string 255 tstr;
   val tmp;
@@ -785,12 +786,12 @@ StopAlert("pocurncy " & pocurncy & " VIp.CurncyCode " & VIp.CurncyCode & " VIrw.
     MatRowPut(VIp,MatRowCnt(VIp),VIrw);
   end;
 LAddExtraCostRow:;  
-  RETURN;
-END;
+  return;
+end;
 
 global  
 procedure POVc_PasteQuant(var record POVc POp,Integer rownr)
-BEGIN
+begin
   Boolean res,pifound;
   record INVc INr;
   record PIVc PIr;  
@@ -817,8 +818,8 @@ BEGIN
   if (PODchrsum(POp,rownr)) then begin
   end;
   POSumup(POp);
-  RETURN;
-END;
+  return;
+end;
 
 global
 procedure PODUpdatePrices(var record POVc POr,Boolean readf)
@@ -913,8 +914,8 @@ begin
       PODUpdatePrices(POr,false);
 //    end;
   end;
-  RETURN;
-END;
+  return;
+end;
 
 global  
 function Boolean POVc_PasteVEArtCode(var record POVc POp,Integer rownr)
@@ -1013,7 +1014,7 @@ end;
 old versiom
 global  
 function Boolean POVc_PasteVEArtCode(var record POVc POp,Integer rownr)
-BEGIN
+begin
   Boolean res,itemfound,found;
   row POVc POrw;
   record INVc INr;
@@ -1094,8 +1095,8 @@ BEGIN
     POSumup(POp);
   end;
   POVc_PasteVEArtCode = res;
-  RETURN;
-END;
+  return;
+end;
 */
 
 global  
@@ -1203,7 +1204,7 @@ end;
 
 global  
 procedure POGetRate(var record POVc POp)
-BEGIN
+begin
   val fr,to1,to2,br1,br2;
   string 10 crncy;
  
@@ -1215,8 +1216,8 @@ BEGIN
   POp.ToRateB2 = to2;
   POp.BaseRate1 = br1;
   POp.BaseRate2 = br2;
-  RETURN;
-END;
+  return;
+end;
 
 global  
 function Boolean POVc_PasteArtCode(var record POVc POp,Integer rownr,Boolean multilinef)
@@ -1262,10 +1263,14 @@ begin
       POrw.VEArtCode = PIr.VEItemCode;
       POrw.CustomsCost = PIr.PurchaseCost;
       POrw.StockType = PIr.DefStockType;
-      if (PIr.ItemCode==POrw.ArtCode and artcode==POrw.ArtCode) then begin  
+      if (PIr.ItemCode==POrw.ArtCode and artcode==POrw.ArtCode) then begin 
         POrw.Spec = PIr.Comment;
       end else begin
-        POrw.Spec = PIr.Comment & ", " & descstr;
+        if (PIr.Comment==INr.Name) then begin
+          POrw.Spec = descstr;
+        end else begin
+          POrw.Spec = PIr.Comment & ", " & descstr;
+        end;
       end;
       POrw.VEUnit =  PIr.VEUnit;
       POrw.PIFactor = PIr.PIFactor;
@@ -1293,6 +1298,7 @@ begin
         POMultiLineText(POp,INr,POp.LangCode,rownr);
       end;
     end;
+    ICPOItemPriceWarning(POp,rownr);
 
     if (PODchrsum(POp,rownr)) then begin
       POSumup(POp);
@@ -1333,7 +1339,7 @@ end;
 old version
 global  
 function Boolean POVc_PasteArtCode(var record POVc POp,Integer rownr,Boolean multilinef)
-BEGIN
+begin
   Boolean res,itemfound,found,varf;
   row POVc POrw;
   record POSettingBlock POset;
@@ -1494,13 +1500,13 @@ BEGIN
     POSumup(POp);
   end;
   POVc_PasteArtCode = res;
-  RETURN;
-END;
+  return;
+end;
 */
 
 global  
 function Boolean POVc_PasteVECode(var record POVc POp,Boolean warnf)
-BEGIN
+begin
   Boolean res;
   record CUVc VEr;
   row POVc POrw;
@@ -1553,8 +1559,8 @@ BEGIN
     POSumup(POp);    
   end;
   POVc_PasteVECode = res;
-  RETURN;
-END;
+  return;
+end;
 
 function Boolean PUExists(LongInt PONr,Integer porownr)
 begin
@@ -1808,6 +1814,7 @@ begin
   string 255 res;
   record PODownPayBlock DPb;
   record INVc INr;
+  record INVc dpINr;
   record CUVc VEr;
   row POVc POrw;
   row VIVc VIrw;
@@ -1834,7 +1841,7 @@ begin
   end else begin
     VIp.VECode = POr.VECode;
   end;
-  VIVc_PasteVECode(VIp,0,true,true,vewarn);
+  VIVc_PasteVECode(VIp,0,true,false,vewarn);
   GetAPAcc(VIp.VECode,VIp.APAcc);
   if (nonblank(POr.VEFactoring)) then begin
     VEr.Code = POr.VEFactoring;
@@ -1916,18 +1923,13 @@ L20OrdDownPay:;
   GetAPAcc(VIp.VECode,VIp.APAcc);
   VATCode = DPb.VATCode;
   if (blank(VATCode)) then begin
-    GetItemVATCode(DPb.ArtCode,VIp.ExportFlag,VATCode,true);
+    GetItemVATCode(DPb.ArtCode,VIp.ExportFlag,VATCode,false);
   end;
   if (blank(VATCode)) then begin 
     VATCode = VIp.VEVatCode; 
   end;
   if (DPb.DetailsOnVI==0) then begin
     rwcnt = MatRowCnt(POr);
-    VATCode = DPb.VATCode;
-    if (blank(VATCode)) then begin
-      GetItemVATCode(DPb.ArtCode,VIp.ExportFlag,VATCode,true);
-    end;
-    if (blank(VATCode)) then begin VATCode = VIp.VEVatCode; end;
     INr.Code = DPb.ArtCode;
     ReadFirstMain(INr,1,true);
     baseprice = INr.InPrice + INr.ExtraCost;
@@ -1978,7 +1980,8 @@ L20OrdDownPay:;
     if (t<0) then begin t = 0; end;
     VIrw.Sum = t;
     VIrw.Item = DPb.ArtCode;
-    GetItemSalesAcc(DPb.ArtCode,VIp.ExportFlag,VIrw.AccNumber);
+//    GetItemSalesAcc(DPb.ArtCode,VIp.ExportFlag,VIrw.AccNumber);
+    VIrw.AccNumber = GetItemCostAcc(INr,POr.VECode);
     VIrw.VATCode = VATCode;
     VIrw.Objects = "";
 //    VIrw.BasePrice = baseprice;
@@ -1996,6 +1999,8 @@ L20OrdDownPay:;
     if (sum!=0) then begin
       percentage = (sum/POr.Sum4)*100;
     end;
+    dpINr.Code = DPb.ArtCode;
+    ReadFirstMain(dpINr,1,true);
     rwcnt = MatRowCnt(POr);
     for (i=0;i<rwcnt;i=i+1) begin
       MatRowGet(POr,i,POrw);
@@ -2052,7 +2057,8 @@ L20OrdDownPay:;
           VIrw.Item = POrw.ArtCode;
           VIrw.qty = POrw.Quant;
           VIrw.Comment = POrw.Spec;
-          VIrw.AccNumber = POrw.CostAcc;
+//          VIrw.AccNumber = POrw.CostAcc;
+          VIrw.AccNumber = GetItemCostAcc(dpINr,POr.VECode);
 //          GetItemSalesAccFromOR(POr,tstr);
 /*
           if (nonblank(tstr)) then begin
@@ -2131,7 +2137,7 @@ begin
   errstr = OrdDownPay(VIp,ordnr,prepaidsum,percentage,POr,userRemainPerc);
   if (blank(errstr)) then begin
     if ((MatRowCnt(VIp)>0) and (VIp.SerNr!=-1)) then begin
-      VISumup(VIp,temp);
+      VIDDefault(-1,"PayVal",VIp);
       if (RecordInsert(VIp,false)) then begin
         CreateRecordLink(VIp,CurrentCompany,POr,CurrentCompany);
         CreateRecordLink(POr,CurrentCompany,VIp,CurrentCompany);

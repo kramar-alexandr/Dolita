@@ -1,3 +1,4 @@
+external function Integer CountObjects(string);
 external function Boolean PasteCust2InInv(var record IVVc,record LocalMachineBlock,string,Boolean,var string,var string,var string,var string,var string);
 external function Boolean IVDchrsum(var record IVVc,Integer);
 external function string 60 AddObjectToObjectList(string,string);
@@ -86,7 +87,7 @@ begin
 end;
 
 function Boolean PasteRetPUInVI_OnePO(var record VIVc VIp,record RetPUVc RetPUp)
-BEGIN
+begin
   record VIVc VIr;
   row VIVc VIrw;
   row VIVc VI2rw;
@@ -183,7 +184,7 @@ BEGIN
                      if (VI2rw.Sum==0) then begin
                        VI2rw.Sum = RetPUrw.FIFORowVal;
                      end;
-                     CurValToOtherCur(CurrentDate,curncy,RetPUrw.FIFORowVal,VIp.CurncyCode,VI2rw.Sum,DefaultCurRoundOff);
+                     CurValToOtherCur(CurrentDate,curncy,VI2rw.Sum,VIp.CurncyCode,VI2rw.Sum,DefaultCurRoundOff);
                   otherwise 
                      VI2rw.Sum = (VIrw.Sum*VI2rw.qty)/VIrw.qty;
                 end;
@@ -210,8 +211,8 @@ L88PasteRetPUInVI_OnePO:;
   VISumup(VIp,t);
 LPasteRetPUInVI_OnePO:;
   PasteRetPUInVI_OnePO = res;
-  RETURN;
-END;
+  return;
+end;
 
 function Boolean PasteRetPUInVI_ManyPOs(var record VIVc VIp,record RetPUVc RetPUp)
 begin
@@ -496,9 +497,10 @@ begin
   if (pasteretf) then begin
    RecordNew(credIVr);
    CUr.Code = credIVr.CustCode;
+   ReadFirstMain(CUr,1,true);
+   credIVr.CustCode = Retp.CustCode;
    PasteCust2InInv(credIVr,LMb,"",true,warning,errstr,prepstr,invdatewarn,transdatewarn);
    
-   credIVr.CustCode = Retp.CustCode;
    credIVr.Addr0 = Retp.CustName;
    credIVr.Location = Retp.Location;
    credIVr.Objects = AddObjectToObjectList(credIVr.Objects,Retp.Objects);
@@ -543,7 +545,7 @@ begin
 end;
 
 function Boolean PasteRetInInv(var record IVVc credIVr,record RetVc Retp,Boolean addon)
-BEGIN
+begin
   record AccBlock ARAccRec;
   record IVVc IVr;
   record INVc INr;
@@ -917,79 +919,111 @@ LBatchStat:;
   RETURN;
 END;
 
-updating procedure UserStatUp(string uc,Date dp,val exlp,val inclp,val payp,val gpp,val basebalp,val sumpp,Boolean negf)
+updating procedure UserStatUp(string salesmen,Date dp,val exlp,val inclp,val payp,val gpp,val basebalp,val sumpp,Boolean negf)
 begin
   record USVc USr;
-  Boolean found;
+  Boolean found,testf;
   val exl,incl,pay,gp,basebal;
   val sump;
   Boolean found2;
   Date ldp;
+  string 255 tmpsalesman,uc;
+  longint charpos;
+  val nrofsalesman;
 
   ldp = dp;
-  if (blankdate(ldp)) then begin goto LUserStatUp; end;
-  if (GetYear(ldp)<1980) then begin
-    ldp = AddYear(ldp,-GetYear(ldp)+1980);
-  end;
-  USr.UserCode = uc;
-  found = ReadFirstMain(USr,1,true);
-  if (found) then begin
-  end else begin
-    USr.UserCode = uc;
-  end;
-  exl = exlp;
-  incl = inclp;
-  pay = payp;
-  gp = gpp;
-  basebal = basebalp;
-  sump = sumpp;
-  sump = Round(sump,DefaultRoundMode);
-  if (negf==true) then begin
-    exl = -exl;
-    incl = -incl;
-    pay = -pay;
-    gp = -gp;
-    basebal = -basebal;
-    sump = -sump;
-  end;  
-  AddBalance(USr,ldp,"salesexclvat",exl,"salesinclvat",incl,"grossprofit",gp,"paidvalue",pay,"balance",basebal,"priceexcldiscount",sump);  
-LUserStatUp:;
+  testf = true;
+  if (blankdate(ldp)) then begin testf = false; end;
+  if (testf) then begin 
+    if (GetYear(ldp)<1980) then begin
+      ldp = AddYear(ldp,-GetYear(ldp)+1980);
+    end;
+    nrofsalesman = CountObjects(salesmen);
+    if (nrofsalesman==0) then begin nrofsalesman = 1;  end;
+    tmpsalesman = salesmen;
+    charpos = 0;
+    while (GetNextSubstring(tmpsalesman,charpos,",",uc)) begin
+      USr.UserCode = uc;
+      found = ReadFirstMain(USr,1,true);
+      if (found) then begin
+      end else begin
+        USr.UserCode = uc;
+      end;
+      exl = exlp;
+      incl = inclp;
+      pay = payp;
+      gp = gpp;
+      basebal = basebalp;
+      sump = sumpp;
+      sump = Round(sump,DefaultRoundMode);
+      if (negf==true) then begin
+        exl = -exl;
+        incl = -incl;
+        pay = -pay;
+        gp = -gp;
+        basebal = -basebal;
+        sump = -sump;
+      end;  
+      exl = exl / nrofsalesman;
+      incl = incl / nrofsalesman;
+      gp = gp / nrofsalesman; 
+      pay = pay / nrofsalesman;  
+      basebal = basebal / nrofsalesman; 
+      sump = sump / nrofsalesman;
+      AddBalance(USr,ldp,"salesexclvat",exl,"salesinclvat",incl,"grossprofit",gp,"paidvalue",pay,"balance",basebal,"priceexcldiscount",sump);  
+    end;
+  end;      
   return;
 end;
 
-updating procedure SalesmanArtStatUp(string ac,string uc,Date dp,val qp,val sp,val gpp,val pp,Boolean negf,val icssp,val icsgpsp,val icspp)
+updating procedure SalesmanArtStatUp(string ac,string salesmen,Date dp,val qp,val sp,val gpp,val pp,Boolean negf,val icssp,val icsgpsp,val icspp)
 begin
   record IUSVc IUSr;
   Boolean found;
   val q,s,gp,p;
   Date ldp;
+  boolean testf;
+  string 255 tmpsalesman,uc;
+  longint charpos;
+  val nrofsalesman;
   
   ldp = dp;
-  if (blankdate(ldp)) then begin goto LSalesmanArtStatUp; end;
-  if (GetYear(ldp)<1980) then begin
-    ldp = AddYear(ldp,-GetYear(ldp)+1980);
+  testf = true;
+  if (blankdate(ldp)) then begin testf = false; end;
+  if (testf) then begin 
+    if (GetYear(ldp)<1980) then begin
+      ldp = AddYear(ldp,-GetYear(ldp)+1980);
+    end;
+    nrofsalesman = CountObjects(salesmen);
+    if (nrofsalesman==0) then begin nrofsalesman = 1;  end;
+    tmpsalesman = salesmen;
+    charpos = 0;
+    while (GetNextSubstring(tmpsalesman,charpos,",",uc)) begin
+      q = qp;
+      s = icssp;
+      gp = icsgpsp;
+      p = icspp;
+      p = Round(p,DefaultRoundMode);
+      if (negf==true) then begin
+        q = -q;
+        s = -s;
+        gp = -gp;
+        p = -p;
+      end;
+      s = s / nrofsalesman;
+      gp = gp / nrofsalesman;
+      p = p / nrofsalesman;
+      IUSr.ArtCode = ac;
+      IUSr.UserCode = uc;
+      found = ReadFirstMain(IUSr,2,true);
+      if (found) then begin
+      end else begin
+        IUSr.ArtCode = ac;
+        IUSr.UserCode = uc;
+      end;
+      AddBalance(IUSr,ldp,"salesexclvat",s,"quant",q,"grossprofit",gp,"price",p,"",blankval,"",blankval);  
+    end;
   end;
-  q = qp;
-  s = icssp;
-  gp = icsgpsp;
-  p = icspp;
-  p = Round(p,DefaultRoundMode);
-  if (negf==true) then begin
-    q = -q;
-    s = -s;
-    gp = -gp;
-    p = -p;
-  end;
-  IUSr.ArtCode = ac;
-  IUSr.UserCode = uc;
-  found = ReadFirstMain(IUSr,2,true);
-  if (found) then begin
-  end else begin
-    IUSr.ArtCode = ac;
-    IUSr.UserCode = uc;
-  end;
-  AddBalance(IUSr,ldp,"salesexclvat",s,"quant",q,"grossprofit",gp,"price",p,"",blankval,"",blankval);  
-LSalesmanArtStatUp:;
   return;
 end;
 
@@ -1031,6 +1065,11 @@ BEGIN
       negf = false; 
     end else  begin
       negf = true;
+    end;
+  end;
+  if (iv2f) then begin
+    if ((IV2p.OKFlag!=0) and (IVp.OKFlag==0)) then begin//unok
+      negf = !negf;
     end;
   end;
   rnegf = negf;
@@ -1164,6 +1203,7 @@ BEGIN
      bv = bv - bv2;
      sumprice = sumprice - sumprice2;
   end;  
+
   if (iv2f) then begin
     if ((IV2p.OKFlag!=0) and (IVp.OKFlag!=0)) then begin
       UserStatUp(IV2p.SalesMan,IV2p.TransDate,basesum,sum4,t,gps,bv,sumprice,!negf);    

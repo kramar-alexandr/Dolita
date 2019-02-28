@@ -1,3 +1,8 @@
+external procedure HTArtGroup(string, var string);
+external procedure HTItemClass(string,var string);
+external function Boolean HasItemClassification();
+external function Boolean HasItemGroups();
+external function Boolean SetInSet2(string,string);
 external function val GetStockQty2(string,string,Date,Boolean,Integer);
 external function roundmode GetCostRoundMode(record RoundBlock);
 external function Boolean ReadFirstItem(string,var record INVc,Boolean,Boolean);
@@ -109,7 +114,7 @@ BEGIN
   Integer acnt;
   record LocationVc Locr;
   Date d1;
-  val linstock,v;
+  val linstock,v,instocktmp;
   Date lastind,lastoutd;
 
   BuildAgedArray(RepSpec,acnt,agedpera,agedqtya,agedsuma);
@@ -123,8 +128,7 @@ BEGIN
         goto LAgedOneItem;
       end;
     end;
-
-//Code same as Stock List BAckdated
+//Code same as Stock List Backdated
 /*
     TrHs = true;
     Locr.Code = RepSpec.f2;
@@ -144,7 +148,7 @@ BEGIN
       end;
     end;
 */    
-    linstock = GetStockQty2(INp.Code,RepSpec.f2,d1,false,0);
+    linstock = GetStockQty2(INp.Code,RepSpec.f2,RepSpec.d1,false,0);
     if (linstock!=0) then begin
       FindStockListAged(INp,RepSpec.f2,RepSpec,instock,acnt,agedpera,agedqtya,agedsuma);
     end;
@@ -206,7 +210,8 @@ BEGIN
             if (acnt>6) then begin
               OutVal(9,0,agedqtya[7],M4UVal,true);
             end;
-            OutValBiDi(1,0,instock,M4UVal,true,520);            
+            instocktmp = agedqtya[0]  + agedqtya[1] + agedqtya[2] + agedqtya[3] + agedqtya[4] + agedqtya[5] + agedqtya[6];
+            OutValBiDi(1,0,instocktmp,M4UVal,true,520);            
             nrp[0] = nrp[0] + agedqtya[0];
             nrp[1] = nrp[1] + agedqtya[1];
             nrp[2] = nrp[2] + agedqtya[2];
@@ -214,7 +219,7 @@ BEGIN
             nrp[4] = nrp[4] + agedqtya[4];
             nrp[5] = nrp[5] + agedqtya[5];
             nrp[6] = nrp[6] + agedqtya[6];
-            nrp["totalqty"] = nrp["totalqty"] + instock;
+            nrp["totalqty"] = nrp["totalqty"] + instocktmp;
         end;
         EndFormat;
       case 1:
@@ -383,6 +388,11 @@ BEGIN
       if (ISr.Variety>tovariety) then begin TrHs = false; end;
     end;              
     if (TrHs==false) then begin testf = false; end;
+    if (testf) then begin 
+      if (nonblank(RepSpec.f4)) then begin
+        testf = SetInSet2(RepSpec.f4,INr.DispGroups);
+      end;      
+    end; 
     if (testf) then begin
       if (nonblank(RepSpec.AccStr)) then begin
         if (INr.Department!=RepSpec.AccStr) then begin
@@ -396,7 +406,12 @@ BEGIN
           testf = false;
         end;
       end;
-    end;      
+    end;   
+    if (testf) then begin 
+      if (nonblank(RepSpec.f4)) then begin
+        testf = SetInSet2(RepSpec.f4,INr.DispGroups);
+      end;      
+    end;        
     if (testf) then begin
       if (nonblank(RepSpec.LastAcc)) then begin
         PIr.ItemCode = INr.Code;
@@ -493,7 +508,12 @@ BEGIN
           testf = false;
         end;
       end;
-    end;      
+    end;  
+    if (testf) then begin 
+      if (nonblank(RepSpec.f4)) then begin
+        testf = SetInSet2(RepSpec.f4,INr.DispGroups);
+      end;      
+    end;         
     if (TrHs) then begin
       if (nonblank(RepSpec.LastAcc)) then begin
         PIr.ItemCode = INr.Code;
@@ -518,6 +538,7 @@ BEGIN
       end;
     end;
     if (TrHs==false) then begin testf = false; end;
+    
     if (testf) then begin
       dblstr = "";
       if (FindItemVAR(INr.Code,sz,msk,mskrep,varsubset)) then begin
@@ -526,12 +547,12 @@ BEGIN
       AgedOneItem(RepSpec,INr,sum1p,nrp,groupsum,roundof,dblstr,balcol,balcol2);
     end;
   end;
-  RETURN;
-END;
+  return;
+end;
 
 global
 procedure AgedINRn(record RcVc RepSpec)
-BEGIN
+begin
   record RoundBlock RoundRec;
   vector val nr;
   val sum1;
@@ -565,10 +586,19 @@ BEGIN
       Header(rw,tstr,1);
       rw = rw + 1;
     end;
-    HTArtGroup(RepSpec.f3,tstr);
-    if (nonblank(tstr)) then begin
-      Header(rw,tstr,1);
-      rw = rw + 1;
+    if (HasItemGroups) then begin
+      HTArtGroup(RepSpec.f3,tstr);
+      if (nonblank(tstr)) then begin
+        Header(rw,tstr,1);
+        rw = rw + 1;
+      end;
+    end;
+    if (HasItemClassification) then begin
+      HTItemClass(RepSpec.f4,tstr);
+      if (nonblank(tstr)) then begin
+        Header(rw,tstr,1);
+        rw = rw + 1;
+      end;
     end;
     if (nonblank(RepSpec.LastAcc)) then begin
       HTSupplier(RepSpec.LastAcc,tstr);
@@ -842,5 +872,5 @@ BEGIN
   end;
   EndFormat;
   EndJob;
-  RETURN;
-END;
+  return;
+end;

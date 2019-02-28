@@ -505,7 +505,7 @@ begin
       IVrw.Quant = coef*IVCashrw.Quant;
       IVrw.Price = IVCashrw.Price;//� Item prices;
       IVrw.Sum = coef*IVCashrw.Sum;
-      IVrw.vRebate = IVCashrw.vRebate;//� Discounts;
+      IVrw.vRebate = stringtoval(IVCashrw.vRebate,m41val);//� Discounts;
       IVrw.SalesAcc = IVCashrw.SalesAcc;
       if (nonblank(setbl.CredDomSalesAcc)) then begin
         IVrw.SalesAcc = setbl.CredDomSalesAcc; // EVS: DOL-89

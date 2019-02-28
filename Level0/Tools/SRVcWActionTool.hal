@@ -69,7 +69,7 @@ LFindPurchaseInvoiceNrForSerialNr:;
 end;
   
 global  
-procedure PasteArtCodeToSR(var record SRVc SRp,Integer rownr,record ItemStatusVc ISr,string serial,val q)
+procedure PasteArtCodeToSR2(var record SRVc SRp,Integer rownr,record ItemStatusVc ISr,string position,string serial,val q)
 begin
   row SRVc SRrw;
   record INVc INr;
@@ -86,18 +86,55 @@ begin
   SRrw.UnitXval = INr.Width;
   SRrw.UnitYval = INr.Height;
   SRrw.UnitZval = INr.Depth;
+  SRrw.PosCode = position;
   SRrw.SerialNr = serial;
   SRrw.Qty = q;
   SRrw.VEInvoiceNr = FindPurchaseInvoiceNrForSerialNr(SRrw.ArtCode,SRrw.SerialNr,vinr,virownr);
 /*
-done when creating  NL Transaction ; // EVS: DOL-110 should do this anyway (to avoid error messages)
-*/
+done when creating  NL Transaction
   Locr.Code = SRrw.Location;
   if (ReadFirstMain(Locr,1,true)) then begin
-    SRrw.Objects = AddObjectToObjectList(SRrw.Objects,Locr.Objects);
+    SRrw.Objects = AddObjectToObjectList(SRrw.Objects,Locr.Objects);        
   end;
-  
+*/
   MatRowPut(SRp,rownr,SRrw);
+  return;
+end;
+  
+global  
+procedure PasteArtCodeToSR(var record SRVc SRp,Integer rownr,record ItemStatusVc ISr,string serial,val q)
+begin
+  PasteArtCodeToSR2(SRp,rownr,ISr,"",serial,q);
+  return;
+end;
+  
+procedure PasteArtCodePerPostionToSR(var record SRVc SRr,string location,var Integer rownr,record ItemStatusVc ISr)
+begin
+  record LocationVc Locr;
+  record PISVc PISr;
+  Boolean found,testf;
+
+  PISr.Location = location;
+  PISr.ArtCode = ISr.Code;
+  PISr.Variety = ISr.Variety;
+  found = true;
+  while (LoopKey("CodeVariety",PISr,3,found)) begin
+    if (PISr.Location!=location) then begin found = false; end;
+    if (PISr.ArtCode!=ISr.Code) then begin found = false; end;
+    if (PISr.Variety!=ISr.Variety) then begin found = false; end;
+    if (found) then begin
+      testf = true;
+      if (PISr.LeftQty<=0) then begin testf = false; end;
+      if (testf) then begin
+        PasteArtCodeToSR2(SRr,rownr,ISr,PISr.Position,"",PISr.LeftQty);
+        rownr = rownr + 1;
+        if (rownr>=500) then begin
+          goto LPasteArtCodePerPostionToSR;
+        end;
+      end;
+    end;
+  end;
+LPasteArtCodePerPostionToSR:;  
   return;
 end;
   
@@ -110,15 +147,16 @@ begin
   Boolean found;
   Integer keys;
   string 60 sz,msk,mskrep,serialnr,prevserialnr,firstserialnr;
-  string 200 varsubset,varcode,itemcode;
+  string 200 varsubset,varcode,itemcode;//EBS
   row SRVc SRrw;
   Integer rownr;
   Boolean itemfound,testf,foundsb,varf;
   record SerBalVc SBr;
   val q,serqty;
   record SerNrTrackBlock SNrb;
-  longint pos;
-
+  record LocationVc Locr;
+	longint pos;//EBS
+	
   if (changedf) then begin
     BlockLoad(SNrb);
     rownr = arownr;
@@ -182,8 +220,14 @@ begin
         if (testf) then begin
           switch (INr.SerNrf) begin
             case 0:
-              PasteArtCodeToSR(SRp,rownr,ISr,"",ISr.Instock);
-              rownr = rownr + 1;
+              Locr.Code = ISr.Location;
+              ReadFirstMain(Locr,1,true);
+              if (Locr.RequirePos!=0) then begin
+                PasteArtCodePerPostionToSR(SRp,Locr.Code,rownr,ISr);
+              end else begin
+                PasteArtCodeToSR(SRp,rownr,ISr,"",ISr.Instock);
+                rownr = rownr + 1;
+              end;
               if (rownr>=500) then begin
 //what then ?   
                 inwarn = USetStr(20407);

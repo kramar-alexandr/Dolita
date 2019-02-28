@@ -1,12 +1,14 @@
+external procedure CashSumup(record CashVc);
 external function LongInt CheckIfOpenTabforTable(record RestAccVc);
 
+forward procedure NPTSPaymentToolKeyPad_AddNumbers(string);
 
 global
 procedure CorrectClassToolEnterText()
 begin
   Integer nwn;
   record RcVc RepSpec;
-
+  
   RepSpec.f1 = "";
   nwn = OpenWindow("EnterTextWClass",0,CurWindow,"","",RepSpec);
   return;
@@ -17,7 +19,7 @@ procedure IVDClassToolEnterText()
 begin
   Integer nwn;
   record RcVc RepSpec;
-
+  
   RepSpec.f1 = "";
   nwn = OpenWindow("EnterTextWClass",0,CurWindow,"","",RepSpec);
   return;
@@ -28,21 +30,25 @@ procedure RestAccToolEnterText()
 begin
   Integer nwn;
   record RcVc RepSpec;
-
+  
   RepSpec.f1 = "";
   nwn = OpenWindow("EnterTextWClass",0,CurWindow,"","",RepSpec);
   return;
 end;
 
-procedure ToolKeyPad_Numbers(string numberstr)
+procedure ToolKeyPad_Numbers(string anumberstr)
 begin
   Integer wn;
   record RcVc RepSpec;
-
+  string 255 numberstr;
+  
+  numberstr = anumberstr;
   wn = CurWindow;
   GetWindowRecord(wn,RepSpec);
-  PasteString(wn,numberstr);
-  RepSpec.f1 = RepSpec.f1 & numberstr;
+  numberstr = RepSpec.f1 & numberstr;
+  PasteStringNoSeparator(wn,numberstr);
+//  PasteString(wn,numberstr);
+  RepSpec.f1 = numberstr;
   PutWindowRecord(wn,RepSpec);
   DeselectWindow(wn,false);
   return;
@@ -121,7 +127,7 @@ END;
 global
 procedure EnterTextToolKeyPadPoint()
 begin
-  ToolKeyPad_Numbers(".");
+  ToolKeyPad_Numbers(DecimalSeparator);
   RETURN;
 END;
 
@@ -133,8 +139,8 @@ begin
   record RestAccVc OldRestAccr;
   Integer mwn,wn;
   LongInt oldbartab;
-  string 255 activefield;
-
+  string 255 activefield,tstr;
+    
   wn = CurWindow;
   WindowDeactivateField(wn);
   GetWindowRecord(wn,RepSpec);
@@ -142,6 +148,11 @@ begin
   CloseWindow(wn);
   if (mwn>0) then begin
     activefield = WindowActiveField(mwn);
+    switch (GetWindowClass(mwn)) begin
+      case "NPTSIVCashDClass":
+        tstr = GetWindowString(mwn,"ivcashcommand");
+        RepSpec.f1 = tstr & RepSpec.f1;
+    end;
     PasteString(mwn,RepSpec.f1);
     KeyPadEnter(mwn);
     if (WindowValid(mwn)) then begin
@@ -181,7 +192,7 @@ begin
     if (GetWindowClass(mwn)=="ForkLiftDriverWClass") then begin
       WindowFieldGoto(mwn,RepSpec,-1,activefield,true);
     end;
-*/
+*/    
   end;
   RETURN;
 END;
@@ -191,14 +202,14 @@ procedure EnterTextToolKeyPadBar()
 BEGIN
   ToolKeyPad_Numbers("BAR");
   RETURN;
-END;
+END; 
 
 global
 procedure EnterTextToolKeyDel()
 BEGIN
   record RcVc RepSpec;
   Integer wn;
-
+  
   wn = CurWindow;
   DeselectWindow(wn,false);
   GetWindowRecord(wn,RepSpec);
@@ -209,13 +220,62 @@ BEGIN
 end;
 
 global
+procedure EnterTextToolKeyClear()
+BEGIN
+  record RcVc RepSpec;
+  Integer wn;
+  
+  wn = CurWindow;
+  DeselectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  RepSpec.f1 = "";
+  PutWindowRecord(wn,RepSpec);
+  SelectWindow(wn);
+  return;
+end;
+
+global
+procedure EnterTextToolKeyPM()
+BEGIN
+  record RcVc RepSpec;
+  Integer wn;
+  string 255 tstr,activefield,pmfield;
+  val sign;
+  
+  wn = CurWindow;
+  activefield = WindowActiveField(wn);
+  DeselectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  pmfield = GetWindowString(wn,"PLUSorMINUS");
+  if (pmfield=="+") or (blank(pmfield)) then begin
+    pmfield = "-";
+  end else begin
+    pmfield = "+";
+  end;
+  sign = -1.00;
+  tstr = RepSpec.f1;
+  if (Left(tstr,1)=="-") then begin
+    tstr = Right(tstr,len(tstr)-1);
+  end else begin
+    tstr = "-" & tstr;
+  end;
+  RepSpec.f1 = tstr;
+  PutWindowString(wn,"PLUSorMINUS",pmfield);
+  PutWindowRecord(wn,RepSpec);
+  SelectWindow(wn);
+  WindowFieldGoto(wn,RepSpec,-1,activefield,true);
+  return;
+end;
+
+
+global
 procedure CashPayTouchScreenKeypad()
 begin
   record RcVc RepSpec;
   record RcVc newRepSpec;
   Integer wn,nwn;
   val v;
-
+  
   wn = CurWindow;
   GetWindowRecord(wn,RepSpec);
   switch (GetWindowClass(wn)) begin
@@ -235,8 +295,10 @@ begin
   string 255 tstr;
   string 255 pmfield,numberstr,activefield;
   val sign;
-
+  
   wn = CurWindow;
+  SoftKey(wn,anumberstr);
+/*
   activefield = WindowActiveField(wn);
   numberstr = anumberstr;
   pmfield = GetWindowString(wn,"PLUSorMINUS");
@@ -247,7 +309,16 @@ begin
   numberstr = pmfield & numberstr;
   tstr = GetWindowString(wn,activefield) & numberstr;
   PutWindowString(wn,activefield,tstr);
-  PasteString(wn,tstr);
+//  tstr = GetWindowString(wn,activefield);
+  PasteStringNoSeparator(wn,tstr);
+  return;
+*/
+end;
+
+global
+procedure NPTSPaymentToolKeyPadDecSep()
+begin
+  NPTSPaymentToolKeyPad_Numbers(DecimalSeparator);
   return;
 end;
 
@@ -321,20 +392,55 @@ begin
   return;
 end;
 
-global
-procedure NPTSPaymentToolKeyEnter()
+procedure NPTSPaymentToolKeyPad_AddNumbers(string anumberstr)
 begin
-  Integer mwn,wn;
-
+  Integer wn;
+  record RcVc RepSpec;
+  string 255 tstr;
+  string 255 pmfield,numberstr,activefield;
+  val sign;
+  
   wn = CurWindow;
-  KeyPadEnter(wn);
+  activefield = WindowActiveField(wn);
+  numberstr = anumberstr;
+  pmfield = GetWindowString(wn,"PLUSorMINUS");
+  tstr = GetWindowString(wn,activefield);
+  if (nonblank(tstr)) then begin
+    pmfield = "";
+  end;
+  numberstr = pmfield & numberstr;
+  tstr = StringToVal(GetWindowString(wn,activefield),M4Val) + StringToVal(numberstr,M4Val);  
+  PutWindowString(wn,activefield,tstr);
+  tstr = GetWindowString(wn,activefield);
+  PasteStringNoSeparator(wn,tstr);
+  return;
+end;
+
+global
+procedure NPTSPaymentToolKeyPad10()
+begin
+  NPTSPaymentToolKeyPad_AddNumbers("10");
+  return;
+end;
+
+global
+procedure NPTSPaymentToolKeyPad20()
+begin
+  NPTSPaymentToolKeyPad_AddNumbers("20");
+  return;
+end;
+
+global
+procedure NPTSPaymentToolKeyPad50()
+begin
+  NPTSPaymentToolKeyPad_AddNumbers("50");
   return;
 end;
 
 global
 procedure NPTSPaymentToolKeyPadPoint()
 begin
-  NPTSPaymentToolKeyPad_Numbers(".");
+  NPTSPaymentToolKeyPad_Numbers(DecimalSeparator);
   return;
 end;
 
@@ -355,34 +461,151 @@ end;
 // :EVS
 
 global
+procedure NPTSPaymentToolKeyEnter()
+begin
+  Integer mwn,wn;
+    
+  wn = CurWindow;
+  KeyPadEnter(wn);
+  return;
+end;
+
+global
+procedure NPTSPaymentToolKeyPadDel()
+begin
+  Integer wn;
+  string 255 tstr,activefield;
+  
+  wn = CurWindow;
+  activefield = WindowActiveField(wn);
+  tstr = GetWindowString(wn,activefield);
+  tstr = Left(tstr,len(tstr)-1);
+  PutWindowString(wn,activefield,tstr);
+  PasteStringNoSeparator(wn,tstr);
+  return;
+end;
+
+global
 procedure NPTSPaymentToolKeyDel()
-BEGIN
+begin
+  Integer wn;
+  string 255 tstr,activefield;
+  
+  wn = CurWindow;
+  activefield = WindowActiveField(wn);
+  tstr = GetWindowString(wn,activefield);
+  tstr = ""; //EBS org: tstr = Left(tstr,len(tstr)-1);
+  PutWindowString(wn,activefield,tstr);
+  PasteStringNoSeparator(wn,tstr);
+/*
   record RcVc RepSpec;
   Integer wn;
   string 255 tstr,activefield;
-
+  
   wn = CurWindow;
-  DeselectWindow(wn,false);
-  GetWindowRecord(wn,RepSpec);
   activefield = WindowActiveField(wn);
+  DeselectWindow(wn,true);
+  GetWindowRecord(wn,RepSpec);
+  tstr = GetFieldValueByName(RepSpec,activefield,-1);
   switch (activefield) begin
-    case "f1": SetFieldValueByName(RepSpec,activefield,"",-1);
-    case "f2": SetFieldValueByName(RepSpec,activefield,"",-1);
-    case "f3": SetFieldValueByName(RepSpec,activefield,"",-1);
-    case "f4": SetFieldValueByName(RepSpec,activefield,"",-1);
-    case "f5": SetFieldValueByName(RepSpec,activefield,"",-1);
-    case "f6": SetFieldValueByName(RepSpec,activefield,"",-1);
-    case "f7": SetFieldValueByName(RepSpec,activefield,"",-1);
-    case "f8": SetFieldValueByName(RepSpec,activefield,"",-1);
-    case "f9": SetFieldValueByName(RepSpec,activefield,"",-1);
-    case "f10": SetFieldValueByName(RepSpec,activefield,"",-1);
+    case "vals0": tstr = "";
+    case "vals1": tstr = "";
+    case "vals2": tstr = "";
+    case "vals3": tstr = "";
+    otherwise
+      tstr = Left(tstr,len(tstr)-1);
   end;
-  tstr = ""; //EBS org: tstr = Left(tstr,len(tstr)-1);
-  PutWindowString(wn,activefield,tstr);
+  SetFieldValueByName(RepSpec,activefield,tstr,-1);
   PutWindowRecord(wn,RepSpec);
+  DeselectWindow(wn,true);
   SelectWindow(wn);
+  PutWindowString(wn,activefield,tstr);
   WindowFieldGoto(wn,RepSpec,-1,activefield,true);
+*/  
+  return;
+end;
 
+global
+procedure NPTSGCDToolKeyDel()
+begin
+  record GCVc GCr;
+  Integer wn;
+  string 255 tstr,activefield;
+  
+  wn = CurWindow;
+  activefield = WindowActiveField(wn);
+/*  
+  DeselectWindow(wn,true);
+  GetWindowRecord(wn,GCr);
+*/  
+//  tstr = GetFieldValueByName(GCr,activefield,-1);
+/*
+  switch (activefield) begin
+    case "Amount": tstr = GCr.Amount;
+    case "TransDate": tstr = GCr.TransDate;
+    case "ExpiryDate": tstr = GCr.ExpiryDate;
+    case "Comment": tstr = GCr.Comment;
+    case "BarCode": tstr = GCr.BarCode;
+    case "Type": tstr = GCr.Type;
+  end;
+*/  
+  tstr = Left(tstr,len(tstr)-1);
+  PutWindowString(wn,activefield,tstr);
+  PasteStringNoSeparator(wn,tstr);
+/*  
+  SetFieldValueByName(GCr,activefield,tstr,-1);
+  PutWindowRecord(wn,GCr);
+  SelectWindow(wn);
+  WindowFieldGoto(wn,GCr,-1,activefield,true);
+*/  
+  return;
+end;
+
+global
+procedure NPTSPaymentToolKeyPadClear()
+begin
+  record RcVc RepSpec;
+  record CashVc Cashr;
+  row CashVc Cashrw;
+  Integer wn,rownr;
+  string 255 tstr,activefield;
+  
+  wn = CurWindow;
+  switch (GetWindowFileName(wn)) begin
+    case "RcVc":
+      GetWindowRecord(wn,RepSpec);
+    case "CashVc":
+      GetWindowRecord(wn,Cashr);
+  end;
+  activefield = WindowActiveField(wn);
+  rownr = WindowActiveRow(wn);
+  tstr = GetWindowString(wn,activefield);
+  DeselectWindow(wn,false);
+  switch (GetWindowFileName(wn)) begin
+    case "RcVc":
+      tstr = "";
+      PutWindowString(wn,activefield,tstr);
+      PutWindowRecord(wn,RepSpec);
+      SelectWindow(wn);
+      WindowFieldGoto(wn,RepSpec,-1,activefield,true);
+    case "CashVc":
+      tstr = "";
+      if (rownr>=0) then begin
+        MatRowGet(Cashr,rownr,Cashrw);
+        switch (activefield) begin
+          case "PMCode": Cashrw.PMCode = "";
+          case "Amount": Cashrw.Amount = blankval;
+        end;
+        MatRowPut(Cashr,rownr,Cashrw);
+      end else begin
+        SetFieldValueByName(Cashr,activefield,"",rownr);
+      end;
+      CashSumup(Cashr);
+      PutWindowString(wn,activefield,"");
+      PutWindowRecord(wn,Cashr);
+      SelectWindow(wn);
+      WindowFieldGoto(wn,Cashr,rownr,activefield,true);
+  end;
   return;
 end;
 
@@ -393,7 +616,7 @@ BEGIN
   Integer wn;
   string 255 tstr,activefield,pmfield;
   val sign;
-
+  
   wn = CurWindow;
   activefield = WindowActiveField(wn);
   DeselectWindow(wn,false);
@@ -402,7 +625,7 @@ BEGIN
   if (pmfield=="+") or (blank(pmfield)) then begin
     pmfield = "-";
   end else begin
-    pmfield = "+";
+    pmfield = "";
   end;
   sign = -1.00;
   switch (activefield) begin
@@ -424,7 +647,7 @@ BEGIN
   PutWindowRecord(wn,RepSpec);
   SelectWindow(wn);
   WindowFieldGoto(wn,RepSpec,-1,activefield,true);
-  PutWindowString(wn,activefield,"");
+  PutWindowString(wn,activefield,"");  
   ReRunWindowDef(wn);
   return;
 end;

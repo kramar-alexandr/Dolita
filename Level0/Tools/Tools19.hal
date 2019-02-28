@@ -1,16 +1,17 @@
-external updating procedure UpdateOffSerNr(LongInt,string,Integer,string,Boolean);
+remote updating procedure UpdateOffSerNr(LongInt,string,Integer,string,Boolean);
 external function boolean IsNumeric(string);
 external procedure FindNextIVCashVcOfficialSerialNr2(var record IVCashVc);
 external updating procedure SetAgreementPrntdf(LongInt);
 external updating procedure SetStockMovPrntdf(record StockMovVc);
 
 global
-function Boolean RecidAction_rlIVCashLPrint(var record IVCashVc IVCashp,string docform,string arg1)
+function Boolean RecidAction_rlIVCashLPrint(var record IVCashVc IVCashp,string repname,string arg1)
 begin
   Boolean res;
   Boolean previewf,testf;
   record RcVc RepSpec;
   string 255 oldOfficialSerNr;
+  string 255 docname;
   
   RepSpec.Media = mtPrinter;
   SetMedia(mtPrinter);
@@ -25,6 +26,15 @@ begin
       testf = false;
     end;
   end;
+  switch (repname) begin
+    case "InvCashForm": docname = "InvCashForm";
+    case "InvCashRetForm": 
+      docname = "InvCashRetForm";
+      if (IVCashp.InvType!=kPOSInvoiceTypeCredit) then begin
+        testf = false;
+      end;
+    otherwise docname = "InvCashForm";
+  end;
   if (testf) then begin
     if (blankdate(IVCashp.PrintDate)) then begin
       IVCashp.PrintDate = CurrentDate;
@@ -34,8 +44,8 @@ begin
       //      FindNextIVCashVcOfficialSerialNr2(IVCashp); // EVS: DOL-112 rm
       res = true;
     end;
-    if (PrintDocument(IVCashp,docform,previewf)) then begin
-      ReadFirstMain(IVCashp,1,true); // EVS: refresh record
+    if (PrintDocument(IVCashp,docname,previewf)) then begin
+			ReadFirstMain(IVCashp,1,true); // EVS: refresh record
       if (IVCashp.Prntdf==0) then begin
         res = true;
       end;  
@@ -52,7 +62,7 @@ begin
 end;
 
 global
-updating procedure RecordActionIVCash_Print(var record IVCashVc IVCashp,string arg1,Boolean readf)
+updating procedure RecordActionIVCash_Print2(var record IVCashVc IVCashp,string docname,string arg1,Boolean readf)
 begin
   record IVCashVc oldIVCashr;
   
@@ -60,11 +70,20 @@ begin
     if (ReadFirstMain(IVCashp,0,true)) then begin end;  
   end;
   RecordCopy(oldIVCashr,IVCashp);
-  if (RecidAction_rlIVCashLPrint(IVCashp,"InvCashForm",arg1)) then begin
-    if (RecordUpdate(oldIVCashr,IVCashp,false)==0) then begin
-      UpdateOffSerNr(IVCashp.SerNr,"IVCashVc2",0,IVCashp.OfficialSerNr2,false);
+  if (RecidAction_rlIVCashLPrint(IVCashp,docname,arg1)) then begin
+    if (nonblank(IVCashp.OfficialSerNr2)) then begin
+      if (RecordUpdate(oldIVCashr,IVCashp,false)==0) then begin
+        UpdateOffSerNr(IVCashp.SerNr,"IVCashVc2",0,IVCashp.OfficialSerNr2,false);
+      end;
     end;
   end;
+  return;
+end;
+
+global
+updating procedure RecordActionIVCash_Print(var record IVCashVc IVCashp,string arg1,Boolean readf)
+begin
+  RecordActionIVCash_Print2(IVCashp,"",arg1,readf);
   return;
 end;
 

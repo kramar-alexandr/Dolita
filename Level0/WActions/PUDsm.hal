@@ -1,3 +1,4 @@
+remote procedure PUSumUp(var record PUVc);
 remote function Boolean GetNextItemNr(var string);
 remote updating function LongInt CancelApprovalRequest(string,string,var Integer);
 remote updating function Integer RequestApproval_PUVc(record PUVc,var record RcVc,var Integer);
@@ -296,6 +297,7 @@ begin
       CopyRow(PUr,frPUrw,toPUrw);
      // toPUrw.OrdRow = -1;
       MatRowInsert(PUr,rownr+1,toPUrw);
+      PUSumUp(PUr);
       PutWindowRecord(wn,PUr);
     end else begin
       Beep;
@@ -376,6 +378,7 @@ begin
     if (WindowDoOK(wn,0)==false) then begin
       goto LPUSendforAcceptancePUDsm;
     end;
+    GetWindowRecord(wn,PUr);
   end;
   PUr.AcceptanceBy = acceptanceby;
   PUr.AcceptanceFYI = acceptancefyi;
@@ -403,7 +406,7 @@ begin
         if (WindowDoOK(wn,0)) then begin
         end;
         PutWindowString(wn,"AcceptanceStatusFlag",StringFromSet(443,ApprovalStatusFlag));  
-        MessageBox(37501,"");
+        CheckmarkBox(37501,"");
       otherwise
         MessageBox(err,"");
     end;

@@ -509,7 +509,6 @@ begin
       // :EVS
     end;
   end;
-
 LStockMovUpdateStock:;  
   return;
 end;

@@ -1,8 +1,12 @@
+external procedure CashVc_PrintToFiscalPrinter(var record CashVc,Boolean);
+external procedure CashSumup(record CashVc);
+external function string 60 RestPMCashModePayMode();
 remote function Boolean FindTimeOfLastPOSEvent(var Date,var Time,string,string);
 external function Boolean IsSessionOpen(string,string,Date,Time);
 remote procedure FindTimeOfLastPOSBalance(var Date,var Time,string,string,var val,var val);
 remote function string 255 CurDrawerCode(string);
 external procedure POSEventVc_PrintToFiscalPrinter(var record POSEventVc,Boolean);
+external procedure POSAudit_WindowOpen(Integer);
 external outer procedure OpenSession_UpdateIVCash(integer);
 
 global
@@ -10,7 +14,7 @@ function Boolean POSEventDClassUpdateTest(Integer wn)
 BEGIN
   record POSEventVc POSEventr;
   Boolean res;
-
+  
   res = false;
   switch (WindowState(wn)) begin
     case 1://insert
@@ -18,7 +22,7 @@ BEGIN
     case 2://update
       if (UserCanAction("UpdatePOSEvent",false)) then begin
         res = true;
-      end;
+      end;          
   end;
   POSEventDClassUpdateTest = res;
   RETURN;
@@ -29,7 +33,7 @@ procedure POSEventOpenDrawer()
 BEGIN
   Integer wn,nwn;
   record POSEventVc POSEventr;
-
+  
   wn = CurWindow;
   GetWindowRecord(wn,POSEventr);
   WindowFieldGoto(wn,POSEventr,-1,"Drawer",true);
@@ -42,7 +46,7 @@ procedure POSEventOpenEvent()
 BEGIN
   Integer wn,nwn;
   record POSEventVc POSEventr;
-
+  
   wn = CurWindow;
   GetWindowRecord(wn,POSEventr);
   WindowFieldGoto(wn,POSEventr,-1,"Event",true);
@@ -61,23 +65,23 @@ begin
   if (POSEventr.Event==0) then begin
     MessageBox(1058," " & USetStr(12546));
     res = -1;
-    goto LPOSEventVcRecordCheck;
-  end;
+    goto LPOSEventVcRecordCheck; 
+  end; 
   if (blank(POSEventr.Drawer)) then begin
     MessageBox(1058," " & USetStr(12542));
     res = -1;
-    goto LPOSEventVcRecordCheck;
-  end;
+    goto LPOSEventVcRecordCheck; 
+  end; 
   if (blank(CurMachineName)) then begin
     MessageBox(1058," " & USetStr(12541));
     res = -1;
-    goto LPOSEventVcRecordCheck;
+    goto LPOSEventVcRecordCheck; 
   end;
   if (blank(POSEventr.MachineName)) then begin
     MessageBox(1058," " & USetStr(12541));
     res = -1;
-    goto LPOSEventVcRecordCheck;
-  end;
+    goto LPOSEventVcRecordCheck; 
+  end; 
   if (blankdate(POSEventr.TransDate)) then begin
     POSEventr.TransDate = CurrentDate;//date and time must be from server which is assigned in RecordDefaults
   end;
@@ -90,26 +94,26 @@ begin
     if (locPOSEventr.Drawer==POSEventr.Drawer and locPOSEventr.Event==POSEventr.Event) then begin
       if (POSEventr.Event==1) then begin
         MessageBox(2200,"");
-        res = -1;
-        goto LPOSEventVcRecordCheck;
+        res = -1; 
+        goto LPOSEventVcRecordCheck;  
       end else begin
         MessageBox(24198,"");
-        res = -1;
-        goto LPOSEventVcRecordCheck;
+        res = -1; 
+        goto LPOSEventVcRecordCheck;  
       end;
       if (locPOSEventr.MachineName!=POSEventr.MachineName) then begin
         MessageBox(1547,"");
         res = -1;
-        goto LPOSEventVcRecordCheck;
+        goto LPOSEventVcRecordCheck; 
       end;
     end;
   end;
   Drawer.Code = POSEventr.Drawer;
-  if (ReadFirstMain(Drawer,1,true)==false) then begin
+  if (ReadFirstMain(Drawer,1,true)==false) then begin   
     MessageBox(2293," " & POSEventr.Drawer);
     res = -1;
-    goto LPOSEventVcRecordCheck;
-  end;
+    goto LPOSEventVcRecordCheck; 
+  end; 
 LPOSEventVcRecordCheck:;
   POSEventVcCheck = res;
   return;
@@ -119,32 +123,42 @@ global
 updating procedure OpenPOSSessionsm()
 begin
   record POSEventVc POSEr;
-  Integer wn,nwn;
-
-  wn = CurWindow;
+  record IVCashVc IVCashr;
+  record IVVc IVr;
+  Integer mwn,nwn;
+  
+  mwn = CurWindow;
   RecordNew(POSEr);
   POSEr.Drawer = CurDrawerCode(CurMachineName);
   POSEr.Event = 1;
   if (blank(POSEr.Drawer)) then begin
-    nwn = OpenWindow("POSEventDClass",1,wn,"","",POSEr);
+    nwn = OpenWindow("POSEventDClass",1,mwn,"","",POSEr);
     WindowFieldGoto(nwn,POSEr,-1,"Drawer",true);
   end else begin
     if (POSEventVcCheck(POSEr,POSEr,0,0)==0) then begin
       POSEr.SerNr = NextSerNr("POSEventVc",POSEr.TransDate,-1,true,"");
-      if (RecordStore(POSEr,true)) then begin
+      if (RecordStore(POSEr,true)) then begin 
         POSEventVc_PrintToFiscalPrinter(POSEr,false);
       end;
     end;
-    switch (GetWindowClass(wn)) begin
+    switch (GetWindowClass(mwn)) begin
       case "NPTSIVCashDClass":
         Sleep(1); // get to next second...
-        OpenSession_UpdateIVCash(wn); //EBS update transtime in IVCash so that session can be opened with invoice already prepared
-        ReRunWindowDef(wn);
+				OpenSession_UpdateIVCash(mwn); //EBS update transtime in IVCash so that session can be opened with invoice already prepared
+        GetWindowRecord(mwn,IVCashr);
+        IVCashr.DrawerCode = CurDrawerCode(IVCashr.LocalMachineCode);
+        IVCashr.TransTime = CurrentTime;
+        PutWindowRecord(mwn,IVCashr);
+        ReRunWindowDef(mwn);
       case "IVDClass":
         Sleep(1); // get to next second...
-        ReRunWindowDef(wn);
+        GetWindowRecord(mwn,IVr);
+        IVr.DrawerCode = CurDrawerCode(CurMachineName);
+        IVr.TransTime = CurrentTime;
+        PutWindowRecord(mwn,IVr);
+        ReRunWindowDef(mwn);
     end;
-  end;
+  end;    
   return;
 end;
 
@@ -152,8 +166,10 @@ global
 updating procedure ClosePOSSessionsm()
 begin
   record POSEventVc POSEr;
-  record CashierDefBlock CDb; //EBS
+  record IVCashVc IVCashr;
+  record IVVc IVr;
   Integer wn;
+  record CashierDefBlock CDb; //EBS
 
   LogText(0,"ClosePOSSessionsm :: START, User = " & CurrentUser);
   RecordNew(POSEr);
@@ -162,8 +178,8 @@ begin
   if (POSEventVcCheck(POSEr,POSEr,0,0)==0) then begin
     LogText(0,"ClosePOSSessionsm :: After POSEventVcCheck");
     POSEr.SerNr = NextSerNr("POSEventVc",POSEr.TransDate,-1,true,"");
-    if (RecordStore(POSEr,true)) then begin
-      LogText(0,"ClosePOSSessionsm :: After saving POS event, company " & CurrentCompany);
+    if (RecordStore(POSEr,true)) then begin 
+			LogText(0,"ClosePOSSessionsm :: After saving POS event, company " & CurrentCompany);
       POSEventVc_PrintToFiscalPrinter(POSEr,false);
 //EBS-->
       BlockLoad(CDb);
@@ -174,14 +190,20 @@ begin
 //EBS<--
     end;
   end;
-
+  
   wn = CurWindow;
   switch (GetWindowClass(wn)) begin
     case "NPTSIVCashDClass":
       Sleep(1); // get to next second...
+      GetWindowRecord(wn,IVCashr);
+      IVCashr.TransTime = CurrentTime;
+      PutWindowRecord(wn,IVCashr);
       ReRunWindowDef(wn);
     case "IVDClass":
       Sleep(1); // get to next second...
+      GetWindowRecord(wn,IVr);
+      IVr.TransTime = CurrentTime;
+      PutWindowRecord(wn,IVr);
       ReRunWindowDef(wn);
   end;
 
@@ -196,14 +218,125 @@ begin
   row CashVc Cashrw;
   record DefCashBlock DefCashRec;
   Integer nwn;
+  record RestPMBlock RPMb;
+  row RestPMBlock RPMbw;
+  Integer i,rwcnt;
+  Boolean testf;
+  vector val vrowstpcnt;
+  record RcVc RepSpec;
 
-  BlockLoad(DefCashRec);
+  BlockLoad(RPMb);
+  rwcnt = MatRowCnt(RPMb);
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowGet(RPMb,i,RPMbw);
+    vrowstpcnt[RPMbw.rowstp] = vrowstpcnt[RPMbw.rowstp] + 1;
+  end;
+  if ((vrowstpcnt[kInvoiceRowTypeCashPayment]+vrowstpcnt[kInvoiceRowTypeGiftVoucherPayment]+vrowstpcnt[kInvoiceRowTypeChequePayment]+vrowstpcnt[kInvoiceRowTypeLoyaltyPointsPayment])==1) then begin
+    testf = true;
+  end;
+  if (testf) then begin
+    RecordClear(RepSpec);
+    nwn = OpenWindow("CashOneModeInOClass",1,0,"","",RepSpec);
+  end else begin
+    BlockLoad(DefCashRec);  
+    RecordNew(Cashr);
+    Cashr.Event = 1;
+    ClearRow(Cashr,Cashrw,1);  
+    Cashrw.PMCode = DefCashRec.DefCashPayMode;
+    MatRowPut(Cashr,0,Cashrw);
+    nwn = OpenWindow("CashSimpleInDClass",1,0,"","",Cashr);
+    WindowFieldGoto(nwn,Cashr,0,"Amount",true);
+  end;
+  return;
+end;
+
+global
+function Boolean CashOneModeInOClassOnOpenWindow(Integer wn)
+begin
+  record RcVc RepSpec;
+
+  GetWindowRecord(wn,RepSpec);
+  RepSpec.f1 = CurDrawerCode(CurMachineName);
+  PutWindowRecord(wn,RepSpec);
+  WindowFieldGoto(wn,RepSpec,-1,"vals0",true);
+  POSAudit_WindowOpen(wn);
+  CashOneModeInOClassOnOpenWindow = false;
+  return;
+end;
+
+global
+updating procedure ProceedCashOneModeInOClass()
+begin
+  record RcVc RepSpec;
+  record CashVc Cashr;
+  row CashVc Cashrw;
+  Integer wn;
+
+  wn = CurWindow;
+  DeselectWindow(wn,true);
+  GetWindowRecord(wn,RepSpec);
+  
   RecordNew(Cashr);
   Cashr.Event = 1;
-  ClearRow(Cashr,Cashrw,1);
-  Cashrw.PMCode = DefCashRec.DefCashPayMode;
+  ClearRow(Cashr,Cashrw,1);  
+  Cashrw.PMCode = RestPMCashModePayMode;
+  Cashrw.Amount = RepSpec.vals0;
   MatRowPut(Cashr,0,Cashrw);
-  nwn = OpenWindow("CashSimpleInDClass",1,0,"","",Cashr);
+  CashSumup(Cashr);
+  Cashr.OKFlag = 1;
+  Cashr.SerNr = NextSerNr("CashVc",Cashr.TransDate,-1,false,"");
+  RecordStore(Cashr,false);
+  if (UserCanAction("PrintToFiscPrnt",true)) then begin
+    CashVc_PrintToFiscalPrinter(Cashr,true);
+  end else begin
+    MessageBox(1274,StringFromStringSet(3,"PrintToFiscPrnt"));
+  end;
+  CloseWindow(wn);
+  return;
+end;
+
+global
+function Boolean CashOneModeOutOClassOnOpenWindow(Integer wn)
+begin
+  record RcVc RepSpec;
+
+  GetWindowRecord(wn,RepSpec);
+  RepSpec.f1 = CurDrawerCode(CurMachineName);
+  PutWindowRecord(wn,RepSpec);
+  WindowFieldGoto(wn,RepSpec,-1,"vals0",true);
+  POSAudit_WindowOpen(wn);
+  CashOneModeOutOClassOnOpenWindow = false;
+  return;
+end;
+
+global
+updating procedure ProceedCashOneModeOutOClass()
+begin
+  record RcVc RepSpec;
+  record CashVc Cashr;
+  row CashVc Cashrw;
+  Integer wn;
+
+  wn = CurWindow;
+  DeselectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  
+  RecordNew(Cashr);
+  Cashr.Event = 0;
+  ClearRow(Cashr,Cashrw,1);  
+  Cashrw.PMCode = RestPMCashModePayMode;
+  Cashrw.Amount = RepSpec.vals0;
+  MatRowPut(Cashr,0,Cashrw);
+  CashSumup(Cashr);
+  Cashr.OKFlag = 1;
+  Cashr.SerNr = NextSerNr("CashVc",Cashr.TransDate,-1,false,"");
+  RecordStore(Cashr,false);
+  if (UserCanAction("PrintToFiscPrnt",true)) then begin
+    CashVc_PrintToFiscalPrinter(Cashr,true);
+  end else begin
+    MessageBox(1274,StringFromStringSet(3,"PrintToFiscPrnt"));
+  end;
+  CloseWindow(wn);
   return;
 end;
 
@@ -214,14 +347,35 @@ begin
   row CashVc Cashrw;
   record DefCashBlock DefCashRec;
   Integer nwn;
+  record RestPMBlock RPMb;
+  row RestPMBlock RPMbw;
+  Integer i,rwcnt;
+  Boolean testf;
+  vector val vrowstpcnt;
+  record RcVc RepSpec;
 
-  BlockLoad(DefCashRec);
-  RecordNew(Cashr);
-  Cashr.Event = 0;
-  ClearRow(Cashr,Cashrw,1);
-  Cashrw.PMCode = DefCashRec.DefCashPayMode;
-  MatRowPut(Cashr,0,Cashrw);
-  nwn = OpenWindow("CashSimpleOutDClass",1,0,"","",Cashr);
+  BlockLoad(RPMb);
+  rwcnt = MatRowCnt(RPMb);
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowGet(RPMb,i,RPMbw);
+    vrowstpcnt[RPMbw.rowstp] = vrowstpcnt[RPMbw.rowstp] + 1;
+  end;
+  if ((vrowstpcnt[kInvoiceRowTypeCashPayment]+vrowstpcnt[kInvoiceRowTypeGiftVoucherPayment]+vrowstpcnt[kInvoiceRowTypeChequePayment]+vrowstpcnt[kInvoiceRowTypeLoyaltyPointsPayment])==1) then begin
+    testf = true;
+  end;
+  if (testf) then begin
+    RecordClear(RepSpec);
+    nwn = OpenWindow("CashOneModeOutOClass",1,0,"","",RepSpec);
+  end else begin
+    BlockLoad(DefCashRec);  
+    RecordNew(Cashr);
+    Cashr.Event = 0;
+    ClearRow(Cashr,Cashrw,1);
+    Cashrw.PMCode = DefCashRec.DefCashPayMode;
+    MatRowPut(Cashr,0,Cashrw);
+    nwn = OpenWindow("CashSimpleOutDClass",1,0,"","",Cashr);
+    WindowFieldGoto(nwn,Cashr,0,"Amount",true);
+  end;
   return;
 end;
 
@@ -235,8 +389,8 @@ begin
   Time t;
   val bal,accsales;
 
-  BlockLoad(LocalMachineRec);
-  BlockLoad(CDb);
+  BlockLoad(LocalMachineRec); 
+  BlockLoad(CDb); 
   ReportDefaults(RepSpec,"CashupRClass");
   if (CDb.StartFromLastPOSBal!=0) then begin
     d = CurrentDate;
@@ -287,7 +441,7 @@ begin
   val bal,accsales;
 
   BlockLoad(LocalMachineRec);
-  BlockLoad(CDb);
+  BlockLoad(CDb); 
   ReportDefaults(RepSpec,"CashupRClass");
   if (CDb.StartFromLastPOSBal!=0) then begin
     d = CurrentDate;
@@ -329,9 +483,9 @@ begin
   Date d;
   Time t;
   val bal,accsales;
-
+  
   BlockLoad(LocalMachineRec);
-  BlockLoad(CDb);
+  BlockLoad(CDb); 
   ReportDefaults(RepSpec,"CashupRClass");
   d = CurrentDate;
   t = CurrentTime;
@@ -380,13 +534,13 @@ begin
   Date d;
   Time t;
   val bal,accsales;
-
+  
   BlockLoad(CDb);
   GetWindowRecord(CurWindow,POSBalancer);
   d = POSBalancer.TransDate;
   t = AddMinutes(POSBalancer.TransTime,-1);
   FindTimeOfLastPOSBalance(d,t,POSBalancer.MachineName,POSBalancer.Drawer,bal,accsales);
-  BlockLoad(LocalMachineRec);
+  BlockLoad(LocalMachineRec); 
   ReportDefaults(RepSpec,"CashupRClass");
   RepSpec.sStartDate = d;
   RepSpec.sStartTime = t;

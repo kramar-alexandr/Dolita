@@ -1,3 +1,10 @@
+remote procedure RemoteFindAndFillMaskVAR(string,var string,var string,var Array string,var Array string);
+external procedure RemoveInvalidVARItemsIVCashDClass(integer);
+external procedure RemoveInvalidVARItemsNPTSIVCashDClass(integer);
+remote function Boolean GetFirstItem(var string,var record INVc);
+external function boolean UpdateExistingVarietyRowsf();
+external function Boolean FindStringInString(string,string);
+external function Integer CntVarietyTheCodes(Integer,var Array string);
 external procedure IVDClass_RefreshStringList(Integer,record IVVc);
 external procedure WindowFieldGotoForTouchScreen(Integer,Integer,string,Boolean);
 external function string 255 FindPOSCommandText(Integer);
@@ -18,11 +25,11 @@ remote function Boolean MATVARINSClassOnOKWindowPaste(var string,var string,var 
                  var Array string,var Array string);
 remote procedure PasteRowsToPOQTRemote(var record POQTVc,var Integer,array string,array val,Integer);
 remote procedure PasteRowsToIntORRemote(var record IntORVc,var Integer,array string,array val,Integer);
-remote procedure EBS_PasteRowsToPORemote(var record POVc,var Integer,array string,array val,val,date,Integer);
+remote procedure PasteRowsToPORemote(var record POVc,var Integer,array string,array val,Integer);
 remote procedure PasteRowsToPURemote(var record PUVc,var Integer,array string,array val,Integer);
 remote procedure PasteRowsToQTRemote(var record QTVc,var Integer,array string,array val,Integer);
 remote procedure PasteRowsToORRemote(var record ORVc,var Integer,array string,array val,Integer);
-remote procedure PasteRowsToIVCashRemote(var record IVCashVc,var Integer,array string,array val,Integer);
+remote procedure PasteRowsToIVCashRemote2(var record IVCashVc,var Integer,array string,array val,Integer,var Integer);
 remote procedure PasteRowsToIVRemote(var record IVVc,var Integer,array string,array val,Integer,Boolean);
 remote procedure PasteRowsToStockMovRemote(var record StockMovVc,var Integer,array string,array val,Integer,var array string);
 remote procedure PasteRowsToStockTakeRemote(var record StockTakeVc,var Integer,array string,array val,Integer);
@@ -30,6 +37,7 @@ external function Boolean TouchScreenLook();
 remote function Boolean FindItemVAR(string,var string,var string,var string,var string);
 external procedure StripEndingSpaces(var string);
 external procedure DisplayStrArray(array string);
+remote procedure EBS_PasteRowsToPORemote(var record POVc,var Integer,array string,array val,val,date,Integer);
 external outer procedure DOLOpenCrossSalesWindow(record IVCashVc,string ,string, integer);
 external outer procedure DOLPasteRowsToNPTSVarEnqWClass(Integer,array string,array val,Integer);
 external outer procedure DOLPasteRowsToNPTSInvValWClass(Integer,array string,array val,Integer);
@@ -40,14 +48,14 @@ global
 procedure PasteFromWn(Integer wn,string paststr)
 begin
   Integer mwn;
-
+  
   mwn = MotherWindow(wn);
   CloseWindow(wn);
   if (mwn!=0) then begin
     PasteString(mwn,paststr);
     if (GetWindowFileName(mwn)=="RestAccVc") begin
       record RestAccVc RestAccr;
-
+      
       switch (WindowActiveField(mwn)) begin
         case "PayDeal2":
           WindowFieldGoto(mwn,RestAccr,-1,"Paid",true);
@@ -69,7 +77,7 @@ begin
   string 255 tstr;
   Integer Sel;
   Integer i,slen;
-
+  
   tstr = "";
   Sel = SelectedListLine(wn);
   if (Sel>-1) then begin
@@ -97,6 +105,21 @@ L20StringFromSysList:;
   return;
 end;
 
+
+global
+procedure PasteFromSysList2(Integer wn,Integer cutlen)
+begin
+  Integer Sel;
+
+  Sel = SelectedListLine(wn);
+  if (Sel>-1) then begin
+      PasteFromWn(wn,GetListTag(wn,Sel));
+  end else begin
+    CloseWindow(wn);
+  end;
+  return;
+end;
+
 global
 procedure PasteFromSysList(Integer wn,Integer cutlen)
 begin
@@ -120,9 +143,8 @@ end;
 
 procedure PasteFromVARINS(Integer wn,Integer cutlen)
 begin
-  string 255 tstr;
-  string 200 varsubset;
-  string 60 sepstr,msk,mskrep;
+  string 255 tstr,tstr2;
+  string 60 sepstr,msk;
   record RcVc RepSpec;
   Integer mwn;
   record MinPerLocVc MPLr;
@@ -130,72 +152,88 @@ begin
   record PIVc PIr;
   record PLVc PLr;
   record INVc INr;
-  Boolean pastedfromwnf;
+  Boolean pastedfromwnf,testvarf,firstf;
+  Array string 20 maskvar;
+  Array string 2 maskvarsz;
 
   DeselectWindow(wn,false);
   GetWindowRecord(wn,RepSpec);
   tstr = RepSpec.AccStr;
-  if (FindItemVAR(tstr,sepstr,msk,mskrep,varsubset)==false) then begin
-    if (StringToInt(sepstr)>0) then begin
-      sepstr = "";
-    end;
-  end;
+  
+  RemoteFindAndFillMaskVAR(tstr,sepstr,msk,maskvar,maskvarsz);
+
+  if (StringToInt(sepstr)>0) then begin
+    sepstr = "";
+  end else begin
+    sepstr = ".";
+  end; 
+  tstr = tstr & sepstr;
   if (nonblank(RepSpec.f1)) then begin
-    if (sepstr==".") then begin
-      if (nonblank(tstr)) then begin
-        tstr = tstr & sepstr;
+    tstr2 = "";
+    if (nonblank((maskvar[1]))) then begin
+      if (maskvarsz[1]==".") then begin
+        tstr2 = maskvarsz[1];
       end;
-    end;
-    tstr = tstr & RepSpec.f1;
+      tstr = tstr & RepSpec.f1 & tstr2;
+    end; 
   end;
   if (nonblank(RepSpec.f2)) then begin
-    if (sepstr==".") then begin
-      if (nonblank(tstr)) then begin
-        tstr = tstr & sepstr;
+    tstr2 = "";
+    if (nonblank((maskvar[2]))) then begin
+      if (maskvarsz[2]==".") then begin
+        tstr2 = maskvarsz[2];
       end;
-    end;
-    tstr = tstr & RepSpec.f2;
+      tstr = tstr & RepSpec.f2 & tstr2;
+    end; 
   end;
   if (nonblank(RepSpec.f3)) then begin
-    if (sepstr==".") then begin
-      if (nonblank(tstr)) then begin
-        tstr = tstr & sepstr;
+    tstr2 = "";
+    if (nonblank((maskvar[3]))) then begin
+      if (maskvarsz[3]==".") then begin
+        tstr2 = maskvarsz[3];
       end;
+      tstr = tstr & RepSpec.f3 & tstr2;
     end;
-    tstr = tstr & RepSpec.f3;
   end;
   if (nonblank(RepSpec.f4)) then begin
-    if (sepstr==".") then begin
-      if (nonblank(tstr)) then begin
-        tstr = tstr & sepstr;
+    tstr2 = "";
+    if (nonblank((maskvar[4]))) then begin
+      if (maskvarsz[4]==".") then begin
+        tstr2 = maskvarsz[4];
       end;
+      tstr = tstr & RepSpec.f4 & tstr2;
     end;
-    tstr = tstr & RepSpec.f4;
   end;
   if (nonblank(RepSpec.f5)) then begin
-    if (sepstr==".") then begin
-      if (nonblank(tstr)) then begin
-        tstr = tstr & sepstr;
+    tstr2 = "";
+    if (nonblank((maskvar[5]))) then begin
+      if (maskvarsz[5]==".") then begin
+        if (nonblank(tstr)) then begin
+          tstr2 = maskvarsz[5] & tstr;
+        end;
       end;
+      tstr = tstr & RepSpec.f5 & tstr2;
     end;
-    tstr = tstr & RepSpec.f5;
   end;
-  mwn = MotherWindow(wn);
+  if (Right(tstr,1)==".") then begin 
+    tstr = Left(tstr,len(tstr)-1);
+  end;
+  mwn = MotherWindow(wn);  
   if (mwn>=0) then begin
-    if (GetWindowClass(mwn)=="PLDClass") then begin
+    if (GetWindowClass(mwn)=="PLDClass") then begin 
       CloseWindow(wn);
       DeselectWindow(mwn,false);
       GetWindowRecord(mwn,PLr);
       PLr.ArtCode = tstr;
       if (ReadFirstItem(PLr.ArtCode,INr,true,true)) then begin
-         PLr.Comment = INr.Name;
-      end;
+         PLr.Comment = INr.Name;   
+      end;   
       PutWindowRecord(mwn,PLr);
       WindowFieldGoto(mwn,PLr,-1,"PLCode",true);
       pastedfromwnf = true;
     end;
 
-    if (GetWindowClass(mwn)=="MinPerLocDClass") then begin
+    if (GetWindowClass(mwn)=="MinPerLocDClass") then begin 
       CloseWindow(wn);
       DeselectWindow(mwn,false);
       GetWindowRecord(mwn,MPLr);
@@ -210,8 +248,8 @@ begin
       GetWindowRecord(mwn,Barcoder);
       Barcoder.Itemcode = tstr;
       if (ReadFirstItem(Barcoder.Itemcode,INr,true,true)) then begin
-         Barcoder.Comment = INr.Name;
-      end;
+         Barcoder.Comment = INr.Name;   
+      end;   
       PutWindowRecord(mwn,Barcoder);
       pastedfromwnf = true;
     end;
@@ -221,8 +259,8 @@ begin
       GetWindowRecord(mwn,PIr);
       PIr.ItemCode = tstr;
       if (ReadFirstItem(PIr.ItemCode,INr,true,true)) then begin
-         PIr.Comment = INr.Name;
-      end;
+         PIr.Comment = INr.Name;   
+      end;   
       PutWindowRecord(mwn,PIr);
       pastedfromwnf = true;
     end;
@@ -311,14 +349,16 @@ global
 function Boolean ContactSClassOnOKWindow(Integer wn)
 begin
   Integer mwn;
-
+  string 255 tstr;
+  
   mwn = MotherWindow(wn);
   switch (GetWindowFileName(mwn)) begin
-    case "EmailRecipVc": PasteFromSysList(wn,20);
+    case "EmailRecipVc": 
+//  tstr = GetListTag(wn,SelectedDataListLine(wn));
+      PasteFromSysList2(wn,60);
     otherwise
-      PasteFromSysList(wn,60);
+      PasteFromSysList2(wn,60);
   end;
-
   ContactSClassOnOKWindow = false;
   return;
 end;
@@ -400,10 +440,10 @@ procedure SwitchToIndexS()
 BEGIN
   Integer wn,mwn,wn2;
   record CUVc CUr; //??
-
+  
   wn = CurWindow;
   mwn = MotherWindow(wn);
-  CloseWindow(wn);
+  CloseWindow(wn);      
   wn2 = OpenWindow("IndexSClass",0,mwn,"","",CUr);
   RETURN;
 END;
@@ -413,10 +453,10 @@ procedure SwitchToSortByS()
 BEGIN
   Integer wn,mwn,wn2;
   record CUVc CUr; //??
-
+  
   wn = CurWindow;
   mwn = MotherWindow(wn);
-  CloseWindow(wn);
+  CloseWindow(wn);      
   wn2 = OpenWindow("SortBySClass",0,mwn,"","",CUr);
   RETURN;
 END;
@@ -428,11 +468,13 @@ begin
   Integer line;
   string 255 tstr;
   record IVCashVc IVCashr;
+  longint pos;
+  string 255 tstrserial;
 
   mwn = MotherWindow(wn);
   switch (GetWindowClass(mwn)) begin
     case "NPTSIVCashDClass":
-      tstr = StringFromSysList(wn,30);
+      tstr = StringFromSysList(wn,200);
       tstr = FindPOSCommandText(kPOSCommandsTypeSerialNr) & tstr;
       DeselectWindow(mwn,false);
       PutWindowString(mwn,"ivcashcommand",tstr);
@@ -441,7 +483,10 @@ begin
       WindowFieldGotoForTouchScreen(mwn,-1,"ivcashcommand",false);
       KeyPadEnter(mwn);
     otherwise
-      PasteFromSysList(wn,30);
+      tstr = StringFromSysList(wn,200);
+      pos = 0;
+      GetNextSubstring(tstr,pos," ",tstrserial);
+      PasteFromSysList(wn,len(tstrserial));
   end;
   SerialNrSClassOnOKWindow = false;
   return;
@@ -492,6 +537,14 @@ function Boolean QuoteClassSClassOnOKWindow(Integer wn)
 begin
   PasteFromSysList(wn,5);
   QuoteClassSClassOnOKWindow = false;
+  return;
+end;
+
+global
+function Boolean OYClassSClassOnOKWindow(Integer wn)
+begin
+  PasteFromSysList(wn,5);
+  OYClassSClassOnOKWindow = false;
   return;
 end;
 
@@ -601,6 +654,23 @@ begin
 end;
 
 global
+function Boolean YodleeAccountIdSClassOnOKWindow(Integer wn)
+begin
+  PasteFromWn(wn,GetListTag(wn,SelectedListLine(wn)));
+  YodleeAccountIdSClassOnOKWindow = false;
+  return;
+end;
+
+global
+function Boolean PMBSClassOnOKWindow(Integer wn)
+begin
+//  PasteFromSysList(wn,2);
+  PasteFromWn(wn,GetListTag(wn,SelectedListLine(wn)));
+  PMBSClassOnOKWindow = false;
+  return;
+end;
+
+global
 function Boolean WHTaxSClassOnOKWindow(Integer wn)
 begin
   PasteFromSysList(wn,2);
@@ -613,6 +683,14 @@ function Boolean RestPMSClassOnOKWindow(Integer wn)
 begin
   PasteFromSysList(wn,2);
   RestPMSClassOnOKWindow = false;
+  return;
+end;
+
+global
+function Boolean NPTSPagesSClassOnOKWindow(Integer wn)
+begin
+  PasteFromSysList(wn,-1);
+  NPTSPagesSClassOnOKWindow = false;
   return;
 end;
 
@@ -669,6 +747,22 @@ function Boolean VATCodeSClassOnOKWindow(Integer wn)
 begin
   PasteFromSysList(wn,-2);
   VATCodeSClassOnOKWindow = false;
+  return;
+end;
+
+global
+function Boolean ChemicalTaxCodeSClassOnOKWindow(Integer wn)
+begin
+  PasteFromSysList(wn,-2);
+  ChemicalTaxCodeSClassOnOKWindow = false;
+  return;
+end;
+
+global
+function Boolean TaxExemptionsSClassOnOKWindow(Integer wn)
+begin
+  PasteFromSysList(wn,-2);
+  TaxExemptionsSClassOnOKWindow = false;
   return;
 end;
 
@@ -792,7 +886,7 @@ begin
   record ResVc Resr;
   record RestAccVc RestAccr;
   Integer mwn;
-
+  
   res = true;
   mwn = MotherWindow(wn);
   if (GetWindowFileName(mwn)=="RestAccVc") begin
@@ -839,8 +933,8 @@ procedure PasteRowsToPU(Integer wn,Integer currow,array string incode,array val 
 begin
   record PUVc PUr;
 
-  GetWindowRecord(wn,PUr);
   DeselectWindow(wn,false);
+  GetWindowRecord(wn,PUr);
   PasteRowsToPURemote(PUr,currow,incode,qty,pos);
   PutWindowRecord(wn,PUr);
   WindowFieldGoto(wn,PUr,currow,"ArtCode",true);
@@ -851,21 +945,21 @@ procedure PasteRowsToOR(Integer wn,Integer currow,array string incode,array val 
 begin
   record ORVc ORr;
 
-  GetWindowRecord(wn,ORr);
   DeselectWindow(wn,false);
+  GetWindowRecord(wn,ORr);
   PasteRowsToORRemote(ORr,currow,incode,qty,pos);
   PutWindowRecord(wn,ORr);
   WindowFieldGoto(wn,ORr,currow,"ArtCode",true);
   return;
 end;
 
-procedure PasteRowsToIVCash(Integer wn,Integer currow,array string incode,array val qty,Integer pos)
+procedure PasteRowsToIVCash(Integer wn,Integer currow,array string incode,array val qty,Integer pos,var Integer sernrf)
 begin
   record IVCashVc IVCashr;
 
-  GetWindowRecord(wn,IVCashr);
   DeselectWindow(wn,false);
-  PasteRowsToIVCashRemote(IVCashr,currow,incode,qty,pos);
+  GetWindowRecord(wn,IVCashr);
+  PasteRowsToIVCashRemote2(IVCashr,currow,incode,qty,pos,sernrf);
   PutWindowRecord(wn,IVCashr);
   WindowFieldGoto(wn,IVCashr,currow,"ArtCode",true);
   return;
@@ -875,9 +969,9 @@ procedure PasteRowsToStockMov(Integer wn,Integer currow,array string incode,arra
 begin
   record StockMovVc StockMovr;
   array string 255 aWarning;
-
-  GetWindowRecord(wn,StockMovr);
+  
   DeselectWindow(wn,false);
+  GetWindowRecord(wn,StockMovr);
   PasteRowsToStockMovRemote(StockMovr,currow,incode,qty,pos,aWarning);
   DisplayStrArray(aWarning);
   PutWindowRecord(wn,StockMovr);
@@ -889,8 +983,8 @@ procedure PasteRowsToStockTake(Integer wn,Integer currow,array string incode,arr
 begin
   record StockTakeVc StockTaker;
 
-  GetWindowRecord(wn,StockTaker);
   DeselectWindow(wn,false);
+  GetWindowRecord(wn,StockTaker);
   PasteRowsToStockTakeRemote(StockTaker,currow,incode,qty,pos);
   PutWindowRecord(wn,StockTaker);
   WindowFieldGoto(wn,StockTaker,currow,"ArtCode",true);
@@ -901,8 +995,8 @@ procedure PasteRowsToIntOR(Integer wn,Integer currow,array string incode,array v
 begin
   record IntORVc IntORr;
 
-  GetWindowRecord(wn,IntORr);
   DeselectWindow(wn,false);
+  GetWindowRecord(wn,IntORr);
   PasteRowsToIntORRemote(IntORr,currow,incode,qty,pos);
   PutWindowRecord(wn,IntORr);
   WindowFieldGoto(wn,IntORr,currow,"ArtCode",true);
@@ -913,8 +1007,8 @@ procedure PasteRowsToProd(Integer wn,Integer currow,string fieldname,array strin
 begin
   record ProdVc Prodr;
 
-  GetWindowRecord(wn,Prodr);
   DeselectWindow(wn,false);
+  GetWindowRecord(wn,Prodr);
   PasteRowsToProdRemote(Prodr,currow,fieldname,incode,qty,pos);
   PutWindowRecord(wn,Prodr);
   WindowFieldGoto(wn,Prodr,currow,"Item",true);
@@ -925,8 +1019,8 @@ procedure PasteRowsToProdOperation(Integer wn,Integer currow,string fieldname,ar
 begin
   record ProdOperationVc ProdOpr;
 
-  GetWindowRecord(wn,ProdOpr);
   DeselectWindow(wn,false);
+  GetWindowRecord(wn,ProdOpr);
   PasteRowsToProdOperationRemote(ProdOpr,currow,fieldname,incode,qty,pos);
   PutWindowRecord(wn,ProdOpr);
   WindowFieldGoto(wn,ProdOpr,currow,"Item",true);
@@ -937,8 +1031,8 @@ procedure PasteRowsToRec(Integer wn,Integer currow,string fieldname,array string
 begin
   record RecVc Recr;
 
-  GetWindowRecord(wn,Recr);
   DeselectWindow(wn,false);
+  GetWindowRecord(wn,Recr);
   PasteRowsToRecRemote(Recr,currow,fieldname,incode,qty,pos);
   PutWindowRecord(wn,Recr);
   WindowFieldGoto(wn,Recr,currow,"Item",true);
@@ -949,8 +1043,8 @@ procedure PasteRowsToSD(Integer wn,Integer currow,array string incode,array val 
 begin
   record SDVc SDr;
 
-  GetWindowRecord(wn,SDr);
   DeselectWindow(wn,false);
+  GetWindowRecord(wn,SDr);
   PasteRowsToSDRemote(SDr,currow,incode,qty,pos);
   PutWindowRecord(wn,SDr);
   WindowFieldGoto(wn,SDr,currow,"ArtCode",true);
@@ -961,8 +1055,8 @@ procedure PasteRowsToSR(Integer wn,Integer currow,array string incode,array val 
 begin
   record SRVc SRr;
 
-  GetWindowRecord(wn,SRr);
   DeselectWindow(wn,false);
+  GetWindowRecord(wn,SRr);
   PasteRowsToSRRemote(SRr,currow,incode,qty,pos);
   PutWindowRecord(wn,SRr);
   WindowFieldGoto(wn,SRr,currow,"ArtCode",true);
@@ -973,6 +1067,7 @@ procedure PasteRowsToPO(Integer wn,Integer currow,array string incode,array val 
 begin
   record POVc POr;
 
+  DeselectWindow(wn,false);
   GetWindowRecord(wn,POr);
   DeselectWindow(wn,false);
   EBS_PasteRowsToPORemote(POr,currow,incode,qty,price,plandeldate,pos); // EVS: DOL-1
@@ -985,23 +1080,27 @@ procedure PasteRowsToPOQT(Integer wn,Integer currow,array string incode,array va
 begin
   record POQTVc POQTr;
 
-  GetWindowRecord(wn,POQTr);
   DeselectWindow(wn,false);
+  GetWindowRecord(wn,POQTr);
   PasteRowsToPOQTRemote(POQTr,currow,incode,qty,pos);
   PutWindowRecord(wn,POQTr);
   WindowFieldGoto(wn,POQTr,currow,"ArtCode",true);
   return;
 end;
 
-procedure PasteRowsToIV(Integer wn,Integer currow,array string incode,array val qty,Integer pos)
+procedure PasteRowsToIV(Integer wn,Boolean tslf,Integer currow,array string incode,array val qty,Integer pos)
 begin
   record IVVc IVr;
-
-  GetWindowRecord(wn,IVr);
+  
   DeselectWindow(wn,false);
-  PasteRowsToIVRemote(IVr,currow,incode,qty,pos,TouchScreenLook);
+  GetWindowRecord(wn,IVr);
+  PasteRowsToIVRemote(IVr,currow,incode,qty,pos,tslf);
   PutWindowRecord(wn,IVr);
-  WindowFieldGoto(wn,IVr,currow,"ArtCode",true);
+  if (tslf) then begin
+    WindowFieldGoto(wn,IVr,-1,"ivcashcommand",true);
+  end else begin
+    WindowFieldGoto(wn,IVr,currow,"ArtCode",true);
+  end;
   return;
 end;
 
@@ -1009,8 +1108,8 @@ procedure PasteRowsToQT(Integer wn,Integer currow,array string incode,array val 
 begin
   record QTVc QTr;
 
-  GetWindowRecord(wn,QTr);
   DeselectWindow(wn,false);
+  GetWindowRecord(wn,QTr);
   PasteRowsToQTRemote(QTr,currow,incode,qty,pos);
   PutWindowRecord(wn,QTr);
   WindowFieldGoto(wn,QTr,currow,"ArtCode",true);
@@ -1141,9 +1240,8 @@ BEGIN
       case "Z": BuildVarString(tstr,VarMErw.Z,varsx[26 + modifier],varsy[rownr+1],maskvar2,maskvarsz2,maskvar,sepstr,incode,qty,pos,false);
     end;
   end;
-
   if (nonblank(incode[0])) then begin
-    SendArtStat(incode[0],location,"",BlankVal,BlankVal,BlankVal,CurrentDate,0);
+    SendArtStat(incode[0],location,"",BlankVal,BlankVal,BlankVal,CurrentDate,0);  
   end;
   MATVARINSClassBeforeEditField = res;
   RETURN;
@@ -1153,9 +1251,18 @@ global
 function Boolean MATVARINSClassOnClose(Integer wn,Integer wn2)
 begin
   record VarMatrxEntryVc VarMEr;
-  string 255 location;
+  string 255 location,wclass;
   Date dt;
+  integer mwn;
 
+  if (UpdateExistingVarietyRowsf==false) then begin 
+    mwn = MotherWindow(wn);
+    wclass = GetWindowClass(mwn);
+    switch (wclass) begin
+      case "NPTSIVCashDClass": RemoveInvalidVARItemsNPTSIVCashDClass(mwn);
+      case "IVCashDClass": RemoveInvalidVARItemsIVCashDClass(mwn);
+    end;  
+  end;
   GetWindowRecord(wn,VarMEr);
   FindMotherWindowLocation(wn,location,dt);
   if (nonblank(VarMEr.ItemCode)) then begin
@@ -1165,36 +1272,36 @@ begin
   return;
 end;
 
-function boolean DOLVarMatEmpty(record VarMatrxEntryVc VarMatrxEntryr)
+function boolean DOLVarMatEmpty(record VarMatrxEntryVc VMEr)
 begin
-  row VarMatrxEntryVc VarMatrxEntryrw;
+  row VarMatrxEntryVc VMErw;
   boolean res;
-  matrowget(VarMatrxEntryr,0,VarMatrxEntryrw);
-  if (VarMatrxEntryrw.A == blankval and
-    VarMatrxEntryrw.B == blankval and
-    VarMatrxEntryrw.C == blankval and
-    VarMatrxEntryrw.D == blankval and
-    VarMatrxEntryrw.E == blankval and
-    VarMatrxEntryrw.F == blankval and
-    VarMatrxEntryrw.G == blankval and
-    VarMatrxEntryrw.H == blankval and
-    VarMatrxEntryrw.I == blankval and
-    VarMatrxEntryrw.J == blankval and
-    VarMatrxEntryrw.K == blankval and
-    VarMatrxEntryrw.L == blankval and
-    VarMatrxEntryrw.M == blankval and
-    VarMatrxEntryrw.N == blankval and
-    VarMatrxEntryrw.O == blankval and
-    VarMatrxEntryrw.P == blankval and
-    VarMatrxEntryrw.Q == blankval and
-    VarMatrxEntryrw.R == blankval and
-    VarMatrxEntryrw.S == blankval and
-    VarMatrxEntryrw.T == blankval and
-    VarMatrxEntryrw.U == blankval and
-    VarMatrxEntryrw.V == blankval and
-    VarMatrxEntryrw.W == blankval and
-    VarMatrxEntryrw.X == blankval and
-    VarMatrxEntryrw.Y == blankval) then begin
+  matrowget(VMEr,0,VMErw);
+  if (VMErw.A == blankval and
+    VMErw.B == blankval and
+    VMErw.C == blankval and
+    VMErw.D == blankval and
+    VMErw.E == blankval and
+    VMErw.F == blankval and
+    VMErw.G == blankval and
+    VMErw.H == blankval and
+    VMErw.I == blankval and
+    VMErw.J == blankval and
+    VMErw.K == blankval and
+    VMErw.L == blankval and
+    VMErw.M == blankval and
+    VMErw.N == blankval and
+    VMErw.O == blankval and
+    VMErw.P == blankval and
+    VMErw.Q == blankval and
+    VMErw.R == blankval and
+    VMErw.S == blankval and
+    VMErw.T == blankval and
+    VMErw.U == blankval and
+    VMErw.V == blankval and
+    VMErw.W == blankval and
+    VMErw.X == blankval and
+    VMErw.Y == blankval) then begin
     res = true;
   end;
 
@@ -1205,20 +1312,33 @@ end;
 global
 function Boolean MATVARINSClassOnOKWindow(Integer wn)
 begin
-  record IVCashVc IVCashr;
-  record IVVc IVr;
   record VarMatrxEntryVc VarMEr;
-  record INVc INr;
-  row IVCashVc IVCashrw;
   row VarMatrxEntryVc VarMErw;
-  Integer j,pos,mwn,i,rwcnt,pg,modifier,l;
-  val price;
-  date plandeldate;
-  string 255 tstr,item,varsubset,sepstr,msk,mskrep;
+  Integer i,rwcnt,mwn,nwn;
+  string 255 tstr;
+  string 200 varsubset;
+  string 60 sepstr,msk,mskrep;
+  Array string 20 maskvar;
+  Array string 10 maskvarsz;
+  Array string 20 maskvar2;
+  Array string 10 maskvarsz2;
+  Array string 20 incode;
   Array val qty;
-  Array string 20 maskvar,maskvarsz,maskvar2,maskvarsz2,incode,varsx,varsy;
+  Array string 20 varsx;
+  Array string 20 varsy;
+  Integer j,pos,pg,modifier,l;//EBS
+  record IVCashVc IVCashr;
+  row IVCashVc IVCashrw;//EBS
+  record IVVc IVr;
+  Integer sernrf;
+  record RcVc RepSpec;
   vector string 255 vecPageVals;
+  record INVc INr;
+  val price;//EBS
+  date plandeldate;//EBS
+	string 255 item;
 
+  
   mwn = MotherWindow(wn);
   GetWindowRecord(wn,VarMEr);
   // EVS: DOL-57
@@ -1283,13 +1403,14 @@ begin
           PasteRowsToOR(mwn,GetWindowCurRow(mwn),incode,qty,pos);
         case "IVDClass":
           if (TouchScreenLook) then begin
+            DeselectWindow(mwn,false);
             GetWindowRecord(mwn,IVr);
-            PasteRowsToIV(mwn,MatRowCnt(IVr)-1,incode,qty,pos);
+            PasteRowsToIV(mwn,TouchScreenLook,MatRowCnt(IVr)-1,incode,qty,pos);
             GetWindowRecord(mwn,IVr);
             IVDClass_RefreshStringList(mwn,IVr);
             SetWindowNameArg(mwn,"");
           end else begin
-            PasteRowsToIV(mwn,GetWindowCurRow(mwn),incode,qty,pos);
+            PasteRowsToIV(mwn,false,GetWindowCurRow(mwn),incode,qty,pos);
           end;
         case "QTDClass":
           PasteRowsToQT(mwn,GetWindowCurRow(mwn),incode,qty,pos);
@@ -1316,11 +1437,19 @@ begin
         case "StockTakeDClass":
           PasteRowsToStockTake(mwn,GetWindowCurRow(mwn),incode,qty,pos);
         case "IVCashDClass":
-          PasteRowsToIVCash(mwn,GetWindowCurRow(mwn),incode,qty,pos);
+          PasteRowsToIVCash(mwn,GetWindowCurRow(mwn),incode,qty,pos,sernrf);
         case "NPTSIVCashDClass":
           GetWindowRecord(mwn,IVCashr);
-          PasteRowsToIVCash(mwn,MatRowCnt(IVCashr)-1,incode,qty,pos);
-          GetWindowRecord(mwn,IVCashr);
+          PasteRowsToIVCash(mwn,MatRowCnt(IVCashr)-1,incode,qty,pos,sernrf);
+          if (sernrf==1 or sernrf==2) then begin
+            RepSpec.long1 = MatRowCnt(IVCashr)-1;
+//            ReOpenWindow(wn,"SerialNoScanNPTSSClass",0,mwn,"","",RepSpec);//doesnt work on windows
+            nwn = OpenWindow("SerialNoScanNPTSSClass",0,mwn,"","",RepSpec);
+            RepSpec.long1 = MatRowCnt(IVCashr)-1;
+            PutWindowRecord(nwn,RepSpec);
+            SelectWindow(nwn);
+          end;
+          GetWindowRecord(mwn,IVCashr);          
           IVCashDClass_RefreshStringList(mwn,IVCashr);
           SetWindowNameArg(mwn,"");
           // EVS: DOL-2
@@ -1333,7 +1462,7 @@ begin
           // :EVS
           // IVCashSumupSoftEditFields(mwn,IVCashr);
         case "POSIVDClass":
-          PasteRowsToIVCash(mwn,GetWindowCurRow(mwn),incode,qty,pos);
+          PasteRowsToIVCash(mwn,GetWindowCurRow(mwn),incode,qty,pos,sernrf);
         case "NPTSVarEnqWClass": // EVS: DOL-13
           DOLPasteRowsToNPTSVarEnqWClass(mwn,incode,qty,pos);
         case "NPTSInvValWClass": // EVS: DOL-49
@@ -1354,8 +1483,8 @@ begin
     // :EVS
     end;
   end;
-
-  // EVS: DOL-104
+	
+	// EVS: DOL-104
   for (l = 1; l <= 20; l = l + 1) begin
     if (l != pg) then begin
       DOLSetPageValuesOnRecordForNewPage(VarMEr,vecPageVals["pgvals" & l]);
@@ -1407,7 +1536,7 @@ begin
             case "ORDClass":
               PasteRowsToOR(mwn,GetWindowCurRow(mwn),incode,qty,pos);
             case "IVDClass":
-              PasteRowsToIV(mwn,GetWindowCurRow(mwn),incode,qty,pos);
+              PasteRowsToIV(mwn,false,GetWindowCurRow(mwn),incode,qty,pos);
             case "QTDClass":
               PasteRowsToQT(mwn,GetWindowCurRow(mwn),incode,qty,pos);
             case "PUDClass":
@@ -1433,10 +1562,10 @@ begin
             case "StockTakeDClass":
               PasteRowsToStockTake(mwn,GetWindowCurRow(mwn),incode,qty,pos);
             case "IVCashDClass":
-              PasteRowsToIVCash(mwn,GetWindowCurRow(mwn),incode,qty,pos);
+              PasteRowsToIVCash(mwn,GetWindowCurRow(mwn),incode,qty,pos,sernrf);
             case "NPTSIVCashDClass":
               GetWindowRecord(mwn,IVCashr);
-              PasteRowsToIVCash(mwn,MatRowCnt(IVCashr)-1,incode,qty,pos);
+              PasteRowsToIVCash(mwn,MatRowCnt(IVCashr)-1,incode,qty,pos,sernrf);
               GetWindowRecord(mwn,IVCashr);
               IVCashDClass_RefreshStringList(mwn,IVCashr);
               SetWindowNameArg(mwn,"");
@@ -1450,7 +1579,7 @@ begin
               // :EVS
               // IVCashSumupSoftEditFields(mwn,IVCashr);
             case "POSIVDClass":
-              PasteRowsToIVCash(mwn,GetWindowCurRow(mwn),incode,qty,pos);
+              PasteRowsToIVCash(mwn,GetWindowCurRow(mwn),incode,qty,pos,sernrf);
             case "NPTSVarEnqWClass": // EVS: DOL-13
               DOLPasteRowsToNPTSVarEnqWClass(mwn,incode,qty,pos);
             case "NPTSInvValWClass": // EVS: DOL-49
@@ -1474,16 +1603,76 @@ begin
     end;
   end;
   // :EVS
-
+	
   CloseWindow(wn);
-
   // EVS: DOL-2
   if (nonblank(item)) then begin
     DOLOpenCrossSalesWindow(IVCashr,item,"",mwn);
   end;
   // :EVS
-  LMATVARINSClassOnOKWindow:;
+LMATVARINSClassOnOKWindow:;
   MATVARINSClassOnOKWindow = false;
+  return;
+end;
+
+procedure FillVarMatrxEntryQuantitys(record VarMatrxEntryVc VMEr,Array string avariety,vector val varsq)
+begin
+  row VarMatrxEntryVc VMErw;
+  array string 255 axlabels,aylabels;
+  Integer ai,posx,posy,xcnt,ycnt;
+  string 255 variety;
+
+  xcnt = CntVarietyTheCodes(1,axlabels);
+  ycnt = CntVarietyTheCodes(2,aylabels);
+
+  for (posy=1;posy<=ycnt;posy=posy+1) begin
+    for (posx=1;posx<=xcnt;posx=posx+1) begin
+      variety = "." & axlabels[posx] & "." & aylabels[posy];
+      switch (posx) begin
+        case 1: VMErw.A = varsq[variety];
+        case 2: VMErw.B = varsq[variety];
+        case 3: VMErw.C = varsq[variety];
+        case 4: VMErw.D = varsq[variety];
+        case 5: VMErw.E = varsq[variety];
+        case 6: VMErw.F = varsq[variety];
+        case 7: VMErw.G = varsq[variety];
+        case 8: VMErw.H = varsq[variety];
+        case 9: VMErw.I = varsq[variety];
+        case 10: VMErw.J = varsq[variety];
+        case 11: VMErw.K = varsq[variety];
+        case 12: VMErw.L = varsq[variety];
+        case 13: VMErw.M = varsq[variety];
+        case 14: VMErw.N = varsq[variety];
+        case 15: VMErw.O = varsq[variety];
+        case 16: VMErw.P = varsq[variety];
+        case 17: VMErw.Q = varsq[variety];
+        case 18: VMErw.R = varsq[variety];
+        case 19: VMErw.S = varsq[variety];
+        case 20: VMErw.T = varsq[variety];
+        case 21: VMErw.U = varsq[variety];
+        case 22: VMErw.V = varsq[variety];
+        case 23: VMErw.W = varsq[variety];
+        case 24: VMErw.X = varsq[variety];
+        case 25: VMErw.Y = varsq[variety];
+        case 26: VMErw.Z = varsq[variety];
+      end;
+    end;
+    MatRowPut(VMEr,posy-1,VMErw);
+  end;
+  return;
+end;
+
+procedure AddToVarietyArray(string variety,Array string avariety)
+begin
+  Integer i;
+  
+  for (i=0;i<avariety.length;i=i+1) begin
+    if (variety==avariety[i]) then begin
+      goto LAddToVarietyArray;
+    end;
+  end;
+  avariety[avariety.length] = variety;
+LAddToVarietyArray:;  
   return;
 end;
 
@@ -1502,8 +1691,203 @@ return;
 end;
 // :EVS
 
+procedure FingVarMatrxEntryQuantitys(Integer wn,string wclass,string actfield,string itemcode,var Array string avariety,var vector val varsq)
+begin
+  Integer ri,rwcnt;
+  string 60 variety;
+
+  switch (wclass)  begin
+    case "ORDClass": begin
+      record ORVc ORr;
+      row ORVc ORrw;
+
+      GetWindowRecord(wn,ORr);
+      rwcnt = MatRowCnt(ORr);
+      for (ri=0;ri<rwcnt;ri=ri+1) begin
+        MatRowGet(ORr,ri,ORrw);
+        if (Left(ORrw.ArtCode,len(itemcode))==itemcode) then begin
+          variety = Right(ORrw.ArtCode,len(ORrw.ArtCode)-len(itemcode));
+          varsq[variety] = varsq[variety] + ORrw.Quant;
+          AddToVarietyArray(variety,avariety);
+        end;
+      end;
+    end;
+    case "QTDClass": begin
+      record QTVc QTr;
+      row QTVc QTrw;
+
+      GetWindowRecord(wn,QTr);
+      rwcnt = MatRowCnt(QTr);
+      for (ri=0;ri<rwcnt;ri=ri+1) begin
+        MatRowGet(QTr,ri,QTrw);
+        if (Left(QTrw.ArtCode,len(itemcode))==itemcode) then begin
+          variety = Right(QTrw.ArtCode,len(QTrw.ArtCode)-len(itemcode));
+          varsq[variety] = varsq[variety] + QTrw.Quant;
+          AddToVarietyArray(variety,avariety);
+        end;
+      end;
+    end;
+    case "IVDClass": begin
+      record IVVc IVr;
+      row IVVc IVrw;
+
+      GetWindowRecord(wn,IVr);
+      rwcnt = MatRowCnt(IVr);
+      for (ri=0;ri<rwcnt;ri=ri+1) begin
+        MatRowGet(IVr,ri,IVrw);
+        if (Left(IVrw.ArtCode,len(itemcode))==itemcode) then begin
+          variety = Right(IVrw.ArtCode,len(IVrw.ArtCode)-len(itemcode));
+          varsq[variety] = varsq[variety] + IVrw.Quant;
+          AddToVarietyArray(variety,avariety);
+        end;
+      end;
+    end;
+    case "NPTSIVCashDClass": begin
+      record IVCashVc IVCashr;
+      row IVCashVc IVCashrw;
+
+      GetWindowRecord(wn,IVCashr);
+      rwcnt = MatRowCnt(IVCashr);
+      for (ri=0;ri<rwcnt;ri=ri+1) begin
+        MatRowGet(IVCashr,ri,IVCashrw);
+        if (Left(IVCashrw.ArtCode,len(itemcode))==itemcode) then begin
+          variety = Right(IVCashrw.ArtCode,len(IVCashrw.ArtCode)-len(itemcode));
+          varsq[variety] = varsq[variety] + IVCashrw.Quant;
+          AddToVarietyArray(variety,avariety);
+        end;
+      end;
+    end;    
+    case "IVCashDClass": begin
+      record IVCashVc IVCashr;
+      row IVCashVc IVCashrw;
+
+      GetWindowRecord(wn,IVCashr);
+      rwcnt = MatRowCnt(IVCashr);
+      for (ri=0;ri<rwcnt;ri=ri+1) begin
+        MatRowGet(IVCashr,ri,IVCashrw);
+        if (Left(IVCashrw.ArtCode,len(itemcode))==itemcode) then begin
+          variety = Right(IVCashrw.ArtCode,len(IVCashrw.ArtCode)-len(itemcode));
+          varsq[variety] = varsq[variety] + IVCashrw.Quant;
+          AddToVarietyArray(variety,avariety);
+        end;
+      end;
+    end;
+    case "IntORDClass": begin
+      record IntORVc IntORr;
+      row IntORVc IntORrw;
+
+      GetWindowRecord(wn,IntORr);
+      rwcnt = MatRowCnt(IntORr);
+      for (ri=0;ri<rwcnt;ri=ri+1) begin
+        MatRowGet(IntORr,ri,IntORrw);
+        if (Left(IntORrw.ArtCode,len(itemcode))==itemcode) then begin
+          variety = Right(IntORrw.ArtCode,len(IntORrw.ArtCode)-len(itemcode));
+          varsq[variety] = varsq[variety] + IntORrw.Quant;
+          AddToVarietyArray(variety,avariety);
+        end;
+      end;
+    end;
+    case "POQTDClass": begin
+      record POQTVc POQTr;
+      row POQTVc POQTrw;
+
+      GetWindowRecord(wn,POQTr);
+      rwcnt = MatRowCnt(POQTr);
+      for (ri=0;ri<rwcnt;ri=ri+1) begin
+        MatRowGet(POQTr,ri,POQTrw);
+        if (Left(POQTrw.ArtCode,len(itemcode))==itemcode) then begin
+          variety = Right(POQTrw.ArtCode,len(POQTrw.ArtCode)-len(itemcode));
+          varsq[variety] = varsq[variety] + POQTrw.Quant;
+          AddToVarietyArray(variety,avariety);
+        end;
+      end;
+    end;
+    case "PODClass": begin
+      record POVc POr;
+      row POVc POrw;
+
+      GetWindowRecord(wn,POr);
+      rwcnt = MatRowCnt(POr);
+      for (ri=0;ri<rwcnt;ri=ri+1) begin
+        MatRowGet(POr,ri,POrw);
+        if (Left(POrw.ArtCode,len(itemcode))==itemcode) then begin
+          variety = Right(POrw.ArtCode,len(POrw.ArtCode)-len(itemcode));
+          varsq[variety] = varsq[variety] + POrw.Quant;
+          AddToVarietyArray(variety,avariety);
+        end;
+      end;
+    end;
+    case "PUDClass": begin
+      record PUVc PUr;
+      row PUVc PUrw;
+
+      GetWindowRecord(wn,PUr);
+      rwcnt = MatRowCnt(PUr);
+      for (ri=0;ri<rwcnt;ri=ri+1) begin
+        MatRowGet(PUr,ri,PUrw);
+        if (Left(PUrw.ArtCode,len(itemcode))==itemcode) then begin
+          variety = Right(PUrw.ArtCode,len(PUrw.ArtCode)-len(itemcode));
+          varsq[variety] = varsq[variety] + PUrw.Quant;
+          AddToVarietyArray(variety,avariety);
+        end;
+      end;
+    end;
+    case "StockMovDClass": begin
+      record StockMovVc StockMovr;
+      row StockMovVc StockMovrw;
+
+      GetWindowRecord(wn,StockMovr);
+      rwcnt = MatRowCnt(StockMovr);
+      for (ri=0;ri<rwcnt;ri=ri+1) begin
+        MatRowGet(StockMovr,ri,StockMovrw);
+        if (Left(StockMovrw.ArtCode,len(itemcode))==itemcode) then begin
+          variety = Right(StockMovrw.ArtCode,len(StockMovrw.ArtCode)-len(itemcode));
+          switch (actfield) begin
+            case "OrdQuant":
+              varsq[variety] = varsq[variety] + StockMovrw.OrdQuant;
+            otherwise
+              varsq[variety] = varsq[variety] + StockMovrw.Quant;
+          end;
+          AddToVarietyArray(variety,avariety);
+        end;
+      end;
+    end;
+    case "StockTakeDClass": begin
+      record StockTakeVc StockTaker;
+      row StockTakeVc StockTakerw;
+
+      GetWindowRecord(wn,StockTaker);
+      rwcnt = MatRowCnt(StockTaker);
+      for (ri=0;ri<rwcnt;ri=ri+1) begin
+        MatRowGet(StockTaker,ri,StockTakerw);
+        if (Left(StockTakerw.ArtCode,len(itemcode))==itemcode) then begin
+          variety = Right(StockTakerw.ArtCode,len(StockTakerw.ArtCode)-len(itemcode));
+          varsq[variety] = varsq[variety] + StockTakerw.Qty;
+          AddToVarietyArray(variety,avariety);
+        end;
+      end;
+    end;
+    case "SDDClass": begin
+      record SDVc SDVr;
+      row SDVc SDVrw;
+
+      GetWindowRecord(wn,SDVr);
+      rwcnt = MatRowCnt(SDVr);
+      for (ri=0;ri<rwcnt;ri=ri+1) begin
+        MatRowGet(SDVr,ri,SDVrw);
+        if (Left(SDVrw.ArtCode,len(itemcode))==itemcode) then begin
+          variety = Right(SDVrw.ArtCode,len(SDVrw.ArtCode)-len(itemcode));
+          varsq[variety] = varsq[variety] + SDVrw.Qty;
+          AddToVarietyArray(variety,avariety);
+        end;
+      end;
+    end;    
+  end;
+  return;
+end;
+
 function Boolean PrepareAndOpenMatVARWind(Integer wn,string itemcode,string location,string itemsize,string mask,string subsets)
-BEGIN
+begin
   Boolean res;
   Integer nwn;
   Array string 20 maskvar;
@@ -1511,22 +1895,27 @@ BEGIN
   Array string 20 amsk;
   Integer cnt;
   Integer i;
-  record VarMatrxEntryVc VarMatrxEntryr;
-  string 60 wclass;
+  record VarMatrxEntryVc VMEr;
+  string 60 wclass,actfield;
+  vector val varsq;
+  Array string 255 avariety;
 
   wclass = GetWindowClass(wn);
-  if ((blank(itemcode)) or
-      (wclass=="VARMaskTClass") or
+  actfield = WindowActiveField(wn);
+  FingVarMatrxEntryQuantitys(wn,wclass,actfield,itemcode,avariety,varsq);
+    
+  if ((blank(itemcode)) or 
+      (wclass=="VARMaskTClass") or 
       (wclass=="AvailVarsRClass")) then begin goto LPrepareAndOpenMatVARWind; end;//list of all windows where paste variety should not work, C - code!
   res = true;
   FillMaskVAR(itemcode,itemsize,mask,maskvar,maskvarsz);
-
+  
   SplitVars(itemcode,maskvar,maskvarsz,amsk);
   while (nonblank(maskvar[cnt])) begin
     cnt = cnt + 1;
   end;
   if ((cnt<2) or (cnt>3)) then begin goto LPrepareAndOpenMatVARWind; end;
-  nwn = OpenWindow("MATVARINSClass",0,wn,itemcode,"",VarMatrxEntryr);//  nwn = OpenNamedViewSubset("MATVARINSClass",NIL,1,wn,itemcode,gBlankString,false);
+  nwn = OpenWindow("MATVARINSClass",0,wn,itemcode,"",VMEr);//  nwn = OpenNamedViewSubset("MATVARINSClass",NIL,1,wn,varsitemcode,gBlankString,false);  
   // EVS: DOL-57
   LogText(0,"wn = " & wn & " nwn=" & nwn & " wclass=" & wclass);
   PutWindowString(nwn,"$pagenum","1");
@@ -1534,41 +1923,60 @@ BEGIN
   // :EVS
   SetWindowNameArg(wn,itemcode & ":" & location);
   DeselectWindow(nwn,false);
-  GetWindowRecord(nwn,VarMatrxEntryr);
-  VarMatrxEntryr.ItemCode = itemcode;
+  GetWindowRecord(nwn,VMEr);
+  VMEr.ItemCode = itemcode;
   // EVS: DOL-1
   if (GetWindowClass(wn) == "PODClass") then begin
-    VarMatrxEntryr.Price = GetItemLastCostPriceNoExtras(itemcode);
+    VMEr.Price = GetItemLastCostPriceNoExtras(itemcode);
   end;
   // :EVS
-  PutWindowRecord(nwn,VarMatrxEntryr);
-  WindowFieldGoto(nwn,VarMatrxEntryr,0,"A",true);
+  if (UpdateExistingVarietyRowsf) then begin 
+    FillVarMatrxEntryQuantitys(VMEr,avariety,varsq);
+  end;
+  PutWindowRecord(nwn,VMEr);
+  WindowFieldGoto(nwn,VMEr,0,"A",true);
 LPrepareAndOpenMatVARWind:;
   PrepareAndOpenMatVARWind = res;
-  RETURN;
-END;
+  return;
+end;
 
 global
 function Boolean TestForMATVARINS(Integer wn)
-BEGIN
+begin
   Boolean res;
-  string 255 itemcode,itemsize,mask,subsets,location;
+  string 255 varsitemcode,itemsize,mask,subsets,location;  
   string 60 wclass;
   record INVc INr;
   record VarietyBlock VBr;
+  boolean checkvarf;
 
-  itemcode = FirstInRange(GetWindowNameArg(wn),20);
+  varsitemcode = FirstInRange(GetWindowNameArg(wn),20);
   location = LastInRange(GetWindowNameArg(wn),20);
   wclass = GetWindowClass(wn);
-  if ((blank(itemcode)) or
-      (wclass=="VARMaskTClass") or
+  if ((blank(varsitemcode)) or 
+      (wclass=="VARMaskTClass") or 
       (wclass=="AvailVarsRClass")) then begin goto LTestForMATVARINS; end;//list of all windows where paste variety should not work, C - code!
-  BlockLoad(VBr);
+  BlockLoad(VBr);  
+  if (VBr.UseInfoFromRow!=0) then begin   
+    checkvarf = true;
+    if (wclass=="NPTSIVCashDClass" or ((wclass=="IVDClass" or wclass=="IVCashDClass") and TouchScreenLook)) then begin 
+      checkvarf = true;
+    end;
+    if (checkvarf) then begin 
+      if (ReadFirstItem(varsitemcode,INr,true,true)) then begin goto LTestForMATVARINS; end;
+      if (FindStringInString(varsitemcode,".")) then begin goto LTestForMATVARINS; end;
+    end;  
+  end else begin
+    if (ReadFirstItem(varsitemcode,INr,true,true)) then begin  goto LTestForMATVARINS; end;
+    if (FindStringInString(varsitemcode,".")) then begin goto LTestForMATVARINS; end;
+  end;
   if (VBr.OpenVarPaste==0) then begin goto LTestForMATVARINS; end;
-  if (FindItemVAR2(itemcode,itemsize,mask,subsets)==false) then begin goto LTestForMATVARINS; end;
-  if (ReadFirstItem(itemcode,INr,true,true)) then begin goto LTestForMATVARINS; end;
-  res = PrepareAndOpenMatVARWind(wn,itemcode,location,itemsize,mask,subsets);
-LTestForMATVARINS:;
+  if (GetFirstItem(varsitemcode,INr)) then begin end;
+  if (FindItemVAR2(varsitemcode,itemsize,mask,subsets)==false) then begin goto LTestForMATVARINS; end;
+  if (ReadFirstItem(varsitemcode,INr,true,false)==false) then begin goto LTestForMATVARINS; end;
+  SetWindowNameArg(wn,INr.Code & ":" & location);
+  res = PrepareAndOpenMatVARWind(wn,INr.Code,location,itemsize,mask,subsets);
+LTestForMATVARINS:;  
   TestForMATVARINS = res;
   RETURN;
 END;
@@ -1576,20 +1984,35 @@ END;
 function Boolean TestForMATVARINSLocal(Integer wn)
 BEGIN
   Boolean res;
-  string 255 itemcode,itemsize,mask,subsets,location;
+  string 255 varsitemcode,itemsize,mask,subsets,location;
   string 60 wclass;
   record INVc INr;
+  boolean checkvarf;
 
-  itemcode = FirstInRange(GetWindowNameArg(wn),20);
+  varsitemcode = FirstInRange(GetWindowNameArg(wn),20);
   location = LastInRange(GetWindowNameArg(wn),20);
   wclass = GetWindowClass(wn);
-  if ((blank(itemcode)) or
-      (wclass=="VARMaskTClass") or
-      (wclass=="AvailVarsRClass")) then begin goto LTestForMATVARINS; end;//list of all windows where paste variety should not work, C - code!
-  if (FindItemVAR2(itemcode,itemsize,mask,subsets)==false) then begin goto LTestForMATVARINS; end;
-  if (ReadFirstItem(itemcode,INr,true,true)) then begin goto LTestForMATVARINS; end;
-  res = PrepareAndOpenMatVARWind(wn,itemcode,location,itemsize,mask,subsets);
-LTestForMATVARINS:;
+  if ((blank(varsitemcode)) or 
+      (wclass=="VARMaskTClass") or 
+      (wclass=="AvailVarsRClass")) then begin goto LTestForMATVARINSLocal; end;//list of all windows where paste variety should not work, C - code!
+  if (UpdateExistingVarietyRowsf) then begin 
+    if (wclass=="NPTSIVCashDClass" or ((wclass=="IVDClass" or wclass=="IVCashDClass") and WindowActiveField(wn)!="Quant")) then begin 
+      if (ReadFirstItem(varsitemcode,INr,true,true)) then begin goto LTestForMATVARINSLocal; end;
+      //if (FindStringInString(varsitemcode,".")) then begin goto LTestForMATVARINSLocal; end;
+    end;  
+  end else begin
+    if (ReadFirstItem(varsitemcode,INr,true,true)) then begin  goto LTestForMATVARINSLocal; end;
+    if (FindStringInString(varsitemcode,".")) then begin goto LTestForMATVARINSLocal; end;
+  end;
+  if (FindItemVAR2(varsitemcode,itemsize,mask,subsets)==false) then begin goto LTestForMATVARINSLocal; end;
+  if (GetFirstItem(varsitemcode,INr)) then begin end;
+  if (ReadFirstItem(varsitemcode,INr,true,false)==false) then begin //*** ReadFirstItem(varsitemcode,INr,true,true)
+    goto LTestForMATVARINSLocal; 
+  end else begin
+    SetWindowNameArg(wn,INr.Code & ":" & location);
+    res = PrepareAndOpenMatVARWind(wn,INr.Code,location,itemsize,mask,subsets);
+  end;
+LTestForMATVARINSLocal:;  
   TestForMATVARINSLocal = res;
   RETURN;
 END;
@@ -1617,21 +2040,21 @@ BEGIN
   string 60 wclass;
 
   wclass = GetWindowClass(wn);
-  if ((blank(mask)) or
-      (wclass=="VARMaskTClass") or
+  if ((blank(mask)) or 
+      (wclass=="VARMaskTClass") or 
       (wclass=="AvailVarsRClass")) then begin goto LPrepareAndOpenVARWind; end;//list of all windows where paste variety should not work, C - code!
 
   nwn = OpenWindow("VARINSClass",0,wn,mask,"",RepSpec);//  nwn = OpenNamedViewSubset("VARINSClass",NIL,1,wn,mask,gBlankString,false);
   DeselectWindow(nwn,false);
   GetWindowRecord(nwn,RepSpec);
 //  SetWindowSubset(wn,subset);
-
+    
   FillMaskVAR(itemcode,itemsize,mask,maskvar,maskvarsz);
   SplitVars(itemcode,maskvar,maskvarsz,amsk);
   RepSpec.AccStr = amsk[0];
-  RepSpec.f6 = subsets;
-  RepSpec.FirstAcc = itemsize;
-  RepSpec.LastAcc = mask;
+  RepSpec.f6 = subsets; 
+  RepSpec.FirstAcc = itemsize; 
+  RepSpec.LastAcc = mask; 
   PutWindowRecord(nwn,RepSpec);
   WindowFieldGoto(nwn,RepSpec,-1,"f1",true);
   res = true;
@@ -1647,7 +2070,7 @@ BEGIN
   string 255 itemcode,mask,subsets;
   string 10 itemsize;
   string 60 wclass;
-
+ 
   if (blank(find)) then begin goto LTestForVARINS; end;
   itemcode = find;
   if (FindItemVAR2(itemcode,itemsize,mask,subsets)==false) then begin goto LTestForVARINS; end;
@@ -1695,7 +2118,7 @@ function Boolean COCUServiceStatRClassOnOKWindow(Integer wn)
 begin
   Boolean res;
   record RcVc RepSpec;
-
+  
   res = true;
   DeselectWindow(wn,true);
   GetWindowRecord(wn,RepSpec);
@@ -1709,7 +2132,7 @@ begin
     MessageBox(14802,"");
     goto LCOCUServiceStatRClassOnOKWindow;
   end;
-
+  
 LCOCUServiceStatRClassOnOKWindow:;
   COCUServiceStatRClassOnOKWindow = res;
   return;
@@ -1734,21 +2157,86 @@ global
 function Boolean RemoteCloudServerSClassOnOKWindow(Integer wn)
 begin
   Boolean res;
-  record RemoteCloudServerVc RCSr;
+  record RemoteCloudServerVc RCSr,RCS2r;
+  row RemoteCloudServerVc RCSrw;
   record CloudWatchpointVc CWr;
-  Integer mwn;
-
+  record ASPPlannedUpdatesVc APUr;
+  row ASPPlannedUpdatesVc APUrw;
+  Integer mwn,rownr;
+  record RCVc RepSpec;
+  UUID tuuid;
+  
   res = true;
   mwn = MotherWindow(wn);
-  if (GetWindowFileName(mwn)=="CloudWatchpointVc") begin
-    if (WindowState(wn)!=Rs_search) then begin
-      if (ReadMarkedRecord(wn,RCSr)) then begin
-        PasteString(mwn,RCSr.UUID);
-        CloseWindow(wn);
-        res = false;
+  switch (GetWindowFileName(mwn)) begin
+    case "ASPPlannedUpdatesVc":
+      if (WindowState(wn)!=Rs_search) then begin
+        if (ReadMarkedRecord(wn,RCSr)) then begin
+          rownr = WindowActiveRow(mwn);
+          CloseWindow(wn);
+          PasteString(mwn,RCSr.Name);
+          GetWindowRecord(mwn,APUr);
+          MatRowGet(APUr,rownr,APUrw);
+          APUrw.ExcludeServer = RCSr.UUID;
+          MatRowPut(APUr,rownr,APUrw);
+          PutWindowRecord(mwn,APUr);
+          res = false;
+        end;
       end;
-    end;
+    case "CloudWatchpointVc":
+      if (WindowState(wn)!=Rs_search) then begin
+        if (ReadMarkedRecord(wn,RCSr)) then begin
+          CloseWindow(wn);
+          PasteString(mwn,RCSr.Name);
+          GetWindowRecord(mwn,CWr);
+          CWr.RemoteCloudServer = RCSr.UUID;
+          CWr.ServerName = RCSr.Name;
+          PutWindowRecord(mwn,CWr);
+          res = false;
+        end;
+      end;
+    case "RemoteCloudServerVc":
+      if (GetWindowClass(mwn)=="RemoteCloudServerDClass") then begin
+        if (WindowState(wn)!=Rs_search) then begin
+          if (ReadMarkedRecord(wn,RCSr)) then begin
+            rownr = WindowActiveRow(mwn);
+            CloseWindow(wn);
+            PasteString(mwn,RCSr.UUID);
+            if (rownr>=0) then begin
+              GetWindowRecord(mwn,RCS2r);
+              MatRowGet(RCS2r,rownr,RCSrw);
+              RCSrw.Desc = RCSr.Name;
+              MatRowPut(RCS2r,rownr,RCSrw);
+              PutWindowRecord(mwn,RCS2r);
+            end;
+            res = false;
+          end;
+        end;
+      end;
+    otherwise
+      if (GetWindowClass(mwn)=="ListCloudArchiveRClass") then begin
+        if (ReadMarkedRecord(wn,RCSr)) then begin
+          CloseWindow(wn);
+          PasteString(mwn,RCSr.Name);
+          GetWindowRecord(mwn,RepSpec);
+          RepSpec.RecordUUID = RCSr.UUID;
+          RepSpec.f1 = RCSr.Name;
+          PutWindowRecord(mwn,RepSpec);
+          res = false;
+        end;
+      end;
+      if (GetWindowClass(mwn)=="ASPServerActivityLogRClass") then begin
+        if (ReadMarkedRecord(wn,RCSr)) then begin
+          CloseWindow(wn);
+          PasteString(mwn,RCSr.UUID);
+          GetWindowRecord(mwn,RepSpec);
+          RepSpec.f1 = RCSr.UUID;
+          PutWindowRecord(mwn,RepSpec);
+          res = false;
+        end;
+      end;
   end;
+
   RemoteCloudServerSClassOnOKWindow = res;
   return;
 end;
@@ -1758,5 +2246,13 @@ function Boolean PayModeBankAccSClassOnOKWindow(Integer wn)
 begin
   PasteFromSysList(wn,-2);
   PayModeBankAccSClassOnOKWindow = false;
+  return;
+end;
+
+global
+function Boolean TaxAuthIDBlockSClassOnOKWindow(Integer wn)
+begin
+  PasteFromSysList(wn,-2);
+  TaxAuthIDBlockSClassOnOKWindow = false;
   return;
 end;

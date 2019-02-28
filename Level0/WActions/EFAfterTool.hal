@@ -20,6 +20,7 @@ external function Boolean GetItemPriceDiscount3(string,val,var record INVc,strin
 */
 external procedure SetupVATBase(var record SMVc,var Integer);
 external function Boolean GetItemNameStr(Integer,var string,string,string,string);
+external procedure IVCashPasteRvrsVATCode(var record IVCashVc,Boolean);
 
 global
 procedure GetVATCodeAccNumbers(string vatcode,var string svatacc,var string pvatacc)
@@ -44,24 +45,34 @@ BEGIN
 END;
 
 global
-procedure VIGetVATCodeAccNumbers(string vatcode,record APAccBlock APb,string vecode,Integer InvType,var string svatacc,var string pvatacc)
-BEGIN
+procedure VIGetVATCodeAccNumbers2(string vatcode,record APAccBlock APb,string vecode,Integer InvType,Integer VIOPBookVAT,var string svatacc,var string pvatacc)
+begin
   record VATCodeBlock VATRec;
   row VATCodeBlock vatrw;
   Integer i,rwcnt;
   record CUVc VEr;
-  Integer OPBookVAT;
+  Integer OPBookVAT,PostVIVATonVATCorr;
+  record APAccBlock APAb;
 
+  BlockLoad(APAb);
   BlockLoad(VATRec);
   VEr.Code = vecode;
   ReadFirstMain(VEr,1,true);
-  switch (VEr.OPBookVAT) begin
-    case 1:
-      OPBookVAT = 1;
-    case 2:
-      OPBookVAT = 0;
-    otherwise
-      OPBookVAT = APb.OPBookVAT;
+  if (HasLocalization("POL")) then begin
+    OPBookVAT = VIOPBookVAT;
+    if (OPBookVAT) then  begin
+      PostVIVATonVATCorr = 1;
+    end;
+  end else begin
+    switch (VEr.OPBookVAT) begin
+      case 1:
+        OPBookVAT = 1;
+      case 2:
+        OPBookVAT = 0;
+      otherwise
+        OPBookVAT = APb.OPBookVAT;
+    end;
+    PostVIVATonVATCorr = APb.PostVIVATonVATCorr;
   end;
   svatacc = "";  
   pvatacc = "";  
@@ -70,23 +81,30 @@ BEGIN
     MatRowGet(VATRec,i,vatrw);
     if (vatrw.VATCode==vatcode) then begin 
       switch (InvType) begin
-        case kInvoiceTypeCreditSpecialSales: goto LkInvoiceTypeCredit;
+        case kInvoiceTypeCreditSpecialSales: 
+          goto LkInvoiceTypeCredit;
         case kInvoiceTypeCredit:
-          LkInvoiceTypeCredit:;
+LkInvoiceTypeCredit:;
           svatacc = vatrw.CredSalesVATAcc;
           if (blank(svatacc)) then begin svatacc = vatrw.SalesVATAcc; end;
           pvatacc = vatrw.CredPurchVATAcc;
           if (blank(pvatacc)) then begin pvatacc = vatrw.PurchVATAcc; end;
-          if (APb.PostVIVATonVATCorr!=0) then begin
+          if (PostVIVATonVATCorr!=0) then begin
             svatacc = vatrw.CorSalesVATAcc;
-            pvatacc = vatrw.CorPurchVATAcc;
+            pvatacc = APAb.CorPurchVATAcc;  
+            if (blank(pvatacc)) then begin
+              pvatacc = vatrw.CorPurchVATAcc;
+            end;
           end;
         otherwise
           svatacc = vatrw.SalesVATAcc;
           pvatacc = vatrw.PurchVATAcc;
-          if (APb.PostVIVATonVATCorr!=0) then begin
+          if (PostVIVATonVATCorr!=0) then begin
             svatacc = vatrw.CorSalesVATAcc;
-            pvatacc = vatrw.CorPurchVATAcc;
+            pvatacc = APAb.CorPurchVATAcc;  
+            if (blank(pvatacc)) then begin
+              pvatacc = vatrw.CorPurchVATAcc;
+            end;
           end;
       end;
       if (blank(pvatacc)) then begin
@@ -97,8 +115,15 @@ BEGIN
       i = rwcnt;
     end;  
   end;  
-  RETURN;
-END;
+  return;
+end;
+
+global
+procedure VIGetVATCodeAccNumbers(string vatcode,record APAccBlock APb,string vecode,Integer InvType,var string svatacc,var string pvatacc)
+begin
+  VIGetVATCodeAccNumbers2(vatcode,APb,vecode,InvType,0,svatacc,pvatacc);
+  return;
+end;
 
 global
 function Boolean PayModeAccIsClosed(string paymode)
@@ -200,8 +225,9 @@ BEGIN
 END;
 
 global
-procedure GetPriceList(string custcat,Date td,Time tt,var string pricelist,var Integer inclvatp)
+procedure GetPriceList2(string custcode,string custcat,Date td,Time tt,var string pricelist,var Integer inclvatp)
 begin
+  record CUVc CUr;
   record CCatVc CCatR;
   record PLDefVc PLDefR;
   record AccBlock ARAccRec;
@@ -211,6 +237,12 @@ begin
     CCatR.Code = custcat;
     if (ReadFirstMain(CCatR,1,true)) then begin
       pricelist = CCatR.PLCode;
+    end;
+  end;
+  if (blank(pricelist)) then begin
+    CUr.Code = custcode;
+    if (ReadFirstMain(CUr,1,true)) then begin
+      pricelist = CUr.PLCode;
     end;
   end;
   PLDefR.Code = pricelist;
@@ -233,6 +265,13 @@ begin
       end;
     end;
   end;
+  return;
+end;
+
+global
+procedure GetPriceList(string custcat,Date td,Time tt,var string pricelist,var Integer inclvatp)
+begin
+  GetPriceList2("",custcat,td,tt,pricelist,inclvatp);
   return;
 end;
 
@@ -291,18 +330,20 @@ end;
 global
 function Boolean PasteCustInCashInv(var record IVCashVc IVCashp,string lmlocation,string defpricelist,var string warning)
 BEGIN
-  record CUVc CUr,CU2r; //EBS added CU2r
+  record CUVc CUr,CU2r;//EBS
   Boolean found;
   string 255 tstr,pricelist,curcode;
   Integer InclVAT;
   val fr,to1,to2,br1,br2;
   string 5 oldSalesMan,tstr2;
-  record LoyaltyCardVc LoyaltyCardr,LoyaltyCard2r; //EBS added LoyaltyCard2r
-  boolean loyaltycardf;
+  record LoyaltyCardVc LoyaltyCardr,LoyaltyCard2r;//EBS added LoyaltyCard2r
+  record AccBlock ARb;
+  boolean loyaltycardf;//EBS
   
   CUr.Code = IVCashp.CustCode;
   found = ReadFirstMain(CUr,1,true);
   if (found) then begin
+    BlockLoad(ARb);
     if (blank(IVCashp.Location)) then begin
       IVCashp.Location = lmlocation;
     end;
@@ -327,6 +368,18 @@ BEGIN
     IVCashp.InvAddr4 = CUr.InvAddr4;
     IVCashp.ClientContact = CUr.Person;
     IVCashp.CustCat = CUr.CustCat;
+    if (HasLocalization("POL")) then begin
+      switch (CUr.IPBookVAT) begin
+        case 1:
+          IVCashp.IPBookVAT = CUr.IPBookVAT;
+        case 2:
+          IVCashp.IPBookVAT = 0;
+        otherwise
+          IVCashp.IPBookVAT = ARb.IPBookVAT;
+      end;
+    end else begin
+      IVCashp.IPBookVAT = ARb.IPBookVAT;  
+    end;
 
     IVCashp.Objects = AddObjectToObjectList(IVCashp.Objects,CUr.Objects);
     // oldSalesMan = IVCashp.SalesMan; //EBS no change of salesman
@@ -353,6 +406,7 @@ we using CurrentUser object in recorddefault
     IVCashp.BaseRate1 = br1;
     IVCashp.BaseRate2 = br2;
     IVCashp.VATNr = CUr.VATNr;
+    IVCashp.RegNr1 = CUr.RegNr1;
     IVCashp.RebCode = CUr.RebCode;
     pricelist = CUr.PLCode;
     GetPriceList(IVCashp.CustCat,IVCashp.TransDate,IVCashp.TransTime,pricelist,InclVAT);
@@ -427,13 +481,13 @@ procedure AddCalcPrice(record INVc INr,record CPMVc CPp,string item,val sump,str
 BEGIN
   Integer i,rwcnt;
   record INVc IN2r;
-  record ItemSettingBlock ItemSettingRec;
+  record ItemSettingBlock ISb;
   string 255 f1,f2;
   val t,t100,t1;
   row CPMVc CPMrw;
   Boolean testf;
   
-  BlockLoad(ItemSettingRec);
+  BlockLoad(ISb);
   t100 = 100;
   IN2r.Code = item;
   if (ReadFirstItem(item,IN2r,true,false)) then begin
@@ -458,7 +512,7 @@ BEGIN
     end;
     if (testf) then begin
       if (InclVAT>0) then begin
-        if (ItemSettingRec.ItemFormulaeInclVAT>0) then begin
+        if (ISb.ItemFormulaeInclVAT>0) then begin
           t = sump;
         end else begin                      
           if (nonblank(vatcode)) then begin
@@ -562,6 +616,39 @@ BEGIN
       
   RETURN;
 END;  
+
+global
+procedure OYGetCalcItemPrice(record INVc INr,record OYVc OYp,Integer rownr,var val pricep)
+begin
+  row OYVc OYrw;
+  record CPMVc CPr;
+  Integer i,rwcnt;
+  val price;
+  
+  rwcnt = MatRowCnt(OYp);
+  MatRowGet(OYp,rownr,OYrw);
+  OYrw.Price = blankval;
+  MatRowPut(OYp,rownr,OYrw);
+
+  CPr.Code = INr.CalcPrice;
+  if (ReadFirstMain(CPr,1,true)) then begin
+    for (i=0;i<rwcnt;i=i+1) begin
+      MatRowGet(OYp,i,OYrw);
+      if (i!=rownr) then begin
+        if (OYrw.stp==1) then begin
+          AddCalcPrice(INr,CPr,OYrw.ArtCode,OYrw.Sum,OYrw.VATCode,OYp.InclVAT,price);
+        end;
+      end;  
+    end;
+    price = Round(price,DefaultRoundMode);
+    MatRowGet(OYp,rownr,OYrw);
+    OYrw.Price = price;
+    MatRowPut(OYp,rownr,OYrw);
+  end;
+  if (pricep!=-1) then begin pricep = price; end;
+      
+  return;
+end;  
 
 /* Not used?
 global

@@ -236,11 +236,25 @@ begin
     
   resm = (GetHour(t1) - GetHour(t2)) * 60;
   resm = resm + GetMinute(t1) - GetMinute(t2);
-  resh = 0;
-  while (resm>=60) begin
-    resm = resm - 60;
-    resh = resh + 1;
-    if (resh==24) then begin resh = 0; end;
+  if (resm>=0) then begin
+    resh = 0;
+    while (resm>=60) begin
+      resm = resm - 60;
+      resh = resh + 1;
+      if (resh==24) then begin resh = 0; end;
+    end;
+  end else begin
+    resh = 24;
+    while (resm<=-60) begin
+      resm = resm + 60;
+      resh = resh - 1;
+      if (resh==24) then begin resh = 0; end;
+    end;
+  end;
+  if (resm>=0) then begin
+  end else begin
+    resh = resh - 1;
+    resm = 60 + resm;
   end;
   tstr = LongIntToTime(resh,resm,0);
   TimeSub = tstr;
@@ -527,15 +541,16 @@ end;
 global
 procedure vTimeDiff(Time stta,Time endta,var val res)
 BEGIN
-  val ominutes, tmp1,tmp2;
+  val ominutes,oseconds, tmp1,tmp2;
   
   res = blankval;
   if ((nonblanktime(stta)) or (nonblanktime(endta))) then begin
     tmp1 = GetHour(endta); 
     if (tmp1<0) then begin tmp1 = 0; end;
-    tmp2 =GetHour(stta);
+    tmp2 = GetHour(stta);
     if (tmp2<0) then begin tmp2 = 0; end;
     res = tmp1 - tmp2;
+    
     tmp1 = GetMinute(endta);
     tmp2 = GetMinute(stta);
     if (tmp1<0) then begin tmp1 = 0; end;
@@ -543,7 +558,16 @@ BEGIN
     ominutes = tmp1 - tmp2;
     ominutes = ominutes/60;//100
     res = res + ominutes;
-    res = Round(res,SetRoundModeD(2));
+    
+    tmp1 = GetSecond(endta);
+    tmp2 = GetSecond(stta);
+    if (tmp1<0) then begin tmp1 = 0; end;
+    if (tmp2<0) then begin tmp2 = 0; end;   
+    oseconds = tmp1 - tmp2;
+    oseconds = oseconds/3600;//100
+    res = res + oseconds;
+
+    res = Round(res,SetRoundModeD(5));
   end;
   RETURN;
 END;
@@ -668,6 +692,9 @@ begin
       end;
     end;
   end;
+//LogText(0,"frd1 " & frd1 & " frt1 " & frt1 & " tod1 " & tod1 & " tot1 " & tot1);          
+//LogText(0,"frd2 " & frd2 & " frt2 " & frt2 & " tod2 " & tod2 & " tot2 " & tot2);          
+//LogText(0,"before " & before & " after " & after);
 
   if (before or after) then begin
     res = false;
@@ -747,6 +774,19 @@ global
 function Integer CompareDateAndTime(Date d1,Time t1,Date d2,Time t2)
 begin
   Integer res;
+  
+  if (blankdate(d1) and blankdate(d2)) then begin
+    res = 0;
+    goto LCompareDateAndTime;
+  end;
+  if (nonblankdate(d1) and blankdate(d2)) then begin
+    res = 1;
+    goto LCompareDateAndTime;
+  end;
+  if (blankdate(d1) and nonblankdate(d2)) then begin
+    res = -1;
+    goto LCompareDateAndTime;
+  end;
   
   if (d1==d2) and (t1==t2) then begin
     res = 0;
@@ -1018,35 +1058,41 @@ LDateFromString:;
 end;
 
 global
-function val ValFromString(string valstr,string decimalsep,string thousandsep)
+function val ValFromString(string avalstr,string decimalsep,string thousandsep)
 begin
   val res;
   Integer i,sl,deccnt;
   Boolean decsepf,thosepf,negf;
-  string 255 tstr;
+  string 255 tstr,ch;
+  string 255 valstr;
 
-  if (blank(valstr)) then begin goto LValFromString; end;
-  sl = len(valstr);
+  if (blank(avalstr)) then begin goto LValFromString; end;
+  sl = len(avalstr);
   deccnt = 0;
   for (i=0;i<sl;i=i+1) begin
+    ch = Mid(avalstr,i,1);
     if (nonblank(decimalsep)) then begin
       if (decsepf) then begin
-        if (Mid(valstr,i,1)>="0" and Mid(valstr,i,1)<="9") then begin
+        if (Mid(avalstr,i,1)>="0" and Mid(avalstr,i,1)<="9") then begin
           deccnt = deccnt + 1;
         end;
       end;
-      if (Mid(valstr,i,1)==decimalsep) then begin
+      if (Mid(avalstr,i,1)==decimalsep) then begin
         decsepf = true;
+        ch = DecimalSeparator;
       end;
     end;
     if (nonblank(thousandsep)) then begin
-      if (Mid(valstr,i,1)==thousandsep) then begin
+      if (Mid(avalstr,i,1)==thousandsep) then begin
         thosepf = true;
+        ch = ThousandSeparator;
       end;
     end;
-    if (Mid(valstr,i,1)=="-") then begin
+    if (Mid(avalstr,i,1)=="-") then begin
       negf = true;
+      ch = "-";
     end;
+    valstr = valstr & ch;
   end;  
   res = StringToVal(StripNonDigits(valstr),M4Val);
   if (decsepf) then begin
@@ -1089,9 +1135,9 @@ procedure GetMonthText(string deflangcode,Date td,var string res)
 BEGIN
   record UserVc Userr;
   record DNMVc DNMr;
-  record LangBlock LangBl;
-  row LangBlock Langrw;
   string 255 langcode;
+  record LangBlock LangBl;//EBS
+  row LangBlock Langrw;//EBS
   
   res = "";
   langcode = deflangcode;
@@ -1366,14 +1412,13 @@ begin
   return;
 end;
 
-
 function Date DaysToUTCDate(LongInt days)
 begin
   Date dat;
   LongInt res;
   LongInt dir;
 
-  res = days;
+  res = days + 1;
   dat.year = 1970;
   dir = DaysInYear(dat.year);
   while (res>dir) begin
@@ -1403,6 +1448,7 @@ begin
   for (i=1970;i<dat.year;i=i+1) begin
     res = res + DaysInYear(i);
   end;
+/*  
   switch (dat.month) begin
     case 12: res = res + 30; // nov
     case 11: res = res + 31; // oct
@@ -1418,7 +1464,11 @@ begin
     case 2:  res = res + 31; //jan
     // case 1:
   end;
-  res = res + dat.day;
+*/  
+  for (i=1;i<dat.month;i=i+1) begin
+    res = res + DaysInMonth(dat.Year,i);
+  end;
+  res = res + dat.day - 1;
   UTCDateToDays = res;
   return;
 end;
@@ -1437,6 +1487,7 @@ begin
   secondsinday = 60*60;
   secondsinday = secondsinday*24;
   days = seconds/secondsinday;
+
   dat = DaysToUTCDate(UTCDateToDays(dat)+days);
   timesecs = seconds - days*secondsinday;
   thour = timesecs/(60*60);
@@ -1519,3 +1570,19 @@ BEGIN
 LDivPIFactor:;
   RETURN;
 END;
+
+global
+function LongInt DateTimeDiffInSeconds(Date d1,Time t1,Date d2,Time t2)
+begin
+  LongInt dsecs,msecs,res;
+
+  if (d1!=d2) then begin
+    dsecs = DateDiff(d1,d2) * 24 * 3600;
+    msecs = (TimeToSeconds2(TimeDiff("00:00:00",t2))+TimeToSeconds2(TimeDiff(t1,"24:00:00")));
+    res = dsecs - msecs;
+  end else begin
+    res = TimeDiffInSeconds(t1,t2);
+  end;
+  DateTimeDiffInSeconds = res;
+  return;
+end;

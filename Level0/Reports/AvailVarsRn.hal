@@ -1,3 +1,7 @@
+external procedure HTItemClass(string,var string);
+external function Boolean HasItemClassification();
+external function Boolean HasItemGroups();
+external function Boolean SetInSet2(string,string);
 external function roundmode GetCostRoundMode(record RoundBlock);
 external function Boolean ItemHasVarieties(string,string,Boolean);
 external function Boolean ReadFirstItem(string,var record INVc,Boolean,Boolean);
@@ -10,9 +14,11 @@ external procedure InvListOneItem(record RcVc,Integer,record INVc,string,record 
 
 procedure PrintInvValRnHeader(record RcVc RepSpec)
 begin
-
   StartFormat(15);
-  
+  OutString(0,0,USetStr(2325),false);
+  OutString(2,0,USetStr(2326),false);
+  OutString(5,0,"",false);
+  OutString(3,0,USetStr(2330),true);
 /*
   if (RepSpec.flags[15]==1) then begin
     OutString(360,0,USetStr(7593),true);
@@ -127,6 +133,13 @@ begin
             testf = false;
           end;
         end;
+        if (testf) then begin
+          if (nonblank(RepSpec.f4)) then begin
+            if (SetInSet2(RepSpec.f4,INr.DispGroups)==false) then begin
+              testf = false;
+            end;
+          end;
+        end;       
         if (nonblank(RepSpec.TransStr)) then begin
           if (INr.AlternativeCode!=RepSpec.TransStr) then begin testf = false; end;
         end;
@@ -225,11 +238,20 @@ begin
    HTLocations(frloc,toloc,tstr);
    Header(rw,tstr,1);
    rw = rw + 1;
-   HTArtGroup(RepSpec.f3,tstr);
-   if (nonblank(tstr)) then begin
-     Header(rw,tstr,1);
-     rw = rw + 1;
+   if (HasItemGroups) then begin
+     HTArtGroup(RepSpec.f3,tstr);
+     if (nonblank(tstr)) then begin
+       Header(rw,tstr,1);
+       rw = rw + 1;
+     end;
    end;
+   if (HasItemClassification) then begin
+     HTItemClass(RepSpec.f4,tstr);
+     if (nonblank(tstr)) then begin
+       Header(rw,tstr,1);
+       rw = rw + 1;
+     end;
+   end;   
   EndHeader;
   if (RepSpec.flags[23]!=2) then begin
     if (blank(RepSpec.f1)) then begin
@@ -322,6 +344,13 @@ begin
             end;
             if (nonblank(RepSpec.TransStr)) then begin
               if (INr.AlternativeCode!=RepSpec.TransStr) then begin testf = false; end;
+            end;
+            if (testf) then begin
+              if (nonblank(RepSpec.f4)) then begin
+                if (SetInSet2(RepSpec.f4,INr.DispGroups)==false) then begin
+                  testf = false;
+                end;
+              end;
             end;
             if (INTrHs==false) then begin testf = false; end;
             if (testf) then begin

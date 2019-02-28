@@ -1,10 +1,16 @@
+external function string 60 AddObjectToObjectList(string,string);
+external procedure RemoveOldUserObjects(string,var string);
+external function Boolean HasSalesmanChanged(string,string);
+external function Boolean IsEnterprise();
+external procedure RecalcDiscountIVCashD(var record IVCashVc);
+external function val CalculateDiscountPercentage(val,val,val);
 external procedure CurValToOtherCurWithRate(Date,string,val,val,val,val,val,val,string,var val,roundmode);
 external procedure MailTextRow(string,string,string,var row MailTextVc,var Integer);
 external function boolean AddEMailRecipients(var record MailVc,string,string,integer);
 external procedure FindUserMailboxName(string,var string,var string);
 external function Boolean FindCustomerRelation(string,string,var record CUVc);
 external procedure GetPayDealText(string,string,var string);
-external procedure GetPriceList(string,Date,Time,var string,var Integer);
+external procedure GetPriceList2(string,string,Date,Time,var string,var Integer);
 external procedure RowCalculateTaxMatrix_IVCashVc(var record IVCashVc,Integer,row IVCashVc);
 forward function Boolean IVCashVc_PasteQuant(var record IVCashVc,Integer);
 external procedure IVCashVc_ChangeQuantityRecepy(string,val,Integer,var record IVCashVc);
@@ -59,15 +65,17 @@ external procedure IVCashDchsum(record IVCashVc,Integer);
 external function Boolean GetItemPriceDiscount3(string,val,var record INVc,string,val,val,val,val,val,string,string,string,string,
                                                 var val,var string,var val,var string,var val,var string,Integer,var Boolean,Date,Time,
                                                 string,Boolean,var Boolean,string,var string,var val,string,string,var string);
+external procedure IVCashPasteRvrsVATCode(var record IVCashVc,Boolean);
+external procedure CalcVATBaseVAT2(record SMVc,Integer,Integer,Integer,Boolean,var val,var val);
+external procedure POSAudit_LogIVCashVcRow(record IVCashVc,row IVCashVc,Integer);
 external function Boolean GetItemPriceDiscount3Ext(string,val,var record INVc,string,val,val,val,val,val,string,string,string,string,
                                                 var val,var string,var val,var string,var val,var string,Integer,var Boolean,Date,Time,
                                                 string,Boolean,var Boolean,string,var string,var val,string,string,var string,val,val);
 external outer function string 60 EBS_AddPersObject(string,string); //EBS
 external outer function boolean HALMatchPricingWithLoyaltyCard(record IVCashVc);
-
 global
 procedure CalculateIVCashVcPoints(var record IVCashVc IVCashr)
-begin
+begin 
   record LoyaltyPointsVc LPr;
   row LoyaltyPointsVc LPrw;
   Integer li,lrwcnt;
@@ -87,7 +95,7 @@ begin
     rnd = DefaultValRoundoff;
     rnd.decimals = 0;
     rnd.mode = kRoundingModeTruncate;
-
+    
     LLPr.Location = IVCashr.Location;
     LLPr.LCMLevel = IVCashr.LCMLevel;
     found = ReadFirstMain(LLPr,2,true);
@@ -98,16 +106,19 @@ begin
     rwcnt = MatRowCnt(IVCashr);
     t = MulRateToBase1(IVCashr.CurncyCode,IVCashr.Sum4,IVCashr.FrRate,IVCashr.ToRateB1,IVCashr.ToRateB2,IVCashr.BaseRate1,IVCashr.BaseRate2,DefaultCurRoundOff);
     for (i=0;i<rwcnt;i=i+1) begin
-     MatRowGet(IVCashr,i,IVCashrw);
+      MatRowGet(IVCashr,i,IVCashrw);
       if (IVCashrw.stp==kInvoiceRowTypeGiftVoucherSold) then begin
         if (GCb.LoyaltyPointsUsageType==0 or GCb.LoyaltyPointsUsageType==3) then begin //None or GV Received only
-          t = t - MulRateToBase1(IVCashr.CurncyCode,IVCashrw.Sum,IVCashr.FrRate,IVCashr.ToRateB1,IVCashr.ToRateB2,IVCashr.BaseRate1,IVCashr.BaseRate2,DefaultCurRoundOff);
+          t = t - MulRateToBase1(IVCashr.CurncyCode,IVCashrw.Sum,IVCashr.FrRate,IVCashr.ToRateB1,IVCashr.ToRateB2,IVCashr.BaseRate1,IVCashr.BaseRate2,DefaultCurRoundOff); 
         end;
       end;
       if (IVCashrw.stp==kInvoiceRowTypeGiftVoucherPayment) then begin
         if GCb.LoyaltyPointsUsageType==0 or GCb.LoyaltyPointsUsageType==2 then begin //None or GV Sold only
-          t = t - MulRateToBase1(IVCashr.CurncyCode,IVCashrw.Sum,IVCashr.FrRate,IVCashr.ToRateB1,IVCashr.ToRateB2,IVCashr.BaseRate1,IVCashr.BaseRate2,DefaultCurRoundOff);
+          t = t - MulRateToBase1(IVCashr.CurncyCode,IVCashrw.Sum,IVCashr.FrRate,IVCashr.ToRateB1,IVCashr.ToRateB2,IVCashr.BaseRate1,IVCashr.BaseRate2,DefaultCurRoundOff); 
         end;
+      end;
+      if (IVCashrw.stp==kInvoiceRowTypeLoyaltyPointsBonus) then begin
+        IVCashr.Points = IVCashr.Points + IVCashrw.Points;
       end;
     end;
     if (found) then begin
@@ -118,7 +129,7 @@ begin
       end;
       lrwcnt = MatRowCnt(LLPr);
       if (lrwcnt==0) then begin
-        IVCashr.Points = (LLPr.Points/LLPr.Amount) * Round(t,rnd);
+        IVCashr.Points = IVCashr.Points + (LLPr.Points/LLPr.Amount) * Round(t,rnd);
       end else begin
         for (i=0;i<rwcnt;i=i+1) begin
           MatRowGet(IVCashr,i,IVCashrw);
@@ -136,15 +147,15 @@ begin
               testf = false;
               switch (LLPrw.CodeType) begin
                 case 0:
-                  if (ReadFirstItem(IVCashrw.ArtCode,INr,true,true)) then begin
+                  if (ReadFirstItem(IVCashrw.ArtCode,INr,true,true)) then begin 
                     if (INr.Group==LLPrw.ITCode) then begin
                       testf = true;
-                    end;
+                    end;  
                   end;
                 case 1:
                   if (IVCashrw.ArtCode==LLPrw.ITCode) then begin
                     testf = true;
-                  end;
+                  end;  
               end;
               if (testf) then begin
                 t = MulRateToBase1(IVCashr.CurncyCode,sum,IVCashr.FrRate,IVCashr.ToRateB1,IVCashr.ToRateB2,IVCashr.BaseRate1,IVCashr.BaseRate2,DefaultCurRoundOff);
@@ -174,8 +185,8 @@ begin
           end;
         end;
         lrwcnt = MatRowCnt(LPr);
-        if (lrwcnt==0) then begin
-          IVCashr.Points = (LPr.Points/LPr.Amount) * Round(t,rnd);
+        if (lrwcnt==0) then begin    
+          IVCashr.Points = IVCashr.Points + (LPr.Points/LPr.Amount) * Round(t,rnd);
         end else begin
           for (i=0;i<rwcnt;i=i+1) begin
             MatRowGet(IVCashr,i,IVCashrw);
@@ -193,15 +204,15 @@ begin
                 testf = false;
                 switch (LPrw.CodeType) begin
                   case 0:
-                    if (ReadFirstItem(IVCashrw.ArtCode,INr,true,true)) then begin
+                    if (ReadFirstItem(IVCashrw.ArtCode,INr,true,true)) then begin 
                       if (INr.Group==LPrw.ITCode) then begin
                         testf = true;
-                      end;
+                      end;  
                     end;
                   case 1:
                     if (IVCashrw.ArtCode==LPrw.ITCode) then begin
                       testf = true;
-                    end;
+                    end;  
                 end;
                 if (testf) then begin
                   t = MulRateToBase1(IVCashr.CurncyCode,sum,IVCashr.FrRate,IVCashr.ToRateB1,IVCashr.ToRateB2,IVCashr.BaseRate1,IVCashr.BaseRate2,DefaultCurRoundOff);
@@ -215,14 +226,14 @@ begin
                 IVCashr.Points = IVCashr.Points + (LPr.Points/LPr.Amount) * Round(t,rnd);
               end;
             end;
-          end;
+          end;        
         end;
       end;
     end;
-  end;
-LCalculateIVCashVcPoints:;
+  end;  
+LCalculateIVCashVcPoints:;  
   return;
-end;
+end;  
 
 global
 procedure IVCashDUpdatePrices(record IVCashVc IVCashp)
@@ -246,7 +257,7 @@ BEGIN
     MatRowGet(IVCashp,i,IVCashrw);
     if (nonblank(IVCashrw.ArtCode)) then begin
       orgprice = IVCashrw.Price; //EBS
-      orgrebate = IVCashrw.vRebate; //EBS
+      orgrebate = stringtoval(IVCashrw.vRebate,m41val); //EBS
       orgsum = IVCashrw.Sum; //EBS
       price = IVCashrw.Price;
       vreb = blankval;
@@ -261,18 +272,18 @@ BEGIN
 
       // EVS: DOL-84
       revertdiscf = false;
-      if (pricingmatchf and IVCashrw.vRebate > vreb and INr.InitDisc == IVCashrw.vRebate) then begin
+      if (pricingmatchf and stringtoval(IVCashrw.vRebate,m41val) > vreb and INr.InitDisc == stringtoval(IVCashrw.vRebate,m41val)) then begin
         revertdiscf = true;
       end;
       // :EVS
 
       //EBS could integrate with DOL-84 however do not know what it was, better seperate so not to break smth there
-      if (pricingmatchf and !revertdiscf and IVCashrw.vRebate > vreb) then begin
-        vreb = IVCashrw.vRebate;
+      if (pricingmatchf and !revertdiscf and stringtoval(IVCashrw.vRebate,m41val) > vreb) then begin
+        vreb = stringtoval(IVCashrw.vRebate,m41val);
       end;
 
       if (revertdiscf) then begin // EVS: DOL-84
-        IVCashrw.vRebate     = INr.InitDisc;
+        IVCashrw.vRebate = INr.InitDisc;
       end else begin
         IVCashrw.Price     = price;
         IVCashrw.vRebate     = vreb;
@@ -288,14 +299,14 @@ BEGIN
         IVCashrw.VATCode = IVCashp.CustVATCode;
       end;
       MatRowPut(IVCashp,i,IVCashrw);
-      if orgprice!=IVCashrw.Price or orgrebate!=IVCashrw.vRebate or orgsum!=IVCashrw.Sum then begin //EBS if nothing is changed do not call IVCashDchrsum, as it messes with sums sometimes
+      if orgprice!=IVCashrw.Price or orgrebate!=stringtoval(IVCashrw.vRebate,m41val) or orgsum!=IVCashrw.Sum then begin //EBS if nothing is changed do not call IVCashDchrsum, as it messes with sums sometimes
         if (IVCashDchrsum(IVCashp,i,GenOptRec.UseDiscount)) then begin
           IVCashDchsum(IVCashp,i);
         end;
       end;
     end;
   end;
-  if (nonblank(IVCashp.LoyaltyCardNr)) then begin
+  if (nonblank(IVCashp.LoyaltyCardNr)) then begin 
     CalculateIVCashVcPoints(IVCashp);
   end;
   RETURN;
@@ -305,7 +316,7 @@ global
 procedure IVCashVc_PastePriceList(var record IVCashVc IVCashp)
 begin
   record PLDefVc PLDefR;
-
+ 
   PLDefR.Code = IVCashp.PriceList;
   if (ReadFirstMain(PLDefR,1,true)) then begin
     IVCashp.InclVAT = PLDefR.InclVAT;
@@ -315,9 +326,10 @@ begin
 end;
 
 global
-procedure IVCashVc_PasteRebCode(var record IVCashVc IVCashp)
+procedure IVCashVc_PasteRebCode(var record IVCashVc IVCr)
 begin
-  IVCashDUpdatePrices(IVCashp);
+//  IVCashDUpdatePrices(IVCr);
+  RecalcDiscountIVCashD(IVCr);
   return;
 end;
 
@@ -335,11 +347,11 @@ begin
   rwcnt = MatRowCnt(IVCashr);
   for (i=0;i<rwcnt;i=i+1) begin
     MatRowGet(IVCashr,i,IVCashrw);
-    if ((IVCashrw.stp==kInvoiceRowTypeGiftVoucherPayment) or (IVCashrw.stp==kInvoiceRowTypeCreditCardPayment) or (IVCashrw.stp==kInvoiceRowTypeChequePayment)) then begin
+    if ((IVCashrw.stp==kInvoiceRowTypeGiftVoucherPayment) or (IVCashrw.stp==kInvoiceRowTypeCreditCardPayment) or (IVCashrw.stp==kInvoiceRowTypeSwishPayment) or (IVCashrw.stp==kInvoiceRowTypeQRPayment) or (IVCashrw.stp==kInvoiceRowTypeCashWithdrawal) or (IVCashrw.stp==kInvoiceRowTypeChequePayment)) then begin
       cash = cash + IVCashrw.Sum;
     end;
-    if ((IVCashrw.stp==kInvoiceRowTypeCashPayment) or (IVCashrw.stp==kInvoiceRowTypeLoyaltyPointsPayment)) then begin
-      if (IVCashrw.CurncyCode!=IVCashr.CurncyCode) then begin
+    if ((IVCashrw.stp==kInvoiceRowTypeCashPayment) or (IVCashrw.stp==kInvoiceRowTypeLoyaltyPointsPayment)) then begin 
+      if (IVCashrw.CurncyCode!=IVCashr.CurncyCode) then begin  
         if (IVCashr.CurncyCode==bascur.BaseCur1) then begin
           cash = cash + MulRateToBase1(IVCashrw.CurncyCode,IVCashrw.Sum,IVCashrw.FrRate,IVCashrw.ToRateB1,IVCashrw.ToRateB2,IVCashrw.BaseRate1,IVCashrw.BaseRate2,DefaultCurRoundOff);
           bcurf = true;
@@ -356,13 +368,13 @@ begin
         cash = cash + IVCashrw.Sum;
       end;
     end;
-  end;
-  CalculateIVCashCashAmount = cash;
+  end; 
+  CalculateIVCashCashAmount = cash; 
   return;
 end;
 
 global
-procedure IVCash2Sumup(record IVCashVc IVCashp,record SMVc SMr,Integer vatcnt,var val s0,var val s1,var val s2,var val s3,var val s4,var val TotGP,var string roundofpaymode)
+procedure IVCash2Sumup(record IVCashVc IVCashp,record SMVc SMr,record SMVc RvrsVATr,Integer vatcnt,var val s0,var val s1,var val s2,var val s3,var val s4,var val TotGP,var string roundofpaymode)
 BEGIN
   Integer i,rwcnt;
   record INVc INr;
@@ -378,7 +390,7 @@ BEGIN
   IVCashp.TotQty = blankval;
   IVCashp.TotWeight = blankval;
   IVCashp.TotVolume = blankval;
-
+  
   TotGP = 0;
   rwcnt = MatRowCnt(IVCashp);
   for (i=0;i<rwcnt;i=i+1) begin
@@ -391,6 +403,12 @@ BEGIN
         cashpaymode = IVCashrw.PayMode;
       case kInvoiceRowTypeCreditCardPayment:
         ccpaymode = IVCashrw.PayMode;
+      case kInvoiceRowTypeSwishPayment:
+        ccpaymode = IVCashrw.PayMode;
+      case kInvoiceRowTypeQRPayment:
+        ccpaymode = IVCashrw.PayMode;
+      case kInvoiceRowTypeCashWithdrawal:
+        ccpaymode = IVCashrw.PayMode;
     end;
     if ((IVCashrw.stp==kInvoiceRowTypeGiftVoucherSold)) then begin
       switch (IVCashp.InclVAT) begin
@@ -399,9 +417,9 @@ BEGIN
           s1 = IVCashrw.Sum + s1 - t;
           if (t==0) then begin
             s2 = IVCashrw.Sum + s2;
-          end;
+          end;  
           AddVATBase(SMr,IVCashrw.VATCode,IVCashrw.Sum - t,tax1reb,vatcnt,1,0);
-//          FindTAX2(IVCashrw.TAX2Prc,IVCashrw.Sum,1);
+//          FindTAX2(IVCashrw.TAX2Prc,IVCashrw.Sum,1);          
         otherwise
           s4 = IVCashrw.Sum + s4;
           t = FindVAT (IVCashrw.VATCode,IVCashrw.Sum,IVCashp.InclVAT,IVCashp.NoTAXonVAT);
@@ -416,52 +434,60 @@ BEGIN
       end;
     end;
     if ((IVCashrw.stp==kInvoiceRowTypeNormal) or (IVCashrw.stp==kInvoiceRowTypeStructuredItemComponent) or (IVCashrw.stp==kInvoiceRowTypeMultiBuyDiscount) or (IVCashrw.stp==kInvoiceRowTypeOnAccountPayment)) and (IVCashrw.ovst==0) then begin
-/*
+/*    
     if (IVCashrw.stp==kInvoiceRowTypeNormal) or (IVCashrw.stp==kInvoiceRowTypeVoid) then begin
       if (IVCashrw.stp==kInvoiceRowTypeVoid) then begin
         IVCashrw.Quant = -IVCashrw.Quant;
         IVCashrw.Sum = -IVCashrw.Sum;
       end;
-*/
+*/      
       TotGP = TotGP + IVCashrw.rowGP;
       if (IVCashrw.DownPaidSum!=0) then begin
         rowsum = IVCashrw.DownPaidSum;
         t = IVCashrw.Quant-IVCashrw.OrdQuant;
         if (t>0) then begin
           rowsum = rowsum + t*IVCashrw.Price;
-        end;
+        end;        
         if (IVCashp.InclVAT==0) then begin
           rowsum = rowsum - FindVAT(IVCashrw.VATCode,rowsum,1,0);
         end;
       end else begin
         rowsum = IVCashrw.Sum;
       end;
-      if (IVCashp.InclVAT==0) then begin/* 0-rndoff 1-sumexvat 2-sumnondtbl 3-vat 4-sumtopay */
+      if (IVCashp.InclVAT==0) then begin/* 0-rndoff 1-sumexvat 2-sumnondtbl 3-vat 4-sumtopay */        
         s1 = rowsum + s1;
         t = FindVAT(IVCashrw.VATCode,rowsum,IVCashp.InclVAT,IVCashp.NoTAXonVAT);
         if (t==0) then begin
           s2 = rowsum + s2;
-        end;
+        end;    
         s3 = t + s3;
-        AddVATBase(SMr,IVCashrw.VATCode,rowsum,blankval,vatcnt,IVCashp.InclVAT,IVCashp.NoTAXonVAT);
+        if (blank(IVCashrw.RvrsVATCode)) then begin
+          AddVATBase(SMr,IVCashrw.VATCode,rowsum,blankval,vatcnt,IVCashp.InclVAT,IVCashp.NoTAXonVAT);
+        end else begin
+          AddVATBase(RvrsVATr,IVCashrw.VATCode,rowsum,blankval,vatcnt,IVCashp.InclVAT,IVCashp.NoTAXonVAT);
+        end;
       end else begin/* 0-rndoff 1-sumvatdble(incl) 2-sumnondtbl 3-vat 4-sumtopay */
         s4 = rowsum + s4;
         t = FindVAT (IVCashrw.VATCode,rowsum,IVCashp.InclVAT,IVCashp.NoTAXonVAT);
         s3 = t + s3;
-        AddVATBase(SMr,IVCashrw.VATCode,rowsum,blankval,vatcnt,IVCashp.InclVAT,IVCashp.NoTAXonVAT);
+        if (blank(IVCashrw.RvrsVATCode)) then begin
+          AddVATBase(SMr,IVCashrw.VATCode,rowsum,blankval,vatcnt,IVCashp.InclVAT,IVCashp.NoTAXonVAT);
+        end else begin
+          AddVATBase(RvrsVATr,IVCashrw.VATCode,rowsum,blankval,vatcnt,IVCashp.InclVAT,IVCashp.NoTAXonVAT);
+        end;
         s1 = rowsum + s1;
         if (t==0) then begin
           s2 = rowsum + s2;
-        end;
+        end;  
       end;
       IVCashp.TotQty = IVCashp.TotQty + IVCashrw.Quant;
       INr.Code = IVCashrw.ArtCode;
-      if (ReadFirstItem(IVCashrw.ArtCode,INr,true,true)) then begin
+      if (ReadFirstItem(IVCashrw.ArtCode,INr,true,true)) then begin 
         t = IVCashrw.Quant * INr.Volume;
         IVCashp.TotVolume = t + IVCashp.TotVolume;
         t = IVCashrw.Quant * INr.Weight;
         IVCashp.TotWeight = t + IVCashp.TotWeight;
-      end;
+      end;                    
     end;
   end;
   if (IVCashp.TotVolume==0) then begin IVCashp.TotVolume = blankval; end;
@@ -470,7 +496,7 @@ BEGIN
   if (blank(roundofpaymode)) then begin
     roundofpaymode = cashpaymode;
   end;
-  RETURN;
+  RETURN;  
 END;
 
 global
@@ -498,11 +524,17 @@ BEGIN
           goto LInvoiceRowTypeCashPayment;
         case kInvoiceRowTypeCreditCardPayment:
           goto LInvoiceRowTypeCashPayment;
+        case kInvoiceRowTypeSwishPayment:
+          goto LInvoiceRowTypeCashPayment;
+        case kInvoiceRowTypeQRPayment:
+          goto LInvoiceRowTypeCashPayment;
+        case kInvoiceRowTypeCashWithdrawal:
+          goto LInvoiceRowTypeCashPayment;
         case kInvoiceRowTypeCashPayment:
 LInvoiceRowTypeCashPayment:;
           if (IVCashr.CurncyCode==IVCashrw.CurncyCode) and (IVCashr.CurncyCode!=BCb.BaseCur1) and (nonblank(IVCashr.CurncyCode)) then begin
             CurValToOtherCurWithRate(IVCashr.InvDate,IVCashrw.CurncyCode,IVCashrw.Sum,IVCashrw.FrRate,IVCashrw.ToRateB1,IVCashrw.ToRateB2,IVCashrw.BaseRate1,IVCashrw.BaseRate2,
-                                     IVCashr.CurncyCode,t,DefaultCurRoundOff);
+                                     IVCashr.CurncyCode,t,DefaultCurRoundOff);    
           end else begin
             t = MulRateToBase1(IVCashrw.CurncyCode,IVCashrw.Sum,IVCashrw.FrRate,IVCashrw.ToRateB1,IVCashrw.ToRateB2,IVCashrw.BaseRate1,IVCashrw.BaseRate2,DefaultCurRoundOff);
           end;
@@ -527,16 +559,16 @@ LInvoiceRowTypeCashPayment:;
   t = MulRateToBase2(IVCashr.CurncyCode,IVCashr.CashValue,IVCashr.FrRate,IVCashr.ToRateB1,IVCashr.ToRateB2,IVCashr.BaseRate1,IVCashr.BaseRate2,DefaultCurRoundOff);
   IVCashr.CashValueB2 = t;
 
-/*
+/*  
   if ((IVCashr.RecValue!=0) or (IVCashr.RecValue2!=0) or (IVCashr.CashValue!=0) or (IVCashr.CashValueCur!=0)) then begin
     t = IVCashr.RecValue + IVCashr.RecValue2 + IVCashr.CashValue + MulWithRateToBase1(IVCashr.POSCurncyCode,IVCashr.InvDate,IVCashr.CashValueCur,DefaultCurRoundOff);
-    IVCashr.RetValue = t - IVCashr.Sum4;
-    Base1ToBase2(IVCashr.RetValue,IVCashr.InvDate,t);
+    IVCashr.RetValue = t - IVCashr.Sum4; 
+    Base1ToBase2(IVCashr.RetValue,IVCashr.InvDate,t); 
     IVCashr.RetValueB2 = t;
-    Base1ToBase2(IVCashr.CashValue,IVCashr.InvDate,t);
+    Base1ToBase2(IVCashr.CashValue,IVCashr.InvDate,t); 
     IVCashr.CashValueB2 = t;
   end;
-*/
+*/  
   RETURN;
 END;
 
@@ -572,7 +604,7 @@ begin
       case kInvoiceRowTypeOnAccountPayment:
         goto LkInvoiceRowTypeNormal;
       case kInvoiceRowTypeNormal:
-LkInvoiceRowTypeNormal:;
+LkInvoiceRowTypeNormal:;      
         UnpackRowFieldMatrix(IVCashrw,"TaxMatrix",TMr);
         AddRowTaxMatrixToSumTaxMatrix(TMr,sumTMr,IVCashp.InclVAT);
         IVCashp.Sum1 = IVCashp.Sum1 + IVCashrw.Sum;
@@ -590,8 +622,8 @@ LkInvoiceRowTypeNormal:;
       case kInvoiceRowTypeDownpayment:
         UnpackRowFieldMatrix(IVCashrw,"TaxMatrix",TMr);
         AddRowTaxMatrixToSumTaxMatrix(TMr,sumTMr,IVCashp.InclVAT);
-        IVCashp.Sum1 = IVCashp.Sum1 + IVCashrw.Sum;
-
+        IVCashp.Sum1 = IVCashp.Sum1 + IVCashrw.Sum;      
+      
 //  kInvoiceRowTypePrepayment = 6,
 //  kInvoiceRowTypeLoan = 7,
 //  kInvoiceRowTypeLoanInterest = 8,
@@ -622,7 +654,7 @@ LkInvoiceRowTypeNormal:;
       IVCashp.Sum4 = IVCashp.Sum1;
     case kBasePriceInclVAT:
       IVCashp.Sum4 = IVCashp.Sum1;
-  end;
+  end;  
   IVCashp.Sum3 = Round(IVCashp.Sum3,rndvat);
   IVCashp.Sum4 = Round(IVCashp.Sum4,rndtotal);
   IVCashp.BaseSum4 = MulRateToBase1(IVCashp.CurncyCode,IVCashp.Sum4,IVCashp.FrRate,IVCashp.ToRateB1,IVCashp.ToRateB2,IVCashp.BaseRate1,IVCashp.BaseRate2,DefaultCurRoundOff);
@@ -634,6 +666,7 @@ global
 procedure IVCashSumup(var record IVCashVc IVCashp,Boolean roundof)
 BEGIN
   record SMVc SMr;/*VATBaseRowType*/
+  record SMVc RvrsVATr;
   Integer vatcnt;
   val s0,s1,s2,s3,s4,TotGP;
   val tax1sum,t,discountval;
@@ -641,27 +674,34 @@ BEGIN
   string 255 tstr;
   record DefCashBlock DCr;
   string 255 roundofpaymode;
-
+  record CUVc CUr;
+  
   if (UseTaxTemplatesforTaxCalc) then begin
     IVCashSumup_TaxTemplate(IVCashp);
     goto LIVCashSumup;
   end;
+  CUr.Code = IVCashp.CustCode;
+  ReadFirstMain(CUr,1,true);
+
   BlockLoad(DCr); // Annoying...
   SetupVATBase(SMr,vatcnt);
+  SetupVATBase(RvrsVATr,vatcnt);
   GetPDVRebt(IVCashp.PayDeal,discountval);
+  IVCashp.RetValue = blankval;
   s0 = IVCashp.Sum0;
   s1 = IVCashp.Sum1;
   s2 = IVCashp.Sum2;
   s3 = IVCashp.Sum3;
   s4 = IVCashp.Sum4;
-  IVCash2Sumup(IVCashp,SMr,vatcnt,s0,s1,s2,s3,s4,TotGP,roundofpaymode);
+  IVCash2Sumup(IVCashp,SMr,RvrsVATr,vatcnt,s0,s1,s2,s3,s4,TotGP,roundofpaymode);
   IVCashp.Sum0 = s0;
   IVCashp.Sum1 = s1;
   IVCashp.Sum2 = s2;
   IVCashp.Sum3 = s3;
   IVCashp.Sum4 = s4;
-  IVCashp.TotGP = TotGP;
+  IVCashp.TotGP = TotGP;  
   CalcVATBaseVAT(SMr,IVCashp.InclVAT,IVCashp.NoTAXonVAT,vatcnt,s3,tax1sum);
+  CalcVATBaseVAT2(RvrsVATr,IVCashp.InclVAT,IVCashp.NoTAXonVAT,vatcnt,CUr.RvrsVAT!=0,IVCashp.RvrsVAT,t);
   if (blank(roundofpaymode)) then begin
     roundofpaymode = DCr.DefCashPayMode;
   end;
@@ -688,10 +728,13 @@ BEGIN
   IVCashp.Sum0 = Round(IVCashp.Sum0,DefaultRoundMode);
   s1 = Round(s1,DefaultRoundMode);
   s2 = Round(s2,DefaultRoundMode);
+  if (IsEnterprise or BuildProductCode=="PAYYAPERP") then begin
+    IVCashp.BaseSum4 = s4;
+  end;
   if (nonblank(IVCashp.CurncyCode)) then begin
     IVCashp.BaseSum4 = MulRateToBase1(IVCashp.CurncyCode,s4,IVCashp.FrRate,IVCashp.ToRateB1,IVCashp.ToRateB2,IVCashp.BaseRate1,IVCashp.BaseRate2,DefaultCurRoundOff);
   end;
-/*
+/*  
   t = IVCashp.RecValue + IVCashp.RecValue2;
   t = t + IVCashp.CashValue;
   t = t + MulWithRateToBase1(IVCashp.POSCurncyCode,IVCashp.InvDate,IVCashp.CashValueCur,DefaultCurRoundOff);
@@ -704,12 +747,12 @@ BEGIN
   IVCashp.Sum1 = s1;
   IVCashp.Sum2 = s2;
   IVCashp.Sum3 = s3;
-  IVCashp.Sum4 = s4;
+  IVCashp.Sum4 = s4;  
   if ((HasLocalization("FIN")) and (blank(IVCashp.PayDeal)) and (blank(IVCashp.PayDeal2))) then begin//vatFinnish
     IVCashp.Sum4 = Round(IVCashp.Sum4,SetRoundModeD(10));
   end;
-LIVCashSumup:;
-  CalculatePOSCashBack(IVCashp);
+LIVCashSumup:;  
+  CalculatePOSCashBack(IVCashp);  
   CalculateIVCashVcPoints(IVCashp);
   RETURN;
 END;
@@ -734,12 +777,12 @@ BEGIN
   MatRowGet(IVCashr,rownr,IVCashrw);
   BlockLoad(GenOptRec);
   IVCashrw.Price = blankval;
-  IVCashrw.vRebate = blankval;
+  IVCashrw.vRebate = "";
   vatcode = IVCashrw.VATCode;
   if (GetFirstItem(IVCashrw.ArtCode,INr)) then begin
     IVCashrw.ArtCode = INr.Code;
     // EVS: DOL-84
-    if (IVCashrw.Price == blankval and IVCashrw.vRebate == blankval) then begin
+    if (IVCashrw.Price == blankval and IVCashrw.vRebate == "") then begin
       fprice = INr.InitPrice;
       fdisc = INr.InitDisc;
     end;
@@ -781,14 +824,14 @@ BEGIN
     IVCashrw.VATCode = vatcode;
     IVCashrw.SalesAcc = salesacc;
     IVCashrw.Spec = curitemname;
-    MatRowPut(IVCashr,rownr,IVCashrw);
+    MatRowPut(IVCashr,rownr,IVCashrw);      
     if (nonblank(INr.WarnText1)) then begin
       warning = INr.WarnText1;
-    end;
+    end;      
     if (calcpricef) then begin
       t = -1;
       IVCashVcGetCalcItemPrice(INr,IVCashr,rownr,t);
-    end;
+    end;    
     MatRowGet(IVCashr,rownr,IVCashrw);
     if (nonblank(IVCashr.CustVATCode)) then begin
       IVCashrw.VATCode = IVCashr.CustVATCode;
@@ -797,7 +840,7 @@ BEGIN
       IVCashrw.Recepy = INr.Recepy;
     end else begin
       IVCashrw.Recepy = "";
-    end;
+    end;  
     if (GetItemNameStr(1,curitemname,IVCashr.LangCode,INr.Name,INr.Code)) then begin
     end;
     IVCashrw.Spec = curitemname;
@@ -817,14 +860,14 @@ BEGIN
     PackRowFieldMatrix(IVCashrw,"TaxMatrix",TMr);
     MatRowPut(IVCashr,rownr,IVCashrw);
     chrsum = true;
-    if ((INr.ExplodeRec==1) and (nonblank(IVCashrw.Recepy))) then begin
+    if ((INr.ExplodeRec==1) and (nonblank(IVCashrw.Recepy))) then begin	
       IVCashMultiLineText(IVCashr,INr,IVCashr.LangCode,rownr);
-    end;
+    end;      
     if (nonblank(INr.InvRecepy)) then begin
 //?            Do_InvoiceRecepy(IVCashr,&INr,row+1);??
       IVCashDUpdatePrices(IVCashr);
       chsum = true;
-    end;
+    end;       
     sernrf = INr.SerNrf;
     if (INr.SerNrf==2) and (INr.DonotRequireBatchNrOnIVCash!=0) then begin
       sernrf = 0;
@@ -836,8 +879,8 @@ BEGIN
         IVCashrw.Quant = 1;
       end;
       MatRowPut(IVCashr,rownr,IVCashrw);
-      if (IVCashVc_PasteQuant(IVCashr,rownr)) then begin
-      end;
+      if (IVCashVc_PasteQuant(IVCashr,rownr)) then begin  
+      end;  
     end;
   end;
   if (chrsum) then begin
@@ -845,10 +888,14 @@ BEGIN
   end;
   if (chsum) then begin
     IVCashDchsum(IVCashr,rownr);
+    if (HasLocalization("LVA")) then begin//potentially slow
+      IVCashPasteRvrsVATCode(IVCashr,false);
+    end;
     IVCashSumup(IVCashr,true);
   end;
+
   AddMultiBuyDiscountItems_IVCashVc(IVCashr);
-  IVCashVc_PasteArtCode = res;
+  IVCashVc_PasteArtCode = res;  
   RETURN;
 END;
 
@@ -869,7 +916,7 @@ BEGIN
 
   MatRowGet(IVCashr,rownr,IVCashrw);
   BlockLoad(GenOptRec);
-  vreb = IVCashrw.vRebate;
+  vreb = stringtoval(IVCashrw.vRebate,m41val);
   price = IVCashrw.Price;
 
   if (GetFirstItem(IVCashrw.ArtCode,INr)) then begin
@@ -898,7 +945,7 @@ BEGIN
     end;
 
     // EVS: DOL-84
-    if (HALMatchPricingWithLoyaltyCard(IVCashr) and fdisc > vreb and fdisc == IVCashrw.vRebate and fprice == IVCashrw.Price) then begin
+    if (HALMatchPricingWithLoyaltyCard(IVCashr) and fdisc > vreb and fdisc == stringtoval(IVCashrw.vRebate,m41val) and fprice == IVCashrw.Price) then begin
       revertdiscf = true;
     end;
     // :EVS
@@ -922,7 +969,7 @@ BEGIN
     if (nonblank(IVCashr.PriceList)) then begin
       if (QtyDepPriceL(IVCashr.PriceList) == true) then begin
         IVCashrw.Price = price;
-      end;
+      end;  
     end;
     MatRowPut(IVCashr,rownr,IVCashrw);
     if (calcpricef) then begin
@@ -959,10 +1006,13 @@ BEGIN
   end;
   if (chsum) then begin
     IVCashDchsum(IVCashr,rownr);
+    if (HasLocalization("LVA")) then begin//potentially slow
+      IVCashPasteRvrsVATCode(IVCashr,false);
+    end;
     IVCashSumup(IVCashr,true);
-  end;
+  end;       
   AddMultiBuyDiscountItems_IVCashVc(IVCashr);
-  IVCashVc_PasteQuant = res;
+  IVCashVc_PasteQuant = res;  
   RETURN;
 END;
 
@@ -981,7 +1031,7 @@ BEGIN
   roundmode rndline,rndtotal,rndvat;
   record SMVc VATr;
 
-  SetupVATBase(VATr,vatcnt);
+  SetupVATBase(VATr,vatcnt);          
   RecordCopy(oldIVCashr,IVCashr);
   RecordNew(ORr);
   ORr.CustCode = IVCashr.CustCode;
@@ -1014,7 +1064,7 @@ BEGIN
       ORrw.Spec = IVCashrw.Spec;
       ORrw.SerialNr = IVCashrw.SerialNr;
       ORrw.Price = IVCashrw.Price;
-      ORrw.vRebate = IVCashrw.vRebate;
+      ORrw.vRebate = CalculateDiscountPercentage(IVCashrw.Quant,IVCashrw.Price,IVCashrw.Sum);
       ORrw.Sum = IVCashrw.Sum;
       ORrw.VATCode = IVCashrw.VATCode;
       downpaidsum = IVCashrw.DownPaidSum;
@@ -1023,7 +1073,7 @@ BEGIN
           downpaidsum = downpaidsum - FindVAT(IVCashrw.VATCode,downpaidsum,1,0);
         end;
         downpaid = downpaid + downpaidsum;
-        AddVATBase(VATr,ORrw.VATCode,downpaidsum,blankval,vatcnt,ORr.InclVAT,ORr.NoTAXonVAT);
+        AddVATBase(VATr,ORrw.VATCode,downpaidsum,blankval,vatcnt,ORr.InclVAT,ORr.NoTAXonVAT);      
       end else begin
         downpaid = downpaid + IVCashrw.Sum;
         AddVATBase(VATr,ORrw.VATCode,IVCashrw.Sum,blankval,vatcnt,ORr.InclVAT,ORr.NoTAXonVAT);
@@ -1057,7 +1107,7 @@ function Boolean CheckBaseCurcy(string crncycode)
 begin
   Boolean res;
   record BaseCurBlock bascur;
-
+  
   res = true;
   BlockLoad(bascur);
   if (crncycode!=bascur.BaseCur1) then begin
@@ -1071,14 +1121,14 @@ global
 function Boolean IVCashVc_PasteCustCode(var record IVCashVc IVCashr,string oldcustcode,string DefLocation,string DefPLCode,var Integer err,var string warning)
 begin
   Boolean res;
-
+  
   if ((oldcustcode!=IVCashr.CustCode) and (nonblank(oldcustcode))) then begin
     RemoveOldCustObjects(oldcustcode,IVCashr.Objects);
   end;
   if (PasteCustInCashInv(IVCashr,DefLocation,DefPLCode,warning)) then begin
     res = true;
     IVCashGetRate(IVCashr);
-    if (ProgramType==typOffLine) then begin
+    if (ProgramType==typOffLine) then begin           
       if (CheckBaseCurcy(IVCashr.CurncyCode)==false) then begin
         IVCashr.CurncyCode = "";
         IVCashGetRate(IVCashr);
@@ -1092,10 +1142,60 @@ begin
 end;
 
 global
+function LongInt IVCashVc_PasteVATNr(var record IVCashVc IVCr)
+begin
+  LongInt res;
+  record CUVc CUr;
+  
+  res = 0;
+  CUr.VATNr = IVCr.VATNr;
+  if (ReadFirstKey("VATNr",CUr,1,true)) then begin
+    if (UserCanAction("ChangeCustCodeonPOSInvoice",false)) then begin
+      IVCr.CustCode = CUr.Code;
+    end;
+    IVCr.Addr0 = CUr.Name;
+    IVCr.Addr1 = CUr.InvAddr0;
+    IVCr.Addr2 = CUr.InvAddr1;
+    IVCr.Addr3 = CUr.InvAddr2;
+    IVCr.InvAddr3 = CUr.InvAddr3;
+    IVCr.InvAddr4 = CUr.InvAddr4;
+  end else begin
+    res = 20859;
+  end;
+  IVCashVc_PasteVATNr = res;
+  return;
+end;
+
+global
+function LongInt ChangeAddressNPTSSClass_PasteVATNr(var record RcVc RepSpec)
+begin
+  LongInt res;
+  record CUVc CUr;
+  
+  res = 0;
+  CUr.VATNr = RepSpec.f12;
+  if (ReadFirstKey("VATNr",CUr,1,true)) then begin
+    if (UserCanAction("ChangeCustCodeonPOSInvoice",false)) then begin
+      RepSpec.f13 = CUr.Code;
+    end;
+    RepSpec.f6 = CUr.Name;
+    RepSpec.f1 = CUr.InvAddr0;
+    RepSpec.f2 = CUr.InvAddr1;
+    RepSpec.f3 = CUr.InvAddr2;
+    RepSpec.f4 = CUr.InvAddr3;
+    RepSpec.f5 = CUr.InvAddr4;
+  end else begin
+    res = 20859;
+  end;
+  ChangeAddressNPTSSClass_PasteVATNr = res;
+  return;
+end;
+
+global
 function Boolean CashPayTouchScreenRemote(record RcVc prevRepSpec,record RcVc RepSpec)
 begin
   Boolean res;
-
+  
   if (prevRepSpec.CurncyCode!=RepSpec.CurncyCode) then begin
     CurValToOtherCur(CurrentDate,prevRepSpec.CurncyCode,prevRepSpec.vals0,RepSpec.CurncyCode,RepSpec.vals0,DefaultCurRoundOff);
     res = true;
@@ -1119,9 +1219,9 @@ begin
   Integer sernrf;
 
   MatRowGet(IVCashr,rownr,IVCashrw);
-  if (blank(IVCashrw.ArtCode)) then begin
+  if (blank(IVCashrw.ArtCode)) then begin 
     if (SerialNrForOneItem(IVCashrw.SerialNr,SBr)) then begin
-      if (nonblank(SBr.Item)) then begin
+      if (nonblank(SBr.Item)) then begin 
         IVCashrw.ArtCode = SBr.Item;
         if (ReadFirstItem(SBr.Item,INr,false,false)) then begin
           if (INr.SerNrf==1) then begin
@@ -1132,25 +1232,25 @@ begin
         serial = IVCashrw.SerialNr;
         IVCashrw.PosCode = FindPositionWithSerialNr(IVCashr.Location,IVCashrw.ArtCode,IVCashrw.SerialNr,"");
         MatRowPut(IVCashr,rownr,IVCashrw);
-        if (IVCashVc_PasteArtCode(IVCashr,rownr,false,inwarning,sernrf)) then begin
+        if (IVCashVc_PasteArtCode(IVCashr,rownr,false,inwarning,sernrf)) then begin 
         end;
         MatRowGet(IVCashr,rownr,IVCashrw);
         IVCashrw.SerialNr = serial;
         MatRowPut(IVCashr,rownr,IVCashrw);
-        res = true;
-      end;
+        res = true;        
+      end;  
     end;
   end;
-  if (blank(IVCashrw.ArtCode)) then begin
-    if (FindLastInvoiceRowForSerial(IVCashr.SerNr,IVCashr.CustCode,IVCashrw.SerialNr,lastIVCashrw)) then begin
-      if (nonblank(lastIVCashrw.ArtCode)) and (nonblank(IVCashrw.SerialNr)) and (IVCashrw.SerialNr==lastIVCashrw.SerialNr) then begin
+  if (blank(IVCashrw.ArtCode)) then begin 
+    if (FindLastInvoiceRowForSerial(IVCashr.SerNr,IVCashr.CustCode,IVCashrw.SerialNr,lastIVCashrw)) then begin 
+      if (nonblank(lastIVCashrw.ArtCode)) and (nonblank(IVCashrw.SerialNr)) and (IVCashrw.SerialNr==lastIVCashrw.SerialNr) then begin 
         CopyRow(IVCashr,lastIVCashrw,IVCashrw);
         IVCashrw.Quant = -1;
         MatRowPut(IVCashr,rownr,IVCashrw);
         chsum = IVCashDchrsum(IVCashr,rownr,0);
-        IVCashSumup(IVCashr,true);
+        IVCashSumup(IVCashr,true); 
         goto LIVCashVc_PasteSerialNr;
-      end;
+      end;  
     end;
   end;
   SerialNrDimensions(IVCashrw.ArtCode,IVCashrw.SerialNr,UnitXval,UnitYval,UnitZval);
@@ -1167,7 +1267,7 @@ begin
   if (blank(location)) then begin
     location = IVCashr.Location;
   end;
-  IVCashrw.Quant = CalculateSerialNrQuantity(IVCashrw.ArtCode,IVCashrw.SerialNr,location,true,IVCashrw.UnitXval,IVCashrw.UnitYval,IVCashrw.UnitZval,IVCashrw.Quant);
+  IVCashrw.Quant = CalculateSerialNrQuantity(IVCashrw.ArtCode,IVCashrw.SerialNr,location,true,IVCashrw.UnitXval,IVCashrw.UnitYval,IVCashrw.UnitZval,IVCashrw.Quant);  
   MatRowPut(IVCashr,rownr,IVCashrw);
   if (chsum) then begin
     IVCashDchsum(IVCashr,rownr);
@@ -1203,7 +1303,7 @@ end;
 
 global
 procedure IVCashVc_PasteLoyaltyCardNr(var record IVCashVc IVCashr)
-begin
+begin 
   record LoyaltyCardVc LoyaltyCardr;
   record IVCashVc credIVCashr;
   string 255 warning;
@@ -1217,7 +1317,7 @@ begin
   BlockLoad(lmr);
   pricechange = false;
   LoyaltyCardr.SerNr = IVCashr.LoyaltyCardNr;
-  if (ReadFirstMain(LoyaltyCardr,1,true)) then begin
+  if (ReadFirstMain(LoyaltyCardr,1,true)) then begin 
     testf = true;
     if (LoyaltyCardr.ExpiryDate<IVCashr.InvDate) and nonblank(LoyaltyCardr.ExpiryDate) then begin
       testf = false;
@@ -1228,13 +1328,12 @@ begin
     if (LoyaltyCardr.Closed!=0) then begin
       testf = false;
     end;
-
-    if (testf) then begin
+    if (testf) then begin 
       oldcust = IVCashr.CustCode;
       IVCashr.CustCode = LoyaltyCardr.CustCode;
       IVCashr.LCMLevel = LoyaltyCardr.LCMLevel;
-      IVCashr.Points = 0;
-      if (IVCashr.CustCode<>oldcust) then begin
+      IVCashr.Points = 0;      
+      if (IVCashr.CustCode<>oldcust) then begin 
         if (IVCashVc_PasteCustCode(IVCashr,oldcust,lmr.DefLocation,lmr.PLCode,err,warning)) then begin
           if (nonblank(warning)) then begin
             MessageBox(0,warning);
@@ -1246,14 +1345,14 @@ begin
       end;
       IVCashr.LoyaltyCardNr = LoyaltyCardr.SerNr;
       IVCashr.LCMLevel = LoyaltyCardr.LCMLevel;
-      IVCashr.Points = 0;
+      IVCashr.Points = 0;      
       //if (LoyaltyCardr.PointsBalance<>0) then begin
         GetLCPrices(LoyaltyCardr.PointsBalance,LoyaltyCardr.LCMLevel,PLCode,RebCode);
-        if (nonblank(PLCode) and (IVCashr.PriceList<>PLCode)) then begin
+        if (nonblank(PLCode) and (IVCashr.PriceList<>PLCode)) then begin 
           IVCashr.PriceList = PLCode;
           pricechange = true;
         end;
-        if (nonblank(RebCode) and (IVCashr.RebCode<>RebCode)) then begin
+        if (nonblank(RebCode) and (IVCashr.RebCode<>RebCode)) then begin 
           IVCashr.RebCode = RebCode;
           pricechange = true;
         end;
@@ -1269,25 +1368,25 @@ begin
       IVCashr.Points = 0;
       MessageBox(26434,"");
     end;
-  end else begin
+  end else begin 
     IVCashr.LCMLevel = "";
     IVCashr.Points = 0;
   end;
   return;
 end;
-
+ 
 global
 procedure PasteIVCashInvDate(integer wn,var record IVCashVc IVCashr)
-begin
+begin 
   WarnFutureDate(true,IVCashr.InvDate);
   IVCashr.PayDate = AddDay(IVCashr.InvDate,IVCashr.pdays);
   IVCashGetRate(IVCashr);
   if (nonblank(IVCashr.LoyaltyCardNr)) then begin
     IVCashVc_PasteLoyaltyCardNr(IVCashr);
   end;
-  GetPriceList(IVCashr.CustCat,IVCashr.TransDate,IVCashr.TransTime,IVCashr.PriceList,IVCashr.InclVAT);
+  GetPriceList2(IVCashr.CustCode,IVCashr.CustCat,IVCashr.TransDate,IVCashr.TransTime,IVCashr.PriceList,IVCashr.InclVAT);
   return;
-end;
+end;  
 
 global
 function Boolean PriceLookupVClassIVCashVc_PasteArtCode(var record RcVc RepSpec,record IVCashVc IVCashr)
@@ -1298,7 +1397,7 @@ begin
   string 255 salesacc,vatcode,curitemname,tax2code,taxtemplatecode;
   val vreb,baseprice,price,t,tax2prc;
   Boolean calcpricef,dummyf;
-
+  
   RepSpec.vals0 = blankval;
   if (GetFirstItem(RepSpec.f1,INr)) then begin
     if (GetItemPriceDiscount3(RepSpec.f1,1.00,INr,IVCashr.CurncyCode,
@@ -1312,7 +1411,7 @@ begin
     end;
   end else begin
     if (SerialNrForOneItem(RepSpec.f1,SBr)) then begin
-      if (nonblank(SBr.Item)) then begin
+      if (nonblank(SBr.Item)) then begin 
         if (GetItemPriceDiscount3(RepSpec.f1,1.00,INr,IVCashr.CurncyCode,
                                 IVCashr.FrRate,IVCashr.ToRateB1,IVCashr.ToRateB2,IVCashr.BaseRate1,IVCashr.BaseRate2,
                                 IVCashr.LangCode,IVCashr.CustCat,IVCashr.PriceList,IVCashr.RebCode,
@@ -1323,11 +1422,11 @@ begin
           res = true;
         end;
       end;
-    end;
+    end;    
   end;
   PriceLookupVClassIVCashVc_PasteArtCode = res;
   return;
-end;
+end;  
 
 global
 function Boolean PriceLookupVClassRestAccVc_PasteArtCode(var record RcVc RepSpec,record RestAccVc RestAccr)
@@ -1339,7 +1438,7 @@ begin
   val vreb,baseprice,price,t,tax2prc;
   Boolean calcpricef,dummyf;
   Time blankt;
-
+  
   RepSpec.vals0 = blankval;
   if (GetFirstItem(RepSpec.f1,INr)) then begin
     if (GetItemPriceDiscount3(RepSpec.f1,1.00,INr,"",
@@ -1353,7 +1452,7 @@ begin
     end;
   end else begin
     if (SerialNrForOneItem(RepSpec.f1,SBr)) then begin
-      if (nonblank(SBr.Item)) then begin
+      if (nonblank(SBr.Item)) then begin 
         if (GetItemPriceDiscount3(RepSpec.f1,1.00,INr,"",
                                 blankval,blankval,blankval,blankval,blankval,
                                 "","","","",
@@ -1364,11 +1463,11 @@ begin
           res = true;
         end;
       end;
-    end;
+    end;    
   end;
   PriceLookupVClassRestAccVc_PasteArtCode = res;
   return;
-end;
+end;  
 
 global
 function Integer CalculateLoyaltyPointsPayment_IVCashVc(record IVCashVc IVCashr,val maxpointstouse,var val PointsBalance,var val totusedpoints,var val totsumb1)
@@ -1446,15 +1545,15 @@ begin
             testf = false;
             switch (LLPRrw.CodeType) begin
               case 0:
-                if (ReadFirstItem(IVCashrw.ArtCode,INr,true,true)) then begin
+                if (ReadFirstItem(IVCashrw.ArtCode,INr,true,true)) then begin 
                   if (INr.Group==LLPRrw.ITCode) then begin
                     testf = true;
-                  end;
+                  end;  
                 end;
               case 1:
                 if (IVCashrw.ArtCode==LLPRrw.ITCode) then begin
                   testf = true;
-                end;
+                end;  
             end;
             if (testf) then begin
               t = MulRateToBase1(IVCashr.CurncyCode,sum,IVCashr.FrRate,IVCashr.ToRateB1,IVCashr.ToRateB2,IVCashr.BaseRate1,IVCashr.BaseRate2,DefaultCurRoundOff);
@@ -1525,15 +1624,15 @@ begin
               testf = false;
               switch (LPRrw.CodeType) begin
                 case 0:
-                  if (ReadFirstItem(IVCashrw.ArtCode,INr,true,true)) then begin
+                  if (ReadFirstItem(IVCashrw.ArtCode,INr,true,true)) then begin 
                     if (INr.Group==LPRrw.ITCode) then begin
                       testf = true;
-                    end;
+                    end;  
                   end;
                 case 1:
                   if (IVCashrw.ArtCode==LPRrw.ITCode) then begin
                     testf = true;
-                  end;
+                  end;  
               end;
               if (testf) then begin
                 t = MulRateToBase1(IVCashr.CurncyCode,sum,IVCashr.FrRate,IVCashr.ToRateB1,IVCashr.ToRateB2,IVCashr.BaseRate1,IVCashr.BaseRate2,DefaultCurRoundOff);
@@ -1573,7 +1672,7 @@ begin
       end;
     end;
   end;
-LCalculateLoyaltyPointsPayment_IVCashVc:;
+LCalculateLoyaltyPointsPayment_IVCashVc:;  
   CalculateLoyaltyPointsPayment_IVCashVc = err;
   return;
 end;
@@ -1592,19 +1691,20 @@ begin
 
       if (found) then begin
         BlockLoad(BCb);
-        ClearRow(IVCashr,IVCashrw,kInvoiceRowTypeLoyaltyPointsPayment);
+        ClearRow(IVCashr,IVCashrw,kInvoiceRowTypeLoyaltyPointsPayment);        
         IVCashrw.Points = totusedpoints;
         IVCashrw.Sum = totsumb1;
         IVCashrw.CurncyCode = IVCashr.CurncyCode;
         GetFullCurncyRate(IVCashrw.CurncyCode,IVCashr.TransDate,IVCashrw.FrRate,IVCashrw.ToRateB1,IVCashrw.ToRateB2,IVCashrw.BaseRate1,IVCashrw.BaseRate2);
         CurValToOtherCur(IVCashr.TransDate,BCb.BaseCur1,IVCashrw.Sum,IVCashrw.CurncyCode,IVCashrw.Sum,DefaultCurRoundOff);
-        IVCashrw.PayMode = paymode;
+        IVCashrw.PayMode = paymode;        
         IVCashrw.Spec = UsetStr(24182);
         MatRowPut(IVCashr,MatRowCnt(IVCashr),IVCashrw);
+        POSAudit_LogIVCashVcRow(IVCashr,IVCashrw,kPOSEventTypeAddRow);
       end;
   end;
   return;
-end;
+end;  
 
 global
 function Integer CustomerSalesPaymentTermType(string custcode)
@@ -1612,7 +1712,7 @@ begin
   Integer res;
   record CUVc CUr;
   record PDVc PDr;
-
+  
   CUr.Code = custcode;
   if (ReadFirstMain(CUr,1,true)) then begin
     PDr.Code = CUr.PayDeal;
@@ -1622,7 +1722,7 @@ begin
   end;
   CustomerSalesPaymentTermType = res;
   return;
-end;
+end;  
 
 global
 function Integer IVCashVc_PasteGiftCertificate(var record IVCashVc IVCashr,Integer rownr,Integer stp)
@@ -1637,9 +1737,9 @@ begin
   string 20 vatcode,salesacc;
   row PMBlock PMrw;
   Boolean found;
-
+  
   res = 1;
-  MatRowGet(IVCashr,rownr,IVCashrw);
+  MatRowGet(IVCashr,rownr,IVCashrw);  
   switch (stp) begin
     case kInvoiceRowTypeGiftVoucherSold://selling
       GCr.SerNr = IVCashrw.GCNr;
@@ -1649,8 +1749,8 @@ begin
         GCr.SerNr = -1;
         if (ReadFirstKey("BarCode",GCr,1,true)) then begin found = true; end;
       end;
-      if (GCr.ExpiryDate<CurrentDate) then begin
-        found = false;
+      if (GCr.ExpiryDate<CurrentDate) then begin 
+        found = false; 
         res = 2185;
       end;
       if (found) then begin
@@ -1661,10 +1761,10 @@ begin
         if (blank(IVCashrw.PayMode)) then begin
           IVCashrw.PayMode = DefCashRec.DefGCSPayMode;
         end;
-        IVCashrw.VATCode = DefCashRec.DefGCSVATCode;
+        IVCashrw.VATCode = DefCashRec.DefGCSVATCode;          
         if (GetPMRow(IVCashrw.PayMode,PMrw)) then begin end;
         IVCashrw.SalesAcc = PMrw.AccNr;
-        MatRowPut(IVCashr,rownr,IVCashrw);
+        MatRowPut(IVCashr,rownr,IVCashrw);  
         IVCashSumup(IVCashr,true);
         res = 0;
       end;
@@ -1684,16 +1784,16 @@ begin
         end;
         BlockLoad(DefCashRec);
         IVCashrw.PayMode = DefCashRec.DefGCRPayMode;
-        IVCashrw.VATCode = DefCashRec.DefGCRVATCode;
+        IVCashrw.VATCode = DefCashRec.DefGCRVATCode;          
         IVCashrw.Spec = GCSr.Comment;
         if (GetPMRow(IVCashrw.PayMode,PMrw)) then begin end;
         IVCashrw.SalesAcc = PMrw.AccNr;
-        MatRowPut(IVCashr,rownr,IVCashrw);
+        MatRowPut(IVCashr,rownr,IVCashrw);  
         IVCashSumup(IVCashr,true);
         res = 0;
-      end;
+      end;   
   end;
-LIVCashVc_PasteGiftCertificate:;
+LIVCashVc_PasteGiftCertificate:;  
   IVCashVc_PasteGiftCertificate = res;
   return;
 end;
@@ -1727,16 +1827,16 @@ begin
     end;
   end;
   rwcnt = MatRowCnt(IVCashr);
-  ClearRow(IVCashr,IVCashrw,kInvoiceRowTypeNormal);
+  ClearRow(IVCashr,IVCashrw,kInvoiceRowTypeNormal);    
   IVCashrw.ArtCode = CDb.DiscountItem;
   MatRowPut(IVCashr,rwcnt,IVCashrw);
   if (IVCashVc_PasteArtCode(IVCashr,rwcnt,false,inwarning,sernrf)) then begin
     IVCashrw.Quant = 1.00;
     MatRowPut(IVCashr,rwcnt,IVCashrw);
-    if (IVCashVc_PasteQuant(IVCashr,rwcnt)) then begin
+    if (IVCashVc_PasteQuant(IVCashr,rwcnt)) then begin    
     end;
   end;
-LSCDiscountCardExecuteRemote:;
+LSCDiscountCardExecuteRemote:;      
   SCDiscountCardExecuteRemote = res;
   return;
 end;
@@ -1748,7 +1848,7 @@ begin
   Boolean found,testf;
   string 255 keystr;
   Integer i,rwcnt;
-
+  
   found = true;
   keystr = "OrgIVNr:" & OrgIVNr;
   while (LoopKey(keystr,IVCashr,1,found)) begin
@@ -1770,7 +1870,7 @@ begin
     end;
   end;
   return;
-end;
+end;  
 
 global
 procedure EBS_IVCashDClassTouchScreenReturnRemote(record IVCashVc IVCashr,var record IVCashVc newIVCashr, integer sline)
@@ -1839,6 +1939,90 @@ begin
 end;
 
 global
+procedure IVCashDClassTouchScreenReturnRemote(record IVCashVc IVCashr,var record IVCashVc newIVCashr)
+begin
+  Integer i,rwcnt,rownr;
+  row IVCashVc newIVCashrw;
+  vector val valreadyreturned;
+  record GeneralOptionBlock GOb;
+  record DefCashBlock DCb;
+  val retv;
+
+  BlockLoad(DCb);
+  BlockLoad(GOb);
+  if (nonblank(DCb.DefRtrnPayMode)) then begin
+    newIVCashr.PayDeal = DCb.DefRtrnPayMode;
+  end;
+  FindAlreadyReturnedItems_IVCashVc(IVCashr.SerNr,valreadyreturned);
+  rwcnt = MatRowCnt(IVCashr);
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowGet(IVCashr,i,newIVCashrw);
+    switch (newIVCashrw.stp) begin
+      case kInvoiceRowTypeCreditCardPayment:
+        if (blank(newIVCashrw.AuthorizationCode)) then begin
+          newIVCashrw.Sum = -(newIVCashrw.Sum-retv);
+          newIVCashrw.AuthorizationCode = "";
+          newIVCashrw.CreditCard = "";
+          MatRowPut(newIVCashr,MatRowCnt(newIVCashr),newIVCashrw);
+        end;
+      case kInvoiceRowTypeSwishPayment:
+        if (blank(newIVCashrw.AuthorizationCode)) then begin
+          newIVCashrw.Sum = -(newIVCashrw.Sum-retv);
+          newIVCashrw.AuthorizationCode = "";
+          newIVCashrw.CreditCard = "";
+          MatRowPut(newIVCashr,MatRowCnt(newIVCashr),newIVCashrw);
+        end;
+      case kInvoiceRowTypeQRPayment:
+        if (blank(newIVCashrw.AuthorizationCode)) then begin
+          newIVCashrw.Sum = -(newIVCashrw.Sum-retv);
+          newIVCashrw.AuthorizationCode = "";
+          newIVCashrw.CreditCard = "";
+          MatRowPut(newIVCashr,MatRowCnt(newIVCashr),newIVCashrw);
+        end;
+      case kInvoiceRowTypeCashWithdrawal:
+      case kInvoiceRowTypeCashPayment:
+//          newIVCashrw.Sum = -newIVCashrw.Sum;
+//          MatRowPut(newIVCashr,MatRowCnt(newIVCashr),newIVCashrw);
+      case kInvoiceRowTypeLoyaltyPointsPayment:
+//          newIVCashrw.Sum = -newIVCashrw.Sum;
+//          MatRowPut(newIVCashr,MatRowCnt(newIVCashr),newIVCashrw);
+      case kInvoiceRowTypeGiftVoucherPayment:
+//          newIVCashrw.Sum = -newIVCashrw.Sum;
+//          MatRowPut(newIVCashr,MatRowCnt(newIVCashr),newIVCashrw);
+      case kInvoiceRowTypeMultiBuyDiscount:
+          rownr = MatRowCnt(newIVCashr);
+          newIVCashrw.Quant = -newIVCashrw.Quant;
+          newIVCashrw.Sum = -newIVCashrw.Sum;
+          MatRowPut(newIVCashr,rownr,newIVCashrw);
+//          IVCashDchrsum(IVCashr,rownr,GOb.UseDiscount);
+//          IVCashDchsum(IVCashr,rownr);
+      otherwise
+        if (valreadyreturned[newIVCashrw.ArtCode]<newIVCashrw.Quant) then begin
+          newIVCashrw.Quant = -newIVCashrw.Quant;
+          newIVCashrw.Sum = -newIVCashrw.Sum;
+          newIVCashrw.rowGP = -newIVCashrw.rowGP;
+          rownr = MatRowCnt(newIVCashr);
+          RowCalculateTaxMatrix_IVCashVc(newIVCashr,rownr,newIVCashrw);
+          MatRowPut(newIVCashr,rownr,newIVCashrw);
+        end else begin
+          valreadyreturned[newIVCashrw.ArtCode] = valreadyreturned[newIVCashrw.ArtCode] - newIVCashrw.Quant;
+          retv = newIVCashrw.Sum;
+        end;
+    end;      
+  end;
+  if (MatRowCnt(newIVCashr)>0) then begin
+    if (IVCashr.SerNr!=newIVCashr.SerNr) then begin
+      ClearRow(newIVCashr,newIVCashrw,kInvoiceRowTypeReturnIVNr);    
+      newIVCashrw.OrgIVNr = IVCashr.SerNr;
+      MatRowPut(newIVCashr,MatRowCnt(newIVCashr),newIVCashrw);
+    end;
+  end;
+  IVCashSumup(newIVCashr,true);
+
+  return;
+end;  
+
+global
 procedure IVCashDClassTouchScreenCreditNoteRemote(record IVCashVc IVCashr,var record IVCashVc newIVCashr)
 begin
   Integer i,rwcnt,rownr;
@@ -1854,6 +2038,27 @@ begin
     MatRowGet(IVCashr,i,newIVCashrw);
     switch (newIVCashrw.stp) begin
       case kInvoiceRowTypeCreditCardPayment:
+        if (blank(newIVCashrw.AuthorizationCode)) then begin
+          newIVCashrw.Sum = (newIVCashrw.Sum-retv);
+          newIVCashrw.AuthorizationCode = "";
+          newIVCashrw.CreditCard = "";
+          MatRowPut(newIVCashr,MatRowCnt(newIVCashr),newIVCashrw);
+        end;
+      case kInvoiceRowTypeSwishPayment:
+        if (blank(newIVCashrw.AuthorizationCode)) then begin
+          newIVCashrw.Sum = (newIVCashrw.Sum-retv);
+          newIVCashrw.AuthorizationCode = "";
+          newIVCashrw.CreditCard = "";
+          MatRowPut(newIVCashr,MatRowCnt(newIVCashr),newIVCashrw);
+        end;
+      case kInvoiceRowTypeQRPayment:
+        if (blank(newIVCashrw.AuthorizationCode)) then begin
+          newIVCashrw.Sum = (newIVCashrw.Sum-retv);
+          newIVCashrw.AuthorizationCode = "";
+          newIVCashrw.CreditCard = "";
+          MatRowPut(newIVCashr,MatRowCnt(newIVCashr),newIVCashrw);
+        end;
+      case kInvoiceRowTypeCashWithdrawal:
         if (blank(newIVCashrw.AuthorizationCode)) then begin
           newIVCashrw.Sum = (newIVCashrw.Sum-retv);
           newIVCashrw.AuthorizationCode = "";
@@ -1888,22 +2093,22 @@ begin
           valreadyreturned[newIVCashrw.ArtCode] = valreadyreturned[newIVCashrw.ArtCode] - newIVCashrw.Quant;
           retv = newIVCashrw.Sum;
         end;
-    end;
+    end;      
   end;
   if (MatRowCnt(newIVCashr)>0) then begin
     if (IVCashr.SerNr!=newIVCashr.SerNr) then begin
-      ClearRow(newIVCashr,newIVCashrw,kInvoiceRowTypeReturnIVNr);
+      ClearRow(newIVCashr,newIVCashrw,kInvoiceRowTypeReturnIVNr);    
       newIVCashrw.OrgIVNr = IVCashr.SerNr;
       MatRowInsert(newIVCashr,0,newIVCashrw);
     end else begin
-      ClearRow(newIVCashr,newIVCashrw,kInvoiceRowTypeReturnIVNr);
+      ClearRow(newIVCashr,newIVCashrw,kInvoiceRowTypeReturnIVNr);    
       newIVCashrw.OrgIVNr = "";
       MatRowInsert(newIVCashr,0,newIVCashrw);
     end;
   end;
 
   return;
-end;
+end;  
 
 global
 updating procedure ProceedEnterRefStrDClass()
@@ -1913,7 +2118,7 @@ begin
   record IVVc IVr;
   record IVCashVc IVCashr;
   record RestAccVc RestAccr;
-
+  
   wn = CurWindow;
   mwn = MotherWindow(wn);
   DeselectWindow(wn,false);
@@ -1933,7 +2138,7 @@ begin
       RestAccr.RefStr = RepSpec.f1;
       PutWindowRecord(mwn,RestAccr);
   end;
-  WindowDoOK(mwn,0);
+  WindowDoOK(mwn,0); 
   return;
 end;
 
@@ -1955,9 +2160,9 @@ begin
   string 255 emailaddr;
   string 255 subject;
   area body;
-
+  
   res = 0;
-  if (ReadFirstMain(IVCashr,0,true)) then begin end;
+  if (ReadFirstMain(IVCashr,0,true)) then begin end;  
   BlockLoad(IVMailr);
   TAB = chr(9);
   CUr.Code = IVCashr.CustCode;
@@ -1996,22 +2201,22 @@ begin
     rwcnt = MatRowCnt(IVCashr);
     for (i=0;i<rwcnt;i=i+1) begin
       MatRowGet(IVCashr,i,IVCashrw);
-      if (IVCashrw.stp==10) then begin
+      if (IVCashrw.stp==10) then begin 
         goto LIVHIDDENLine;
       end;
       tstr = IVCashrw.ArtCode & TAB;
-      tstr = tstr & ValToString(IVCashrw.Quant,M4UVal,"",".",0) & TAB;
+      tstr = tstr & ValToString(IVCashrw.Quant,M4UVal,"",DecimalSeparator,0) & TAB;
       tstr = tstr & Left(IVCashrw.Spec,60) & TAB;
       tstr = tstr & IVCashrw.Price & TAB;
-      if (IVCashrw.vRebate!=0) then begin
-        tstr = tstr & "-" & ValToString(IVCashrw.vRebate,M4UVal,"",".",0) & "%" &  TAB;
+      if (nonblank(IVCashrw.vRebate)) then begin
+        tstr = tstr & "-" & ValToString(CalculateDiscountPercentage(IVCashrw.Quant,IVCashrw.Price,IVCashrw.Sum),M4UVal,"",DecimalSeparator,0) & "%" &  TAB;
       end;
       tstr = tstr & IVCashrw.Sum & TAB;
         AddTextToArea(tstr,body);
-        AddTextToArea(chr(13) & chr(10),body);
+        AddTextToArea(chr(13) & chr(10),body);        
     end;
   end;
-LIVHIDDENLine:;
+LIVHIDDENLine:;  
   tstr = TAB & TAB & TAB & "=====";
   AddTextToArea(tstr,body);
   AddTextToArea(chr(13) & chr(10),body);
@@ -2035,7 +2240,7 @@ LIVHIDDENLine:;
       tstr = LineTextGet(LTxtr,i);
       AddTextToArea(tstr,body);
       AddTextToArea(chr(13) & chr(10),body);
-    end;
+    end;    
   end;
 
   docname = pdfform;
@@ -2050,7 +2255,7 @@ LIVHIDDENLine:;
   SetDocumentFilename("");
   SendExtEmailWithAttach(emailaddr,fname,subject,body);
 //  Delete_File(fname);
-LCreateExternalMailFromIVCashD:;
+LCreateExternalMailFromIVCashD:;  
   CreateExternalMailFromIVCashD = res;
   return;
 end;
@@ -2075,9 +2280,10 @@ begin
   record IVCashVc oldIVCashr;
   row MailTextVc MTrw;
   Integer IgnoreRecordDetails;
-
+  Boolean paytermf;
+  
   res = 0;
-  if (ReadFirstMain(IVCashr,0,true)) then begin end;
+  if (ReadFirstMain(IVCashr,0,true)) then begin end;  
   TAB = chr(9);
   FindUserMailboxName(CurrentUser,mailboxnr,tstr);
   if (blank(tstr)) then begin
@@ -2088,7 +2294,7 @@ begin
     res = 2289;
     warning = CurrentUser;
     goto LCreateMailFromIVCashD;
-  end;
+  end;  
   MArw.RowTyp = 1;
   MArw.AddrCode = tstr;
   MatRowPut(Mailr,0,MArw);
@@ -2104,10 +2310,10 @@ begin
       end;
     end;
   end;
-  if (AddEMailRecipients(Mailr,CUr.Code,custemail,kMailPOSInvoice)==false) then begin
-    res = 2289;
-    warning = CUr.Code;
-    goto LCreateMailFromIVCashD;
+  if (AddEMailRecipients(Mailr,CUr.Code,custemail,kMailPOSInvoice)==false) then begin 
+//    res = 2289;
+//    warning = CUr.Code;
+//    goto LCreateMailFromIVCashD;
   end;
   if (nonblank(IVMailr.Header)) then begin
     Mailr.Header = IVMailr.Header & " ";
@@ -2131,12 +2337,12 @@ begin
       Mailr.HtmlFlag = LTxtr.HtmlFlag;
     end;
   end;
-
+  
   Mailr.TransDate = CurrentDate;
   Mailr.SerNr = NextSerNr("MailVc",Mailr.TransDate,-1,false,"");
-  if (RecordStore(Mailr,false)) then begin
-    CreateRecordLink(Mailr,CurrentCompany,IVCashr,CurrentCompany);
-    CreateRecordLink(IVCashr,CurrentCompany,Mailr,CurrentCompany);
+  if (RecordStore(Mailr,false)) then begin 
+    CreateRecordLink(Mailr,CurrentCompany,IVCashr,CurrentCompany);  
+    CreateRecordLink(IVCashr,CurrentCompany,Mailr,CurrentCompany);  
   end;
   RecordCopy(Mail2r,Mailr);
 
@@ -2147,7 +2353,7 @@ begin
       for (i=0;i<rwcnt;i=i+1) begin
         tstr = LineTextGet(LTxtr,i);
         LineTextPut(Mailr,LineTextCnt(Mailr),tstr);
-      end;
+      end;    
       AddCRToText(Mailr);
     end else begin
       if (LTxtr.HtmlFlag==0) then begin
@@ -2158,18 +2364,19 @@ begin
     end;
   end;
   if (additemstobodyf or IgnoreRecordDetails==0) then begin
+    paytermf = true;
     rwcnt = MatRowCnt(IVCashr);
     for (i=0;i<rwcnt;i=i+1) begin
       MatRowGet(IVCashr,i,IVCashrw);
-      if (IVCashrw.stp==10) then begin
+      if (IVCashrw.stp==10) then begin 
         goto LIVHIDDENLine;
       end;
       tstr = IVCashrw.ArtCode & TAB;
-      tstr = tstr & ValToString(IVCashrw.Quant,M4UVal,"",".",0) & TAB;
+      tstr = tstr & ValToString(IVCashrw.Quant,M4UVal,"",DecimalSeparator,0) & TAB;
       tstr = tstr & Left(IVCashrw.Spec,60) & TAB;
       tstr = tstr & IVCashrw.Price & TAB;
-      if (IVCashrw.vRebate!=0) then begin
-        tstr = tstr & "-" & ValToString(IVCashrw.vRebate,M4UVal,"",".",0) & "%" &  TAB;
+      if (nonblank(IVCashrw.vRebate)) then begin
+        tstr = tstr & "-" & ValToString(CalculateDiscountPercentage(IVCashrw.Quant,IVCashrw.Price,IVCashrw.Sum),M4UVal,"",DecimalSeparator,0) & "%" &  TAB;
       end;
       tstr = tstr & IVCashrw.Sum & TAB;
       if (Mailr.HtmlFlag==0) then begin
@@ -2177,8 +2384,13 @@ begin
       end else begin
         LineTextPutToHtmlRecord(Mailr,tstr,false,true);
       end;
+      if (IVCashrw.stp==kInvoiceRowTypeCashPayment or IVCashrw.stp==kInvoiceRowTypeCreditCardPayment or IVCashrw.stp==kInvoiceRowTypeChequePayment or IVCashrw.stp==kInvoiceRowTypeLoyaltyPointsPayment or IVCashrw.stp==kInvoiceRowTypeLoyaltyPointsPayment) then begin
+        if (IVCashr.RetValue>=0) then begin
+          paytermf = false;
+        end;
+      end;
     end;
-LIVHIDDENLine:;
+LIVHIDDENLine:;  
     tstr = TAB & TAB & TAB & "=====";
     if (Mailr.HtmlFlag==0) then begin
       LineTextPut(Mailr,LineTextCnt(Mailr),tstr);
@@ -2203,12 +2415,14 @@ LIVHIDDENLine:;
     end else begin
       LineTextPutToHtmlRecord(Mailr,tstr,false,true);
     end;
-    GetPayDealText(IVCashr.PayDeal,IVCashr.LangCode,tstr);
-    tstr = USetStr(3060) & " " & tstr;
-    if (Mailr.HtmlFlag==0) then begin
-      LineTextPut(Mailr,LineTextCnt(Mailr),tstr);
-    end else begin
-      LineTextPutToHtmlRecord(Mailr,tstr,false,true);
+    if (paytermf) then begin
+      GetPayDealText(IVCashr.PayDeal,IVCashr.LangCode,tstr);
+      tstr = USetStr(3060) & " " & tstr;
+      if (Mailr.HtmlFlag==0) then begin
+        LineTextPut(Mailr,LineTextCnt(Mailr),tstr);
+      end else begin
+        LineTextPutToHtmlRecord(Mailr,tstr,false,true);
+      end;
     end;
   end;
   LTxtr.Code = MTrw.LastTxt;
@@ -2218,7 +2432,7 @@ LIVHIDDENLine:;
       for (i=0;i<rwcnt;i=i+1) begin
         tstr = LineTextGet(LTxtr,i);
         LineTextPut(Mailr,LineTextCnt(Mailr),tstr);
-      end;
+      end;    
       AddCRToText(Mailr);
     end else begin
       if (LTxtr.HtmlFlag==0) then begin
@@ -2228,7 +2442,7 @@ LIVHIDDENLine:;
       end;
     end;
   end;
-
+  
   RecordUpdate(Mail2r,Mailr,false);
 
   docname = pdfform;
@@ -2249,12 +2463,12 @@ LIVHIDDENLine:;
   SetDocumentFilename("");
   Delete_File(fname);
 
-LCreateMailFromIVCashD:;
+LCreateMailFromIVCashD:;  
   CreateMailFromIVCashD = res;
   return;
 end;
 
-global
+global 
 procedure QTPasteNPTSSClassRemote(string qtnr,var record IVCashVc IVCashr)
 begin
   record QTVc QTr;
@@ -2368,7 +2582,7 @@ begin
       IVCashrw.TAX1Reb = QTrw.TAX1Reb;
       IVCashrw.TAX2Acc = QTrw.TAX2Acc;
 //      IVCashrw.MBRCode = QTrw.MBRCode;
-//      IVCashrw.Points = QTrw.Points;
+//      IVCashrw.Points = QTrw.Points;   
       IVCashrw.TaxTemplateCode = QTrw.TaxTemplateCode;
 //  ArrayField(TaxMatrix,M4PackedMatrix,0,TaxMatrixVc);
 
@@ -2387,7 +2601,7 @@ begin
 end;
 
 
-global
+global 
 procedure ORPasteNPTSSClassRemote(string ornr,var record IVCashVc IVCashr)
 begin
   record ORVc ORr;
@@ -2505,7 +2719,7 @@ begin
         IVCashrw.TAX2Acc = ORrw.TAX2Acc;
         IVCashrw.OrdRow = i;
     //      IVCashrw.MBRCode = ORrw.MBRCode;
-    //      IVCashrw.Points = ORrw.Points;
+    //      IVCashrw.Points = ORrw.Points;   
         IVCashrw.TaxTemplateCode = ORrw.TaxTemplateCode;
     //  ArrayField(TaxMatrix,M4PackedMatrix,0,TaxMatrixVc);
 
@@ -2520,6 +2734,41 @@ begin
       end;
     end;
     IVCashSumup(IVCashr,true);
+  end;
+  return;
+end;
+
+global
+procedure IVCashVc_PasteSalesMan(var record IVCashVc IVCr,string oldsalesmen)
+begin
+  record UserVc Userr;
+  string 255 tstr,salesman;
+  LongInt pos;
+
+  if (HasSalesmanChanged(IVCr.SalesMan,oldsalesmen)) then begin
+    if (IVCr.OKFlag==0) then begin
+      pos = 0;
+      GetNextSubstring(oldsalesmen,pos,",",salesman);
+      while (nonblank(salesman)) begin
+        RemoveOldUserObjects(salesman,IVCr.Objects);
+        GetNextSubstring(oldsalesmen,pos,",",salesman);
+      end;
+    end;
+//    IVCr.SalesGroup = "";    
+
+    pos = 0;
+    GetNextSubstring(IVCr.SalesMan,pos,",",salesman);
+    while (nonblank(salesman)) begin
+      Userr.Code = salesman;
+      if (ReadFirstMain(Userr,1,true)) then begin
+        IVCr.POSOperatorID = Userr.POSOperatorID;
+//        IVCr.SalesGroup = AddStringToStringList(IVCr.SalesGroup,Userr.SalesGroup);                
+        if (IVCr.OKFlag==0) then begin
+          IVCr.Objects = AddObjectToObjectList(IVCr.Objects,Userr.PersObjx);        
+        end;
+      end;
+      GetNextSubstring(IVCr.SalesMan,pos,",",salesman);
+    end;
   end;
   return;
 end;

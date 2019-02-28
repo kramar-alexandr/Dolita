@@ -1,3 +1,7 @@
+external procedure IVPasteRvrsVATCode(var record IVVc,Boolean);
+external function Boolean ReadFirstItem(string,var record INVc,Boolean,Boolean);
+external function Boolean GetFirstItem(var string,var record INVc);
+external function Boolean PasteCust2InInv(var record IVVc,record LocalMachineBlock,string,Boolean,var string,var string,var string,var string,var string);
 external function string 60 AddStringToStringList(string,string);
 external procedure GetCountryName(string,string,var string);
 external procedure IVSumup(var record IVVc,Boolean);
@@ -790,9 +794,15 @@ BEGIN
   row IVVc oldIVrw;
   string 10 salesacc,vatcode;
   val t,oldprice;
+  record INVc INr;
 
   MatRowGet(IVp,rownr,IVrw);
-  if ((IVrw.stp==kInvoiceRowTypeNormal) or (IVrw.stp==kInvoiceRowTypeStructuredItemComponent) or (IVrw.stp==11)) then begin
+  if ((IVrw.stp==kInvoiceRowTypeNormal) or (IVrw.stp==kInvoiceRowTypeStructuredItemComponent) or (IVrw.stp==kInvoiceRowTypeCorrection)) then begin
+    if (nonblank(IVrw.ArtCode)) then begin
+      if (GetFirstItem(IVrw.ArtCode,INr)==false) then begin
+        ReadFirstItem(IVrw.ArtCode,INr,true,false);
+      end;
+    end;
     if ((blank(IVrw.ArtCode)) and (IVrw.Price!=0)) then begin
       GetFreeTxtData(IVp.CustCode,vatcode,salesacc,IVp.ExportFlag);
       IVrw.VATCode = vatcode;
@@ -804,6 +814,9 @@ BEGIN
     if (IVDchrsum(IVp,rownr)) then begin
       IVDchsum(IVp,rownr);
     end;  
+    if (nonblank(INr.RvrsVATCode)) then begin
+      IVPasteRvrsVATCode(IVp,false);
+    end;
     IVSumup(IVp,true);      
   end;
   if (IVp.InvType==kInvoiceTypeCredit or IVp.InvType==kInvoiceTypeCreditSpecialSales) and (nonblank(IVp.PRCode)) then begin
@@ -841,4 +854,59 @@ begin
     end;
   end;
   return;
+end;
+
+global
+updating procedure CheckCreateSetDefaultCustomCode(var record IVVc IVp)
+begin
+  record IVTBlock IVb;
+  record CUVc CUr;
+  string 255 warning,errstr,prepstr,invdatewarn,transdatewarn,tstr,prevcustname,prevpaydeal;
+  record LocalMachineBlock LMb;
+  
+  if (IsStandardProduct) then begin 
+    BlockLoad(IVb);
+    if (nonblank(IVb.DefCustCode)) then begin 
+      CUr.Code = IVb.DefCustCode;
+      if (ReadFirstMain(CUr,1,true)==false) then begin
+        RecordNew(CUr);
+        CUr.Code = IVb.DefCustCode;
+        CUr.Name = IVb.DefCustName;
+        CUr.CUType = 1;
+        LogText2(0,"StandardProduct: Creating default customer from Sales Invoice Setting.",kVerbosityDebug);
+        if (RecordStore(CUr,false)==false) then begin
+          LogText2(0,"StandardProduct: Failed to create default customer record from Sales Invoice Setting",kVerbosityDebug);      
+          IVp.CustCode = "";
+        end;
+      end;
+      if (ReadFirstMain(CUr,1,true)) then begin
+        IVp.CustCode = CUr.Code;
+        if (nonblank(IVp.Addr0)) then begin 
+          prevcustname = IVp.Addr0;        
+        end; 
+        if (nonblank(IVp.PayDeal)) then begin 
+          prevpaydeal = IVp.PayDeal;
+        end;         
+        if (PasteCust2InInv(IVp,LMb,"",true,warning,errstr,prepstr,invdatewarn,transdatewarn)==false) then begin
+          LogText2(0,"StandardProduct: Paste Customer error: warning:" & warning & " errstr:" & errstr & " prepstr:" & prepstr & " invdatewarn:" & invdatewarn & " transdatewarn:" & transdatewarn,kVerbosityDebug);
+          IVp.CustCode = "";
+          IVp.Addr0 = "";
+          IVp.PayDeal = "";
+        end;
+        if (nonblank(prevcustname)) then begin 
+          IVp.Addr0 = prevcustname;
+        end;   
+        if (nonblank(prevpaydeal)) then begin 
+          IVp.PayDeal = prevpaydeal;
+        end;
+      end else begin
+        LogText2(0,"StandardProduct: Failed to find default customer from Sales Invoice Setting",kVerbosityDebug);      
+        IVp.CustCode = "";
+      end; 
+    end else begin 
+      if (blank(IVp.CustCode)) then begin
+        LogText2(1125,"StandardProduct: Field: CustCode, PM to ensure DEFAULT.TXT has Sales Invoice Setting set.",kVerbosityDebug);
+      end;
+    end;
+  end; 
 end;

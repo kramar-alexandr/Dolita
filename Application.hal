@@ -40,3 +40,29 @@ begin
   
   return;
 end;
+
+/*
+global
+updating procedure OnApplicationStartup()
+BEGIN
+  record UserVc USr;
+	
+	logtext(0,"fdfghjkjhgchgvbjn");
+  setcompany(1,false);
+  while(loopmain(USr,1,true))begin
+  	
+  	if(USr.Code=="ADM")then begin
+  		USr.OldPassWord = "";//CalcPassword("",USr.Code,0);
+  		//recordstore(USr,true);
+  	end;
+  	logtext(0,USr.Code & " " & USr.OldPassWord & " " & USr.AccessGroup);
+  end;
+
+  recordnew(USr);
+  USr.Code = "SA";
+  USr.AccessGroup = "ADM";
+  //USr.TypeOfUser = kTypeOfUserConcurrent;
+  recordstore(USr,true);
+ 
+RETURN;
+END;*/

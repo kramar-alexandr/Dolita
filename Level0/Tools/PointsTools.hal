@@ -1,4 +1,3 @@
-
 global
 function val GetLCardStartBalance(string card,string location,date tilldate)
 begin 
@@ -143,7 +142,7 @@ begin
       PHr.FileName = "LoyaltyCardVc";
       PHr.TransDate = CurrentDate;
       PHr.CustCode = LCr.CustCode;
-      PHr.Location = "";        
+      PHr.Location = "";  
       PHr.LMCardNr = LCr.PointsTo;
       PHr.PointsFrom = LCr.SerNr;
       if (negf) then begin
@@ -264,6 +263,9 @@ begin
         end;
       end;  
       qty = IVCashr.Points;
+      if (IVCashr.InvType==kPOSInvoiceTypeCredit) then begin
+        qty = -qty;
+      end;
       PHr.Points = qty;
       PHr.SerNr = NextSerNr("PointsHistVc",PHr.TransDate,-1,false,"");
       testf = RecordStore(PHr,false); 

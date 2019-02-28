@@ -1,3 +1,4 @@
+external function Boolean IsMarketplaceServer();
 external function Boolean SerNrTestGCVc(LongInt,Date,var Boolean);
 
 global
@@ -6,6 +7,7 @@ begin
   LongInt res;
   record GCVc locGCr;
   Boolean gentrans;
+  record GCTypeVc GCTr;
 
   res = 0;
   if (GCr.SerNr<=0) then begin
@@ -34,7 +36,7 @@ begin
       end;
     end;
   end;
-  if (TestEnablerFile("EnMarketplace")==false) then begin
+  if (IsMarketplaceServer==false) then begin
     if (GCr.Amount==0) then begin
       RecordCheckError(1058,"  " & GCr.Amount,-1,"Amount");
       res = -1;
@@ -57,6 +59,23 @@ begin
     res = -1;
     goto LGCVcRecordCheck;
   end;
+  if (nonblank(GCr.Type)) then begin
+    GCTr.Code = GCr.Type;
+    if (ReadFirstMain(GCTr,1,true)==false) then begin
+      RecordCheckError(1290,"",-1,"Type");
+      res = -1;
+      goto LGCVcRecordCheck;
+    end;
+  end;
+/*  
+  if (GCTyper.RequireGuarantor!=0) then begin
+    if (blank(GCr.GuarantorCode)) then begin
+      RecordCheckError(1058,"",-1,"GuarantorCode");
+      res = -1;
+      goto LGCVcRecordCheck;
+    end;
+  end;
+*/  
 LGCVcRecordCheck:;
   GCVcRecordCheck = res;
   return;

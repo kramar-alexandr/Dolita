@@ -1,3 +1,5 @@
+external procedure AutomatedSalesOrderly(string);
+external function Boolean HasIntegratedNL();
 external function string 255 StripCharacter(string,string);
 external function Boolean IsCapitalLetter(string); 
 external function Integer InString2(string,string);
@@ -208,6 +210,8 @@ BEGIN
   val t,fr,to1,to2,br1,br2;
   string 5 curncy;
   row LegalInvNrBlock LINrbrw;
+  record RetPUVc cRetPUr;
+  transaction Boolean gRetPUVcRecordImport_RecordExists;
   
   BlockLoad(cvm);
   if (cvm.DualBaseCurrencyFlag!=0) then begin gToDualBase = true; end;
@@ -243,6 +247,8 @@ BEGIN
     GetLegalInvNrRow(RetPUr.OfficialSerNr,LINrbrw);
     RetPUr.OfficialSerNrSerie = GetLegalInvoiceNrSerie(LINrbrw,RetPUr.OfficialSerNr);
   end;
+  cRetPUr.SerNr = RetPUr.SerNr;
+  gRetPUVcRecordImport_RecordExists = ReadFirstMain(cRetPUr,1,true);
   RetPUVcRecordImport = res;
   RETURN;
 END;
@@ -368,13 +374,16 @@ updating function LongInt RetPUVcRecordImportAfter(var record RetPUVc RetPUr,rec
 BEGIN
   LongInt res;
   Integer err;
+  transaction Boolean gRetPUVcRecordImport_RecordExists;
   
   if (RetPUr.OKFlag!=0) then begin
-    RetPUUpdateSerialNr(RetPUr,false);
-    if (ImportingTextBackup==false and CanOKStockRecord(err)==true) then begin
-      RetPUUpdateCostPrice(RetPUr);
-      RetPUUpdateStock(RetPUr,false,false);
-      RetPUUpdateItemHist(RetPUr);
+    if (gRetPUVcRecordImport_RecordExists==false) then begin
+      RetPUUpdateSerialNr(RetPUr,false);
+      if (ImportingTextBackup==false and CanOKStockRecord(err)==true) then begin
+        RetPUUpdateCostPrice(RetPUr);
+        RetPUUpdateStock(RetPUr,false,false);
+        RetPUUpdateItemHist(RetPUr);
+      end;
     end;
   end;
   RetPUVcRecordImportAfter = res;
@@ -471,7 +480,7 @@ begin
       MatRowGet(RetPUp,i,RetPUrw);
       PONr = RetPUrw.PONr;
       if (PONr<=0) then begin PONr = RetPUp.PONr; end;
-      if (RetPUrw.PONr!=-1) and (RetPUrw.OrdRow>=0) then begin
+      if (PONr!=-1) and (RetPUrw.OrdRow>=0) then begin
         UpdatePORowWithRetPURow(GenOptr,RetPUp,RetPUrw,PONr,false,sh2only);
       end;
     end;
@@ -660,6 +669,7 @@ BEGIN
     end else begin
       UpdatePOFromRetPURows(RetPUr,true,RetPU2r,false,false);
     end;
+    AutomatedSalesOrderly("HasIntegratedNL");  
     if (ihef==false) then begin
       UpdateVarianceStatusRetPU(RetPUr);
       UpdateStockResFromRetPU(RetPUr,RetPU2r);
@@ -716,7 +726,11 @@ global
 updating function LongInt RetPUVcRecordSaveAfter(var record RetPUVc RetPUr,record RetPUVc RetPU2r,LongInt stat,LongInt long4)
 begin
   LongInt res;
+  record UserVc Userr;
 
+  Userr.Code = RetPUr.Sign;
+  ReadFirstMain(Userr,1,true);
+  RetPUr.SalesGroup = Userr.SalesGroup;  
   if (RetPUr.OKFlag!=0) then begin
     RetPUUpdateCostPrice(RetPUr);
     RetPUUpdateStock(RetPUr,false,false);
@@ -789,14 +803,14 @@ begin
     end;
   end;
   rwcnt = MatRowCnt(RetPUr);
-  serialnr = FirstInRange(RetPUrw.SerialNr,30);
+  serialnr = FirstInRange(RetPUrw.SerialNr,60);
   while (nonblank(serialnr)) begin
     for (j=0;j<currow;j=j+1) begin  
       MatRowGet(RetPUr,j,RetPU2rw);
       if (RetPU2rw.Quant!=0) then begin
         if (RetPUrw.ArtCode==RetPU2rw.ArtCode) then begin
           qty2 = blankval;
-          serialnr2 = FirstInRange(RetPU2rw.SerialNr,30);
+          serialnr2 = FirstInRange(RetPU2rw.SerialNr,60);
           while (nonblank(serialnr2)) begin
             if (serialnr==serialnr2) then begin
               res = 1241;
@@ -1008,6 +1022,14 @@ BEGIN
           goto LRetPUVcRecordCheck;
         end;
       end;
+      if (RetPUp.PlanSendDate>RetPUp.PlanArrDate and nonblankdate(RetPUp.PlanArrDate)) then begin
+        error = 20866;
+        errorstr = "";
+        rownr = -1;
+        fieldstr = "PlanArrDate";            
+        res = -1; 
+        goto LRetPUVcRecordCheck;
+      end;
     end else begin
       error = 1142;
       errorstr = "";
@@ -1016,15 +1038,32 @@ BEGIN
       res = -1; 
       goto LRetPUVcRecordCheck;
     end;
-  end;
-  if (blanktime(RetPUp.PlanSendTime)) then begin
-    if (HasLocalization("PRT")) then begin
+    if (nonblankdate(RetPUp.PlanArrDate) and blanktime(RetPUp.PlanArrTime)) then begin
+      error = 20866;
+      errorstr = "";
+      rownr = -1;
+      fieldstr = "PlanArrTime";         
+      res = -1; 
+      goto LRetPUVcRecordCheck;
+    end;
+    if (blanktime(RetPUp.PlanSendTime)) then begin
       error = 20866;
       errorstr = "";
       rownr = -1;
       fieldstr = "PlanSendTime";          
       res = -1; 
       goto LRetPUVcRecordCheck;
+    end else begin
+      if (RetPUp.PlanSendTime>RetPUp.PlanArrTime and nonblanktime(RetPUp.PlanArrTime)) then begin
+        if (RetPUp.PlanSendDate>=RetPUp.PlanArrDate) then begin
+          error = 20866;
+          errorstr = "";
+          rownr = -1;
+          fieldstr = "PlanArrTime";          
+          res = -1; 
+          goto LRetPUVcRecordCheck;
+        end;
+      end;
     end;
   end;
   if (MSb.ForceReason!=0 and blank(RetPUp.Reason)) then begin
@@ -1585,7 +1624,7 @@ what?
         case 1:
           if (SNrb.BulkSerialNos!=0) then begin
             serqty = blankval;
-            serialnr = FirstInRange(RetPUrw.SerialNr,30);
+            serialnr = FirstInRange(RetPUrw.SerialNr,60);
             while (nonblank(serialnr)) begin
               if (SerialNrAvail(RetPUrw.ArtCode,serialnr,location,1.00)==false) then begin
                 error = 1240;
@@ -1696,6 +1735,9 @@ LDONOTCHECK:;
   end;
 LRetPUVcRecordCheck_GenTrans:;
   if (gentrans==false) then begin transf = false; end;
+  if (IsStandardProduct) then begin
+    transf = HasIntegratedNL and transf;
+  end;
   if (transf) then begin
     errcode = MakeTransFromRetPU(gTRp,RetPUp,false);
     if (errcode!=0) then begin

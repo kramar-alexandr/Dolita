@@ -1,3 +1,9 @@
+remote procedure AccCompSClassArrayOnOpen(var Array string,var Array string);
+remote procedure ObjCompSClassArrayOnOpen(var Array string,var Array string,var Array string);
+remote procedure POSButtonsPagesSClassArrayOnOpen(string,LongInt,var Array string);
+remote procedure ActPrioLevelSClassArrayOnOpen(var Array string);
+external procedure AutomatedSalesOrderly(string);
+remote procedure CountryNameSClassOnOpenRemote(var Array string);
 remote procedure PL2SClassArrayOnOpen(string,string,string,var Array string,var Array string,var Array string,var Array string);
 remote procedure PDPMSClassArrayOnOpen(var Array string,var Array string,var Array string);
 remote procedure LegalInvNr2SClassArrayOnOpen(string,LongInt,Date,string,var Array string,var Integer,Integer,string,string,Integer);
@@ -11,7 +17,7 @@ remote function Boolean PasteCust2InInv(var record IVVc,record LocalMachineBlock
 remote procedure FillPPSClass(string,string,record ExpVc,Integer,var Array string,var Array string,var Integer);
 external function val ValFromString(string,string,string);
 external procedure ExtractObj(string,var Integer,var string);
-remote procedure UserNPTSSClassArrayOnOpen(var Array string,var Integer);
+remote procedure UserNPTSSClassArrayOnOpen2(var Array string,var Array string);
 remote function Boolean RestAccVc_PasteCUCode(var record RestAccVc);
 external function Boolean RestAccDClasstouchscreenitemEFAfter(Integer ,Boolean);
 external function string 255 StringFromSysList(Integer,Integer);
@@ -42,6 +48,7 @@ remote procedure PRVc_AssPRClSClass(record PRVc,var record RcVc);
 remote procedure VEBankAccSClassArrayOnOpen(string,var Array string,var Integer);
 remote procedure LegalCLInNrSClassArrayOnOpen(LongInt,Date,var Array string,var Integer);
 remote procedure LegalInvNrSClassArrayOnOpen(string,LongInt,Date,string,var Array string,var Integer,Integer,string,string,Integer);
+remote procedure LegalInvNrSClassArrayOnOpen2(string,LongInt,Date,string,var Array string,var Integer,Integer,Integer,string,string,Integer);
 external procedure StripEndingSpaces(var string);
 external procedure M4PadString(string,Integer,string,Boolean,var string);
 external procedure ModulesSClassArrayOnOpen(var Array string,var Integer);
@@ -59,10 +66,10 @@ function Boolean ModulesSClassOnOpenWindow(Integer wn)
 begin
   Array string 255 astr;
   Integer i,acnt;
-
+  
   ModulesSClassArrayOnOpen(astr,acnt);
   for (i=0;i<acnt;i=i+1) begin
-    SetListString(wn,len(astr[i]),astr[i],false);
+    SetListString(wn,len(astr[i]),astr[i],false);    
   end;
   ModulesSClassOnOpenWindow = false;
   return;
@@ -73,10 +80,10 @@ function Boolean TTRFieldSClassOnOpenWindow(Integer wn)
 begin
   Array string 255 astr;
   Integer i,acnt;
-
+  
   TTRFieldSClassArrayOnOpen(astr,acnt);
   for (i=0;i<acnt;i=i+1) begin
-    SetListString(wn,len(astr[i]),astr[i],false);
+    SetListString(wn,len(astr[i]),astr[i],false);    
   end;
   TTRFieldSClassOnOpenWindow = false;
   return;
@@ -88,7 +95,7 @@ begin
   Integer mwn;
   record RcVc RepSpec;
   record PRVc PRr;
-
+  
   mwn = MotherWindow(wn);
   GetWindowRecord(mwn,PRr);
  // GetWindowRecord(wn,RepSpec);
@@ -102,8 +109,8 @@ global
 function Boolean  PRClBTSClassOnOpenWindow(Integer wn)
 begin
   Array string 255 astr;
-  Integer i,acnt,mwn,fn;
-
+  Integer i,acnt,mwn,fn;  
+  
   mwn = MotherWindow(wn);
   switch (WindowActiveField(mwn)) begin
     case "f1": fn = 1;
@@ -117,7 +124,7 @@ begin
   end;
   PRClBTSClassArrayOnOpen(mwn,fn,astr,acnt);
   for (i=0;i<acnt;i=i+1) begin
-    SetListString(wn,len(astr[i]),astr[i],false);
+    SetListString(wn,len(astr[i]),astr[i],false);    
   end;
   PRClBTSClassOnOpenWindow = false;
   return;
@@ -130,7 +137,7 @@ begin
   record HotelBlock HotelSettings;
   Boolean Cont;
   string 100 tstr,t2;
-
+  
   BlockLoad(HotelSettings); Cont = true;
   Jobr.ResStatus = HotelSettings.ChInSt;
   while LoopKey("ResStatus",Jobr,1,Cont) begin
@@ -142,7 +149,7 @@ begin
       t2 = t2 & Jobr.CUName;
       SetListString(wn,1,t2,false);
     end;
-  end;
+  end;  
   CheckInJobSClassOnOpenWindow = false;
   return;
 end;
@@ -154,7 +161,7 @@ begin
   string 60 tstr,t2;
   Integer np;
   Boolean nsep;
-
+  
   mwn = MotherWindow(wn);
   tstr = GetListString(wn,SelectedListLine(wn));
   np = 0;
@@ -183,27 +190,27 @@ begin
   record IPVc IPr;
   row IPVc IPrw;
   Integer doctype;
-
+  
   mwn = MotherWindow(wn);
   if (GetWindowFileName(mwn)=="IVVc") then begin
     GetWindowRecord(mwn,IVr);
-    LegalInvNrSClassArrayOnOpen("IVVc",IVr.SerNr,IVr.InvDate,IVr.CustCode,astr,acnt,IVr.InvType,IVr.TerminalID,IVr.BranchID,IVr.Status);
+    LegalInvNrSClassArrayOnOpen2("IVVc",IVr.SerNr,IVr.InvDate,IVr.CustCode,astr,acnt,IVr.InvType,IVr.TaxInvType,IVr.TerminalID,IVr.BranchID,IVr.Status);
     for (i=0;i<acnt;i=i+1) begin
-      SetListString(wn,len(astr[i]),astr[i],false);
+      SetListString(wn,len(astr[i]),astr[i],false);    
     end;
   end;
   if (GetWindowFileName(mwn)=="IVCashVc") then begin
     GetWindowRecord(mwn,IVCashr);
     LegalInvNrSClassArrayOnOpen("IVCashVc",IVCashr.SerNr,IVCashr.InvDate,IVCashr.CustCode,astr,acnt,10,IVCashr.TerminalID,IVCashr.BranchID,IVCashr.Status);
     for (i=0;i<acnt;i=i+1) begin
-      SetListString(wn,len(astr[i]),astr[i],false);
+      SetListString(wn,len(astr[i]),astr[i],false);    
     end;
   end;
   if (GetWindowFileName(mwn)=="RestAccVc") then begin
     GetWindowRecord(mwn,RestAccr);
     LegalInvNrSClassArrayOnOpen("RestAccVc",RestAccr.SerNr,RestAccr.TransDate,RestAccr.CustCode,astr,acnt,16,RestAccr.TerminalID,RestAccr.BranchID,-1);
     for (i=0;i<acnt;i=i+1) begin
-      SetListString(wn,len(astr[i]),astr[i],false);
+      SetListString(wn,len(astr[i]),astr[i],false);    
     end;
   end;
   if (GetWindowFileName(mwn)=="StockMovVc") then begin
@@ -216,35 +223,35 @@ begin
       case kStockMovTypeGlobalTransport: LegalInvNrSClassArrayOnOpen("StockMovVc",StockMovr.SerNr,StockMovr.TransDate,"",astr,acnt,21,StockMovr.TerminalID,StockMovr.BranchID,StockMovr.Status);
     end;
     for (i=0;i<acnt;i=i+1) begin
-      SetListString(wn,len(astr[i]),astr[i],false);
+      SetListString(wn,len(astr[i]),astr[i],false);    
     end;
-  end;
+  end;  
   if (GetWindowFileName(mwn)=="ORVc") then begin
     GetWindowRecord(mwn,ORr);
     LegalInvNrSClassArrayOnOpen("ORVc",ORr.SerNr,ORr.OrdDate,ORr.CustCode,astr,acnt,12,ORr.TerminalID,ORr.BranchID,-1);
     for (i=0;i<acnt;i=i+1) begin
-      SetListString(wn,len(astr[i]),astr[i],false);
+      SetListString(wn,len(astr[i]),astr[i],false);    
     end;
   end;
   if (GetWindowFileName(mwn)=="RetVc") then begin
     GetWindowRecord(mwn,Retr);
     LegalInvNrSClassArrayOnOpen("RetVc",Retr.SerNr,Retr.TransDate,Retr.CustCode,astr,acnt,13,Retr.TerminalID,Retr.BranchID,Retr.Status);
     for (i=0;i<acnt;i=i+1) begin
-      SetListString(wn,len(astr[i]),astr[i],false);
+      SetListString(wn,len(astr[i]),astr[i],false);    
     end;
-  end;
+  end; 
   if (GetWindowFileName(mwn)=="RetPUVc") then begin
     GetWindowRecord(mwn,RetPUr);
     LegalInvNrSClassArrayOnOpen("RetPUVc",RetPUr.SerNr,RetPUr.TransDate,RetPUr.VECode,astr,acnt,15,RetPUr.TerminalID,RetPUr.BranchID,RetPUr.Status);
     for (i=0;i<acnt;i=i+1) begin
-      SetListString(wn,len(astr[i]),astr[i],false);
+      SetListString(wn,len(astr[i]),astr[i],false);    
     end;
   end;
   if (GetWindowFileName(mwn)=="SHVc") then begin
     GetWindowRecord(mwn,SHr);
     LegalInvNrSClassArrayOnOpen("SHVc",SHr.SerNr,SHr.ShipDate,SHr.CustCode,astr,acnt,14,SHr.TerminalID,SHr.BranchID,SHr.Status);
     for (i=0;i<acnt;i=i+1) begin
-      SetListString(wn,len(astr[i]),astr[i],false);
+      SetListString(wn,len(astr[i]),astr[i],false);    
     end;
   end;
   if (GetWindowFileName(mwn)=="IPVc") then begin
@@ -252,15 +259,15 @@ begin
     if (HasLocalization("PRT")) then begin
       LegalInvNrSClassArrayOnOpen("IPVc",IPr.SerNr,IPr.TransDate,"",astr,acnt,17,IPr.TerminalID,IPr.BranchID,IPr.Status);
       for (i=0;i<acnt;i=i+1) begin
-        SetListString(wn,len(astr[i]),astr[i],false);
+        SetListString(wn,len(astr[i]),astr[i],false);    
       end;
     end else begin
       if (MatRowCnt(IPr)>=0) then begin
         MatRowGet(IPr,0,IPrw);
-        if (nonblank(IPrw.CustCode)) then begin
+        if (nonblank(IPrw.CustCode)) then begin  
           LegalInvNrSClassArrayOnOpen("IPVc",IPr.SerNr,IPr.TransDate,IPrw.CustCode,astr,acnt,17,IPr.TerminalID,IPr.BranchID,IPr.Status);
           for (i=0;i<acnt;i=i+1) begin
-            SetListString(wn,len(astr[i]),astr[i],false);
+            SetListString(wn,len(astr[i]),astr[i],false);    
           end;
         end;
       end;
@@ -284,57 +291,61 @@ begin
   record RetVc Retr;
   record RetPUVc RetPUr;
   Integer doctype;
-
+  
   mwn = MotherWindow(wn);
   if (GetWindowFileName(mwn)=="IVVc") then begin
     GetWindowRecord(mwn,IVr);
     LegalInvNr2SClassArrayOnOpen("IVVc",IVr.SerNr,IVr.InvDate,IVr.CustCode,astr,acnt,IVr.InvType,IVr.TerminalID,IVr.BranchID,IVr.Status);
     for (i=0;i<acnt;i=i+1) begin
-      SetListString(wn,len(astr[i]),astr[i],false);
+      SetListString(wn,len(astr[i]),astr[i],false);    
     end;
   end;
   if (GetWindowFileName(mwn)=="IVCashVc") then begin
     GetWindowRecord(mwn,IVCashr);
-    LegalInvNr2SClassArrayOnOpen("IVCashVc",IVCashr.SerNr,IVCashr.InvDate,IVCashr.CustCode,astr,acnt,10,IVCashr.TerminalID,IVCashr.BranchID,-1);
+    doctype = 10;
+    if (IVCashr.InvType==kPOSInvoiceTypeCredit) then begin
+      doctype = -10;
+    end;
+    LegalInvNr2SClassArrayOnOpen("IVCashVc",IVCashr.SerNr,IVCashr.InvDate,IVCashr.CustCode,astr,acnt,doctype,IVCashr.TerminalID,IVCashr.BranchID,-1);
     for (i=0;i<acnt;i=i+1) begin
-      SetListString(wn,len(astr[i]),astr[i],false);
+      SetListString(wn,len(astr[i]),astr[i],false);    
     end;
   end;
   if (GetWindowFileName(mwn)=="StockMovVc") then begin
     GetWindowRecord(mwn,StockMovr);
     LegalInvNr2SClassArrayOnOpen("StockMovVc",StockMovr.SerNr,StockMovr.TransDate,"",astr,acnt,11,StockMovr.TerminalID,StockMovr.BranchID,-1);
     for (i=0;i<acnt;i=i+1) begin
-      SetListString(wn,len(astr[i]),astr[i],false);
+      SetListString(wn,len(astr[i]),astr[i],false);    
     end;
-  end;
+  end;  
   if (GetWindowFileName(mwn)=="ORVc") then begin
     GetWindowRecord(mwn,ORr);
     LegalInvNr2SClassArrayOnOpen("ORVc",ORr.SerNr,ORr.OrdDate,ORr.CustCode,astr,acnt,12,ORr.TerminalID,ORr.BranchID,-1);
     for (i=0;i<acnt;i=i+1) begin
-      SetListString(wn,len(astr[i]),astr[i],false);
+      SetListString(wn,len(astr[i]),astr[i],false);    
     end;
   end;
   if (GetWindowFileName(mwn)=="RetVc") then begin
     GetWindowRecord(mwn,Retr);
     LegalInvNr2SClassArrayOnOpen("RetVc",Retr.SerNr,Retr.TransDate,Retr.CustCode,astr,acnt,13,Retr.TerminalID,Retr.BranchID,-1);
     for (i=0;i<acnt;i=i+1) begin
-      SetListString(wn,len(astr[i]),astr[i],false);
+      SetListString(wn,len(astr[i]),astr[i],false);    
     end;
-  end;
+  end; 
   if (GetWindowFileName(mwn)=="RetPUVc") then begin
     GetWindowRecord(mwn,RetPUr);
     LegalInvNr2SClassArrayOnOpen("RetPUVc",RetPUr.SerNr,RetPUr.TransDate,RetPUr.VECode,astr,acnt,15,RetPUr.TerminalID,RetPUr.BranchID,-1);
     for (i=0;i<acnt;i=i+1) begin
-      SetListString(wn,len(astr[i]),astr[i],false);
+      SetListString(wn,len(astr[i]),astr[i],false);    
     end;
   end;
   if (GetWindowFileName(mwn)=="SHVc") then begin
     GetWindowRecord(mwn,SHr);
     LegalInvNr2SClassArrayOnOpen("SHVc",SHr.SerNr,SHr.ShipDate,SHr.CustCode,astr,acnt,14,SHr.TerminalID,SHr.BranchID,-1);
     for (i=0;i<acnt;i=i+1) begin
-      SetListString(wn,len(astr[i]),astr[i],false);
+      SetListString(wn,len(astr[i]),astr[i],false);    
     end;
-  end;
+  end; 
   LegalInvNr2SClassOnOpenWindow = false;
   return;
 end;
@@ -346,13 +357,13 @@ begin
   Integer i,acnt;
   Integer mwn;
   record CLInVc CLInr;
-
+  
   mwn = MotherWindow(wn);
   if (GetWindowFileName(mwn)=="CLInVc") then begin
     GetWindowRecord(mwn,CLInr);
     LegalCLInNrSClassArrayOnOpen(CLInr.SerNr,CLInr.TransDate,astr,acnt);
     for (i=0;i<acnt;i=i+1) begin
-      SetListString(wn,len(astr[i]),astr[i],false);
+      SetListString(wn,len(astr[i]),astr[i],false);    
     end;
   end;
   LegalCLInNrSClassOnOpenWindow = false;
@@ -369,7 +380,7 @@ begin
   record OPVc OPr;
   row OPVc OPrw;
   string 255 vecode;
-
+  
   mwn = MotherWindow(wn);
   switch (GetWindowFileName(mwn)) begin
     case "VIVc":
@@ -386,7 +397,7 @@ begin
   if (nonblank(vecode)) then begin
     VEBankAccSClassArrayOnOpen(vecode,astr,acnt);
     for (i=0;i<acnt;i=i+1) begin
-      SetListString(wn,len(astr[i]),astr[i],false);
+      SetListString(wn,len(astr[i]),astr[i],false);    
     end;
   end;
   VEBankAccSClassOnOpenWindow = false;
@@ -404,7 +415,7 @@ begin
   BlockLoad(Compb);
   rwcnt = MatRowCnt(Compb);
   for (i=0;i<rwcnt;i=i+1) begin
-    MatRowGet(Compb,i,Compbrw);
+    MatRowGet(Compb,i,Compbrw);  
     M4PadString(Compbrw.CompCode,10," ",false,tstr);
     tstr = tstr & Compbrw.CompName;
     SetListString(wn,1,tstr,false);
@@ -424,7 +435,7 @@ begin
   BlockLoad(DCb);
   rwcnt = MatRowCnt(DCb);
   for (i=0;i<rwcnt;i=i+1) begin
-    MatRowGet(DCb,i,DCrw);
+    MatRowGet(DCb,i,DCrw);  
     M4PadString(DCrw.CompCode,10," ",false,tstr);
     tstr = tstr & DCrw.CompName;
     SetListString(wn,1,tstr,false);
@@ -438,7 +449,7 @@ function Boolean VARsubSClassOnOpenWindow(Integer wn)
 begin
   Array string 255 astr;
   Integer i,acnt,mwn,fn;
-
+  
   mwn = MotherWindow(wn);
   switch (WindowActiveField(mwn)) begin
     case "f1": fn = 1;
@@ -449,7 +460,7 @@ begin
   end;
   VARsubSClassArrayOnOpen(mwn,fn,astr,acnt);
   for (i=0;i<acnt;i=i+1) begin
-    SetListString(wn,len(astr[i]),astr[i],false);
+    SetListString(wn,len(astr[i]),astr[i],false);    
   end;
   VARsubSClassOnOpenWindow = false;
   return;
@@ -474,8 +485,8 @@ global
 function Boolean DIClassBTSClassOnOpenWindow(Integer wn)
 begin
   Array string 255 astr;
-  Integer i,acnt,mwn,fn;
-
+  Integer i,acnt,mwn,fn;  
+  
   mwn = MotherWindow(wn);
   switch (WindowActiveField(mwn)) begin
     case "f1": fn = 1;
@@ -489,7 +500,7 @@ begin
   end;
   DIClassBTSClassArrayOnOpen(mwn,fn,astr,acnt);
   for (i=0;i<acnt;i=i+1) begin
-    SetListString(wn,len(astr[i]),astr[i],false);
+    SetListString(wn,len(astr[i]),astr[i],false);    
   end;
   DIClassBTSClassOnOpenWindow = false;
   return;
@@ -501,7 +512,7 @@ begin
   Integer mwn;
   record RcVc RepSpec;
   record INVc INr;
-
+  
   mwn = MotherWindow(wn);
   GetWindowRecord(mwn,INr);
   INVc_DIClassSClass(INr,RepSpec);
@@ -517,7 +528,7 @@ begin
   Integer i,acnt,rownr,mwn;
   record IPVc IPr;
   row IPVc IPrw;
-
+  
   mwn = MotherWindow(wn);
   GetWindowRecord(mwn,IPr);
   rownr = WindowActiveRow(mwn);
@@ -526,7 +537,7 @@ begin
   end;
   ARInstSClassArrayOnOpen(IPrw.InvoiceNr,astr,acnt);
   for (i=0;i<acnt;i=i+1) begin
-    SetListString(wn,len(astr[i]),astr[i],false);
+    SetListString(wn,len(astr[i]),astr[i],false);    
   end;
   ARInstSClassOnOpenWindow = false;
   return;
@@ -539,7 +550,7 @@ begin
   Integer i,acnt,rownr,mwn;
   record IPVc IPr;
   row IPVc IPrw;
-
+  
   mwn = MotherWindow(wn);
   GetWindowRecord(mwn,IPr);
   rownr = WindowActiveRow(mwn);
@@ -548,7 +559,7 @@ begin
   end;
   ARInstallSClassArrayOnOpen(IPrw.InvoiceNr,astr,acnt);
   for (i=0;i<acnt;i=i+1) begin
-    SetListString(wn,len(astr[i]),astr[i],false);
+    SetListString(wn,len(astr[i]),astr[i],false);    
   end;
   ARInstallSClassOnOpenWindow = false;
   return;
@@ -561,7 +572,7 @@ begin
   Integer i,acnt,rownr,mwn;
   record OPVc OPr;
   row OPVc OPrw;
-
+  
   mwn = MotherWindow(wn);
   GetWindowRecord(mwn,OPr);
   rownr = WindowActiveRow(mwn);
@@ -570,7 +581,7 @@ begin
   end;
   APInstSClassArrayOnOpen(OPrw.VISerNr,astr,acnt);
   for (i=0;i<acnt;i=i+1) begin
-    SetListString(wn,len(astr[i]),astr[i],false);
+    SetListString(wn,len(astr[i]),astr[i],false);    
   end;
   APInstSClassOnOpenWindow = false;
   return;
@@ -583,7 +594,7 @@ begin
   Integer i,acnt,rownr,mwn;
   record OPVc OPr;
   row OPVc OPrw;
-
+  
   mwn = MotherWindow(wn);
   GetWindowRecord(mwn,OPr);
   rownr = WindowActiveRow(mwn);
@@ -592,7 +603,7 @@ begin
   end;
   APInstallSClassArrayOnOpen(OPrw.VISerNr,astr,acnt);
   for (i=0;i<acnt;i=i+1) begin
-    SetListString(wn,len(astr[i]),astr[i],false);
+    SetListString(wn,len(astr[i]),astr[i],false);    
   end;
   APInstallSClassOnOpenWindow = false;
   return;
@@ -628,12 +639,12 @@ begin
 
   mwn = MotherWindow(wn);
   switch (GetWindowFileName(mwn)) begin
-    case "JobVc":
+    case "JobVc": 
       GetWindowRecord(mwn,Jobr);
       ReservationStatus2SClassArrayOnOpen(Jobr.ResStatus,astr,acnt);
   end;
   for (i=0;i<acnt;i=i+1) begin
-    SetListString(wn,len(astr[i]),astr[i],false);
+    SetListString(wn,len(astr[i]),astr[i],false);    
   end;
   return;
 end;
@@ -652,7 +663,7 @@ begin
     ActType3SClassArrayOnOpen(Actr.ActType,astr,acnt);
   end;
   for (i=0;i<acnt;i=i+1) begin
-    SetListString(wn,len(astr[i]),astr[i],false);
+    SetListString(wn,len(astr[i]),astr[i],false);    
   end;
   return;
 end;
@@ -665,7 +676,7 @@ begin
   record XBRLSettingsVc XBRLSr;
   row XBRLSettingsVc XBRLSrw;
   string 20 shortname;
-
+  
   mwn = MotherWindow(wn);
   if (GetWindowFileName(mwn)=="XBRLSettingsVc") then begin
     GetWindowRecord(mwn,XBRLSr);
@@ -675,12 +686,12 @@ begin
       shortname = XBRLSrw.UserDefRep;
     end;
   end;
-
+  
   UserDefRepLinesSClassArrayOnOpen(astr,acnt,shortname);
   for (i=0;i<acnt;i=i+1) begin
-    SetListString(wn,len(astr[i]),astr[i],false);
+    SetListString(wn,len(astr[i]),astr[i],false);    
   end;
-
+  
   return;
 end;
 
@@ -689,7 +700,7 @@ function Boolean UserDefRepLinesSClassOnOKWindow(Integer wn)
 begin
   Integer mwn;
   string 60 tstr;
-
+  
   mwn = MotherWindow(wn);
   if (SelectedListLine(wn)!=-1) then begin
     tstr = GetListString(wn,SelectedListLine(wn));
@@ -697,7 +708,7 @@ begin
     CloseWindow(wn);
     PasteString(mwn,tstr);
   end;
-
+  
   UserDefRepLinesSClassOnOKWindow = false;
   return;
 end;
@@ -709,18 +720,18 @@ begin
   Integer i,acnt,mwn;
   record XBRLSettingsVc XBRLSr;
   Integer ReportType;
-
+  
   mwn = MotherWindow(wn);
   if (GetWindowFileName(mwn)=="XBRLSettingsVc") then begin
     GetWindowRecord(mwn,XBRLSr);
     ReportType = XBRLSr.ReportType;
   end;
-
+  
   XBRLElementSClassArrayOnOpen(astr,acnt,ReportType);
   for (i=0;i<acnt;i=i+1) begin
-    SetListString(wn,len(astr[i]),astr[i],false);
+    SetListString(wn,len(astr[i]),astr[i],false);    
   end;
-
+  
   return;
 end;
 
@@ -729,7 +740,7 @@ function Boolean XBRLElementSClassOnOKWindow(Integer wn)
 begin
   Integer mwn;
   string 60 tstr;
-
+  
   mwn = MotherWindow(wn);
   if (SelectedListLine(wn)!=-1) then begin
     tstr = GetListString(wn,SelectedListLine(wn));
@@ -737,7 +748,7 @@ begin
     CloseWindow(wn);
     PasteString(mwn,tstr);
   end;
-
+  
   XBRLElementSClassOnOKWindow = false;
   return;
 end;
@@ -749,33 +760,34 @@ begin
   Array val aprice;
   Integer i,acnt;
   transaction record RcVc gNPTSRepSpec;
-
+  
+  ClearStringList(wn);
   INNPTSSClassArrayOnOpen(gNPTSRepSpec,astr,astr2,aprice,acnt);
   for (i=0;i<acnt;i=i+1) begin
     AddListRow(wn,"NPTSItemSearch",1,astr[i],0);
     AddListData(wn,"NPTSItemSearch","ArtCode",astr[i]);
     AddListData(wn,"NPTSItemSearch","ArtName",astr2[i]);
     AddListData(wn,"NPTSItemSearch","ArtPrice",aprice[i]);
-//    SetListString(wn,len(astr[i]),astr[i],false);
+//    SetListString(wn,len(astr[i]),astr[i],false);    
   end;
   INNPTSSClassOnOpenWindow = false;
   return;
 end;
 
 global
-function Boolean INNPTSSClassOnOKWindow(Integer wn)
+function Boolean INNPTSSClassListClickOnOKWindow(Integer wn)
 begin
   Integer mwn;
   string 60 tstr;
   record IVCashVc IVCashr;
   record IVVc IVr;
   Integer sline;
-
+    
   mwn = MotherWindow(wn);
   switch (GetWindowClass(mwn)) begin
     case "NPTSIVCashDClass":
       if (StringFromSysList(wn,-1)!=USetStr(19390)) and (StringFromSysList(wn,-1)!=USetStr(24160)) then begin
-        WindowFieldGoto(mwn,IVCashr,-1,"ivcashcommand",false);
+        WindowFieldGoto(mwn,IVCashr,-1,"ivcashcommand",false); 
         //WindowFieldGotoForTouchScreen(mwn,-1,"ivcashcommand",false);
 //        PasteFromSysList(wn,-2);
         sline = SelectedListLine(wn);
@@ -805,15 +817,56 @@ begin
         RestAccDClasstouchscreenitemEFAfter(mwn,true);
       end;
   end;
-  INNPTSSClassOnOKWindow = false;
+  INNPTSSClassListClickOnOKWindow = false;
   return;
 end;
 
 global
-function Boolean INNPTSSClassListClick(Integer wn,Integer rownr)
+function Boolean INNPTSSClassAfterEditField(Integer wn,string fieldname,Integer fn,Integer rownr,Integer changed)
 begin
-  INNPTSSClassOnOKWindow(wn);
-  INNPTSSClassListClick = true;
+  Boolean res;
+  record RcVc RepSpec;
+  transaction record RcVc gNPTSRepSpec;
+  
+  switch (fieldname) begin
+    case "f1": 
+      if (changed!=0) then begin
+        GetWindowRecord(wn,RepSpec);
+        RepSpec.f1 = GetWindowString(wn,"f1");
+        PutWindowRecord(wn,RepSpec);   
+        gNPTSRepSpec = RepSpec;
+        INNPTSSClassOnOpenWindow(wn);
+        PutWindowRecord(wn,RepSpec);   
+      end;
+  end;
+  INNPTSSClassAfterEditField = res;
+  return;
+end;
+
+global
+function Boolean INNPTSSClassOnEnterKey(Integer wn,string fieldname,Integer fn,Integer rownr)
+begin
+  Boolean res;
+  record RcVc RepSpec;
+
+  switch (fieldname) begin
+    case "f1":
+      GetWindowRecord(wn,RepSpec);      
+    otherwise
+      res = true;     
+  end;
+LINNPTSSClassOnEnterKey:;  
+  INNPTSSClassOnEnterKey = res;
+  return;
+end;
+
+
+global
+function Boolean INNPTSSClassListDoubleClick(Integer wn,Integer rownr)
+begin
+  //INNPTSSClassOnOKWindow(wn);
+  INNPTSSClassListClickOnOKWindow(wn);
+  INNPTSSClassListDoubleClick = true;
   return;
 end;
 
@@ -823,9 +876,9 @@ begin
   Array string 255 astr, atags;
   Integer i,acnt;
   transaction record RcVc gNPTSRepSpec;
-
+  
   CUNPTSSClassArrayOnOpen(gNPTSRepSpec,astr,acnt);
-  DOL_SetTagArrayAndLoyaltyCards(astr, atags, acnt);
+  DOL_SetTagArrayAndLoyaltyCards(astr, atags, acnt);//EBS
   for (i=0;i<acnt;i=i+1) begin
     // SetListString(wn,len(astr[i]),astr[i],false);
     SetListStringAndTag(wn,len(astr[i]),astr[i],atags[i]); //EBS
@@ -839,11 +892,11 @@ function Boolean RestAccClassNPTSSClassOnOpenWindow(Integer wn)
 begin
   Array string 255 astr;
   Integer i,acnt;
-
+  
   RestAccClassNPTSSClassArrayOnOpen(astr,acnt);
   for (i=0;i<acnt;i=i+1) begin
-    SetListString(wn,len(astr[i]),astr[i],false);
-  end;
+    SetListString(wn,len(astr[i]),astr[i],false);    
+  end;  
   RestAccClassNPTSSClassOnOpenWindow = false;
   return;
 end;
@@ -865,7 +918,7 @@ begin
   string 255 errstr,prepstr,invdatewarn,transdatewarn;
   record RcVc RepSpec;
   record CUVc CUr;
-
+    
   mwn = MotherWindow(wn);
   switch (GetWindowClass(mwn)) begin
     case "NPTSIVCashDClass":
@@ -1026,7 +1079,7 @@ begin
   record RestAccVc RestAccr;
   record RestAccVc RestAcc2r;
   record CUVc CUr;
-
+    
   mwn = MotherWindow(wn);
   switch (GetWindowClass(mwn)) begin
     case "NPTSIVCashDClass":
@@ -1105,10 +1158,14 @@ function Boolean UserNPTSSClassOnOpenWindow(Integer wn)
 begin
   Array string 255 astr;
   Integer i,acnt;
-
-  UserNPTSSClassArrayOnOpen(astr,acnt);
-  for (i=0;i<acnt;i=i+1) begin
-    SetListString(wn,len(astr[i]),astr[i],false);
+  record UserDefRepICACLVc UDRICACLr;
+  array string 100 auser,ausername;//BS
+  
+  UserNPTSSClassArrayOnOpen2(auser,ausername);
+  for (i=0;i<auser.length;i=i+1) begin
+    AddListRow(wn,"UsersNPTS",1,auser[i],0);
+    AddListData(wn,"UsersNPTS","UserCode",auser[i]);
+    AddListData(wn,"UsersNPTS","UserName",ausername[i]);
   end;
   UserNPTSSClassOnOpenWindow = false;
   return;
@@ -1119,6 +1176,84 @@ function Boolean UserNPTSSClassOnOKWindow(Integer wn)
 begin
   PasteFromSysList(wn,-2);
   UserNPTSSClassOnOKWindow = false;
+  return;
+end;
+
+global
+function Boolean AccCompSClassOnOpenWindow(Integer wn)
+begin
+  array string 255 aacc;
+  array string 255 aaccname;  
+  Integer i,acnt,oldcomp,mwn;
+  record UserDefRepICACLVc UDRICACLr;
+  
+  oldcomp = CurrentCompany;
+  mwn = MotherWindow(wn);
+  if (mwn>0) then begin
+    switch (GetWindowClass(mwn)) begin
+      case "UserDefRepICACLinesDClass":
+        GetWindowRecord(mwn,UDRICACLr);        
+        if (StringToInt(UDRICACLr.CompCode)!=oldcomp) then begin
+          SetCompanyCode(StringToInt(UDRICACLr.CompCode),false);
+        end;
+    end;
+  end;
+  AccCompSClassArrayOnOpen(aacc,aaccname);
+  for (i=0;i<aacc.length;i=i+1) begin
+    AddListRow(wn,"AccComp",1,aacc[i],0);
+    AddListData(wn,"AccComp","ActAccNumber",aacc[i]);
+    AddListData(wn,"AccComp","ActComment",aaccname[i]);
+  end;
+  ResetCompany(oldcomp);
+  AccCompSClassOnOpenWindow = false;
+  return;
+end;
+
+global
+function Boolean AccCompSClassOnOKWindow(Integer wn)
+begin
+  PasteFromSysList(wn,-2);
+  AccCompSClassOnOKWindow = false;
+  return;
+end;
+
+global
+function Boolean ObjCompSClassOnOpenWindow(Integer wn)
+begin
+  array string 255 aobj;
+  array string 255 aobjtype;  
+  array string 255 aobjname;  
+  Integer i,acnt,oldcomp,mwn;
+  record UserDefRepICACLVc UDRICACLr;
+  
+  oldcomp = CurrentCompany;
+  mwn = MotherWindow(wn);
+  if (mwn>0) then begin
+    switch (GetWindowClass(mwn)) begin
+      case "UserDefRepICACLinesDClass":
+        GetWindowRecord(mwn,UDRICACLr);        
+        if (StringToInt(UDRICACLr.CompCode)!=oldcomp) then begin
+          SetCompanyCode(StringToInt(UDRICACLr.CompCode),false);
+        end;
+    end;
+  end;  
+  ObjCompSClassArrayOnOpen(aobj,aobjtype,aobjname);
+  for (i=0;i<aobj.length;i=i+1) begin
+    AddListRow(wn,"ObjComp",1,aobj[i],0);
+    AddListData(wn,"ObjComp","ActCode",aobj[i]);
+    AddListData(wn,"ObjComp","ActOTCode",aobjtype[i]);
+    AddListData(wn,"ObjComp","ActComment",aobjname[i]);
+  end;
+  ObjCompSClassOnOpenWindow = false;
+  ResetCompany(oldcomp);
+  return;
+end;
+
+global
+function Boolean ObjCompSClassOnOKWindow(Integer wn)
+begin
+  PasteFromSysList(wn,-2);
+  ObjCompSClassOnOKWindow = false;
   return;
 end;
 
@@ -1135,7 +1270,7 @@ begin
   record LocalMachineBlock LMb;
   record RestAccVc RestAccr;
   record RestAccVc RestAcc2r;
-
+    
   mwn = MotherWindow(wn);
   switch (GetWindowClass(mwn)) begin
     case "NPTSIVCashDClass":
@@ -1193,7 +1328,7 @@ begin
   row IVCashVc IVCash2rw;
   Integer i,rwcnt,j,mwn;
   Boolean testf;
-
+  
   mwn = MotherWindow(wn);
   switch (GetWindowClass(mwn)) begin
     case "NPTSIVCashDClass":
@@ -1221,7 +1356,7 @@ LkInvoiceRowTypeNormal:;
             testf = false;
         end;
         if (testf) then begin
-          SetListStringAndTag(wn,len(IVCashrw.ArtCode),IVCashrw.ArtCode & "     " & IVCashrw.Spec,i);
+          SetListStringAndTag(wn,len(IVCashrw.ArtCode),IVCashrw.ArtCode & "     " & IVCashrw.Spec,i);    
         end;
       end;
   end;
@@ -1240,22 +1375,22 @@ begin
   row IVVc IVrw;
   LongInt l;
   Integer rownr;
-
+    
   mwn = MotherWindow(wn);
   switch (GetWindowClass(mwn)) begin
     case "NPTSIVCashDClass":
       l = SelectedListLine(wn);
       rownr = StringToInt(GetListTag(wn,l));
       if (rownr>=0) then begin
-        GetWindowRecord(mwn,IVCashr);
+        GetWindowRecord(mwn,IVCashr);    
         if (rownr<MatRowCnt(IVCashr)) then begin
           if (IVCashDClassVoidRow(IVCashr,rownr)) then begin
-            PutWindowRecord(mwn,IVCashr);
+            PutWindowRecord(mwn,IVCashr);    
             MatRowGet(IVCashr,rownr,IVCashrw);
             IVCashDClass_RefreshStringList(mwn,IVCashr);
             tstr = ValToString(-IVCashrw.Quant,M4UVal,ThousandSeparator,DecimalSeparator,0) & "*" & ValToString(IVCashrw.Price,M4Val,ThousandSeparator,DecimalSeparator,0);
             M4PadString(ValToString(IVCashrw.Sum,M4Val,ThousandSeparator,DecimalSeparator,0),30-len(tstr)," ",true,t2);
-            tstr = tstr & t2;
+            tstr = tstr & t2;  
             SetPOSWindowDisplay(IVCashrw.ArtCode & " " & IVCashrw.Spec,tstr);
             DeselectWindow(mwn,false);
             //WindowFieldGoto(mwn,IVCashr,-1,"ivcashcommand",false);
@@ -1268,15 +1403,15 @@ begin
       l = SelectedListLine(wn);
       rownr = StringToInt(GetListTag(wn,l));
       if (rownr>=0) then begin
-        GetWindowRecord(mwn,IVr);
+        GetWindowRecord(mwn,IVr);    
         if (rownr<MatRowCnt(IVr)) then begin
           if (IVDClassVoidRow(IVr,rownr)) then begin
-            PutWindowRecord(mwn,IVr);
+            PutWindowRecord(mwn,IVr);    
             MatRowGet(IVr,rownr,IVrw);
             IVDClass_RefreshStringList(mwn,IVr);
             tstr = ValToString(-IVrw.Quant,M4UVal,ThousandSeparator,DecimalSeparator,0) & "*" & ValToString(IVrw.Price,M4Val,ThousandSeparator,DecimalSeparator,0);
             M4PadString(ValToString(IVrw.Sum,M4Val,ThousandSeparator,DecimalSeparator,0),30-len(tstr)," ",true,t2);
-            tstr = tstr & t2;
+            tstr = tstr & t2;  
             SetPOSWindowDisplay(IVrw.ArtCode & " " & IVrw.Spec,tstr);
             DeselectWindow(mwn,false);
             //WindowFieldGoto(mwn,IVr,-1,"ivcashcommand",false);
@@ -1293,7 +1428,7 @@ end;
 procedure IVVc_ARPay2SClass(string index,string sorting,Integer mwn,var Array string astr,var Integer acnt)
 begin
   record IVVc IVr;
-
+  
   GetWindowRecord(mwn,IVr);
   FillARPay2SClass(index,sorting,IVr.CustCode,IVr.TransDate,astr,acnt);
   return;
@@ -1311,7 +1446,7 @@ begin
   end;
   switch (GetWindowFileName(mwn)) begin
     case "IVVc": IVVc_ARPay2SClass(index,sorting,mwn,astr,acnt);
-    case "RcVc":
+    case "RcVc": 
       switch (GetWindowClass(mwn)) begin
         case "ConnectToPrepaymentNPTSSClass":
           IVVc_ARPay2SClass(index,sorting,MotherWindow(mwn),astr,acnt);
@@ -1319,7 +1454,7 @@ begin
   end;
   for (i=0;i<acnt;i=i+1) begin
     SetListString(wn,len(astr[i]),astr[i],false);
-  end;
+  end;      
   return;
 end;
 
@@ -1338,9 +1473,9 @@ begin
   ARPay2SClassOnOpen("CUPNr",GetWindowString(CurWindow,"ARPay2SClassSorting"),CurWindow);
   UpdateNamedWindow("ARPay2SClass");
   if (GetWindowString(CurWindow,"ARPay2SClassSorting")=="reverse") then begin
-    PutWindowString(CurWindow,"ARPay2SClassSorting","");
+    PutWindowString(CurWindow,"ARPay2SClassSorting","");  
   end else begin
-    PutWindowString(CurWindow,"ARPay2SClassSorting","reverse");
+    PutWindowString(CurWindow,"ARPay2SClassSorting","reverse");  
   end;
   return;
 end;
@@ -1352,9 +1487,9 @@ begin
   ARPay2SClassOnOpen("OrderNr",GetWindowString(CurWindow,"ARPay2SClassSorting"),CurWindow);
   UpdateNamedWindow("ARPay2SClass");
   if (GetWindowString(CurWindow,"ARPay2SClassSorting")=="reverse") then begin
-    PutWindowString(CurWindow,"ARPay2SClassSorting","");
+    PutWindowString(CurWindow,"ARPay2SClassSorting","");  
   end else begin
-    PutWindowString(CurWindow,"ARPay2SClassSorting","reverse");
+    PutWindowString(CurWindow,"ARPay2SClassSorting","reverse");  
   end;
   return;
 end;
@@ -1366,9 +1501,9 @@ begin
   ARPay2SClassOnOpen("PayDate",GetWindowString(CurWindow,"ARPay2SClassSorting"),CurWindow);
   UpdateNamedWindow("ARPay2SClass");
   if (GetWindowString(CurWindow,"ARPay2SClassSorting")=="reverse") then begin
-    PutWindowString(CurWindow,"ARPay2SClassSorting","");
+    PutWindowString(CurWindow,"ARPay2SClassSorting","");  
   end else begin
-    PutWindowString(CurWindow,"ARPay2SClassSorting","reverse");
+    PutWindowString(CurWindow,"ARPay2SClassSorting","reverse");  
   end;
   return;
 end;
@@ -1381,9 +1516,9 @@ begin
   ARPay2SClassOnOpen("CustCode",GetWindowString(CurWindow,"ARPay2SClassSorting"),CurWindow);
   UpdateNamedWindow("ARPay2SClass");
   if (GetWindowString(CurWindow,"ARPay2SClassSorting")=="reverse") then begin
-    PutWindowString(CurWindow,"ARPay2SClassSorting","");
+    PutWindowString(CurWindow,"ARPay2SClassSorting","");  
   end else begin
-    PutWindowString(CurWindow,"ARPay2SClassSorting","reverse");
+    PutWindowString(CurWindow,"ARPay2SClassSorting","reverse");  
   end;
   return;
 end;
@@ -1397,7 +1532,7 @@ begin
 
   wn = CurWindow;
   mwn = MotherWindow(wn);
-  CloseWindow(wn);
+  CloseWindow(wn);      
   nwn = OpenWindow("ARPaySClass",0,mwn,"","",ARPayr);
   return;
 end;
@@ -1418,7 +1553,7 @@ begin
 
   wn = CurWindow;
   mwn = MotherWindow(wn);
-  CloseWindow(wn);
+  CloseWindow(wn);      
   nwn = OpenWindow("OPPSClass",0,mwn,"","",OPPr);
   return;
 end;
@@ -1434,7 +1569,7 @@ end;
 procedure ExpVc_PPSClass(string index,string sorting,Integer mwn,var Array string astr,var Array string atag,var Integer acnt)
 begin
   record ExpVc Expr;
-
+  
   GetWindowRecord(mwn,Expr);
   FillPPSClass(index,sorting,Expr,WindowActiveRow(mwn),astr,atag,acnt);
   return;
@@ -1452,7 +1587,7 @@ begin
   end;
   for (i=0;i<acnt;i=i+1) begin
     SetListStringAndTag(wn,len(astr[i]),astr[i],atag[i]);
-  end;
+  end;      
   return;
 end;
 
@@ -1471,9 +1606,9 @@ begin
   PPSClassOnOpen("OSPerson",GetWindowString(CurWindow,"PPSClassSorting"),CurWindow);
   UpdateNamedWindow("PPSClass");
   if (GetWindowString(CurWindow,"PPSClassSorting")=="reverse") then begin
-    PutWindowString(CurWindow,"PPSClassSorting","");
+    PutWindowString(CurWindow,"PPSClassSorting","");  
   end else begin
-    PutWindowString(CurWindow,"PPSClassSorting","reverse");
+    PutWindowString(CurWindow,"PPSClassSorting","reverse");  
   end;
   return;
 end;
@@ -1489,7 +1624,7 @@ begin
   Integer j,jrwcnt;
   val ppsum;
   LongInt pos;
-
+  
   ppnr = StringFromSysList(wn,-2);
   tag = GetListTag(wn,SelectedListLine(wn));
 
@@ -1513,7 +1648,7 @@ begin
         switch (Exp2rw.stp) begin
           case kExpenseRowTypePersonnelPayment:
             if (Exp2rw.PPNr==Exprw.PPNr) and (Exp2rw.PPRow==Exprw.PPRow) and (j!=rownr) then begin
-              ppsum = ppsum + Exp2rw.Sum;
+              ppsum = ppsum + Exp2rw.Sum; 
             end;
         end;
       end;
@@ -1534,10 +1669,10 @@ function Boolean BaggerSClassOnOpenWindow(Integer wn)
 begin
   Array string 255 astr;
   Integer i,acnt;
-
+  
   BaggerSClassArrayOnOpen(astr,acnt);
   for (i=0;i<acnt;i=i+1) begin
-    SetListString(wn,len(astr[i]),astr[i],false);
+    SetListString(wn,len(astr[i]),astr[i],false);    
   end;
   BaggerSClassOnOpenWindow = false;
   return;
@@ -1548,10 +1683,10 @@ function Boolean SupervisorSClassOnOpenWindow(Integer wn)
 begin
   Array string 255 astr;
   Integer i,acnt;
-
+  
   SupervisorSClassArrayOnOpen(astr,acnt);
   for (i=0;i<acnt;i=i+1) begin
-    SetListString(wn,len(astr[i]),astr[i],false);
+    SetListString(wn,len(astr[i]),astr[i],false);    
   end;
   SupervisorSClassOnOpenWindow = false;
   return;
@@ -1578,7 +1713,8 @@ function Boolean LangModeSClassOnOpenWindow(Integer wn)
 begin
   AddLangMode(wn,StringFromSet(80,LangAngolanPortuguese),"ANG");
   AddLangMode(wn,StringFromSet(80,LangArabic),"ARB");
-  AddLangMode(wn,StringFromSet(80,LangEnglish),"AUS");
+  AddLangMode(wn,StringFromSet(80,LangAustralian),"AUS");
+  AddLangMode(wn,StringFromSet(80,LangNewZealandEng),"NZE");
   AddLangMode(wn,StringFromSet(80,LangArabic),"BHR");
   AddLangMode(wn,StringFromSet(80,LangBrazilian),"BRA");
   AddLangMode(wn,StringFromSet(80,LangCroatian),"CRO");
@@ -1617,9 +1753,13 @@ begin
   AddLangMode(wn,StringFromSet(80,LangHondurianSpanish),"HND");
   AddLangMode(wn,StringFromSet(80,LangArgentineanSpanish),"ARG");
   AddLangMode(wn,StringFromSet(80,LangBolivianSpanish),"BOL");
+  AddLangMode(wn,StringFromSet(80,LangColombianSpanish),"COL");
+  AddLangMode(wn,StringFromSet(80,LangChileanSpanish),"CHL");
   AddLangMode(wn,StringFromSet(80,LangCostaRicanSpanish),"CRI");
   AddLangMode(wn,StringFromSet(80,LangGuatemaleanSpanish),"GTM");
   AddLangMode(wn,StringFromSet(80,LangMexicanSpanish),"MEX");
+  AddLangMode(wn,StringFromSet(80,LangNicaraguanSpanish),"NIC");
+  AddLangMode(wn,StringFromSet(80,LangMozambicanPortuguese),"MOZ");
   AddLangMode(wn,StringFromSet(80,LangPanamanianSpanish),"PAN");
 //  AddLangMode(wn,StringFromSet(80,LangParaguayanSpanish),"HND");
   AddLangMode(wn,StringFromSet(80,LangSalvadorianSpanish),"SLV");
@@ -1646,7 +1786,8 @@ begin
   AddLangModeIfExists(wn,StringFromSet(80,LangDanish),"DAN");
   AddLangModeIfExists(wn,StringFromSet(80,LangArabic),"DZA");
   AddLangModeIfExists(wn,StringFromSet(80,LangArabic),"EGY");
-  AddLangModeIfExists(wn,StringFromSet(80,LangEnglish),"AUS");
+  AddLangModeIfExists(wn,StringFromSet(80,LangAustralian),"AUS");
+  AddLangModeIfExists(wn,StringFromSet(80,LangNewZealandEng),"NZE");
   AddLangModeIfExists(wn,StringFromSet(80,LangEnglish),"IND");
   AddLangModeIfExists(wn,StringFromSet(80,LangEnglish),"SAF");
   AddLangModeIfExists(wn,StringFromSet(80,LangEnglish),"ENG");
@@ -1678,9 +1819,13 @@ begin
   AddLangModeIfExists(wn,StringFromSet(80,LangHondurianSpanish),"HND");
   AddLangModeIfExists(wn,StringFromSet(80,LangArgentineanSpanish),"ARG");
   AddLangModeIfExists(wn,StringFromSet(80,LangBolivianSpanish),"BOL");
+  AddLangModeIfExists(wn,StringFromSet(80,LangChileanSpanish),"CHL");
+  AddLangModeIfExists(wn,StringFromSet(80,LangColombianSpanish),"COL");
   AddLangModeIfExists(wn,StringFromSet(80,LangCostaRicanSpanish),"CRI");
   AddLangModeIfExists(wn,StringFromSet(80,LangGuatemaleanSpanish),"GTM");
   AddLangModeIfExists(wn,StringFromSet(80,LangMexicanSpanish),"MEX");
+  AddLangModeIfExists(wn,StringFromSet(80,LangNicaraguanSpanish),"NIC");
+  AddLangModeIfExists(wn,StringFromSet(80,LangMozambicanPortuguese),"MOZ");
   AddLangModeIfExists(wn,StringFromSet(80,LangPanamanianSpanish),"PAN");
 //  AddLangModeIfExists(wn,StringFromSet(80,LangParaguayanSpanish),"HND");
   AddLangModeIfExists(wn,StringFromSet(80,LangSalvadorianSpanish),"SLV");
@@ -1698,13 +1843,13 @@ end;
 global
 function Boolean SpecialMenuFunSClassOnOpenWindow(Integer wn)
 begin
-
+  
   SetListStringAndTag(wn,0,StringFromStringSet(493,"OpenPOSSessionsm"),"OpenPOSSessionsm");
   SetListStringAndTag(wn,1,StringFromStringSet(493,"ClosePOSSessionsm"),"ClosePOSSessionsm");
   SetListStringAndTag(wn,2,StringFromStringSet(493,"POSMoneyInsm"),"POSMoneyInsm");
   SetListStringAndTag(wn,2,StringFromStringSet(493,"POSMoneyOutsm"),"POSMoneyOutsm");
   SetListStringAndTag(wn,2,StringFromStringSet(493,"IVCashCashupRnsm"),"IVCashCashupRnsm");
-
+  
   return;
 end;
 
@@ -1721,6 +1866,12 @@ begin
   SetListStringAndTag(wn,0,USetStr(24604),"POSBalanceVc");
   SetListStringAndTag(wn,0,USetStr(24605),"CashVc");
   SetListStringAndTag(wn,0,USetStr(24606),"GCVc");
+  SetListStringAndTag(wn,0,USetStr(24609),"RestAccVc");
+  SetListStringAndTag(wn,0,USetStr(24610),"KitchenOrderVc");
+  SetListStringAndTag(wn,0,USetStr(24611),"CCTSVc");
+  SetListStringAndTag(wn,0,USetStr(24612),"CCTRVc");
+  SetListStringAndTag(wn,0,USetStr(24613),"ORVc");
+  SetListStringAndTag(wn,0,USetStr(24614),"DefCCTransVc");
 //  SetListStringAndTag(wn,0,USetStr(24607),"GCSVc");
 //  SetListStringAndTag(wn,0,USetStr(24608),"GCRVc");
 
@@ -1736,7 +1887,7 @@ begin
   Integer i,acnt,mwn;
   record RcVc RepSpec;
   string 255 tstr;
-
+  
   mwn = MotherWindow(wn);
   if (mwn>0) then begin
     GetWindowRecord(mwn,RepSpec);
@@ -1752,7 +1903,7 @@ begin
     AddListRow(wn,"Approvers",1,astr[i],0);
     AddListData(wn,"Approvers","UserCode",astr[i]);
     AddListData(wn,"Approvers","UserName",astr2[i]);
-//    SetListString(wn,len(astr[i]),astr[i],false);
+//    SetListString(wn,len(astr[i]),astr[i],false);    
   end;
   ApproversSClassOnOpenWindow = false;
   return;
@@ -1775,7 +1926,7 @@ global
 function string 40 SelectApproverWClassSpecPasteName(Integer wn,string defpsname)
 begin
   string 255 psname;
-
+  
   psname = defpsname;
   switch (WindowActiveField(wn)) begin
     case "f1": SelectApproverWClassSpecPasteNameSerNr(wn,psname);
@@ -1791,9 +1942,9 @@ begin
   Array string 255 astr2;
   Integer i,acnt,mwn;
   string 255 tstr;
-
+  
   mwn = MotherWindow(wn);
-
+  
   CUDocTypeSClassArrayOnOpen(astr,astr2,acnt);
   for (i=0;i<acnt;i=i+1) begin
     AddListRow(wn,"DocType",1,astr[i],0);
@@ -1809,23 +1960,23 @@ function Boolean MailTextRegisterSClassOnOpenWindow(Integer wn)
 begin
   Array string 255 astr;
   Integer i,acnt;
-
-  SetListString(wn,len(StringFromStringSet(-3,"ActVc")),StringFromStringSet(-3,"ActVc"),false);
-  SetListString(wn,len(StringFromStringSet(-3,"AlarmVc")),StringFromStringSet(-3,"AlarmVc"),false);
-  SetListString(wn,len(StringFromStringSet(-3,"ExpVc")),StringFromStringSet(-3,"ExpVc"),false);
-  SetListString(wn,len(StringFromStringSet(-3,"IVVc")),StringFromStringSet(-3,"IVVc"),false);
-  SetListString(wn,len(StringFromStringSet(-3,"PPVc")),StringFromStringSet(-3,"PPVc"),false);
-  SetListString(wn,len(StringFromStringSet(-3,"OPVc")),StringFromStringSet(-3,"OPVc"),false);
-  SetListString(wn,len(StringFromStringSet(-3,"IVCashVc")),StringFromStringSet(-3,"IVCashVc"),false);
-  SetListString(wn,len(StringFromStringSet(-3,"POVc")),StringFromStringSet(-3,"POVc"),false);
-  SetListString(wn,len(StringFromStringSet(-3,"POQTVc")),StringFromStringSet(-3,"POQTVc"),false);
-  SetListString(wn,len(StringFromStringSet(-3,"QTVc")),StringFromStringSet(-3,"QTVc"),false);
-  SetListString(wn,len(StringFromStringSet(-3,"JobVc")),StringFromStringSet(-3,"JobVc"),false);
-  SetListString(wn,len(StringFromStringSet(-3,"ResAvVc")),StringFromStringSet(-3,"ResAvVc"),false);
-  SetListString(wn,len(StringFromStringSet(-3,"ORVc")),StringFromStringSet(-3,"ORVc"),false);
-  SetListString(wn,len(USetStr(2541)),USetStr(2541),false);
-  SetListString(wn,len(USetStr(2480)),USetStr(2480),false);
-  SetListString(wn,len(USetStr(4180)),USetStr(4180),false);
+  
+  SetListString(wn,len(StringFromStringSet(-3,"ActVc")),StringFromStringSet(-3,"ActVc"),false);    
+  SetListString(wn,len(StringFromStringSet(-3,"AlarmVc")),StringFromStringSet(-3,"AlarmVc"),false); 
+  SetListString(wn,len(StringFromStringSet(-3,"ExpVc")),StringFromStringSet(-3,"ExpVc"),false);    
+  SetListString(wn,len(StringFromStringSet(-3,"IVVc")),StringFromStringSet(-3,"IVVc"),false);    
+  SetListString(wn,len(StringFromStringSet(-3,"PPVc")),StringFromStringSet(-3,"PPVc"),false);     
+  SetListString(wn,len(StringFromStringSet(-3,"OPVc")),StringFromStringSet(-3,"OPVc"),false);    
+  SetListString(wn,len(StringFromStringSet(-3,"IVCashVc")),StringFromStringSet(-3,"IVCashVc"),false);    
+  SetListString(wn,len(StringFromStringSet(-3,"POVc")),StringFromStringSet(-3,"POVc"),false);    
+  SetListString(wn,len(StringFromStringSet(-3,"POQTVc")),StringFromStringSet(-3,"POQTVc"),false); 
+  SetListString(wn,len(StringFromStringSet(-3,"QTVc")),StringFromStringSet(-3,"QTVc"),false);    
+  SetListString(wn,len(StringFromStringSet(-3,"JobVc")),StringFromStringSet(-3,"JobVc"),false);    
+  SetListString(wn,len(StringFromStringSet(-3,"ResAvVc")),StringFromStringSet(-3,"ResAvVc"),false);    
+  SetListString(wn,len(StringFromStringSet(-3,"ORVc")),StringFromStringSet(-3,"ORVc"),false);    
+  SetListString(wn,len(USetStr(2541)),USetStr(2541),false);    
+  SetListString(wn,len(USetStr(2480)),USetStr(2480),false); 
+  SetListString(wn,len(USetStr(4180)),USetStr(4180),false); 
   MailTextRegisterSClassOnOpenWindow = false;
   return;
 end;
@@ -1835,7 +1986,7 @@ function Boolean IntrastatTransCodeSClassOnOpenWindow(Integer wn)
 begin
   Array string 255 astr;
   Integer i,acnt;
-
+  
   IntrastatTransCodeSClassArrayOnOpen(astr,acnt);
   for (i=0;i<acnt;i=i+1) begin
     SetListString(wn,60,astr[i],false);
@@ -1849,7 +2000,7 @@ function Boolean IntrastatTransCodeSClassOnOKWindow(Integer wn)
 begin
   Integer mwn;
   string 60 tstr;
-
+  
   mwn = MotherWindow(wn);
   if (SelectedListLine(wn)!=-1) then begin
     tstr = GetListString(wn,SelectedListLine(wn));
@@ -1857,7 +2008,7 @@ begin
     CloseWindow(wn);
     PasteString(mwn,tstr);
   end;
-
+  
   IntrastatTransCodeSClassOnOKWindow = false;
   return;
 end;
@@ -1869,7 +2020,7 @@ begin
   Array string 255 astr2;
   Array string 255 astr3;
   Integer i;
-
+  
   PDPMSClassArrayOnOpen(astr,astr2,astr3);
   for (i=0;i<astr.length;i=i+1) begin
     AddListRow(wn,"PDPM",1,astr[i],0);
@@ -1901,13 +2052,13 @@ begin
   record ORVc ORr;
   row ORVc ORrw;
   record QTVc QTr;
-  row QTVc QTrw;
+  row QTVc QTrw;  
   record IVVc IVr;
-  row IVVc IVrw;
-
+  row IVVc IVrw;  
+  
   mwn = MotherWindow(wn);
   switch (GetWindowFileName(mwn)) begin
-    case "ORVc":
+    case "ORVc":  
         GetWindowRecord(mwn,ORr);
         custcode = ORr.CustCode;
         plcode = ORr.PriceList;
@@ -1916,7 +2067,7 @@ begin
           MatRowGet(ORr,rownr,ORrw);
           artcode = ORrw.ArtCode;
         end;
-    case "QTVc":
+    case "QTVc":  
         GetWindowRecord(mwn,QTr);
         custcode = QTr.CustCode;
         plcode = QTr.PriceList;
@@ -1925,7 +2076,7 @@ begin
           MatRowGet(QTr,rownr,QTrw);
           artcode = QTrw.ArtCode;
         end;
-    case "IVVc":
+    case "IVVc":  
         GetWindowRecord(mwn,IVr);
         custcode = IVr.CustCode;
         plcode = IVr.PriceList;
@@ -1933,9 +2084,10 @@ begin
         if (rownr<MatRowCnt(IVr)) then begin
           MatRowGet(IVr,rownr,IVrw);
           artcode = IVrw.ArtCode;
-        end;
+        end;              
   end;
-  if (nonblank(custcode) and nonblank(artcode) and nonblank(plcode)) then begin
+//  if (nonblank(custcode) and nonblank(artcode) and nonblank(plcode)) then begin 
+  if (nonblank(custcode) and nonblank(artcode)) then begin 
     PL2SClassArrayOnOpen(plcode,custcode,artcode,astr,astr2,astr3,astr4);
     for (i=0;i<astr.length;i=i+1) begin
       AddListRow(wn,"PPDL",1,astr[i],0);
@@ -1944,7 +2096,7 @@ begin
       AddListData(wn,"PPDL","Item",astr3[i]);
       AddListData(wn,"PPDL","Comment",astr4[i]);
     end;
-  end;
+  end;  
   PL2SClassOnOpenWindow = false;
   return;
 end;
@@ -1954,5 +2106,79 @@ function Boolean PL2SClassOnOKWindow(Integer wn)
 begin
   PasteFromSysList(wn,20);
   PL2SClassOnOKWindow = false;
+  return;
+end;
+
+global
+function Boolean CountryNameSClassOnOpenWindow(Integer wn)
+begin
+  Array string 255 astr;
+  Integer i;
+  
+  CountryNameSClassOnOpenRemote(astr);
+  for (i=0;i<astr.length;i=i+1) begin
+    SetListString(wn,len(astr[i]),astr[i],false);    
+  end;
+  CountryNameSClassOnOpenWindow = false;
+  return;
+end;
+
+global
+function Boolean CountryNameSClassOnOKWindow(Integer wn)
+begin
+  PasteFromSysList(wn,-2);
+  CountryNameSClassOnOKWindow = false;
+  return;
+end;
+
+global
+function Boolean ActPrioLevelSClassOnOpenWindow(Integer wn)
+begin
+  Array string 255 astr;
+  Integer i;
+  
+  ActPrioLevelSClassArrayOnOpen(astr);
+  for (i=0;i<astr.length;i=i+1) begin
+    SetListString(wn,len(astr[i]),astr[i],false);    
+  end;
+  ActPrioLevelSClassOnOpenWindow = false;
+  return;
+end;
+
+global
+function Boolean ActPrioLevelSClassOnOKWindow(Integer wn)
+begin
+  PasteFromSysList(wn,-2);
+  ActPrioLevelSClassOnOKWindow = false;
+  return;
+end;
+
+global
+function Boolean POSButtonsPagesSClassOnOpenWindow(Integer wn)
+begin
+  Array string 255 astr;
+  Integer i,mwn;
+  record POSButtonsVc POSBr;
+  
+  mwn = MotherWindow(wn);
+  if (mwn>0) then begin
+    switch (GetWindowClass(mwn)) begin
+      case "POSButtonsDClass":
+        GetWindowRecord(mwn,POSBr)
+    end;
+  end;
+  POSButtonsPagesSClassArrayOnOpen(POSBr.WindowClass,POSBr.Page,astr);
+  for (i=0;i<astr.length;i=i+1) begin
+    SetListString(wn,len(astr[i]),astr[i],false);    
+  end;
+  POSButtonsPagesSClassOnOpenWindow = false;
+  return;
+end;
+
+global
+function Boolean POSButtonsPagesSClassOnOKWindow(Integer wn)
+begin
+  PasteFromSysList(wn,-2);
+  POSButtonsPagesSClassOnOKWindow = false;
   return;
 end;

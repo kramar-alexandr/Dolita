@@ -1,3 +1,4 @@
+external function Boolean SetInSet2(string,string);
 external function roundmode GetTotalRoundMode(record RoundBlock);
 external procedure GetAccPeriodComments(Integer,Date,var string,var string,var string,var string,var string,var string,var string);
 external function roundmode SetRoundModeD(Integer);
@@ -228,7 +229,7 @@ begin
         if (SetInSet(RepSpec.AccStr,IVr.SalesMan)==false) then begin res = false; end;
       end;
       if (nonblank(RepSpec.f4)) then begin
-        If ((SetInSet(RepSpec.f4,IVr.Objects))==false) then begin
+        If ((SetInSet2(RepSpec.f4,IVr.Objects))==false) then begin
           res = false;
         end;  
       end;
@@ -239,7 +240,6 @@ begin
 //EBS<--
     end;
   end;
-  
   CheckRepSpecParameters = res;
   return;
 end;
@@ -512,7 +512,7 @@ BEGIN
         if (nonblank(RepSpec.f2) and (RepSpec.f2!=IVr.CustCode)) then begin testf = false; end;
         if (testf) then begin
           if (nonblank(RepSpec.ObjStr)) then begin 
-            if (SetInSet(RepSpec.ObjStr,IVr.Objects)==false) then begin testf = false; end;
+            if (SetInSet2(RepSpec.ObjStr,IVr.Objects)==false) then begin testf = false; end;
           end else begin
             if ((testf==true) and (nonblank(RepSpec.ObjType))) then begin    
               testf = false;

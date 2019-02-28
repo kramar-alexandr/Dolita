@@ -61,7 +61,7 @@ BEGIN
   ReportDefaults(RepSpec,"IPRClass");  
   RepSpec.flags[1] = 0;
   RepSpec.flags[2] = 1;
-  if (HasLocalization("POL")) and (BuildProductCode=="StandardBookkeepingLite") then begin
+  if (HasLocalization("POL")) and (Left(BuildProductCode,23)=="StandardBookkeepingLite") then begin
     RepSpec.flags[16] = 2;
   end;
   PutWindowRecord(wn,RepSpec);
@@ -106,6 +106,7 @@ begin
   RepSpec.flags[0] = 0;
   RepSpec.flags[1] = 0;
   RepSpec.flags[2] = 1;
+  RepSpec.flags[3] = 1;
   RepSpec.flags[16] = 1;
   if (HasLocalization("ISL")) then begin
     RepSpec.flags[0] = 0;
@@ -220,7 +221,7 @@ BEGIN
   salesgroup = "";
   res = false;
   Userr.Code = CurrentUser;
-  if (ReadFirstMain(Userr,1,true)) then begin
+  if (DoGetCurUser(Userr)) then begin
     switch (Userr.limitedAccess) begin
       case kLimitedAccessUserOnly:
         person = Userr.Code;
@@ -629,6 +630,8 @@ BEGIN
   DeselectWindow(wn,false);
   GetWindowRecord(wn,RepSpec);
   ReportDefaults(RepSpec,"ProStatRClass");  
+  RepSpec.d1 = RepSpec.sStartDate; 
+  RepSpec.d2 = RepSpec.sEndDate; 
   RepSpec.flags[1] = 1;
   RepSpec.flags[3] = 1;
   RepSpec.flags[6] = 1;
@@ -1401,6 +1404,23 @@ begin
   return;
 end;
 
+global
+procedure CashFlowRClassReportDefaults(Integer wn)
+begin
+  record RcVc RepSpec;
+  string 255 tstr;
+  
+  DeselectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  ReportDefaults(RepSpec,"CashFlowRClass");  
+  FindRepDefHeader(RepSpec.repname,RepSpec.shortname,tstr);
+  RepSpec.f1 = tstr;
+  RepSpec.AccSpec = 2;
+  PutWindowRecord(wn,RepSpec);
+  SelectWindow(wn);
+  return;
+end;
+
 procedure KeyConsRClassRepDef(Integer wn)
 BEGIN
   record RcVc RepSpec;
@@ -2131,6 +2151,87 @@ BEGIN
 END;
 
 global
+procedure PLVATITARClassReportDefaults(Integer wn)
+begin
+  record RcVc RepSpec;
+  Date td;
+  record CYBlock CYb;
+  Integer add;
+  
+  BlockLoad(CYb);
+  DeselectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  ReportDefaults(RepSpec,"PLVATITARClass");  
+  switch (CYb.VATPeriodType) begin
+    case kPeriodTypeMonth:
+      td = CurrentDate;
+      td.day = 1;
+      RepSpec.sStartDate = td;
+      td.day = DaysInMonth(td.year,td.month);
+    case kPeriodTypeQuarter:
+      td = CurrentDate;
+      switch (Mod(td.month,3)) begin
+        case 0: add = 0;
+        case 1: add = 2;
+        case 2: add = 1;
+      end;         
+      td = AddMonth(td,-add); 
+      td.day = 1;
+      RepSpec.sStartDate = td;
+      td = AddMonth(td,2);
+      td.day = DaysInMonth(td.year,td.month);
+    case kPeriodTypeYear:
+      td = CurrentDate;
+      td.day = 1;
+      td.month = 1;
+      RepSpec.sStartDate = td;
+      td = AddMonth(td,11);
+      td.day = DaysInMonth(td.year,td.month);
+  end;
+  RepSpec.sEndDate = td;
+  RepSpec.Period2Str = RepSpec.sStartDate;
+  RepSpec.Period2Str = RepSpec.Period2Str & ":";
+  RepSpec.Period2Str = RepSpec.Period2Str & RepSpec.sEndDate;  
+  RepSpec.ArtMode = 1;
+  RepSpec.flags[3] = 1;
+  RepSpec.flags[7] = 1;
+  RepSpec.flags[8] = 1;
+  RepSpec.flags[9] = 1;
+  RepSpec.flags[12] = 1;  
+  PutWindowRecord(wn,RepSpec);
+  SelectWindow(wn);
+  return;
+end;
+
+global
+procedure SLVATITARClassReportDefaults(Integer wn)
+begin
+  record RcVc RepSpec;
+  Date td;
+  
+  DeselectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  ReportDefaults(RepSpec,"SLVATITARClass");  
+  td = CurrentDate;
+  td.day = 1;
+  td = AddMonth(td,-1);
+  RepSpec.sStartDate = td;
+  td.day = DaysInMonth(td.year,td.month);
+  RepSpec.sEndDate = td;
+  RepSpec.ArtMode = 1;
+  RepSpec.flags[3] = 1;
+  RepSpec.flags[4] = 1;
+  RepSpec.flags[6] = 1;
+  RepSpec.flags[7] = 1;
+  RepSpec.flags[8] = 1;
+  RepSpec.flags[9] = 1;
+  RepSpec.flags[12] = 1;
+  PutWindowRecord(wn,RepSpec);
+  SelectWindow(wn);
+  return;
+end;
+
+global
 procedure ArgPurchVATRClassReportDefaults(Integer wn)
 begin
   record RcVc RepSpec;
@@ -2231,7 +2332,9 @@ global
 procedure RestBookingRClassReportDefaults(Integer wn)
 BEGIN
   record RcVc RepSpec;
+  record LocalMachineBlock LMb;
 
+  BlockLoad(LMb);
   DeselectWindow(wn,false);
   GetWindowRecord(wn,RepSpec);
   ReportDefaults(RepSpec,"RestBookingRClass");  
@@ -2241,6 +2344,7 @@ BEGIN
   RepSpec.Period2Str = RepSpec.Period2Str & CurrentDate;
   RepSpec.sStartDate = CurrentDate;
   RepSpec.sEndDate = CurrentDate;
+  RepSpec.AccStr = LMb.LocalMachineCode;
   PutWindowRecord(wn,RepSpec);
   SelectWindow(wn);
   RETURN;
@@ -2310,6 +2414,7 @@ begin
   RepSpec.flags[1] = 1;
   RepSpec.flags[2] = 1;
   RepSpec.flags[3] = 1;
+  RepSpec.flags[7] = 1;
   RepSpec.flags[8] = 1;
   RepSpec.f1 = LMb.LocalMachineCode;
   RepSpec.f4 = CurDrawerCode(LMb.LocalMachineCode);
@@ -2347,22 +2452,37 @@ begin
 end;
 
 global
-procedure CashupVClassReportDefaults(Integer wn)
-BEGIN
-  record RcVc RepSpec;
-  record LocalMachineBlock LocalMachineRec;
+procedure CashupMaintDefaults(var record RcVc RepSpec)
+begin
+  record LocalMachineBlock LMb;
+  record CashierDefBlock CDb;
   
-  BlockLoad(LocalMachineRec);  
-  DeselectWindow(wn,false);
-  GetWindowRecord(wn,RepSpec);
+  BlockLoad(LMb);  
+  BlockLoad(CDb);  
   RepSpec.d1 = CurrentDate;
   RepSpec.sStartTime = CurrentTime;
   RepSpec.flags[1] = 1;
   RepSpec.flags[2] = 1;
   RepSpec.flags[3] = 1;
   RepSpec.flags[8] = 1;
-  RepSpec.f1 = LocalMachineRec.LocalMachineCode;
-  RepSpec.f4 = CurDrawerCode(LocalMachineRec.LocalMachineCode);
+  RepSpec.flags[9] = CDb.PrintZReportatCashup;
+  RepSpec.f1 = LMb.LocalMachineCode;
+  RepSpec.f4 = CurDrawerCode(LMb.LocalMachineCode);
+  return;
+end;
+
+global
+procedure CashupVClassReportDefaults(Integer wn)
+BEGIN
+  record RcVc RepSpec;
+  record LocalMachineBlock LMb;
+  record CashierDefBlock CDb;
+  
+  BlockLoad(LMb);  
+  BlockLoad(CDb);  
+  DeselectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  CashupMaintDefaults(RepSpec);
   PutWindowRecord(wn,RepSpec);
   SelectWindow(wn);
   RETURN;
@@ -2370,7 +2490,7 @@ END;
 
 global
 procedure TransGenRClassReportDefaults(Integer wn)
-BEGIN
+begin
   record RcVc RepSpec;
 
   DeselectWindow(wn,false);
@@ -2379,8 +2499,24 @@ BEGIN
   RepSpec.flags[1] = 1;
   PutWindowRecord(wn,RepSpec);
   SelectWindow(wn);
-  RETURN;
-END;
+  return;
+end;
+
+global
+procedure StdTransGenRClassReportDefaults(Integer wn)
+begin
+  record RcVc RepSpec;
+
+  DeselectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  ReportDefaults(RepSpec,"StdTransGenRClass");  
+  RepSpec.flags[1] = 1;
+  RepSpec.flags[2] = 1;
+  RepSpec.ArtMode = 0;
+  PutWindowRecord(wn,RepSpec);
+  SelectWindow(wn);
+  return;
+end;
 
 global
 procedure CollectionStatusRClassReportDefaults(Integer wn)
@@ -2657,6 +2793,7 @@ BEGIN
   GetWindowRecord(wn,RepSpec);
   ReportDefaults(RepSpec,"LitIntrastatVIEClass");  
   RepSpec.d1 = CurrentDate;
+  RepSpec.f3 = "O";
 
   PutWindowRecord(wn,RepSpec);
   SelectWindow(wn);

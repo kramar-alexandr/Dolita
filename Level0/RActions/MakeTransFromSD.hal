@@ -14,6 +14,7 @@ external function Boolean ReadFirstItem(string,var record INVc,Boolean,Boolean);
 external procedure GetITStockAcc(string,var string);
 external procedure GetITCostAcc(string,var string);
 external procedure AddEuroTrRowType(record TRVc,string,string,string,string,val,val,val,Boolean,Boolean,var val,Boolean,string,string,string,Integer);
+external procedure AddEuroTrRowTypeQty(record TRVc,string,string,string,string,val,val,val,Boolean,Boolean,var val,Boolean,string,string,string,Integer,val);
 external function Boolean GetAccName(string,var string,Integer);
 external function Boolean ExpandStructItem(string,string,val,var record SHVc);
 external procedure GetFullCurncyRate (var string,Date,var val,var val,var val,var val,var val);
@@ -170,7 +171,7 @@ BEGIN
     goto LAddSDCostRow;
   end;
   if (CheckTTRPerRow("SDVc",stockacc,objstr,dc2,taccnumber,1)) then begin end;      
-  AddEuroTrRowType(gTRp,stockacc,objstr,"",tstr,t1,baserate1,baserate2,sumupf,dc2,TotSum,false,taccnumber,"","",kTransactionRowTypeStock);
+  AddEuroTrRowTypeQty(gTRp,stockacc,objstr,"",tstr,t1,baserate1,baserate2,sumupf,dc2,TotSum,false,taccnumber,"","",kTransactionRowTypeStock,SDrw.Qty);
 LAddSDCostRow:;      
   AddSDCostRow = res;      
   RETURN;
@@ -224,7 +225,7 @@ BEGIN
     location = MainStockRec.MainStock;
   end;
 //EBS-->
-  if SDp.DoNotGenTrans==1 then begin
+  if (SDp.DoNotGenTrans==1) then begin
     res = 0;
     goto LMakeTransFromSD;
   end;
@@ -265,9 +266,11 @@ BEGIN
   gTRp.RegDate = CurrentDate;
   gTRp.RegTime = CurrentTime;
   gTRp.TransDate = SDp.TransDate;
-  if (TransInFiscal(gTRp.TransDate)==false) then begin
-    res = 1075;
-    goto LMakeTransFromSD;
+  if (rpt==false) then begin
+    if (TransInFiscal(gTRp.TransDate)==false) then begin
+      res = 1075;
+      goto LMakeTransFromSD;
+    end;
   end;
   curncy = "";
   GetFullCurncyRate(curncy,gTRp.TransDate,temp,temp,temp,baserate1,baserate2);
@@ -345,7 +348,7 @@ BEGIN
 
         if (CAb.ObjOnStock==0) then begin objstr = ""; end;
         if (CheckTTRPerRow("SDVc",stockacc,objstr,dc2,taccnumber,1)) then begin end;      
-        AddEuroTrRowType(gTRp,stockacc,objstr,"",tstr,t1,baserate1,baserate2,sumupf,dc2,TotSum,false,taccnumber,"","",kTransactionRowTypeStock);
+        AddEuroTrRowTypeQty(gTRp,stockacc,objstr,"",tstr,t1,baserate1,baserate2,sumupf,dc2,TotSum,false,taccnumber,"","",kTransactionRowTypeStock,SDrw.Qty);
         structrs = structrs - t1;        
       end;
     end;

@@ -1,3 +1,4 @@
+external procedure GetVATproc(string,Integer,var val);
 external function Boolean RequireOpenSession(string);
 external function Boolean TransInFiscal(Date);
 external procedure ExtractObj(string,var Integer,var string);
@@ -63,6 +64,7 @@ begin
   RecordNew(POSBalancer);
   POSBalancer.SerNr = -1;
   curncy = "";
+  TRr.TransDate = SMr.TransDate;
   GetFullCurncyRate(curncy,TRr.TransDate,temp,temp,temp,baserate1,baserate2);
   rwcnt = MatRowCnt(SMr);
   res = false;
@@ -129,19 +131,18 @@ StartFormat(15);
  OutString(100,0,vacc["74115"],false);
 EndFormat;
 */
-  
   BuildPOSTRFromSM = res;
   return;
 end;
 
-procedure PreparePOSSM(var record SMVc SMr)
+procedure PreparePOSSM(var record SMVc SMr,Date sEndDate)
 begin
   row SMVc SMrw;
   Integer rwcnt,i,last;
   Boolean res;
   Integer cnt;
   
-  SMr.TransDate = CurrentDate;
+  SMr.TransDate = sEndDate;
   rwcnt = MatRowCnt(SMr);
   for (i=0;i<rwcnt;i=i+1) begin
     MatRowGet(SMr,i,SMrw);
@@ -162,11 +163,13 @@ begin
       res = true;
     end;
   end;
+/*  
   if (last>0) then begin
     while (last<MatRowCnt(SMr)) begin
       MatRowDelete(SMr,MatRowCnt(SMr)-1);
     end;
   end;
+*/  
   return;
 end;
 
@@ -769,7 +772,7 @@ begin
   return;
 end;
 
-procedure PrintIVArray(string ivtype,Date thedat,string machine,string drawer,string paymode,Date frdat,Time frtim,Date todat,Time totim,
+procedure PrintIVArray(string aivtype,Date thedat,string machine,string drawer,string paymode,Date frdat,Time frtim,Date todat,Time totim,
                        array string aivcode,array string aivcrncy,array val aivval,array val aivb1val,array val aivnr,array val aivoutval,array val aivb1outval,array val atipsum,Integer aivcnt,
                        var val bal,var val totin,var val totout,var Date printedd,Boolean inperiod,Boolean printf,Boolean recprinter,Boolean dbttrsf,Integer detail,string dblclk,
                        var array string aitcodetot,var array string aitcrncytot,var array val aitsumtot,var array val aitsumb1tot,var array val aitnrtot,var array val aitstartbaltot,var array val aitstartbalb1tot,var array val aitvattot,var array val aitsumb1outtot,var Integer aitcnttot)
@@ -782,15 +785,15 @@ begin
   transaction Integer gCashupReportMode;
   record IVVc IVr;
   record IVCashVc IVCashr;
-  string 255 lastivcode,lastivcrncy;
-  Boolean testf;
+  string 255 lastivcode,lastivcrncy,ivtype;
+  Boolean testf,ivf;
   val openbal;
   
   BlockLoad(CDb);
   the80s.year = 1980;
   the80s.month = 1;
   the80s.day = 1;
-
+  ivtype = aivtype;
 //  openbal = bal;//this line makes fwd balance going wild if u have many sessions in same day, or without closing
   for (i=0;i<aivcnt;i=i+1) begin
     if (printf and inperiod) then begin
@@ -833,6 +836,11 @@ begin
         TimeToSeconds(frtim,t1);
         TimeToSeconds(totim,t2);
         if (detail!=2) then begin
+          IVCashr.SerNr = StringtoLongInt(aivcode[i]);
+          ivf = ReadFirstMain(IVCashr,1,true);
+          if (IVCashr.InvType==kPOSInvoiceTypeCredit) then begin
+            ivtype = USetStr(38500);
+          end;
           GetPayModeText(aivcode[i],pmcomment);
           StartFormat(15);
           if (detail!=0) then begin
@@ -843,7 +851,7 @@ begin
               case kCashupReportCleanCash:
                 if (ivtype==USetStr(12566)) then begin
                   IVCashr.SerNr = StringtoLongInt(aivcode[i]);
-                  if (ReadFirstMain(IVCashr,1,true)) then begin
+                  if (ivf) then begin
                     if (nonblank(IVCashr.OfficialSerNr)) then begin
                       if (blank(IVCashr.OfficialSerNr2)) then begin
                         OutString(5,0,USetStr(18692),false);
@@ -1417,10 +1425,10 @@ begin
   dto = sEndDate;
   tfr = stfr;
   tto = stto;
-  
+
   firstsessf = true;
 // Loops through arrays and print or calculate
-  for (i=0;i<acnt-1;i=i+1) begin
+  for (i=0;i<acnt-1;i=i+1) begin  
     switch (avcn[i]) begin
       case "POSBalanceVc":
         PrintPOSBalance(dfr,dto,tfr,tto,acod,aser,adat,atim,i,0,bal,printedd,printf,recprinter,aitcodetot,aitcrncytot,aitsumtot,aitsumb1tot,aitstartbaltot,aitstartbalb1tot,aitvattot,aitsumb1outtot,aitcnttot,SMr);
@@ -1491,9 +1499,45 @@ we need another totals per session
   return;
 end;
 
-procedure PrintCleanCashTotals(record RcVc RepSpec,vector val vcleancashstatussum)
+function val CashDrawerOpeningsCount(record RcVc RepSpec)
+begin
+  val res;
+  record POSJournalVc POSJr;
+  Boolean found;
+  string 255 index;
+  Integer segs;
+  
+  index = "DrawerCode";
+  segs = 3;
+  POSJr.DrawerCode = RepSpec.f4;
+  if (blank(POSJr.DrawerCode)) then begin
+    index = "LocalMachineCode";
+    segs = 2;
+  end;
+  POSJr.LocalMachineCode = RepSpec.f1;
+  POSJr.Action = kPOSActionOpenDrawer;
+  found = true;
+  while (LoopKey(index,POSJr,segs,found)) begin
+    if (POSJr.LocalMachineCode!=RepSpec.f1) then begin found = false; end;
+    if (nonblank(RepSpec.f4)) then begin
+      if (POSJr.DrawerCode!=RepSpec.f4) then begin found = false; end;
+    end;
+    if (DateInRange(POSJr.TransDate,RepSpec.sStartDate,RepSpec.sEndDate)==false) then begin
+      found = false;
+    end;
+    if (found) then begin
+      res = res + 1;
+    end;
+  end;
+  CashDrawerOpeningsCount = res;
+  return;
+end;
+
+procedure PrintCleanCashTotals(record RcVc RepSpec,vector val vcleancashstatussum,array string avatcode,array string avatname,array val avatsum)
 begin
   val t1,t2;
+  Integer i;
+  val t;
   
   if (RepSpec.ArtMode!=0) then begin
     StartFormat(15);
@@ -1527,8 +1571,8 @@ begin
   EndFormat;
   StartFormat(15);
    OutString(100,0,USetStr(18686),false);
-   OutString(300,0,"Number",true);
-   OutString(360,0,"Total",true);
+   OutString(300,0,USetStr(18681),true);
+   OutString(360,0,USetStr(18682),true);
   EndFormat;
   Gray_Divider(100,360);
   StartFormat(15);
@@ -1558,7 +1602,27 @@ begin
    OutVal(360,0,t1-t2,M4Val,true);
   EndFormat;
   StartFormat(15);
+   OutString(100,0,USetStr(18706),false);
+   OutVal(300,0,CashDrawerOpeningsCount(RepSpec),M40Val,true);
   EndFormat;
+  StartFormat(15);
+  EndFormat;
+  StartFormat(15);
+   OutString(100,0,USetStr(18707),false);
+   OutString(300,0,USetStr(18708),true);
+   OutString(360,0,USetStr(18709),true);
+  EndFormat;
+  Gray_Divider(100,360);
+  for (i=0;i<avatcode.length;i=i+1) begin
+    if (avatsum[i]!=0) then begin
+      StartFormat(15);
+       GetVATproc(avatcode[i],0,t);
+       OutString(100,0,avatcode[i],false);
+       OutVal(300,0,t,M4Val,true);
+       OutVal(360,0,avatsum[i],M4Val,true);
+      EndFormat;
+    end;
+  end;
   return;
 end;
 
@@ -1604,6 +1668,10 @@ begin
   rw = rw + 1;
   if (nonblank(RepSpec.f5)) then begin
     Header(rw,USetStr(12798) & ": " & RepSpec.f5,1);
+    rw = rw + 1;
+  end;
+  if (nonblank(RepSpec.FirstAcc)) then begin
+    Header(rw,USetStr(12799) & ": " & RepSpec.FirstAcc,1);
     rw = rw + 1;
   end;
   EndHeader;
@@ -1675,13 +1743,16 @@ begin
   record INVc INr;
   transaction Integer gCashupReportMode;
   vector val vcleancashstatussum;
-  val t1,t2;
+  val t1,t2,a_sumval,a_sumvat;
   Date ReportingDate;
   record AccBlock ARAccb;
+  Date ed;
+  record RestBlock Restb;
  
   totsum = 0;
   totvat = 0;
   aitcnt = 0;
+  BlockLoad(Restb);
   if (RepSpec.flags[7]==0) then begin
     while(LoopMain(ITr,1,true)) begin
       aitcode[aitcnt] = ITr.Code;    
@@ -1699,6 +1770,7 @@ begin
     MatRowGet(VATCodeBlockr,i,VATCodeBlockrw);
     avatcode[i] = VATCodeBlockrw.VATCode;
     avatname[i] = VATCodeBlockrw.Comment;
+    avatsum[i] = blankval;
   end;
   DoTheCashup(RepSpec.ArtMode,RepSpec.flags[1],RepSpec.flags[2],RepSpec.flags[3],RepSpec.flags[4],RepSpec.flags[8],RepSpec.flags[7],RepSpec.sStartDate,RepSpec.sEndDate,RepSpec.sStartTime,RepSpec.sEndTime,
               RepSpec.f1,RepSpec.f4,RepSpec.f5,0,true,recprinter,bal,totin,totout,aitcode,aitsum,aitvat,aitqty,aitcnt,totsum,totvat,avatcode,avatsum,avatcnt,SMr,
@@ -1708,7 +1780,7 @@ begin
               CountSMr,vcleancashstatussum,ReportingDate);
   switch (gCashupReportMode) begin
     case kCashupReportCleanCash:
-      PrintCleanCashTotals(RepSpec,vcleancashstatussum);
+      PrintCleanCashTotals(RepSpec,vcleancashstatussum,avatcode,avatname,avatsum);
   end;
   if (recprinter==false) then begin
     if (RepSpec.ArtMode!=2) then begin
@@ -1757,26 +1829,36 @@ we need another totals per session
             OutStringAdjustBiDi(1,0,USetStr(12571),true,M4Val,510);
             EndFormat;
             Gray_Divider(0,1);
-            for(i=0;i<aitcnt;i=i+1) begin
-              if (aitsum[i] <> 0) then begin
+            for (i=0;i<aitcnt;i=i+1) begin
+              if (aitsum[i]!=0) then begin
                 StartFormat(15);
-                OutString(0,0,aitcode[i],false);
-                if (ReadFirstItem(aitcode[i],INr,false,false)) then begin
-                  aitname[i] = INr.Name;
-                end;
-                if (RepSpec.flags[7]==0) then begin  
-                  OutString(70,0,aitname[i],false);      
+                if (aitcode[i]=="GV-SOLD") then begin
+                  OutString(70,0,USetStr(24607),false);
                 end else begin
-//                  INr.Code = aitcode[i];
-//                  ReadFirstMain(INr,1,true);
-                  OutString(70,0,INr.Name,false);      
+                  OutString(0,0,aitcode[i],false);
+                  if (RepSpec.flags[7]==0) then begin  
+                    OutString(70,0,aitname[i],false);      
+                  end else begin
+                    INr.Code = aitcode[i];
+                    ReadFirstMain(INr,1,true);
+                    OutString(70,0,INr.Name,false);      
+                  end;
                 end;
                 OutValBiDi(300,0,aitqty[i],M4Val,true,340);
                 OutValBiDi(400,0,aitsum[i]+aitvat[i],M4Val,true,420);
                 OutValBiDI(1,0,aitvat[i],M4Val,true,510); 
                 EndFormat;
                 totqty = totqty + aitqty[i];
+                a_sumval = a_sumval + aitsum[i] + aitvat[i];
+                a_sumvat = a_sumvat + aitvat[i];
               end;
+            end;
+            if (a_sumval!=(totsum+totvat)) then begin  // Display as Rounding off
+              StartFormat(15);
+              OutString(0,0,USetStr(18705),false);
+              OutValBiDi(400,0,((totsum+totvat)-a_sumval),M4Val,true,420);
+              OutValBiDI(1,0,(totvat-a_sumvat),M4Val,true,510); 
+              EndFormat; 
             end;
             Gray_Divider(0,1);
             StartFormat(15);
@@ -1793,7 +1875,7 @@ we need another totals per session
             OutVal(200,0,totsum+totvat,M4Val,true);  
             EndFormat;
             for(i=0; i<avatcnt; i=i+1) begin
-              if(avatsum[i] > 0) then begin
+              if (avatsum[i] > 0) then begin
                 StartFormat(15);
                 OutString(0,0,USetStr(12551) & " " & avatname[i],false);
                 OutVal(200,0,avatsum[i],M4Val,true);  
@@ -1808,9 +1890,13 @@ we need another totals per session
           i = 0;
           serno = -1;
           if (RepSpec.flags[5]!=0) and (RepSpec.ArtMode==0) then begin
-            PreparePOSSM(SMr);
+            ed = CurrentDate;
+            if (Restb.UseReportingDateforNL!=0) then begin
+              ed = ReportingDate;
+            end;
+            PreparePOSSM(SMr,ed);
             SMSumup(SMr);
-            
+                        
             StartFormat(15);
             EndFormat;
             StartFormat(15);
@@ -2099,7 +2185,6 @@ begin
     end;
   end;
 LMakePOSTRFromSM:;
-  
   MakePOSTRFromSM = res;
   return;
 end;
@@ -2200,7 +2285,7 @@ begin
   Date d;
   Time t;
   vector val vstatussum;
-  
+
   totsum = 0;
   totvat = 0;
   aitcnt = 0;

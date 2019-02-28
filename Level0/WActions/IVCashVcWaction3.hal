@@ -4,7 +4,8 @@ external function Boolean IVCashDClassInsertRowTest(Integer,Integer);
 remote function Boolean IVCashVc_PasteArtCode(var record IVCashVc,Integer,Boolean,var string,var Integer);
 remote function Boolean IVCashVc_PasteQuant(var record IVCashVc,Integer);
 external procedure SplitEclass(string,var Array string);
-external outer function boolean LocalLoginToPOSWindow(string);
+external procedure POSAudit_LogIVCashVcRow(record IVCashVc,row IVCashVc,Integer);
+external outer function boolean LocalLoginToPOSWindow(string);//EBS
 
 global
 procedure POSPIVCashDClassTileItems()
@@ -199,6 +200,7 @@ begin
         end;
         PutWindowRecord(wn,IVCashr);
         DisplayIVCashItem(IVCashr,rownr);
+        POSAudit_LogIVCashVcRow(IVCashr,IVCashrw,kPOSEventTypeModifyRow);
         goto LPOSPIVCashDClassToolKeyPadAdd;
       end;
     end;
@@ -220,6 +222,7 @@ L55POSPIVCashDClassToolKeyPadAdd:;
       IVCashrw.ArtCode = INr.Code;
       IVCashrw.Quant = 1;
       MatRowPut(IVCashr,rownr,IVCashrw);
+      POSAudit_LogIVCashVcRow(IVCashr,IVCashrw,kPOSEventTypeAddRow);
       if (IVCashVc_PasteArtCode(IVCashr,rownr,false,tstr,sernrf)) then begin
       end;
       DisplayIVCashItem(IVCashr,rownr);
@@ -227,6 +230,7 @@ L55POSPIVCashDClassToolKeyPadAdd:;
       MatRowGet(IVCashr,rownr,IVCashrw);
       IVCashrw.Quant = IVCashrw.Quant + 1;
       MatRowPut(IVCashr,rownr,IVCashrw);
+      POSAudit_LogIVCashVcRow(IVCashr,IVCashrw,kPOSEventTypeModifyRow);
       if (IVCashVc_PasteQuant(IVCashr,rownr)) then begin
       end;
       DisplayIVCashItem(IVCashr,rownr);
@@ -436,7 +440,7 @@ end;
 global
 function Boolean POSPIVCashDClassOnClose(Integer wn,Integer wn2)
 begin
-  POSPIVCashDClassOnClose = true;
+  POSPIVCashDClassOnClose = false;
   return;
 end;
 
@@ -458,3 +462,30 @@ begin
 //EBS<--
   return;
 end;
+
+/*
+global
+function Boolean GCSSClassOnClose(Integer wn,Integer wn2)
+begin
+  Integer nwn;
+  
+  GCSSClassOnClose = true;
+  return;
+end;
+*/
+/*
+global
+function Boolean GCSSClassOnClose(Integer wn,Integer wn2)
+begin
+  Boolean res;
+  Integer mwn;
+  
+  mwn = MotherWindow(wn);
+  switch (GetWindowClass(mwn)) begin
+    case "GiftVoucherTouchScreenDClass":
+      KeyPadEnter(mwn);
+  end;
+  GCSSClassOnClose = true;
+  return;
+end;
+*/

@@ -913,8 +913,11 @@ begin
   RepSpec.flags[3] = 1;
   RepSpec.flags[4] = 1;
   RepSpec.flags[5] = 1;
-  if (HasLocalization("ITA")) and (IsStandardProduct) then begin
-    RepSpec.ArtMode = 3;
+  if (HasLocalization("ITA")) then begin
+    if (IsStandardProduct) then begin
+      RepSpec.ArtMode = 3;
+    end;
+    RepSpec.flags[15] = 1;
   end;
   if (UserHasLimitedAccess(RepSpec.AccStr,RepSpec.Stext)) then begin
   end;
@@ -1054,7 +1057,8 @@ begin
   GetWindowRecord(wn,RepSpec);
   ReportDefaults(RepSpec,"InvFactEClass");  
   RepSpec.flags[1] = 1;
-  RepSpec.FirstVer = factb.LastSerNr + 1;
+//  RepSpec.FirstVer = factb.LastSerNr + 1;
+  RepSpec.FirstVer = factb.LastSerNr;//done in export code
   RepSpec.f3 = factb.User;  
   PutWindowRecord(wn,RepSpec);
   SelectWindow(wn);
@@ -1137,6 +1141,17 @@ begin
   RepSpec.ArtMode = 2;
   PutWindowRecord(wn,RepSpec);
   SelectWindow(wn);
+  return;
+end;
+
+global
+function string 60 SieEClassDefaultFileName(record RcVc RepSpec)
+begin
+  string 60 res;
+
+  res = res & DateToString(CurrentDate,"YYYYMMDD");
+  res = res & ".sie";
+  SieEClassDefaultFileName = res;  
   return;
 end;
 
@@ -1299,7 +1314,9 @@ begin
   RepSpec.flags[5] = 1;
   RepSpec.flags[6] = 1;
   RepSpec.flags[8] = 1;
-  RepSpec.flags[9] = 1;
+  if (HasLocalization("ITA")==false) then begin
+    RepSpec.flags[9] = 1;
+  end;
   PutWindowRecord(wn,RepSpec);
   SelectWindow(wn);
   return;
@@ -1922,7 +1939,7 @@ begin
     RepSpec.flags[15] = 1;
     RepSpec.flags[16] = 1;
   end;
-  if (UserHasLimitedAccess(RepSpec.AccStr,RepSpec.Comment)) then begin
+  if (UserHasLimitedAccess(RepSpec.AccStr,RepSpec.f14)) then begin
   end;
   PutWindowRecord(wn,RepSpec);
   SelectWindow(wn);
@@ -2097,16 +2114,23 @@ global
 procedure DetSalesTimeRClassReportDefaults(Integer wn)
 begin
   record RcVc RepSpec;
+  Date td;
   
   DeselectWindow(wn,false);
   GetWindowRecord(wn,RepSpec);
   ReportDefaults(RepSpec,"DetSalesTimeRClass");  
-  RepSpec.sStartDate = AddDay(CurrentDate,-6);
-  RepSpec.sEndDate = CurrentDate;
+  td = RepSpec.d1;
+  if (blankdate(RepSpec.d1)) then begin 
+    RepSpec.sStartDate = AddDay(CurrentDate,-6);
+    RepSpec.sEndDate = CurrentDate;
+    RepSpec.d1 = AddDay(CurrentDate,-6);
+  end else begin
+    RepSpec.sStartDate = RepSpec.d1;
+    RepSpec.sEndDate = AddDay(RepSpec.sStartDate,6);
+  end;
   RepSpec.Period2Str = RepSpec.sStartDate;
   RepSpec.Period2Str = RepSpec.Period2Str & ":";
   RepSpec.Period2Str = RepSpec.Period2Str & RepSpec.sEndDate;  
-  RepSpec.d1 = AddDay(CurrentDate,-6);
   RepSpec.long1 = 1;
   PutWindowRecord(wn,RepSpec);
   SelectWindow(wn);
@@ -2487,4 +2511,47 @@ begin
     case "f1": CuLabRClassSpecPasteNamef1(wn,psname);
   end;
   CuLabRClassSpecPasteName = psname;
+end;
+
+global
+procedure RealCustRClassReportDefaults(Integer wn)
+begin
+  record RcVc RepSpec;
+  
+  DeselectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  ReportDefaults(RepSpec,"RealCustRClass");
+  RepSpec.flags[3] = 1;
+  PutWindowRecord(wn,RepSpec);
+  SelectWindow(wn);
+  return;
+end;
+
+global
+procedure POSEJournalRClassReportDefaults(Integer wn)
+begin
+  record RcVc RepSpec;
+  
+  DeselectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  ReportDefaults(RepSpec,"POSEJournalRClass");
+  RepSpec.flags[0] = 1;
+  RepSpec.flags[1] = 1;
+  PutWindowRecord(wn,RepSpec);
+  SelectWindow(wn);
+  return;
+end;
+
+global
+procedure CleanUILogVClassReportDefaults(Integer wn)
+begin
+  record RcVc RepSpec;
+
+  DeselectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  ReportDefaults(RepSpec,"CleanUILogVClass");
+  RepSpec.flags[0] = 1;
+  PutWindowRecord(wn,RepSpec);
+  SelectWindow(wn);
+  return;
 end;

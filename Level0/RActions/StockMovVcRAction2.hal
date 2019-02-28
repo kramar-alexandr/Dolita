@@ -1,3 +1,4 @@
+external procedure AutomatedSalesOrderly(string);
 external function string 255 GetLegalInvoiceNrSerie(row LegalInvNrBlock,string);
 external procedure GetLegalInvNrRow(string,var row LegalInvNrBlock);
 external procedure B1ToB2StrValRM(string,val,val,var string,roundmode);
@@ -42,6 +43,7 @@ external function val MulRateToBase1(var string,val,val,val,val,val,val,roundmod
 external procedure PUCalcPerc(val,string,var val);
 external procedure GetITStockAcc(string,var string);
 external procedure AddEuroTrRowType(record TRVc,string,string,string,string,val,val,val,Boolean,Boolean,var val,Boolean,string,string,string,Integer);
+external procedure AddEuroTrRowTypeQty(record TRVc,string,string,string,string,val,val,val,Boolean,Boolean,var val,Boolean,string,string,string,Integer,val);
 external function Boolean GetAccName(string,var string,Integer);
 external function Integer TypeOfCurncy(var string,var Integer);
 external procedure GetFullCurncyRateText(Boolean,var string,val,val,val,val,val);
@@ -54,7 +56,7 @@ BEGIN
   LongInt res;
   string 10 curcode;
   val fr,to1,to2,br1,br2;
-
+  
   StockMovr.SerNr = -1;
   StockMovr.OrdTransDate = CurrentDate;
   if (SingleUserMode) then begin
@@ -64,7 +66,7 @@ BEGIN
   GetFullCurncyRate(curcode,StockMovr.OrdTransDate,fr,to1,to2,br1,br2);
   StockMovr.CurncyCode = curcode;
   StockMovr.FrRate = fr;
-  StockMovr.ToRateB1 = to1;
+  StockMovr.ToRateB1 = to1; 
   StockMovr.ToRateB2 = to2;
   StockMovr.BaseRate1 = br1;
   StockMovr.BaseRate2 = br2;
@@ -85,7 +87,7 @@ BEGIN
   StockMovr.OfficialSerNr = "";
   StockMovr.OfficialSerNrSerie = "";
 
-  StockMovVcRecordDefaults = res;
+  StockMovVcRecordDefaults = res; 
   RETURN;
 END;
 
@@ -114,7 +116,7 @@ BEGIN
   StockMovr.TreatedFlag = 0;
   StockMovr.CurncyCode = curcode;
   StockMovr.FrRate = fr;
-  StockMovr.ToRateB1 = to1;
+  StockMovr.ToRateB1 = to1; 
   StockMovr.ToRateB2 = to2;
   StockMovr.BaseRate1 = br1;
   StockMovr.BaseRate2 = br2;
@@ -135,13 +137,20 @@ BEGIN
   StockMovr.LocalMachineCode = CurMachineName;
   StockMovr.Hash = "";
   StockMovr.HashKeyVersion = 0;
-  StockMovr.TaxAdminServSeal = "";
+  StockMovr.TaxAdminServSeal = "";    
   StockMovr.OfficialSerNrSerie = "";
+  StockMovr.InvoiceNr = -1;
   if (HasLocalization("PRT")) then begin
     StockMovr.PlanSendTime = "";
     StockMovr.PlanSendDate = "";
-  end;
-  StockMovVcRecordDuplicate = res;
+    StockMovr.InvDate = "";
+    StockMovr.InvoiceOfficialSerNr = "";
+    StockMovr.InvRegTime = "";
+    StockMovr.InvOfficialSerNrSerie = "";
+    StockMovr.InvOfficialSerNr2 = "";
+    StockMovr.InvOfficialSerNr2Serie = "";
+  end;  
+  StockMovVcRecordDuplicate = res; 
   RETURN;
 END;
 
@@ -149,7 +158,7 @@ global
 function LongInt StockMovVcRecordReset(var record StockMovVc StockMovr,record StockMovVc StockMov2r,LongInt long3,LongInt long4)
 begin
   LongInt res;
-
+  
   StockMovr.OKFlag = 0;
   StockMovVcRecordReset = res;
   RETURN;
@@ -157,7 +166,7 @@ END;
 
 procedure GetStockMovStockAcc(Integer ItemGroupAccounts,record LocationVc Locp,string itcode,string accusageacc,var string stockfracc)
 BEGIN
-  stockfracc = "";
+  stockfracc = "";  
   stockfracc = Locp.StockAcc;
   if (nonblank(stockfracc)) then begin
     goto LGetStockMovFromStockAcc;
@@ -172,7 +181,7 @@ BEGIN
   if (nonblank(stockfracc)) then begin
     goto LGetStockMovFromStockAcc;
   end;
-LGetStockMovFromStockAcc:;
+LGetStockMovFromStockAcc:;  
   RETURN;
 END;
 
@@ -189,7 +198,7 @@ BEGIN
   string 10 stockfracc,stocktoacc;
   string 255 stockfrtxt,stocktotxt,errstr;
   Date blankd;
-
+  
   lsumupf = sumupf;
   frobjstr = StockMovp.Objects;
   if (CostAccRec.ObjOnStock!=0) then begin
@@ -245,7 +254,7 @@ BEGIN
     goto LAddStockMovCostRows;
   end;
 
-  AddEuroTrRowType(gTRp,stockfracc,locobjstr,"",stockfrtxt,rs2,br1,br2,lsumupf,dc2,TotSum,false,"","","",kTransactionRowTypeStock);
+  AddEuroTrRowTypeQty(gTRp,stockfracc,locobjstr,"",stockfrtxt,rs2,br1,br2,lsumupf,dc2,TotSum,false,"","","",kTransactionRowTypeStock,StockMovrw.Quant);
   if (IntYc==SentSTMovYc) then begin
     if (nonblank(StockMovrw.SentExtraSCost)) then begin
       PUCalcPerc(rs2,StockMovrw.SentExtraSCost,t);
@@ -283,7 +292,7 @@ BEGIN
     goto LAddStockMovCostRows;
   end;
   rs2 = Round(rs2,DefaultRoundMode);
-  AddEuroTrRowType(gTRp,stocktoacc,locobjstr,"",stocktotxt,rs2,br1,br2,lsumupf,dc1,TotSum,false,"","","",kTransactionRowTypeStock);
+  AddEuroTrRowTypeQty(gTRp,stocktoacc,locobjstr,"",stocktotxt,rs2,br1,br2,lsumupf,dc1,TotSum,false,"","","",kTransactionRowTypeStock,StockMovrw.Quant);
 LAddStockMovCostRows:;
   AddStockMovCostRows = res;
   RETURN;
@@ -330,12 +339,12 @@ BEGIN
     end;
     if (IntYc==SentSTMovYc) then begin
       if ((nonblankdate(TRGenRec.StockMovStartDate)) and
-        (StockMovp.SentTransDate<TRGenRec.StockMovStartDate)) then begin
+        (StockMovp.SentTransDate<TRGenRec.StockMovStartDate)) then begin 
         testf = true;
       end;
     end else begin
       if ((nonblankdate(TRGenRec.StockMovStartDate)) and
-        (StockMovp.TransDate<TRGenRec.StockMovStartDate)) then begin
+        (StockMovp.TransDate<TRGenRec.StockMovStartDate)) then begin 
         testf = true;
       end;
     end;
@@ -350,7 +359,7 @@ BEGIN
     locTRr.Number = gTRp.Number;
     locTRr.IntYc = gTRp.IntYc;
     if (ReadFirstMain(locTRr,0,true)) then begin
-      switch (gRuniningMaint) begin
+      switch (gRuniningMaint) begin    
         case "RecalcStockMn":  ;
         otherwise
           res = 0;
@@ -394,7 +403,7 @@ BEGIN
     res = AddStockMovCostRows(gTRp,LocFrp,LocTop,CostAccRec,ARAccRec,StockMovp,StockMovrw,dc1,dc2,sumupf,br1,br2,TotSum,IntYc);
     if (res!=0) then begin
       goto LMakeTransFromStockMov;
-    end;
+    end;                                 
   end;
   if (TotSum!=0) then begin
     if (GetAccName(ARAccRec.StockGainAcc,tstr,60)==false) then begin
@@ -434,29 +443,29 @@ BEGIN
       error = 1854;
       errorstr = frpos;
       errorrownr = -1;
-      fieldstr = "FrPos";
-      res = 1854;
+      fieldstr = "FrPos";                 
+      res = 1854; 
       goto LCheckStockMovRowFromPosition;
-    end;
+    end;      
     if (INr.ItemType==1) then begin
       if (frpos==LocFrRec.WHMDefPUPosCode) or (frpos==LocFrRec.WHMDefProdPosCode) then begin
       end else begin
         if (nonblank(SMp.ThrouLocation)) then begin
-//missing funcionality
+//missing funcionality        
         end else begin
           FindStockValueAtPosition(StockMovrw.ArtCode,LocFrRec.Code,frpos,PISr);
           if (quant>PISr.Instock) and (quant!=0) then begin
             error = 1397;
             errorstr = " " & PISr.Position;
             errorrownr = rownr;
-            fieldstr = "Quant";
-            res = 1397;
+            fieldstr = "Quant";                
+            res = 1397; 
             goto LCheckStockMovRowFromPosition;
           end;
         end;
       end;
-    end;
-  end;
+    end;  
+  end;    
 LCheckStockMovRowFromPosition:;
   CheckStockMovRowFromPosition = res;
   RETURN;
@@ -474,7 +483,9 @@ BEGIN
   Boolean gBase1ToBase2,gToDualBase;
   record ConvMasterBlock cvm;
   row LegalInvNrBlock LINrbrw;
-
+  record StockMovVc cStockMovr;
+  transaction Boolean gStockMovVcRecordImport_RecordExists;
+      
   BlockLoad(cvm);
   if (cvm.DualBaseCurrencyFlag!=0) then begin gToDualBase = true; end;
   if (cvm.Base1ToBase2Flag!=0) then begin gBase1ToBase2 = true; end;
@@ -524,7 +535,7 @@ BEGIN
       B1ToB2ValRM(StockMovrw.SentFIFORowVal,br1,br2,t,GetCostRoundModeRB);
       StockMovrw.SentFIFORowVal = t;
       MatRowPut(StockMovr,i,StockMovrw);
-    end;
+    end;    
     StockMovr.CurncyCode = curncy;
     StockMovr.FrRate = fr;
     StockMovr.ToRateB1 = to1;
@@ -532,14 +543,16 @@ BEGIN
     StockMovr.BaseRate1 = br1;
     StockMovr.BaseRate2 = br2;
     StockMovSumUp(StockMovr);
-  end;
+  end;    
   if (StockMovr.TotQty==0) then begin
     StockMovSumUp(StockMovr);
-  end;
+  end;  
   if (blank(StockMovr.OfficialSerNrSerie)) then begin
     GetLegalInvNrRow(StockMovr.OfficialSerNr,LINrbrw);
     StockMovr.OfficialSerNrSerie = GetLegalInvoiceNrSerie(LINrbrw,StockMovr.OfficialSerNr);
   end;
+  cStockMovr.SerNr = StockMovr.SerNr;
+  gStockMovVcRecordImport_RecordExists = ReadFirstMain(cStockMovr,1,true);
   StockMovVcRecordImport = res;
   RETURN;
 END;
@@ -549,21 +562,26 @@ updating function LongInt StockMovVcRecordImportAfter(var record StockMovVc Stoc
 BEGIN
   LongInt res;
   Integer err;
-
-  StockMovUpdateSerialNr(StockMovr,StockMov2r,false);
-  UpdateInStockMovFromStockMov(StockMovr,false);
+  transaction Boolean gStockMovVcRecordImport_RecordExists;
+      
+  if (gStockMovVcRecordImport_RecordExists==false) then begin
+    StockMovUpdateSerialNr(StockMovr,StockMov2r,false);
+    UpdateInStockMovFromStockMov(StockMovr,false);
+  end;
   if (StockMovr.OKFlag==0) then begin
-    StockMovUpdateStock(StockMovr,StockMov2r,false,false,false);
+    StockMovUpdateStock(StockMovr,StockMov2r,false,false,false);  
   end else begin
-    if (ImportingTextBackup==false and CanOKStockRecord(err)==true) then begin
-      StockMovUpdateStock(StockMovr,StockMov2r,true,false,false);
-      StockMovUpdateCostPrice(StockMovr,StockMov2r);
-      StockMovUpdateItemHist(StockMovr,StockMov2r);
-    end else begin
-      StockMovUpdateStock(StockMovr,StockMov2r,false,false,false);
+    if (gStockMovVcRecordImport_RecordExists==false) then begin
+      if (ImportingTextBackup==false and CanOKStockRecord(err)==true) then begin
+        StockMovUpdateStock(StockMovr,StockMov2r,true,false,false);
+        StockMovUpdateCostPrice(StockMovr,StockMov2r);
+        StockMovUpdateItemHist(StockMovr,StockMov2r);
+      end else begin
+        StockMovUpdateStock(StockMovr,StockMov2r,false,false,false);  
+      end;
     end;
   end;
-
+  
   StockMovVcRecordImportAfter = res;
   RETURN;
 END;
@@ -601,7 +619,7 @@ BEGIN
     res = 0;
   end;
 LStockMovVcRecordRemoveTest:;
-  StockMovVcRecordRemoveTest = res;
+  StockMovVcRecordRemoveTest = res; 
   RETURN;
 END;
 
@@ -618,11 +636,11 @@ BEGIN
   end;
   UpdateInStockMovFromStockMov(StockMovr,true);
   if (UpdateForkLiftQueue(StockMovr,true)) then begin end;
-
-  if (nonblank(StockMovr.OfficialSerNr)) then begin
+  
+  if (nonblank(StockMovr.OfficialSerNr)) then begin 
     DeleteOffSerNr(StockMovr.SerNr,"StockMovVc");
   end;
-
+  
   StockMovVcRecordRemove = res;
   RETURN;
 END;
@@ -677,7 +695,7 @@ BEGIN
   end;
   if ((StockMovr.IntORNo!=-1) and (StockMov2r.OKFlag==0)) then begin
     if (UpdateIntOrderFromStockMov(StockMovr,StockMov2r,false)) then begin end;
-  end;
+  end;  
   if (StockMovr.SentOKFlag!=0 and StockMov2r.SentOKFlag==0) then begin
     AddPortugueseSAFTHashToStockMov(StockMovr);
   end else begin
@@ -693,15 +711,20 @@ global
 updating function LongInt StockMovVcRecordSaveAfter(var record StockMovVc StockMovr,record StockMovVc StockMov2r,LongInt stat,LongInt long4)
 BEGIN
   LongInt res;
+  record UserVc Userr;
 
+  Userr.Code = StockMovr.Sign;
+  ReadFirstMain(Userr,1,true);
+  StockMovr.SalesGroup = Userr.SalesGroup;  
   StockMovUpdateStock(StockMovr,StockMov2r,true,false,false);
   StockMovUpdateCostPrice(StockMovr,StockMov2r);//Cost Price before history
   StockMovUpdateItemHist(StockMovr,StockMov2r);
   StockMovUpdateSerialNr(StockMovr,StockMov2r,false);
-
+  
   if (StockMovr.OKFlag!=0) then begin
     StockMovSetPositionStatus(StockMovr,1);
     CreateAutoProduction(StockMovr);
+    AutomatedSalesOrderly("HasIntegratedNL");
   end else begin
     StockMovSetPositionStatus(StockMovr,2);
   end;
@@ -725,7 +748,7 @@ global
 updating function LongInt StockMovVcRecordSave(var record StockMovVc StockMovr,record StockMovVc StockMov2r,LongInt stat,LongInt long4)
 BEGIN
   LongInt res;
-
+  
   if (blankdate(StockMovr.RegDate)) then begin
     StockMovr.RegDate = CurrentDate;
   end;
@@ -735,7 +758,7 @@ BEGIN
   if ((StockMovr.SentOKFlag==0)) then begin
     if (StockMovr.OKFlag!=0) then begin
       StockMovr.FrLocOKNr = NextLocOKNr(StockMovr.FrLocation);
-    end;
+    end;  
   end else begin
     StockMovr.FrLocOKNr = NextLocOKNr(StockMovr.FrLocation);
     StockMovr.ToThrouLocOKNr = NextLocOKNr(StockMovr.ThrouLocation);
@@ -756,3 +779,18 @@ BEGIN
   StockMovVcRecordSave = res;
   RETURN;
 END;
+
+global
+function LongInt StockMovVcRecordInIndex(record StockMovVc StockMovr,string indexname)
+begin
+  LongInt res;
+  
+  res = 1;
+  if (StockMovr.InvoiceNr==-1) then begin 
+    if (indexname=="InvDate") then begin res = 0; end;
+    if (indexname=="InvoiceOfficialSerNr") then begin res = 0; end;
+    if (indexname=="InvoiceNr") then begin res = 0; end;
+  end;
+  StockMovVcRecordInIndex = res;
+  return;
+end;

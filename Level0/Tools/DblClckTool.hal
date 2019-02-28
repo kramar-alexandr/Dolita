@@ -421,10 +421,15 @@ begin
   Integer wn;
   record CLInVc CLInr;
    
-  CLInr.SerNr = FirstInRange(dblstr,10);
-  if (ReadFirstMain(CLInr,1,true)) then begin
-    wn = OpenWindow("CLInDClass",1,0,"","",CLInr);
-  end;     
+ CLInr.SerNr = FirstInRange(l,10);
+  if (CLInr.SerNr<0) then begin
+    CLInr.SerNr = FirstInRange(dblstr,10);
+  end;
+  if (CLInr.SerNr>0) then begin
+    if (ReadFirstMain(CLInr,1,true)) then begin
+      wn = OpenWindow("CLInDClass",1,0,"","",CLInr);
+    end;     
+  end;
   return;
 end;
 
@@ -435,9 +440,14 @@ begin
   record CLInVc CLInr;
    
   CLInr.SerNr = FirstInRange(l,10);
-  if (ReadFirstMain(CLInr,1,true)) then begin
-    wn = OpenWindow("CLInDClass",1,0,"","",CLInr);
-  end;     
+  if (CLInr.SerNr<0) then begin
+    CLInr.SerNr = FirstInRange(dblstr,10);
+  end;
+  if (CLInr.SerNr>0) then begin
+    if (ReadFirstMain(CLInr,1,true)) then begin
+      wn = OpenWindow("CLInDClass",1,0,"","",CLInr);
+    end;     
+  end;
   return;
 end;
 
@@ -447,10 +457,15 @@ begin
   Integer wn;
   record CLOutVc CLOutr;
   
-  CLOutr.SerNr = FirstInRange(dblstr,10);
-  if (ReadFirstMain(CLOutr,1,true)) then begin
-    wn = OpenWindow("CLOutDClass",1,0,"","",CLOutr);
-  end;     
+  CLOutr.SerNr = FirstInRange(l,10);
+  if (CLOutr.SerNr<0) then begin
+    CLOutr.SerNr = FirstInRange(dblstr,10);
+  end;
+  if (CLOutr.SerNr>0) then begin
+    if (ReadFirstMain(CLOutr,1,true)) then begin
+      wn = OpenWindow("CLOutDClass",1,0,"","",CLOutr);
+    end;     
+  end;
   return;
 end;
 
@@ -534,9 +549,11 @@ begin
   record IPVc IPr;
    
   IPr.SerNr = FirstInRange(l,10);
-  if (ReadFirstMain(IPr,1,true)) then begin
-    wn = OpenWindow("IPDClass",1,0,"","",IPr);
-  end;     
+  if (IPr.SerNr>0) then begin
+    if (ReadFirstMain(IPr,1,true)) then begin
+      wn = OpenWindow("IPDClass",1,0,"","",IPr);
+    end;     
+  end;
   return;
 end;
 
@@ -546,9 +563,14 @@ begin
   record IPVc IPr;
   Integer wn;
   
-  IPr.SerNr = FirstInRange(dblstr,10);
-  if (ReadFirstMain(IPr,1,true)) then begin
-    wn = OpenWindow("IPDClass",1,0,"","",IPr);
+  IPr.SerNr = FirstInRange(l,10);
+  if (IPr.SerNr<0) then begin
+    IPr.SerNr = FirstInRange(dblstr,10);
+  end;
+  if (IPr.SerNr>0) then begin
+    if (ReadFirstMain(IPr,1,true)) then begin
+      wn = OpenWindow("IPDClass",1,0,"","",IPr);
+    end;
   end;
   return;
 end;
@@ -1091,3 +1113,34 @@ begin
   return;
 end;
 
+global
+procedure DblLitTaxXmlEn(string dblstr,string l,Integer currepwn)
+begin
+  Integer wn;
+  record RcVc curRepSpec;
+  record RcVc RepSpec;
+
+  if (nonblank(dblstr)) then begin
+    GetWindowRecord(currepwn,curRepSpec);
+    ReportDefaults(RepSpec,"LitTaxXmlEClass");    
+    RepSpec.repname = "LitTaxXmlEn";
+    RepSpec.Media = mtFile;
+    RepSpec.f1 = curRepSpec.f1;
+    RepSpec.f2 = curRepSpec.f2;
+    RepSpec.f3 = curRepSpec.f3;
+    RepSpec.f4 = curRepSpec.f4;
+    RepSpec.f5 = curRepSpec.f5;
+    RepSpec.flags[0] = curRepSpec.flags[0];
+    RepSpec.flags[1] = curRepSpec.flags[1];
+    RepSpec.flags[2] = curRepSpec.flags[2];
+    RepSpec.flags[3] = curRepSpec.flags[3];
+    RepSpec.flags[7] = curRepSpec.flags[7];
+    RepSpec.flags[8] = curRepSpec.flags[8];
+    RepSpec.Comparison = curRepSpec.Comparison;
+    RepSpec.Period2Str = curRepSpec.Period2Str;
+    RepSpec.sStartDate = curRepSpec.sStartDate;
+    RepSpec.sEndDate = curRepSpec.sEndDate;
+    RunExport(RepSpec,true);   
+  end;
+  return;
+end;

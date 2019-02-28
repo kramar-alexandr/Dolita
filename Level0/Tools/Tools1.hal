@@ -33,12 +33,12 @@ begin
     end;
     currate = currate & tstr;
   end;
-return;
+  return;
 end;
 
 global
 procedure GetItemVATCode(string item,Integer aexport,var string vatcode,Boolean sales)
-BEGIN
+begin
   record ITVc ITr;
   record INVc INr;
   record AccBlock ARAccRec;
@@ -86,7 +86,7 @@ BEGIN
         case 3: vatcode = APAccRec.VATCodeEU;
         case 2: vatcode = APAccRec.VATCodeExp;
         case 1: vatcode = APAccRec.VATCodeEU;
-        otherwise vatcode = ARAccRec.VATCodeDom;
+        otherwise vatcode = APAccRec.VATCodeDom;
       end;
       if (blank(vatcode)) then begin
         vatcode = APAccRec.VATCodeDom;
@@ -94,8 +94,8 @@ BEGIN
     end;
   end;
 LGetItemVATCode:;
-  RETURN;
-END;
+  return;
+end;
 
 global
 procedure GetItemTaxTemplateCode(string item,Integer aexport,var string taxtemplatecode,Boolean sales)
@@ -160,7 +160,7 @@ end;
 
 global
 procedure GetItemCreditVATCode(string item,Integer aexport,var string vatcode,Boolean sales)
-BEGIN
+begin
   record ITVc ITr;
   record INVc INr;
   record AccBlock ARAccRec;
@@ -216,8 +216,8 @@ BEGIN
     end;
   end;
 LGetItemCreditVATCode:;
-  RETURN;
-END;
+  return;
+end;
 
 global
 function Boolean GetItemNameStr(Integer tnr,var string tstr,string langcod2,string deftext,string itemname)
@@ -315,5 +315,32 @@ begin
   res = GetCostRoundMode(Rb);
   res.decimals = 5;
   CostPriceDecimals = res;
-  RETURN;
-END;
+  return;
+end;
+
+global
+procedure SplitString(string s,string split,var array string ssa)
+begin
+  LongInt i,j,k,n,l;
+  string 10 tstr;
+  string 1 c;
+
+  k = 0;
+  tstr = "";
+  j = 0;
+  l = len(s);
+
+  if (nonblank(s)) then begin
+    for (i = 0; i<=l; i = i + 1) begin
+      c = Mid(s,i,1);
+      if ((c==split) or (i==l)) then begin
+        ssa[j] = tstr;
+        tstr = "";
+        j = j + 1;
+      end else begin
+        tstr = tstr & c;
+      end;
+    end;
+    k = j;
+  end;
+end;

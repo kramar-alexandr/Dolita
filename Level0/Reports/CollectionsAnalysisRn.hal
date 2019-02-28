@@ -28,7 +28,7 @@ begin
   if (RemRetValue>0) then begin
     for (i=0;i<rwcnt;i=i+1) begin
       MatRowGet(IVr,i,IVrw);
-      if (IVrw.stp==kInvoiceRowTypeCashPayment or IVrw.stp==kInvoiceRowTypeCreditCardPayment or 
+      if (IVrw.stp==kInvoiceRowTypeCashPayment or IVrw.stp==kInvoiceRowTypeCreditCardPayment or IVrw.stp==kInvoiceRowTypeSwishPayment or IVrw.stp==kInvoiceRowTypeQRPayment or 
         IVrw.stp==kInvoiceRowTypeChequePayment or IVrw.stp==kInvoiceRowTypeLoyaltyPointsPayment) then begin
         if (RemRetValue > IVrw.Sum) then begin
           RemRetValue = RemRetValue - IVrw.Sum;
@@ -80,7 +80,7 @@ begin
   if (RemRetValue>0) then begin
     for (i=0;i<rwcnt;i=i+1) begin
       MatRowGet(IVCashr,i,IVCashrw);
-      if (IVCashrw.stp==kInvoiceRowTypeCashPayment or IVCashrw.stp==kInvoiceRowTypeCreditCardPayment or 
+      if (IVCashrw.stp==kInvoiceRowTypeCashPayment or IVCashrw.stp==kInvoiceRowTypeCreditCardPayment or IVCashrw.stp==kInvoiceRowTypeSwishPayment or IVCashrw.stp==kInvoiceRowTypeQRPayment or IVCashrw.stp==kInvoiceRowTypeCashWithdrawal or 
         IVCashrw.stp==kInvoiceRowTypeChequePayment or IVCashrw.stp==kInvoiceRowTypeLoyaltyPointsPayment) then begin
         if (IVCashr.Sum4>=0) then begin
           if (RemRetValue > IVCashrw.Sum) then begin
@@ -144,6 +144,9 @@ begin
           switch (IVrw.stp) begin
             case kInvoiceRowTypeCashPayment: testf = true;
             case kInvoiceRowTypeCreditCardPayment: testf = true;
+            case kInvoiceRowTypeSwishPayment: testf = true;
+            case kInvoiceRowTypeQRPayment: testf = true;
+            case kInvoiceRowTypeCashWithdrawal: testf = true;
             case kInvoiceRowTypeChequePayment: testf = true;
             case kInvoiceRowTypeLoyaltyPointsPayment: testf = true;
           end;
@@ -215,6 +218,9 @@ begin
           switch (IVCashrw.stp) begin
             case kInvoiceRowTypeCashPayment: testf = true;
             case kInvoiceRowTypeCreditCardPayment: testf = true;
+            case kInvoiceRowTypeSwishPayment: testf = true;
+            case kInvoiceRowTypeQRPayment: testf = true;
+            case kInvoiceRowTypeCashWithdrawal: testf = true;
             case kInvoiceRowTypeChequePayment: testf = true;
             case kInvoiceRowTypeLoyaltyPointsPayment: testf = true;
             case kInvoiceRowTypeGiftVoucherPayment: testf = true;

@@ -29,7 +29,7 @@ END;
 global
 function Boolean CashSimpleInDClassActiveEditField(Integer wn,string fieldname,Integer fn,Integer wnst,Integer rownr,Integer changed)
 BEGIN
-  boolean res;
+  boolean res;//EBS ALL
 
   res = CashDClassActiveEditField(wn,fieldname,fn,wnst,rownr,changed);
 
@@ -49,7 +49,7 @@ BEGIN
   RETURN;
 END;
 
-global
+global 
 function Boolean CashDClassInsertRowTest(Integer wn, Integer rownr)
 BEGIN
   Boolean res;
@@ -68,15 +68,14 @@ BEGIN
     otherwise
       res = false;
   end;
-
   CashDClassInsertRowTest = res;
   RETURN;
 END;
 
-global
+global 
 function Boolean CashSimpleInDClassInsertRowTest(Integer wn, Integer rownr)
 BEGIN
-  boolean res;
+  boolean res;//EBS ALL
 
   res = CashDClassInsertRowTest(wn,rownr);
 
@@ -88,39 +87,39 @@ BEGIN
   RETURN;
 END;
 
-global
+global 
 function Boolean CashSimpleOutDClassInsertRowTest(Integer wn, Integer rownr)
 BEGIN
   CashSimpleOutDClassInsertRowTest = CashDClassInsertRowTest(wn,rownr);
   RETURN;
 END;
 
-global
+global 
 function Boolean CashDClassDeleteRowTest(Integer wn,Integer rownr)
 begin
   record CashVc Cashr;
   Boolean res;
 
   res = true;
-  switch (WindowState(wn)) begin
+  switch (WindowState(wn)) begin  
     case 0://Rs_normal
       GetWindowRecord(wn,Cashr);
       if (Cashr.OKFlag!=0) then begin res = false; end;
     case 1://Rs_insert
       res = true;
     case 2://Rs_update
-      GetPrevWindowRecord(wn,Cashr);
+      GetPrevWindowRecord(wn,Cashr);    
       if (Cashr.OKFlag!=0) then begin res = false; end;
   end;
-LCashDClassDeleteRowTest:;
+LCashDClassDeleteRowTest:;  
   CashDClassDeleteRowTest = res;
   return;
 end;
 
-global
+global 
 function Boolean CashSimpleInDClassDeleteRowTest(Integer wn,Integer rownr)
 begin
-  boolean res;
+  boolean res;//EBS ALL
 
   res = CashDClassDeleteRowTest(wn,rownr);
 
@@ -132,7 +131,7 @@ begin
   return;
 end;
 
-global
+global 
 function Boolean CashSimpleOutDClassDeleteRowTest(Integer wn,Integer rownr)
 begin
   CashSimpleOutDClassDeleteRowTest = CashDClassDeleteRowTest(wn,rownr);
@@ -161,7 +160,7 @@ BEGIN
   Boolean res;
   record CashVc Cashr;
   Integer normalmode,updatemode;
-
+ 
   res = true;
   normalmode = 0;//Rs_normal
   updatemode = 2;//Rs_update
@@ -173,13 +172,13 @@ BEGIN
         res = true;
       end;
     end;
-  end;
+  end;  
   if (WindowState(wn)==updatemode) then begin
     GetPrevWindowRecord(wn,Cashr);
     if (Cashr.OKFlag!=0) then begin
       res = false;
     end;
-  end;
+  end;  
   CashDClassOKFlagButtonAction = res;
   RETURN;
 END;
@@ -203,7 +202,7 @@ function Boolean CashDClassEventButtonAction(Integer wn,Integer value)
 BEGIN
   Boolean res;
   record CashVc Cashr;
-
+ 
   res = true;
   switch (WindowState(wn)) begin
     case 0://Rs_normal
@@ -258,8 +257,8 @@ BEGIN
       rwcnt  = MatRowCnt(Cashr);
     end;
   end;
-
-  rwcnt = MatRowCnt(Cashr);
+  
+  rwcnt = MatRowCnt(Cashr);  
   for (i=0;i<rwcnt;i=i+1) begin
     MatRowGet(Cashr,i,Cashrw);
     Cashr.Total = Cashr.Total + Cashrw.Amount;
@@ -273,35 +272,57 @@ begin
 
   MatRowGet(Cashr,rownr,Cashrw);
   if (Cashrw.DenominationValue!=kDenominationTypeUnknown) and (Cashrw.DenominationQty>0) then begin
+   
     Cashrw.Amount = Cashrw.DenominationValue*Cashrw.DenominationQty;
   end;
   MatRowPut(Cashr,rownr,Cashrw);
   return;
 end;
 function Boolean CashDClassAmountEFAfter(Integer wn,Integer rownr,Integer changedf)
-begin
+begin  
   record CashVc Cashr;
   row CashVc Cashrw;
-
+  
   if (changedf!=0) then begin
     GetWindowRecord(wn,Cashr);
     MatRowGet(Cashr,rownr,Cashrw);
     if (Cashrw.Denomination!=kDenominationTypeUnknown) then begin
+      switch (Cashrw.Denomination) begin
+        case kDenominationTypeOneCent:   Cashrw.DenominationValue = 0.01;
+        case kDenominationTypeTwoCents:  Cashrw.DenominationValue = 0.02;
+        case kDenominationTypeFiveCents: Cashrw.DenominationValue = 0.05;
+        case kDenominationTypeTenCents:  Cashrw.DenominationValue = 0.10;
+        case kDenominationTypeFifteenCents: Cashrw.DenominationValue = 0.15;
+        case kDenominationTypeTwentyCents: Cashrw.DenominationValue = 0.20;
+        case kDenominationTypeTwentyFiveCents: Cashrw.DenominationValue = 0.25;
+        case kDenominationTypeFiftyCents: Cashrw.DenominationValue = 0.50;
+        case kDenominationTypeOne: Cashrw.DenominationValue = 1;
+        case kDenominationTypeFive: Cashrw.DenominationValue = 5;
+        case kDenominationTypeTen: Cashrw.DenominationValue = 10;
+        case kDenominationTypeTwenty: Cashrw.DenominationValue = 20;
+        case kDenominationTypeFifty: Cashrw.DenominationValue = 50;
+        case kDenominationTypeHundred: Cashrw.DenominationValue = 100;
+        case kDenominationTypeTwoHundreds:  Cashrw.DenominationValue = 200;
+        case kDenominationTypeFiveHundreds: Cashrw.DenominationValue = 500;
+        case kDenominationTypeThousand: Cashrw.DenominationValue = 1000;
+        case kDenominationTypeTwoThousands:  Cashrw.DenominationValue = 2000;
+        case kDenominationTypeFiveThousands: Cashrw.DenominationValue = 5000;
+      end;
       Cashrw.DenominationQty = Cashrw.Amount/Cashrw.DenominationValue;
     end;
     MatRowPut(Cashr,rownr,Cashrw);
     CashSumup(Cashr);
-    PutWindowRecord(wn,Cashr);
+    PutWindowRecord(wn,Cashr);      
   end;
   CashDClassAmountEFAfter = true;
   return;
 end;
 
 function Boolean CashDClassDenominationEFAfter(Integer wn,Integer rownr,Boolean changedf)
-begin
+begin  
   record CashVc Cashr;
   row CashVc Cashrw;
-
+  
   if (changedf) then begin
     GetWindowRecord(wn,Cashr);
     MatRowGet(Cashr,rownr,Cashrw);
@@ -312,6 +333,7 @@ begin
       case kDenominationTypeTenCents:  Cashrw.DenominationValue = 0.10;
       case kDenominationTypeFifteenCents: Cashrw.DenominationValue = 0.15;
       case kDenominationTypeTwentyCents: Cashrw.DenominationValue = 0.20;
+      case kDenominationTypeTwentyFiveCents: Cashrw.DenominationValue = 0.25;
       case kDenominationTypeFiftyCents: Cashrw.DenominationValue = 0.50;
       case kDenominationTypeOne: Cashrw.DenominationValue = 1;
       case kDenominationTypeFive: Cashrw.DenominationValue = 5;
@@ -328,22 +350,45 @@ begin
     MatRowPut(Cashr,rownr,Cashrw);
     CashDchrsum(Cashr,rownr);
     CashSumup(Cashr);
-    PutWindowRecord(wn,Cashr);
+    PutWindowRecord(wn,Cashr);      
   end;
   CashDClassDenominationEFAfter = true;
   return;
 end;
 
 function Boolean CashDClassDenominationQtyEFAfter(Integer wn,Integer rownr,Boolean changedf)
-begin
+begin  
   record CashVc Cashr;
   row CashVc Cashrw;
-
+  
   if (changedf) then begin
     GetWindowRecord(wn,Cashr);
+    MatRowGet(Cashr,rownr,Cashrw);
+    switch (Cashrw.Denomination) begin
+      case kDenominationTypeOneCent:   Cashrw.DenominationValue = 0.01;
+      case kDenominationTypeTwoCents:  Cashrw.DenominationValue = 0.02;
+      case kDenominationTypeFiveCents: Cashrw.DenominationValue = 0.05;
+      case kDenominationTypeTenCents:  Cashrw.DenominationValue = 0.10;
+      case kDenominationTypeFifteenCents: Cashrw.DenominationValue = 0.15;
+      case kDenominationTypeTwentyCents: Cashrw.DenominationValue = 0.20;
+      case kDenominationTypeTwentyFiveCents: Cashrw.DenominationValue = 0.25;
+      case kDenominationTypeFiftyCents: Cashrw.DenominationValue = 0.50;
+      case kDenominationTypeOne: Cashrw.DenominationValue = 1;
+      case kDenominationTypeFive: Cashrw.DenominationValue = 5;
+      case kDenominationTypeTen: Cashrw.DenominationValue = 10;
+      case kDenominationTypeTwenty: Cashrw.DenominationValue = 20;
+      case kDenominationTypeFifty: Cashrw.DenominationValue = 50;
+      case kDenominationTypeHundred: Cashrw.DenominationValue = 100;
+      case kDenominationTypeTwoHundreds:  Cashrw.DenominationValue = 200;
+      case kDenominationTypeFiveHundreds: Cashrw.DenominationValue = 500;
+      case kDenominationTypeThousand: Cashrw.DenominationValue = 1000;
+      case kDenominationTypeTwoThousands:  Cashrw.DenominationValue = 2000;
+      case kDenominationTypeFiveThousands: Cashrw.DenominationValue = 5000;
+    end;
+    MatRowPut(Cashr,rownr,Cashrw);
     CashDchrsum(Cashr,rownr);
     CashSumup(Cashr);
-    PutWindowRecord(wn,Cashr);
+    PutWindowRecord(wn,Cashr);      
   end;
   CashDClassDenominationQtyEFAfter = true;
   return;
@@ -358,6 +403,7 @@ BEGIN
     case "Amount": res = CashDClassAmountEFAfter(wn,rownr,changed);
     case "Denomination": res = CashDClassDenominationEFAfter(wn,rownr,changed!=0);
     case "DenominationQty": res = CashDClassDenominationQtyEFAfter(wn,rownr,changed!=0);
+    case "DenominationValue": res = CashDClassDenominationQtyEFAfter(wn,rownr,changed!=0);
   end;
   CashDClassAfterEditField = res;
   RETURN;
@@ -392,7 +438,7 @@ procedure PrintToFiscPrntCashDsm()
 begin
   Integer wn;
   record CashVc Cashr;
-
+  
   wn = CurWindow;
   if (WindowState(wn)==Rs_normal) then begin
     GetWindowRecord(wn,Cashr);
@@ -403,6 +449,60 @@ begin
     end;
   end else begin
     Beep;
+  end;
+  return;
+end;
+
+global
+updating procedure ProceedCashSimpleInDClass()
+begin
+  record CashVc Cashr;
+  Integer wn;
+  
+  wn = CurWindow;
+  DeselectWindow(wn,true);
+  GetWindowRecord(wn,Cashr);
+  if (Cashr.Total>0) then begin
+    Cashr.OKFlag = 1;
+    PutWindowRecord(wn,Cashr);
+    if (WindowDoOK(wn,0)) then begin
+/*  
+done in CashVcRecordSaveClient
+      if (UserCanAction("PrintToFiscPrnt",true)) then begin
+        CashVc_PrintToFiscalPrinter(Cashr,true);
+      end else begin
+        MessageBox(1274,StringFromStringSet(3,"PrintToFiscPrnt"));
+      end;
+*/      
+      CloseWindow(wn);
+    end;
+  end;
+  return;
+end;
+
+global
+updating procedure ProceedCashSimpleOutDClass()
+begin
+  record CashVc Cashr;
+  Integer wn;
+  
+  wn = CurWindow;
+  DeselectWindow(wn,true);
+  GetWindowRecord(wn,Cashr);
+  if (Cashr.Total>0) then begin
+    Cashr.OKFlag = 1;
+    PutWindowRecord(wn,Cashr);
+    if (WindowDoOK(wn,0)) then begin
+/*  
+done in CashVcRecordSaveClient
+      if (UserCanAction("PrintToFiscPrnt",true)) then begin
+        CashVc_PrintToFiscalPrinter(Cashr,true);
+      end else begin
+        MessageBox(1274,StringFromStringSet(3,"PrintToFiscPrnt"));
+      end;
+*/      
+      CloseWindow(wn);
+    end;
   end;
   return;
 end;

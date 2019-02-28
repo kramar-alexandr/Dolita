@@ -1,3 +1,6 @@
+external function Boolean GetPMRow(string,var row PMBlock);
+external function string 60 UpdatedeRowObject(string,string,string);
+external function string 60 GetPayModeObjectsStr(string);
 external function Boolean PasteCust2InInv(var record IVVc,record LocalMachineBlock,string,Boolean,var string,var string,var string,var string,var string);
 external procedure PasteARPayInIV(record IVVc,row IVVc,Integer);
 external updating function Integer RecordAction_raOrdDownPay(LongInt,val,val,var record IVVc,var string,integer);
@@ -29,6 +32,48 @@ external procedure IPSumup(var record IPVc);
 external procedure Base1ToOther(var string,val,val,val,val,val,val,var val,roundmode);
 external function Boolean GetFullCurncyRateDate(var string,Date,var val,var val,var val,var val,var val,var Date);
 external procedure CurValToOtherCur(Date,string,val,string,var val,roundmode);
+
+function string 255 ActContactFromIP(longint InvNr,longint OrderNr,string CustCode)
+begin
+  string 255 res;
+  record IVVc IVr;
+  record ORVc ORr;
+  record CUVc CUr;
+  boolean NoContactf;
+  
+  NoContactf = true;  
+  if (nonblank(InvNr)) then begin 
+    IVr.SerNr = InvNr;
+    if (ReadFirstMain(IVr,1,true)) then begin 
+      if (nonblank(IVr.ClientContact)) then begin 
+        res = IVr.ClientContact;
+        NoContactf = false;
+      end;
+    end;
+  end;
+  if (NoContactf and nonblank(OrderNr)) then begin 
+    ORr.SerNr = OrderNr;
+    if (ReadFirstMain(ORr,1,true)) then begin 
+      if (nonblank(ORr.CustContact)) then begin
+        res = ORr.CustContact;
+        NoContactf = false;
+      end;
+    end;    
+  end;
+  if (NoContactf and nonblank(CustCode)) then begin 
+    CUr.Code = CustCode;
+    if (ReadFirstMain(CUr,1,true)) then begin 
+      if (nonblank(CUr.Person)) then begin 
+        res = CUr.Person;
+        NoContactf = false;
+      end;
+    end;    
+  end;  
+  if (NoContactf) then begin 
+    res = CurrentUser;
+  end;
+  ActContactFromIP = res;
+end;
 
 procedure CurValToOtherCurWithRate(Date td,string frcur,val frval,string tocur,val abr1,var val toval,roundmode roundof)
 begin
@@ -817,6 +862,11 @@ begin
         IPrw.TAX1Sum = blankval;
       end;
     end else begin
+      MulVATIV(IPrw.VATCode,IPrw.InvVal,IPrw.VATVal,t1,1,0);
+/*
+the code below can NOT be correct, 
+do many vat rates on same invoice and many recipts!
+
       IVr.SerNr = IPrw.InvoiceNr;
       if (ReadFirstMain(IVr,1,true)) then begin
         v = IVr.Sum4;
@@ -836,6 +886,7 @@ begin
         Mul2VAT(IPrw.VATCode,IPrw.InvVal,t,rs,1);
         IPrw.VATVal = t;
       end;
+*/      
     end;
   end;
   MatRowPut(IPp,rownr,IPrw);
@@ -1171,12 +1222,18 @@ begin
   Integer i,rwcnt;
   LongInt lastchnr;
   val chval;
+  row PMBlock PMrw;
+  string 255 pm;
 
   if (currow>=0) then begin
     MatRowGet(IPp,currow,curIPrw);
     rwcnt = MatRowCnt(IPp);
     for (i=currow;i<rwcnt;i=i+1) begin
       MatRowGet(IPp,i,IPrw);
+      pm = IPrw.PayMode;
+      if (blank(pm)) then begin pm = IPp.PayMode; end;
+      GetPMRow(pm,PMrw);
+      if (PMrw.CheckType==kPayModeTypeCheque and IPrw.stp==1) then begin
       if (IPrw.ChequeNr<0) and (IPrw.CustCode==curIPrw.CustCode) then begin
         if (FindChequenr(IPrw.CustCode,chval,lastchnr)) then begin
           chval = chval - ThisCheuqeAmount(IPp,i,lastchnr);
@@ -1196,7 +1253,7 @@ begin
               if ((i+1)<rwcnt) then begin
                 MatRowGet(IPp,i+1,nextIPrw); 
               end;                                   
-              if (nextIPrw.CustCode!=newIPrw.CustCode) then begin
+              if (nextIPrw.CustCode!=newIPrw.CustCode or nextIPrw.stp!=newIPrw.stp) then begin
                 newIPrw.InvoiceNr = -1;
                 newIPrw.PayMode = "";
                 MatRowInsert(IPp,i+1,newIPrw);
@@ -1223,6 +1280,7 @@ begin
             gotorownr = i + 1;
           end;
         end;
+      end;
       end;
     end;
     IPSumup(IPp);
@@ -1255,7 +1313,9 @@ begin
     if (ReadFirstMain(CUr,1,true)) then begin
       Actr.CUName = CUr.Name;
       Actr.Phone = CUr.Phone;
-      if (blank(Actr.Contact)) then begin Actr.Contact = CurrentUser; end;
+      if (blank(Actr.Contact)) then begin 
+        Actr.Contact = ActContactFromIP(IPrw.InvoiceNr,IPrw.OrderNr,IPrw.CustCode); 
+      end;
     end;
     Actr.ActType = ASTb.Receipts;
     if (PasteActTypeInAct("",Actr)) then begin
@@ -1273,13 +1333,22 @@ begin
 end;
 
 global
-procedure IPPastePayMode(var record IPVc IPp)
+procedure IPPastePayMode2(var record IPVc IPp,string prevpaymode)
 begin
   Integer i,rwcnt,rn;
   record PMBlock PMRec;
   row PMBlock pmrw;
   record MainCLBlock MainCLRec;
+  string 255 objectstoremove,objectstoadd,pmcode;
+  row IPVc IPrw;
 
+  if (IPp.PayMode!=prevpaymode) then begin 
+    if (blank(prevpaymode)) then begin 
+      objectstoremove = GetPayModeObjectsStr(IPp.PayMode);
+    end else begin 
+      objectstoremove = GetPayModeObjectsStr(prevpaymode);
+    end;
+  end;
   BlockLoad(MainCLRec);
   BlockLoad(PMRec);
   rwcnt = MatRowCnt(PMRec);
@@ -1309,12 +1378,82 @@ L88IPPastePayMode:;
     IPp.PayMode = pmrw.Code;
     IPp.Comment = pmrw.Comment;
     IPp.Objects = pmrw.Objects;
+    rwcnt = MatRowCnt(IPp);
+    for (i=0;i<rwcnt;i=i+1) begin
+      MatRowGet(IPp,i,IPrw);
+      pmcode = IPrw.PayMode;
+      if (blank(pmcode)) then begin
+        objectstoadd = GetPayModeObjectsStr(IPp.PayMode);
+        IPrw.Objects = UpdatedeRowObject(objectstoremove,objectstoadd,IPrw.Objects);      
+        MatRowPut(IPp,i,IPrw);
+        pmcode = IPp.PayMode;
+      end;
+    end;    
     if (pmrw.TSerStartIn!=-1) and (MainCLRec.CommonNoSer!=0) then begin
       IPp.SerNr = NextFreeCashSerNr(pmrw,true);
     end;
   end;
 LIPPastePayMode:;
   return;
+end;
+
+global
+procedure IPPastePayMode(var record IPVc IPp)
+begin
+  IPPastePayMode2(IPp,"");
+  return;
+end;
+
+global
+procedure IPPasteRowPayMode3(var row IPVc IPrwp,string headerpaymentcode,string prevpaymode)
+begin
+  Integer i,rwcnt,rn;
+  record PMBlock PMRec;
+  row PMBlock pmrw;
+  string 255 objectstoremove,objectstoadd;
+
+  BlockLoad(PMRec);
+  rwcnt = MatRowCnt(PMRec);
+  rn = 0;
+  if (blank(IPrwp.PayMode)) then begin goto L88IPPasteRowPayMode; end;
+  for (i = 0; i<rwcnt; i=i+1) begin
+    MatRowGet(PMRec,i,pmrw);
+    if (pmrw.Code==IPrwp.PayMode) then begin
+      rn = i;
+      goto L88IPPasteRowPayMode;
+    end;
+  end;
+L88IPPasteRowPayMode:;
+  if (rwcnt>0) then begin
+    if (nonblank(pmrw.Objects) or blank(IPrwp.PayMode) or (IPrwp.PayMode!=prevpaymode)) then begin
+      if (IPrwp.PayMode!=prevpaymode) then begin 
+        if (blank(prevpaymode)) then begin 
+          objectstoremove = GetPayModeObjectsStr(headerpaymentcode);
+        end else begin 
+          objectstoremove = GetPayModeObjectsStr(prevpaymode);
+        end;
+      end; 
+      if (blank(IPrwp.PayMode)) then begin 
+        objectstoadd = GetPayModeObjectsStr(headerpaymentcode);
+      end else begin
+        objectstoadd = pmrw.Objects;
+      end; 
+      IPrwp.Objects = UpdatedeRowObject(objectstoremove,objectstoadd,IPrwp.Objects);    
+    end;
+  end;
+  return;
+end;
+
+global
+procedure IPPasteRowPayMode2(var row IPVc IPrwp,string headerpaymentcode)
+begin
+  IPPasteRowPayMode3(IPrwp,headerpaymentcode,"");
+end;
+
+global
+procedure IPPasteRowPayMode(var row IPVc IPrwp)
+begin
+  IPPasteRowPayMode3(IPrwp,"","");
 end;
 
 global
@@ -1583,6 +1722,8 @@ begin
       end;
       if (IVr.SerNr>0) then begin
         RecordStore(IVr,false);
+      end else begin
+        errstr = USetStr(1747);
       end;
     end else begin
       RecordUpdate(oldIVr,IVr,true);

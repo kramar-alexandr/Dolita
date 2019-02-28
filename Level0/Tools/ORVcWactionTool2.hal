@@ -13,7 +13,7 @@ external procedure GetUserName(string,var string);
 external procedure GetNextProjectNr(var string);
 external function val FindVAT(string,val,Integer,Integer);
 external procedure AddCalcPrice(record INVc,record CPMVc,string,val,string,Integer,var val);
-external procedure GetPriceList(string,Date,Time,var string,var Integer);
+external procedure GetPriceList2(string,string,Date,Time,var string,var Integer);
 external function Boolean GetItemPriceDiscount3(string,val,var record INVc,string,val,val,val,val,val,string,string,string,string,
                                                 var val,var string,var val,var string,var val,var string,Integer,var Boolean,Date,Time,
                                                 string,Boolean,var Boolean,string,var string,var val,string,string,var string);
@@ -59,6 +59,7 @@ BEGIN
     ORr.DelAddr3 = CUr.DelAddr3;
     ORr.DelAddr4 = CUr.DelAddr4;
     ORr.CustContact = CUr.Person;
+    ORr.RecipientGLN = CUr.RecipientGLN;
     ORr.CurncyCode = CUr.CurncyCode;
     if (blank(ORr.CurncyCode)) then begin
       ORr.CurncyCode = BaseCurRec.BaseCur1;
@@ -475,7 +476,7 @@ begin
     while (nonblank(salesman)) begin
       Userr.Code = salesman;
       if (ReadFirstMain(Userr,1,true)) then begin
-        ORp.SalesGroup = AddStringToStringList(ORp.SalesGroup,Userr.SalesGroup);                      
+        ORp.SalesGroup = AddStringToStringList(ORp.SalesGroup,Userr.SalesGroup);                
         ORp.Objects = AddObjectToObjectList(ORp.Objects,Userr.PersObjx);        
       end;
       ExtractObj(ORp.SalesMan,pos,salesman);

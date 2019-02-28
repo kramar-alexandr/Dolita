@@ -1,3 +1,9 @@
+external function Boolean HasItemGroups();
+external function Boolean IsEnterprise();
+external function string 255 CurDrawerCode(string);
+external function string 255 StripCharacter(string,string);
+external function val ValFromString(string,string,string);
+external function Boolean IsDigit(string);
 external function string 255 ReplaceCharacterSeries(string,string,string);
 external procedure FindFiscalYearBlockRow(Date,row YearBlock);
 external function Integer CountObjects(string);
@@ -978,6 +984,12 @@ begin
     RepSpec.Stext = d1;
     RepSpec.Stext = RepSpec.Stext & ":";
     RepSpec.Stext = RepSpec.Stext & d2;
+    if (HasLocalization("FIN")) then begin
+      RepSpec.ArtMode = 2;
+      RepSpec.flags[10] = 1;
+      RepSpec.flags[13] = 1;
+      RepSpec.flags[15] = 1;
+    end;
   end;  
   PutWindowRecord(wn,RepSpec);
   SelectWindow(wn);
@@ -1003,7 +1015,7 @@ begin
   End;
   RepSpec.flags[9] = 1;
   RepSpec.flags[10] = 1;
-  RepSpec.flags[27] = 3;
+  RepSpec.flags[27] = 4;
   RepSpec.f2 = CYbl.emailAddr;
   RepSpec.f3 = CYbl.Phone;
 
@@ -1102,6 +1114,42 @@ begin
     ResetCompany(oldcomp);
   end;
 */  
+  return;
+end;
+
+global
+procedure Check1TRRClassReportDefaults(Integer wn)
+begin
+  record RcVc RepSpec;
+
+  DeselectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  ReportDefaults(RepSpec,"Check1TRRClass");  
+  RepSpec.sStartDate = CurrentDate;
+  RepSpec.sEndDate = CurrentDate;
+  RepSpec.Period2Str = RepSpec.sStartDate;
+  RepSpec.Period2Str = RepSpec.Period2Str & ":";
+  RepSpec.Period2Str = RepSpec.Period2Str & RepSpec.sEndDate;  
+  PutWindowRecord(wn,RepSpec);
+  SelectWindow(wn);
+  return;
+end;
+
+global
+procedure Check2TRRClassReportDefaults(Integer wn)
+begin
+  record RcVc RepSpec;
+
+  DeselectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  ReportDefaults(RepSpec,"Check2TRRClass");  
+  RepSpec.sStartDate = CurrentDate;
+  RepSpec.sEndDate = CurrentDate;
+  RepSpec.Period2Str = RepSpec.sStartDate;
+  RepSpec.Period2Str = RepSpec.Period2Str & ":";
+  RepSpec.Period2Str = RepSpec.Period2Str & RepSpec.sEndDate;  
+  PutWindowRecord(wn,RepSpec);
+  SelectWindow(wn);
   return;
 end;
 
@@ -1234,6 +1282,30 @@ begin
   return;
 end;
 
+global
+function string 60 GPAISEClassDefaultFileName(record RcVc RepSpec)
+begin
+  string 60 res;
+
+  res = "GPAIS";
+  res = res & DateToString(CurrentDate,"YYYYMMDD");
+  res = res & ".xml";
+  GPAISEClassDefaultFileName = res;  
+  return;
+end;
+
+global
+function string 60 GPAISUsedResEClassDefaultFileName(record RcVc RepSpec)
+begin
+  string 60 res;
+
+  res = "GPAIS";
+  res = res & DateToString(CurrentDate,"YYYYMMDD");
+  res = res & ".xml";
+  GPAISUsedResEClassDefaultFileName = res;  
+  return;
+end;
+
 
 global
 procedure RoyaltyRepRClassReportDefaults(Integer wn)
@@ -1335,6 +1407,7 @@ begin
     RepSpec.flags[13] = 1;
   end;
   RepSpec.sStartDate = CurrentDate;
+  RepSpec.sEndDate = CurrentDate;
   PutWindowRecord(wn,RepSpec);
   SelectWindow(wn);
   return;
@@ -1399,7 +1472,7 @@ begin
   ReportDefaults(RepSpec,"PortTaxXmlEClass");
   RepSpec.FirstAcc = LMb.BranchID;
   RepSpec.flags[0] = 1;
-  RepSpec.flags[1] = 3;
+  RepSpec.flags[1] = 4;
   PutWindowRecord(wn,RepSpec);
   SelectWindow(wn);
   return;
@@ -1472,20 +1545,6 @@ BEGIN
 END; 
 
 global
-procedure CreateCOCUInvVClassReportDefaults(Integer wn)
-begin
-  record RcVc RepSpec;
-  
-  DeselectWindow(wn,false);
-  GetWindowRecord(wn,RepSpec);
-  ReportDefaults(RepSpec,"CreateCOCUInvVClass");  
-  RepSpec.flags[14] = 1;
-  PutWindowRecord(wn,RepSpec);
-  SelectWindow(wn);
-  return;
-end;
-
-global
 procedure COCUServiceInvRClassReportDefaults(Integer wn)
 begin
   record RcVc RepSpec;
@@ -1494,6 +1553,7 @@ begin
   GetWindowRecord(wn,RepSpec);
   ReportDefaults(RepSpec,"COCUServiceInvRClass");  
   RepSpec.flags[14] = 1;
+  RepSpec.f7 = "11,1T";
   PutWindowRecord(wn,RepSpec);
   SelectWindow(wn);
   return;
@@ -1828,32 +1888,6 @@ begin
 end;
 
 global
-procedure Check1TRRClassReportDefaults(Integer wn)
-begin
-  record RcVc RepSpec;
-  
-  DeselectWindow(wn,false);
-  GetWindowRecord(wn,RepSpec);
-  ReportDefaults(RepSpec,"Check1TRRClass");  
-  PutWindowRecord(wn,RepSpec);
-  SelectWindow(wn);
-  return;
-end;
-
-global
-procedure Check2TRRClassReportDefaults(Integer wn)
-begin
-  record RcVc RepSpec;
-  
-  DeselectWindow(wn,false);
-  GetWindowRecord(wn,RepSpec);
-  ReportDefaults(RepSpec,"Check2TRRClass");  
-  PutWindowRecord(wn,RepSpec);
-  SelectWindow(wn);
-  return;
-end;
-
-global
 procedure CFDIEInvEClassReportDefaults(Integer wn)
 begin
   record RcVc RepSpec;
@@ -1997,6 +2031,29 @@ begin
   filname = filname & "-" & Ybrw.YearCode;
   filname = filname & ".xml";
   PortTaxXmlEClassDefaultFileName = filname;  
+  return;
+end;
+
+global
+function string 60 PRTInventoryEClassDefaultFileName(record RcVc RepSpec)
+begin
+  string 60 filename;
+  record CYBlock CYb;
+  row YearBlock Ybrw;
+  
+  BlockLoad(CYb);
+  filename = CYb.VATNr;
+  if (blank(filename)) then begin
+    filename = "PRTTaxXmlEn";
+  end;  
+  FindFiscalYearBlockRow(RepSpec.d1,Ybrw);
+  filename = filename & "-" & Ybrw.YearCode;
+  if (RepSpec.flags[0]==0) then begin
+    filename = filename & ".xml";
+  end else begin
+    filename = filename & ".csv";
+  end;
+  PRTInventoryEClassDefaultFileName = filename;  
   return;
 end;
 
@@ -2272,6 +2329,7 @@ begin
   RepSpec.flags[3] = 1;
   RepSpec.flags[4] = 1;
   RepSpec.flags[5] = 1;
+  RepSpec.flags[7] = 1;
   PutWindowRecord(wn,RepSpec);
   SelectWindow(wn);
   return;
@@ -2322,29 +2380,36 @@ global
 function string 60 FInvoiceEClassDefaultFileName(record RcVc RepSpec)
 begin
   string 60 filname;
-  filname = RepSpec.f1 & ".xml";
+  
+  if (InString(RepSpec.f1,":")==0) then begin
+    filname = RepSpec.f1;
+  end;
   if (blank(filname)) then begin
     filname = "FInvoiceEn";
   end;  
-  FInvoiceEClassDefaultFileName = filname; 
-    
+  filname = filname & ".xml";
+  FInvoiceEClassDefaultFileName = filname;     
   return;
 end;
 
-/*
 global
 function string 60 MPEClassDefaultFileName(record RcVc RepSpec)
 begin
+  record BankFileBlock BFb;
   string 60 filname;
-  filname = "Payment " & RepSpec.f1 & " - " & CurrentDate;
-  if (blank(filname)) then begin
-    filname = "MPEn";
-  end;  
+  
+  BlockLoad(BFb);
+  
+  if (BFb.Bank==156) then begin
+    filname = USetStr(1751) & " " & RepSpec.f1 & ".xml";
+  end else begin
+    filname = "";
+  end; 
+  
   MPEClassDefaultFileName = filname; 
     
   return;
 end;
-*/
 
 global
 procedure ActCalRClassReportDefaults(Integer wn)
@@ -2571,8 +2636,40 @@ begin
 end;
 
 global
-updating function Boolean GenOwnChkVClassOnOKWindow(Integer wn)
+procedure AvailableAppsRClassReportDefaults(Integer wn)
 begin
+  record RCVc RepSpec;
+  
+  GetWindowRecord(wn,RepSpec);
+  ReportDefaults(RepSpec,"AvailableAppsRClass");
+  RepSpec.flags[6] = -1;
+  RepSpec.flags[5] = -1;
+  PutWindowRecord(wn,RepSpec);
+
+  return;
+end;
+
+global
+procedure SwitchboardCallsRClassReportDefaults(Integer wn)
+begin
+  record RCVc RepSpec;
+  
+  GetWindowRecord(wn,RepSpec);
+  ReportDefaults(RepSpec,"SwitchboardCallsRClass");
+  RepSpec.flags[0] = 1;
+  RepSpec.flags[1] = 1;
+  RepSpec.flags[2] = 1;
+  RepSpec.flags[3] = 1;
+  PutWindowRecord(wn,RepSpec);
+
+  return;
+end;
+
+
+global
+function Boolean GenOwnChkVClassOnOKWindow(Integer wn)
+begin
+  boolean res;
   record RcVc RepSpec;
   Integer nwn;
   record AccVc Accr;
@@ -2581,7 +2678,7 @@ begin
   if (nonblank(RepSpec.LastAcc)) then begin
     Accr.AccNumber = RepSpec.LastAcc;
     if (ReadFirstMain(Accr,1,true)==false) then begin
-      MessageBox(1058,"");
+      MessageBox(1290,RepSpec.LastAcc);
       WindowFieldGoto(wn,RepSpec,-1,"LastAcc",true);
       goto LGenOwnChkVClassOnOKWindow;
     end;
@@ -2594,7 +2691,7 @@ begin
   if (nonblank(RepSpec.AccStr)) then begin
     Accr.AccNumber = RepSpec.AccStr;
     if (ReadFirstMain(Accr,1,true)==false) then begin
-      MessageBox(1058,"");
+      MessageBox(1290,RepSpec.AccStr);
       WindowFieldGoto(wn,RepSpec,-1,"AccStr",true);
       goto LGenOwnChkVClassOnOKWindow;
     end;
@@ -2607,7 +2704,7 @@ begin
   if (nonblank(RepSpec.f2)) then begin
     Accr.AccNumber = RepSpec.f2;
     if (ReadFirstMain(Accr,1,true)==false) then begin
-      MessageBox(1058,"");
+      MessageBox(1290,RepSpec.f2);
       WindowFieldGoto(wn,RepSpec,-1,"f2",true);
       goto LGenOwnChkVClassOnOKWindow;
     end;
@@ -2617,8 +2714,724 @@ begin
       goto LGenOwnChkVClassOnOKWindow;
     end;
   end;
-  CloseWindow(wn);
+  res = true;
 LGenOwnChkVClassOnOKWindow:;  
-  GenOwnChkVClassOnOKWindow = false;
+  GenOwnChkVClassOnOKWindow = res;
   return;
 end;
+
+global
+function Boolean HotelUpdateRatesVClassOnOKWindow(Integer wn)
+begin
+  record RcVc RepSpec;
+  Integer nwn;
+  record AccVc Accr;
+  Boolean res;
+  
+  GetWindowRecord(wn,RepSpec);
+  if (blank(RepSpec.LastAcc)) then begin
+    MessageBox(2210,RepSpec.LastAcc);
+    WindowFieldGoto(wn,RepSpec,-1,"LastAcc",true);
+    goto LHotelUpdateRatesVClassOnOKWindow;
+  end;
+  if (blank(RepSpec.AccStr)) then begin
+    MessageBox(2210,RepSpec.AccStr);
+    WindowFieldGoto(wn,RepSpec,-1,"AccStr",true);
+    goto LHotelUpdateRatesVClassOnOKWindow;
+  end;
+  if (blank(RepSpec.FirstAcc)) then begin
+    MessageBox(2210,RepSpec.FirstAcc);
+    WindowFieldGoto(wn,RepSpec,-1,"FirstAcc",true);
+    goto LHotelUpdateRatesVClassOnOKWindow;
+  end;
+  if (blank(RepSpec.vals0)) then begin
+    MessageBox(2210,RepSpec.vals0);
+    WindowFieldGoto(wn,RepSpec,-1,"vals0",true);
+    goto LHotelUpdateRatesVClassOnOKWindow;
+  end;
+  res = true;
+LHotelUpdateRatesVClassOnOKWindow:;  
+  HotelUpdateRatesVClassOnOKWindow = res;
+  return;
+end;
+  
+global
+procedure ListServerVersionsRClassReportDefaults(Integer wn)
+begin
+  record RcVc RepSpec;
+
+  DeselectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  ReportDefaults(RepSpec,"ListServerVersionsRClass");
+  RepSpec.NoTimeoutLimit = 1;
+  PutWindowRecord(wn,RepSpec);
+  SelectWindow(wn);
+  return;
+end;
+
+global
+procedure ASPListUsedVersionsRClassReportDefaults(Integer wn)
+begin
+  record RcVc RepSpec;
+
+  DeselectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  ReportDefaults(RepSpec,"ASPListUsedVersionsRClass");
+  RepSpec.flags[1] = 1;
+  RepSpec.flags[2] = 1;
+  RepSpec.flags[3] = 1;
+  RepSpec.flags[4] = 1;
+  PutWindowRecord(wn,RepSpec);
+  SelectWindow(wn);
+  return;
+end;
+
+global
+function string 60 GDPdUDataToSimbaEClassDefaultFileName(record RcVc RepSpec)
+begin
+  string 60 res;
+
+  res = DateToString(RepSpec.sStartDate,"YYYYMMDD") & "-" & DateToString(RepSpec.sEndDate,"YYYYMMDD") & "_GDPdU.scs";
+  GDPdUDataToSimbaEClassDefaultFileName = res;  
+  return;
+end;
+
+global
+procedure BankTRIClassReportDefaults(Integer wn)
+begin
+  record RcVc RepSpec;
+  record SysFormatBlock SFb;
+
+  BlockLoad(SFb);
+  DeselectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  ReportDefaults(RepSpec,"BankTRIClass");
+  RepSpec.flags[0] = 1;
+  RepSpec.AccStr = ";";
+  switch (SFb.dateOrder) begin
+    case 0:
+      RepSpec.Stext = "MM-DD-YYYY";
+    case 1:
+      RepSpec.Stext = "DD-MM-YYYY";
+    case 2:
+      RepSpec.Stext = "YYYY-MM-DD";
+  end;
+  RepSpec.FirstAcc = ",";
+  RepSpec.LastAcc = "";
+  RepSpec.f1 = StringFromSet(621,0); 
+  RepSpec.f2 = StringFromSet(621,0); 
+  RepSpec.f3 = StringFromSet(621,0); 
+  RepSpec.f4 = StringFromSet(621,0); 
+  RepSpec.f5 = StringFromSet(621,0); 
+  RepSpec.f6 = StringFromSet(621,0); 
+  RepSpec.f7 = StringFromSet(621,0); 
+  RepSpec.f8 = StringFromSet(621,0); 
+  RepSpec.f9 = StringFromSet(621,0); 
+  RepSpec.f10 = StringFromSet(621,0); 
+  PutWindowRecord(wn,RepSpec);
+  SelectWindow(wn);
+  return;
+end;
+
+function string 255 BankTRCSVFileFieldSeparator(string default,string inline)
+begin
+  string 255 res;
+  
+  if (InString(inline,""",")) then begin
+    res = ",";
+  end;
+  if (blank(res)) then begin
+    if (InString(inline,""";")) then begin
+      res = ";";
+    end;
+  end;
+  if (blank(res)) then begin
+    if (InString(inline,",")) then begin
+      res = ",";
+    end;
+  end;
+  if (blank(res)) then begin
+    if (InString(inline,";")) then begin
+      res = ";";
+    end;
+  end;
+  if (blank(res)) then begin
+    res = default;
+  end;
+  BankTRCSVFileFieldSeparator = res;
+  return;
+end;
+
+function string 255 FindBankTRCSVFileDecimalSeparator(string data)
+begin
+  string 255 res,decsep;
+  Integer sp;
+  val v;
+
+  sp = InString(data,".");
+  if (sp!=0) then begin 
+    v = ValFromString(data,".","");
+    if (len(ValToString(v,M4Val,"",".",0))==len(data)) then begin
+      res = ".";
+    end;
+  end;
+  if (sp<=0) then begin
+    sp = InString(data,",");
+    if (sp!=0) then begin 
+      v = ValFromString(data,",","");
+      if (len(ValToString(v,M4Val,"",",",0))==len(data)) then begin
+        res = ",";
+      end;
+    end;
+  end;
+  FindBankTRCSVFileDecimalSeparator = res;
+  return;
+end;
+
+function string 255 BankTRCSVFileDecimalSeparator(record RcVc RepSpec,string fsep,string default,string inline)
+begin
+  string 255 res,data;
+  LongInt pos;
+  Integer col;
+  
+  col = 1;
+  pos = 0;
+  GetNextSubstring(inline,pos,fsep,data);
+  while (nonblank(data)) begin
+    data = StripCharacter(data,"""");
+    res = FindBankTRCSVFileDecimalSeparator(data);
+    if (nonblank(res)) then begin
+      data = "";
+    end else begin
+      GetNextSubstring(inline,pos,fsep,data);
+      col = col + 1;
+    end;
+  end;
+  switch (col) begin
+    case 1: RepSpec.f1 = StringFromSet(621,kBankTRFileColumnAmount); 
+    case 2: RepSpec.f2 = StringFromSet(621,kBankTRFileColumnAmount); 
+    case 3: RepSpec.f3 = StringFromSet(621,kBankTRFileColumnAmount); 
+    case 4: RepSpec.f4 = StringFromSet(621,kBankTRFileColumnAmount); 
+    case 5: RepSpec.f5 = StringFromSet(621,kBankTRFileColumnAmount); 
+    case 6: RepSpec.f6 = StringFromSet(621,kBankTRFileColumnAmount); 
+    case 7: RepSpec.f7 = StringFromSet(621,kBankTRFileColumnAmount); 
+    case 8: RepSpec.f8 = StringFromSet(621,kBankTRFileColumnAmount); 
+    case 9: RepSpec.f9 = StringFromSet(621,kBankTRFileColumnAmount); 
+    case 10: RepSpec.f10 = StringFromSet(621,kBankTRFileColumnAmount); 
+  end;
+  if (blank(res)) then begin
+    res = default;
+  end;
+  BankTRCSVFileDecimalSeparator = res;
+  return;
+end;
+
+function string 255 ParseCSVFileDate(record SysFormatBlock SFb,string data,Integer sp,string datesep)
+begin
+  string 255 res,ch;
+  Integer p,d;
+  Boolean testf;
+
+  if (nonblank(data)) then begin
+    testf = true;
+    p = sp - 1;
+    if (p>=0 and p<len(data)) then begin
+      if (IsDigit(Mid(data,p,1))==false) then begin
+        testf = false;
+      end;
+    end;
+    p = sp + 1;
+    if (p>=0 and p<len(data)) then begin
+      if (IsDigit(Mid(data,p,1))==false) then begin
+        testf = false;
+      end;
+    end;
+    if (testf) then begin
+      d = 1;
+      p = 0;
+      ch = Mid(data,p,1);
+      while (nonblank(ch)) begin
+        if (ch==datesep) then begin
+          res = res & ch;
+        end else begin
+          if (IsDigit(ch)) then begin
+            switch (SFb.dateOrder) begin
+              case 0:
+                switch (d) begin
+                  case 1: res = res & "M";
+                  case 2: res = res & "M";
+                  case 3: res = res & "D";
+                  case 4: res = res & "D";
+                  case 5: res = res & "Y";
+                  case 6: res = res & "Y";
+                  case 7: res = res & "Y";
+                  case 8: res = res & "Y";
+                end;
+              case 1:
+                switch (d) begin
+                  case 1: res = res & "D";
+                  case 2: res = res & "D";
+                  case 3: res = res & "M";
+                  case 4: res = res & "M";
+                  case 5: res = res & "Y";
+                  case 6: res = res & "Y";
+                  case 7: res = res & "Y";
+                  case 8: res = res & "Y";
+                end;
+              case 2:
+                switch (d) begin
+                  case 1: res = res & "Y";
+                  case 2: res = res & "Y";
+                  case 3: res = res & "Y";
+                  case 4: res = res & "Y";
+                  case 5: res = res & "M";
+                  case 6: res = res & "M";
+                  case 7: res = res & "D";
+                  case 8: res = res & "D";
+                end;
+            end;
+            d = d + 1;
+          end;
+        end;        
+        p = p + 1;      
+        ch = Mid(data,p,1);
+      end;
+    end;
+  end;
+  ParseCSVFileDate = res;
+  return;
+end;
+
+function string 255 FindBankTRCSVFileDateFormat(record SysFormatBlock SFb,string data)
+begin
+  string 255 res,datesep;
+  Integer sp;
+
+  sp = InString(data,"/");
+  if (sp!=0) then begin datesep = "/"; end;
+  if (sp<=0) then begin
+    sp = InString(data,"-");
+    if (sp!=0) then begin datesep = "-"; end;
+  end;
+  if (sp<=0) then begin
+    sp = InString(data,".");
+    if (sp!=0) then begin datesep = "."; end;
+  end;
+  if (sp!=0) then begin
+    res = ParseCSVFileDate(SFb,data,sp-1,datesep);
+  end;
+  FindBankTRCSVFileDateFormat = res;
+  return;
+end;
+
+function string 255 BankTRCSVFileDateFormat(record RcVc RepSpec,string fsep,string default,string inline)
+begin
+  string 255 res,data;
+  LongInt pos;
+  record SysFormatBlock SFb;
+  Integer col;
+
+  BlockLoad(SFb);  
+  col = 1;
+  pos = 0;
+  GetNextSubstring(inline,pos,fsep,data);
+  while (nonblank(data)) begin
+    data = StripCharacter(data,"""");
+    res = FindBankTRCSVFileDateFormat(SFb,data);
+    if (nonblank(res)) then begin
+      data = "";
+    end else begin
+      GetNextSubstring(inline,pos,fsep,data);
+      col = col + 1;
+    end;
+  end;
+  switch (col) begin
+    case 1: RepSpec.f1 = StringFromSet(621,kBankTRFileColumnDate); 
+    case 2: RepSpec.f2 = StringFromSet(621,kBankTRFileColumnDate); 
+    case 3: RepSpec.f3 = StringFromSet(621,kBankTRFileColumnDate); 
+    case 4: RepSpec.f4 = StringFromSet(621,kBankTRFileColumnDate); 
+    case 5: RepSpec.f5 = StringFromSet(621,kBankTRFileColumnDate); 
+    case 6: RepSpec.f6 = StringFromSet(621,kBankTRFileColumnDate); 
+    case 7: RepSpec.f7 = StringFromSet(621,kBankTRFileColumnDate); 
+    case 8: RepSpec.f8 = StringFromSet(621,kBankTRFileColumnDate); 
+    case 9: RepSpec.f9 = StringFromSet(621,kBankTRFileColumnDate); 
+    case 10: RepSpec.f10 = StringFromSet(621,kBankTRFileColumnDate); 
+  end;
+  if (blank(res)) then begin
+    res = default;
+  end;
+  BankTRCSVFileDateFormat = res;
+  return;
+end;
+
+procedure ParseBankTRCSVFile(record RcVc RepSpec)
+begin
+  string 255 inline;
+  
+  if (RepSpec.flags[0]!=0) then begin
+    NextImportLine(true);
+  end;
+  inline = ImportField;
+
+//"EE242200221010625678";"10";"01.08.2015";"";"Algsaldo";"8074,61";"EUR";"K";"";"AS";"";"";  
+//06/08/2015,FEE-Fee-Dom Wire,-17.00
+  RepSpec.AccStr = BankTRCSVFileFieldSeparator(RepSpec.AccStr,inline);
+  RepSpec.Stext = BankTRCSVFileDateFormat(RepSpec,RepSpec.AccStr,RepSpec.Stext,inline);
+  RepSpec.FirstAcc = BankTRCSVFileDecimalSeparator(RepSpec,RepSpec.AccStr,RepSpec.FirstAcc,inline);
+  return;
+end;
+
+global
+procedure BankTRFindCSVFileFormat()
+begin
+  Integer wn;
+  record RcVc RepSpec;
+  string 255 fname;
+  
+  wn = CurWindow;
+  DeselectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  if (OpenFileDialog("CSV",fname)) then begin    
+    RepSpec.f1 = StringFromSet(621,0); 
+    RepSpec.f2 = StringFromSet(621,0); 
+    RepSpec.f3 = StringFromSet(621,0); 
+    RepSpec.f4 = StringFromSet(621,0); 
+    RepSpec.f5 = StringFromSet(621,0); 
+    RepSpec.f6 = StringFromSet(621,0); 
+    RepSpec.f7 = StringFromSet(621,0); 
+    RepSpec.f8 = StringFromSet(621,0); 
+    RepSpec.f9 = StringFromSet(621,0); 
+    RepSpec.f10 = StringFromSet(621,0); 
+    OpenFile(fname);
+    ParseBankTRCSVFile(RepSpec);
+    CloseFile;
+  end;  
+  PutWindowRecord(wn,RepSpec);
+  SelectWindow(wn);
+  return;
+end;
+
+global
+procedure WebSiteInfoRClassReportDefaults(Integer wn)
+begin
+  record RcVc RepSpec;
+
+  DeselectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  ReportDefaults(RepSpec,"WebSiteInfoRClass");
+  RepSpec.NoTimeoutLimit = 1;
+  PutWindowRecord(wn,RepSpec);
+  SelectWindow(wn);
+  return;
+end;
+
+global
+procedure WebSiteInfoRClassReportDefaults(Integer wn)
+begin
+  record RcVc RepSpec;
+
+  DeselectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  ReportDefaults(RepSpec,"WebSiteInfoRClass");
+  RepSpec.NoTimeoutLimit = 1;
+  PutWindowRecord(wn,RepSpec);
+  SelectWindow(wn);
+  return;
+end;
+
+procedure SetLatIntrastatDefaults(var record RCVc RepSpec)
+begin
+
+  RepSpec.flags[1] = 1;
+  RepSpec.flags[2] = 1;
+  RepSpec.flags[3] = 0;
+
+  return;
+end;
+
+global
+procedure LatIntrastatPURClassReportDefaults(Integer wn)
+begin
+  record RcVc RepSpec;
+
+  DeselectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  ReportDefaults(RepSpec,"LatIntrastatPURClass");
+  SetLatIntrastatDefaults(RepSpec);
+  PutWindowRecord(wn,RepSpec);
+  SelectWindow(wn);
+  return;
+end;
+
+global
+procedure LatIntrastatIVRClassReportDefaults(Integer wn)
+begin
+  record RcVc RepSpec;
+
+  DeselectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  ReportDefaults(RepSpec,"LatIntrastatIVRClass");
+  SetLatIntrastatDefaults(RepSpec);
+  PutWindowRecord(wn,RepSpec);
+  SelectWindow(wn);
+  return;
+end;
+
+global
+procedure LatIntrastatPUEClassReportDefaults(Integer wn)
+begin
+  record RcVc RepSpec;
+
+  DeselectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  ReportDefaults(RepSpec,"LatIntrastatPUEClass");
+  SetLatIntrastatDefaults(RepSpec);
+  PutWindowRecord(wn,RepSpec);
+  SelectWindow(wn);
+  return;
+end;
+
+global
+procedure LatIntrastatIVEClassReportDefaults(Integer wn)
+begin
+  record RcVc RepSpec;
+
+  DeselectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  ReportDefaults(RepSpec,"LatIntrastatIVEClass");
+  SetLatIntrastatDefaults(RepSpec);
+  PutWindowRecord(wn,RepSpec);
+  SelectWindow(wn);
+  return;
+end;
+
+global
+procedure POSZRClassReportDefaults(Integer wn)
+begin
+  record RcVc RepSpec;
+  record LocalMachineBlock LMb;
+  
+  BlockLoad(LMb);  
+  
+  DeselectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  ReportDefaults(RepSpec,"POSZRClass");  
+  RepSpec.sStartDate = CurrentDate;
+  RepSpec.sEndDate = CurrentDate;
+  RepSpec.Period2Str = CurrentDate;
+  RepSpec.Period2Str = RepSpec.Period2Str & ":";
+  RepSpec.Period2Str = RepSpec.Period2Str & RepSpec.sEndDate;
+  RepSpec.FirstAcc = LMb.LocalMachineCode;
+  RepSpec.LastAcc = CurDrawerCode(LMb.LocalMachineCode);
+  RepSpec.flags[0] = 0;
+  PutWindowRecord(wn,RepSpec);
+  SelectWindow(wn);  
+  return;
+end;
+
+global
+procedure POSXRClassReportDefaults(Integer wn)
+begin
+  record RcVc RepSpec;
+  record LocalMachineBlock LMb;
+  
+  BlockLoad(LMb);  
+  
+  DeselectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  ReportDefaults(RepSpec,"POSXRClass");  
+  RepSpec.sStartDate = CurrentDate;
+  RepSpec.sEndDate = CurrentDate;
+  RepSpec.Period2Str = CurrentDate;
+  RepSpec.Period2Str = RepSpec.Period2Str & ":";
+  RepSpec.Period2Str = RepSpec.Period2Str & RepSpec.sEndDate;
+  RepSpec.FirstAcc = LMb.LocalMachineCode;
+  RepSpec.LastAcc = CurDrawerCode(LMb.LocalMachineCode);
+  RepSpec.flags[0] = 1;
+  PutWindowRecord(wn,RepSpec);
+  SelectWindow(wn);  
+  return;
+end;
+
+global
+procedure BIRESalesEClassReportDefaults(Integer wn)
+begin
+  record CYBlock CYb;
+  record RcVc RepSpec;
+    
+  DeselectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  ReportDefaults(RepSpec,"BIRESalesEClass");  
+  BlockLoad(CYb);
+  RepSpec.f1 = "POS SALES";
+  RepSpec.f1 = RepSpec.f1 & " " & CYb.VATNr;
+  RepSpec.f1 = RepSpec.f1 & " " & DateToString(CurrentDate,"MMYYYY");
+  RepSpec.f1 = RepSpec.f1 & " " & "F00";
+  PutWindowRecord(wn,RepSpec);
+  return;
+end;
+
+global
+procedure RCldSvrNoArchvRClassReportDefaults(Integer wn)
+begin
+  record RcVc RepSpec;
+
+  DeselectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  ReportDefaults(RepSpec,"RCldSvrNoArchvRClass");  
+  RepSpec.flags[0] = 1;
+  PutWindowRecord(wn,RepSpec);
+  SelectWindow(wn);  
+  return;
+end;
+
+global
+procedure OPBIRJRClassReportDefaults(Integer wn)
+begin
+  record RcVc RepSpec;
+
+  DeselectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  ReportDefaults(RepSpec,"OPBIRJRClass");  
+  RepSpec.f2 = USetStr(39260);
+  PutWindowRecord(wn,RepSpec);
+  SelectWindow(wn);  
+  return;
+end;
+
+global
+procedure IPBIRJRClassReportDefaults(Integer wn)
+begin
+  record RcVc RepSpec;
+
+  DeselectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  ReportDefaults(RepSpec,"IPBIRJRClass");  
+  RepSpec.f2 = USetStr(39280);
+  PutWindowRecord(wn,RepSpec);
+  SelectWindow(wn);  
+  return;
+end;
+
+global
+procedure VIIntCostCalcRClassReportDefaults(Integer wn)
+begin
+  record RcVc RepSpec;
+
+  DeselectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  ReportDefaults(RepSpec,"VIIntCostCalcRClass");  
+  RepSpec.flags[1] = 1;
+  PutWindowRecord(wn,RepSpec);
+  SelectWindow(wn);  
+  return;
+end;
+
+global
+procedure ConsCust2STRClassReportDefaults(Integer wn)
+begin
+  record RcVc RepSpec;
+
+  DeselectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  ReportDefaults(RepSpec,"ConsCust2STRClass");  
+  RepSpec.IncDaughter = 1;
+  PutWindowRecord(wn,RepSpec);
+  SelectWindow(wn);  
+  return;
+end;
+
+global
+procedure SugarCRMInitVClassReportDefaults(Integer wn)
+begin
+  record RcVc RepSpec;
+  record SugarCRMBlock SCRMb;
+  
+  BlockLoad(SCRMb);
+  DeselectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  ReportDefaults(RepSpec,"SugarCRMInitVClass");  
+  RepSpec.flags[0] = SCRMb.SendContacts;
+  RepSpec.flags[1] = SCRMb.SendItems;
+  PutWindowRecord(wn,RepSpec);
+  SelectWindow(wn);
+  return;
+end;
+
+global
+procedure CleanUILogVClassReportDefaults(Integer wn)
+begin
+  record RcVc RepSpec;
+
+  DeselectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  ReportDefaults(RepSpec,"CleanUILogVClass");
+  RepSpec.flags[0] = 1;
+  PutWindowRecord(wn,RepSpec);
+  SelectWindow(wn);
+  return;
+end;
+
+global
+procedure ActProjStatRClassReportDefaults(Integer wn)
+begin
+  record RcVc RepSpec;
+
+  DeselectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  ReportDefaults(RepSpec,"ActProjStatRClass");
+  RepSpec.ArtMode = 1;
+  PutWindowRecord(wn,RepSpec);
+  SelectWindow(wn);
+  return;
+end;
+
+global
+procedure ALLVATZWERClassReportDefaults(Integer wn)
+begin
+  record RcVc RepSpec;
+  
+  DeselectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  ReportDefaults(RepSpec,"ALLVATZWERClass");
+  if (HasLocalization("KEN")) then begin
+    RepSpec.flags[14] = 1;
+  end;
+  PutWindowRecord(wn,RepSpec);
+  SelectWindow(wn);
+  return;
+end;
+
+global
+procedure BarItemStatRClassReportDefaults(Integer wn)
+begin
+  record RcVc RepSpec;
+  
+  DeselectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  ReportDefaults(RepSpec,"BarItemStatRClass");
+  if (IsEnterprise or HasItemGroups) then begin
+    RepSpec.ArtMode = 0;
+  end else begin
+    RepSpec.ArtMode = 1;
+  end;
+  PutWindowRecord(wn,RepSpec);
+  SelectWindow(wn);
+  return;
+end;
+
+global
+procedure SysDataEClassReportDefaults(Integer wn)
+begin
+  record RcVc RepSpec;
+  
+  DeselectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  ReportDefaults(RepSpec,"SysDataEClass");
+  RepSpec.sm1 = 0;
+  RepSpec.em1 = 0;
+  PutWindowRecord(wn,RepSpec);
+  SelectWindow(wn);
+  return;
+end;
+

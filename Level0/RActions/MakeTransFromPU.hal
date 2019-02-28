@@ -115,7 +115,7 @@ BEGIN
         goto LGetPUPControlAcc;
       end;
       VEp.Code = vecode;
-      if ReadFirstMain(VEp,1,true) then begin
+      if (ReadFirstMain(VEp,1,true)) then begin
         if (VEp.ExportFlag == 0) then begin
           ctype = 0;
         end;
@@ -142,7 +142,7 @@ BEGIN
         purchacc = ARAccRec.ExpPurchAcc;
       end;  
     case kStockTypeConsignment:
-        purchacc = ARAccRec.ConsigPurchAcc;
+      purchacc = ARAccRec.ConsigPurchAcc;
   end;
 LGetPUPControlAcc:;  
   if (GetAccName(purchacc,purchaccname,60)==false) then begin 
@@ -395,7 +395,7 @@ begin
       if (CAb.BookInPriceVariance!=0) and (primarycostmodel==1) and (queuecostmodel!=20) then begin
         if (CheckTTRPerRow("PUVc",stockacc,stockobjstr,dc1,taccnumber,1)) then begin end;      
         t = Round(PUrw.Quant*PUrw.InPrice,SetRoundModeD(2));
-        AddEuroCurncyTrRowType(gTRp,stockacc,stockobjstr,"",tstr,t,sumupf,dc1,TotSum,PUp.CurncyCode,frrate,to1,to2,br1,br2,blankval,blankval,-1,false,taccnumber,kTransactionRowTypeStock);
+        AddEuroCurncyTrRowType(gTRp,stockacc,stockobjstr,"",tstr,t,sumupf,dc1,TotSum,PUp.CurncyCode,frrate,to1,to2,br1,br2,blankval,PUrw.Quant,-1,false,taccnumber,kTransactionRowTypeStock);
 
         if (GetAccName(ARb.InPriceVarAcc,tstr,60)==false) then begin
           res = 22048;
@@ -409,7 +409,7 @@ begin
       end else begin
         if (CheckTTRPerRow("PUVc",stockacc,stockobjstr,dc1,taccnumber,1)) then begin end;      
         t = Round(rs+extra,SetRoundModeD(2));
-        AddEuroCurncyTrRowType(gTRp,stockacc,stockobjstr,"",tstr,t,sumupf,dc1,TotSum,PUp.CurncyCode,frrate,to1,to2,br1,br2,blankval,blankval,-1,false,taccnumber,kTransactionRowTypeStock);
+        AddEuroCurncyTrRowType(gTRp,stockacc,stockobjstr,"",tstr,t,sumupf,dc1,TotSum,PUp.CurncyCode,frrate,to1,to2,br1,br2,blankval,PUrw.Quant,-1,false,taccnumber,kTransactionRowTypeStock);
 /*
 cause of rounding diferences between GR an TR 
         if (extra!=0) then begin
@@ -630,10 +630,12 @@ BEGIN
   gTRp.RegDate = CurrentDate;
   gTRp.RegTime = CurrentTime;
   gTRp.TransDate = PUp.TransDate;  
-  if (TransInFiscal(gTRp.TransDate)==false and HasFiscalRows) then begin
-    res = 1075;
-    goto LMakeTransFromPU;
-  end;  
+  if (rpt==false) then begin
+    if (TransInFiscal(gTRp.TransDate)==false and HasFiscalRows) then begin
+      res = 1075;
+      goto LMakeTransFromPU;
+    end;  
+  end;
   ftxt = PUp.VECode;
   ftxt = ftxt & " ";
   ftxt = ftxt & PUp.VEName;
@@ -769,7 +771,7 @@ BEGIN
       rwobj = PUp.Objects;
     end;      
     if (CheckTTRPerRow("PUVc",stockacc,rwobj,dc1,taccnumber,0)) then begin end;      
-    AddEuroCurncyTrRowType(gTRp,stockacc,rwobj,"",tstr,rs,sumupf,dc1,TotSum,PUp.CurncyCode,frrate,to1,to2,br1,br2,rs2,blankval,-1,false,taccnumber,kTransactionRowTypeStock);
+    AddEuroCurncyTrRowType(gTRp,stockacc,rwobj,"",tstr,rs,sumupf,dc1,TotSum,PUp.CurncyCode,frrate,to1,to2,br1,br2,rs2,PUrw.Quant,-1,false,taccnumber,kTransactionRowTypeStock);
   end;
   rs = PUp.ShipCostRound;
   rs = Round(rs,DefaultRoundMode);

@@ -1,3 +1,5 @@
+external updating procedure RetriveSiteMinderReservations();
+external procedure PullBookingComStatus();
 external function LongInt TimeToSeconds2(Time);
 external function Integer SetDateOrder(string);
 external procedure LongDateToStr(Date,Integer,var string);
@@ -35,17 +37,17 @@ begin
     if (blank(STr.Code)) then begin
       STr.Code = CRb.SMSReminderText;
     end;
-
+    
     if (nonblank(STr.Code)) then begin
       if (ReadFirstMain(STr,1,true)) then begin end;
       l = SizeTextCnt(STr);
-
+      
       if (l>0) then begin
         BlockLoad(BARb);
         rwcnt = MatRowCnt(CourseEventr);
         for (i=0;i<rwcnt;i=i+1) begin
           MatRowGet(CourseEventr,i,CourseEventrw);
-
+          
           if (CourseEventrw.Status==kCourseEventPaticipantStatusPaying or CourseEventrw.Status==kCourseEventPaticipantStatusNotPaying) then begin
             CUr.Code = CourseEventrw.ContactCode;
             if (blank(CUr.Code)) then begin
@@ -57,7 +59,7 @@ begin
                   if (custsent[CUr.Code]==false) then begin
 
                     RecordNew(SMSr);
-
+                    
                     pos = 0;
                     while (pos<l) begin
                       tstr = StringFromText(STr,pos,1);
@@ -67,7 +69,7 @@ begin
                           case "d":
                             tstr = CourseEventr.TransDate;
                             pos = pos+1;
-                          case "t":
+                          case "t": 
                             tstr = CourseEventr.StartTime;
                             pos = pos+1;
                           case "c":
@@ -80,7 +82,7 @@ begin
                             pos = pos+1;
                         end;
                       end;
-
+                      
                       AddToText(tstr,SMSr);
                       pos = pos + 1;
                     end;
@@ -89,12 +91,12 @@ begin
 
                     SMSr.PhoneNo = CUr.Mobile;
                     SMSr.CustCode = CUr.Code;
-
+                    
                     SMSr.FromPhoneNo = BARb.SystemMobile;
                     if (blank(SMSr.FromPhoneNo)) then begin
                       SMSr.FromPhoneNo = SMSr.PhoneNo;
                     end;
-
+                    
                     SMSr.SendFlag = 1;
                     SMSr.SerNr = NextSerNr("SMSVc",SMSr.TransDate,-1,false,"");
 
@@ -107,15 +109,15 @@ begin
         end;
       end;
     end;
-
+    
     RecordCopy(oldCourseEventr,CourseEventr);
     CourseEventr.RemindersSent = 1;
-
+    
     if (RecordUpdate(oldCourseEventr,CourseEventr,false)!=0) then begin
       LogText(0,"Sending reminder for course event " & CourseEventr.SerNr & " in company " & CurrentCompany & " failed.");
     end;
   end;
-
+  
   return;
 end;
 
@@ -131,11 +133,11 @@ begin
   time t;
 
   BlockLoad(CRb);
-
+  
   treatedf = false;
-  oldcomp = CurrentCompany;
+  oldcomp = CurrentCompany;  
   BlockLoad(Compb);
-  rwcnt = MatRowCnt(Compb);
+  rwcnt = MatRowCnt(Compb);  
   for (i=0;i<rwcnt;i=i+1) begin
     MatRowGet(Compb,i,Comprw);
     if (blank(Comprw.TCPIP)) then begin
@@ -169,7 +171,7 @@ procedure InitCourseSMSReminderTask()
 begin
   record CourseReminderBlock CRb;
   time t;
-
+  
   BlockLoad(CRb);
   if (CRb.SendReminders==1 and nonblanktime(CRb.ReminderTime) and CRb.DaysBeforeEvent>0) then begin
     if (CRb.ReminderTime < CurrentTime) then begin
@@ -190,7 +192,7 @@ begin
   string 255 mailboxnr,to,recidstr;
   record ActVc Actr;
   Integer oldcomp;
-
+   
   oldcomp = CurrentCompany;
   if (oldcomp!=Alarmr.CompNo) then begin
     if (SetCompany(Alarmr.CompNo,false)) then begin
@@ -203,7 +205,7 @@ begin
     ResetCompany(oldcomp);
   end;
   recidstr = BuildRecordIdStr(Actr,Alarmr.CompNo);
-
+  
   pos = 0;
   ExtractObj(Alarmr.MainPersons,pos,person);
   while (nonblank(person)) begin
@@ -211,10 +213,10 @@ begin
     if (nonblank(to)) then begin
       if (SendAlarmMessage(Alarmr.Comment,"",to,recidstr)) then begin
         res = true;
-      end;
+      end;      
     end;
     ExtractObj(Alarmr.MainPersons,pos,person);
-  end;
+  end;  
 
   pos = 0;
   ExtractObj(Alarmr.CCPersons,pos,person);
@@ -223,10 +225,10 @@ begin
     if (nonblank(to)) then begin
       if (SendAlarmMessage(Alarmr.Comment,"",to,recidstr)) then begin
         res = true;
-      end;
+      end;      
     end;
     ExtractObj(Alarmr.CCPersons,pos,person);
-  end;
+  end;  
 
   SendMsgs = res;
   return;
@@ -237,7 +239,7 @@ function string 255 GetUserMobileNr(record UserVc Userr)
 begin
   string 255 res;
   record CUVc CUr;
-
+  
   if (nonblank(Userr.CustCode)) then begin
     CUr.Code = Userr.CustCode;
     if (ReadFirstMain(CUr,1,true)) then begin
@@ -250,7 +252,7 @@ begin
   if (blank(res)) then begin
     res = Userr.Phone2;
   end;
-
+  
   GetUserMobileNr = res;
 end;
 
@@ -262,7 +264,7 @@ begin
   record UserVc Userr;
   string 255 mobile;
   Integer oldcomp;
-
+  
   pos = 0;
   ExtractObj(Alarmr.MainPersons,pos,person);
   while (nonblank(person)) begin
@@ -277,14 +279,14 @@ begin
       if (nonblank(mobile)) then begin
         if (SendSMSFromSystem("",mobile,Alarmr.Comment,"")) then begin
           res = true;
-        end;
+        end;      
       end;
     end;
     if (oldcomp!=Alarmr.CompNo) then begin
       ResetCompany(oldcomp);
     end;
     ExtractObj(Alarmr.MainPersons,pos,person);
-  end;
+  end;  
 
   pos = 0;
   ExtractObj(Alarmr.CCPersons,pos,person);
@@ -300,14 +302,14 @@ begin
       if (nonblank(mobile)) then begin
         if (SendSMSFromSystem("",mobile,Alarmr.Comment,"")) then begin
           res = true;
-        end;
+        end;      
       end;
     end;
     if (oldcomp!=Alarmr.CompNo) then begin
       ResetCompany(oldcomp);
     end;
     ExtractObj(Alarmr.CCPersons,pos,person);
-  end;
+  end;  
 
   SendSMSes = res;
   return;
@@ -318,24 +320,24 @@ begin
   Boolean res;
   string 255 person;
   Integer pos;
-
+  
   pos = 0;
   ExtractObj(Alarmr.MainPersons,pos,person);
   while (nonblank(person)) begin
     if (SendMailFromSystem("",person,Alarmr.Comment,Alarmr.StdTxt,Alarmr.ActSerNr,Alarmr.CompNo,"AlarmVc")) then begin
       res = true;
-    end;
+    end;      
     ExtractObj(Alarmr.MainPersons,pos,person);
-  end;
+  end;  
 
   pos = 0;
   ExtractObj(Alarmr.CCPersons,pos,person);
   while (nonblank(person)) begin
     if (SendMailFromSystem("",person,Alarmr.Comment,Alarmr.StdTxt,Alarmr.ActSerNr,Alarmr.CompNo,"AlarmVc")) then begin
       res = true;
-    end;
+    end;      
     ExtractObj(Alarmr.CCPersons,pos,person);
-  end;
+  end;  
 
   SendMails = res;
   return;
@@ -346,7 +348,7 @@ begin
   Boolean res;
   string 255 person;
   Integer pos;
-
+  
   pos = 0;
   ExtractObj(Alarmr.MainPersons,pos,person);
   while (nonblank(person)) begin
@@ -355,7 +357,7 @@ begin
     end;
     ExtractObj(Alarmr.MainPersons,pos,person);
   end;
-
+  
   pos = 0;
   ExtractObj(Alarmr.CCPersons,pos,person);
   while (nonblank(person)) begin
@@ -364,7 +366,7 @@ begin
     end;
     ExtractObj(Alarmr.CCPersons,pos,person);
   end;
-
+  
   SendNotifications = res;
 end;
 
@@ -376,7 +378,7 @@ begin
   record AlarmVc oldAlarmr;
   Time endtime;
   record CYBlock CYb;
-
+  
   BlockLoad(CYb);
   if (CYb.LockedLevel!=0) then begin
     RemoveTask("TreatAlarmIdleTasks");
@@ -412,7 +414,7 @@ begin
     end;
   end;
   AlarmIdleTasks = RecordsInIndex("AlarmVc","ActDate");
-LAlarmIdleTasks:;
+LAlarmIdleTasks:;  
   return;
 end;
 
@@ -443,10 +445,10 @@ begin
         td.day = td.day + 1;
       end;
       NewTimedTask("SYSRUN_DUEREPORT","Sys Run Due Report","SysRuns","DueReport",td,t,"","");
-    case 1:
+    case 1:      
       td.day = td.day + 1;
       NewTimedTask("SYSRUN_DUEREPORT","Sys Run Due Report","SysRuns","DueReport",td,t,"","");
-    case 2:
+    case 2:         
       RemoveTask("SYSRUN_DUEREPORT");
       if (t<CurrentTime) then begin
         td.day = td.day + 1;
@@ -468,7 +470,7 @@ begin
   Integer attachnr;
   record RLinkVc RLr;
   record BADueReportBlock BADRb;
-
+  
   Mailr.SerNr = FirstInRange(arg,20);
   if (ReadFirstMain(Mailr,1,true)) then begin
     linkfilename = "tmp/ARRn.obj";
@@ -489,7 +491,7 @@ begin
       StartSysRun_DueReport(1,BADRb.TransTime);
     end else begin
       t = CurrentTime;
-      t.second = t.second + 10;
+      t.second = t.second + 10; 
       NewTimedTask("SysRun_DueIdleTask","SysRun_DueReport Idle Task","SysRun_DueReportIdleTask",Mailr.SerNr,CurrentDate,t,"","");
     end;
   end;
@@ -501,7 +503,7 @@ updating procedure SysRun_DueReport()
 begin
   Boolean res;
   record BADueReportBlock BADueRb;
-  record MailSettingsBlock MSb;
+  record MailSettingsBlock MSb; 
   record MailVc Mailr;
   row MailVc Mailrw;
   record RcVc RepSpec;
@@ -535,14 +537,14 @@ begin
           RepSpec.flags[0] = 2;
           RepSpec.ArtMode = 2;
           RepSpec.repname = "ARRn";
-          RunReport(RepSpec,0);
+          RunReport(RepSpec,0); 
           t = CurrentTime;
-          t.second = t.second + 10;
+          t.second = t.second + 10; 
           NewTimedTask("SysRun_DueIdleTask","SysRun_DueReport Idle Task","SysRun_DueReportIdleTask",Mailr.SerNr,CurrentDate,t,"","");
         end;
       end;
     end;
-  end;
+  end;  
   return;
 end;
 
@@ -557,7 +559,7 @@ begin
   record Attach2Vc Attachr;
   Integer attachnr;
   record RLinkVc RLr;
-
+  
   Mailr.SerNr = FirstInRange(arg,20);
   if (ReadFirstMain(Mailr,1,true)) then begin
     linkfilename = "tmp/MainRn.obj";
@@ -578,7 +580,7 @@ begin
       end;
     end else begin
       t = CurrentTime;
-      t.second = t.second + 10;
+      t.second = t.second + 10; 
       NewTimedTask("SysRun_NLReport","SysRun_NLReport","SysRun_NLReportIdleTask","",CurrentDate,t,Mailr.SerNr,"");
     end;
   end;
@@ -590,7 +592,7 @@ updating procedure SysRun_NLReport()
 begin
   Boolean res;
   record BADueReportBlock BADueRb;
-  record MailSettingsBlock MSb;
+  record MailSettingsBlock MSb; 
   record MailVc Mailr;
   row MailVc Mailrw;
   record RcVc RepSpec;
@@ -624,14 +626,14 @@ begin
           RepSpec.flags[26] = 0;
           RepSpec.flags[11] = 0;
           RepSpec.flags[7] = 2;
-          RunReport(RepSpec,0);
+          RunReport(RepSpec,0); 
           t = CurrentTime;
-          t.second = t.second + 10;
+          t.second = t.second + 10; 
           NewTimedTask("SysRun_NLIdleTask","SysRun_NLReport Idle Task","SysRun_NLReportIdleTask",Mailr.SerNr,CurrentDate,t,"","");
         end;
       end;
     end;
-  end;
+  end;  
   return;
 end;
 
@@ -646,7 +648,7 @@ begin
   record Attach2Vc Attachr;
   Integer attachnr;
   record RLinkVc RLr;
-
+  
   Mailr.SerNr = FirstInRange(arg,20);
   if (ReadFirstMain(Mailr,1,true)) then begin
     linkfilename = "tmp/APRn.obj";
@@ -667,7 +669,7 @@ begin
       end;
     end else begin
       t = CurrentTime;
-      t.second = t.second + 10;
+      t.second = t.second + 10; 
       NewTimedTask("SysRun_APReport","SysRun_APReport","SysRun_APReportIdleTask","",CurrentDate,t,Mailr.SerNr,"");
     end;
   end;
@@ -679,7 +681,7 @@ updating procedure SysRun_APReport()
 begin
   Boolean res;
   record BADueReportBlock BADueRb;
-  record MailSettingsBlock MSb;
+  record MailSettingsBlock MSb; 
   record MailVc Mailr;
   row MailVc Mailrw;
   record RcVc RepSpec;
@@ -709,14 +711,14 @@ begin
           RepSpec.flags[0] = 2;
           RepSpec.ArtMode = 0;
           RepSpec.repname = "APRn";
-          RunReport(RepSpec,0);
+          RunReport(RepSpec,0); 
           t = CurrentTime;
-          t.second = t.second + 10;
+          t.second = t.second + 10; 
           NewTimedTask("SysRun_APIdleTask","SysRun_APReport Idle Task","SysRun_APReportIdleTask",Mailr.SerNr,CurrentDate,t,"","");
         end;
       end;
     end;
-  end;
+  end;  
   return;
 end;
 
@@ -760,7 +762,7 @@ global
 procedure InitIdleTasks_BADueReportOnOKWindow(record BADueReportBlock BADRb,record BADueReportBlock BADRprevb)
 begin
   if (ServerMode or SingleUserMode) then begin
-    if (blanktime(BADRprevb.TransTime)) and (nonblanktime(BADRb.TransTime)) or
+    if (blanktime(BADRprevb.TransTime)) and (nonblanktime(BADRb.TransTime)) or 
        (BADRprevb.TransTime!=BADRb.TransTime) then begin
          InitSysRunIdleTasks_Run(2,BADRb);
     end;
@@ -774,7 +776,7 @@ begin
   Boolean res;
   Integer oldcomp;
   Boolean resetf;
-
+  
   if (RepSpec.flags[0]>=0) then begin
     oldcomp = CurrentCompany;
     if (RepSpec.flags[0]!=oldcomp) then begin
@@ -792,7 +794,7 @@ begin
   return;
 end;
 
-
+global
 updating procedure StopEmailQueueActivity(string user,string comment,string acttype)
 begin
   record ActTypeGrVc ATGRr;
@@ -816,6 +818,8 @@ begin
   Actr.OKFlag = 0;
   Actr.Comment = comment;
   Actr.MainPersons = user;
+  Actr.TodoFlag = 0;
+  Actr.CalTimeFlag = 2;
 
   ATr.Code = Actr.ActType;
   if (ReadFirstMain(ATr,1,true)) then begin
@@ -824,18 +828,20 @@ begin
     if (ReadFirstMain(ATGRr,1,true)) then begin
       Actr.CalTimeFlag = ATGRr.DefTimeFlag;
     end;
+    Actr.AlarmType = ATr.AlarmType;
+    Actr.AlarmWhen = ATr.AlarmWhen;
+    Actr.AlarmUnits = ATr.AlarmUnits;
+  end else begin
+    Actr.AlarmType = 1;
+    Actr.AlarmWhen = 0;
+    Actr.AlarmUnits = 1;
   end;
-  Actr.TodoFlag = 0;
-  Actr.CalTimeFlag = 2;
-  Actr.AlarmType = 1;
-  Actr.AlarmWhen = 0;
-  Actr.AlarmUnits = 1;
   if (Actr.SerNr>0) then begin
     if (RecordStore(Actr,false)) then begin
     end;
   end;
   return;
-end;
+end; 
 
 global
 updating procedure TestEmailQueueStoppedIdleTask(string arg)
@@ -846,7 +852,7 @@ begin
   record BASysIntBlock BASysIntb;
   record MailSettingsBlock MailSb;
   record ConfVc Confr;
-
+  
   if (RecordsInIndex("EMailQueVc","SerNr")>0) then begin
     EMailQuer.EMailSent = 0;
     found = ReadFirstKey("Sending",EMailQuer,1,true);
@@ -867,7 +873,7 @@ begin
       end;
       msgf = true;
 
-      if (msgf) then begin
+      if (msgf) then begin      
         BlockLoad(BASysIntb);
         if (BASysIntb.SMSStopEmailQueue!=0) then begin
           SendSMSFromSystem(BASysIntb.SystemMobile,BASysIntb.SMSNumbers,USetStr(20284),BASysIntb.StopEmailQueueLTxtCode);
@@ -960,7 +966,7 @@ begin
   Time startt,tt;
   Boolean testf;
 
-  oldcomp = CurrentCompany;
+  oldcomp = CurrentCompany;  
   if (nonblank(arg)) then begin
     testf = true;
     if (oldcomp!=StringToInt(arg)) then begin
@@ -970,16 +976,16 @@ begin
     end;
     if (testf) then begin
       BlockLoad(CDb);
-
+        
       if (CDb.UpdStockMaint!=0) then begin
-        ReportDefaults(RepSpec,"POSUpdStockVClass");
+        ReportDefaults(RepSpec,"POSUpdStockVClass");  
         RepSpec.sStartDate = CurrentDate;
         RepSpec.sEndDate = CurrentDate;
         RepSpec.Period2Str = RepSpec.sStartDate;
         RepSpec.Period2Str = RepSpec.Period2Str & ":";
         RepSpec.Period2Str = RepSpec.Period2Str & RepSpec.sEndDate;
         RepSpec.FirstAcc = "*";
-
+  
         RepSpec.repname = "POSUpdStockMn";
         RepSpec.critname = "POSUpdStockVClass";
         RepSpec.flags[1] = CDb.POSOKSD;
@@ -1013,7 +1019,7 @@ begin
   Time startt,tt;
   Boolean testf;
 
-  oldcomp = CurrentCompany;
+  oldcomp = CurrentCompany;  
   if (nonblank(arg)) then begin
     testf = true;
     if (oldcomp!=StringToInt(arg)) then begin
@@ -1024,14 +1030,14 @@ begin
     if (testf) then begin
       BlockLoad(CDb);
       if (CDb.RestUpdStockMaint!=0) then begin
-        ReportDefaults(RepSpec,"BarGenSDVClass");
+        ReportDefaults(RepSpec,"BarGenSDVClass");  
         RepSpec.sStartDate = CurrentDate;
         RepSpec.sEndDate = CurrentDate;
         RepSpec.Period2Str = RepSpec.sStartDate;
         RepSpec.Period2Str = RepSpec.Period2Str & ":";
         RepSpec.Period2Str = RepSpec.Period2Str & RepSpec.sEndDate;
         RepSpec.flags[1] = CDb.RestOKSD;
-
+  
         RepSpec.repname = "BarGenSDMn";
         RepSpec.critname = "BarGenSDVClass";
         RunMaintenance(RepSpec);
@@ -1103,7 +1109,7 @@ begin
       BlockLoad(CDb);
       if (CDb.CashupMaint!=0) or (CDb.CushUpOnCloseSession!=0 and larg=="onlyPOS") then begin //EBS edit
 
-        ReportDefaults(RepSpec,"CashupVClass");
+        ReportDefaults(RepSpec,"CashupVClass");  
         RepSpec.f1 = "";
         RepSpec.f4 = "";
         RepSpec.sStartDate = CurrentDate;
@@ -1154,7 +1160,7 @@ begin
   Time startt,tt;
   Boolean testf;
 
-  oldcomp = CurrentCompany;
+  oldcomp = CurrentCompany; 
   if (nonblank(arg)) then begin
     testf = true;
     if (oldcomp!=StringToInt(arg)) then begin
@@ -1169,9 +1175,9 @@ begin
         startt = CurrentTime;
         tt = startt;
         if (nonblanktime(CDb.CashupMaintInterval) and TimeToSeconds2(CDb.CashupMaintInterval)!=0) then begin
-          tt.minute = tt.minute + TimeToSeconds2(CDb.CashupMaintInterval)/60;
+          tt = AddMinutes(tt,TimeToSeconds2(CDb.CashupMaintInterval)/60);
         end else begin
-          tt.minute = tt.minute + 1;
+          tt = AddMinutes(tt,1);
         end;
         if (tt<startt) then begin
           td = AddDay(td,1);
@@ -1193,7 +1199,7 @@ begin
   Time startt,tt;
   Boolean testf;
 
-  oldcomp = CurrentCompany;
+  oldcomp = CurrentCompany; 
   if (nonblank(arg)) then begin
     testf = true;
     if (oldcomp!=StringToInt(arg)) then begin
@@ -1208,9 +1214,9 @@ begin
         startt = CurrentTime;
         tt = startt;
         if (nonblanktime(CDb.UpdStockMaintTime) and TimeToSeconds2(CDb.UpdStockMaintTime)!=0) then begin
-          tt.minute = tt.minute + TimeToSeconds2(CDb.UpdStockMaintTime)/60;
+          tt = AddMinutes(tt,TimeToSeconds2(CDb.UpdStockMaintTime)/60);
         end else begin
-          tt.minute = tt.minute + 1;
+          tt = AddMinutes(tt,1);
         end;
         if (tt<startt) then begin
           td = AddDay(td,1);
@@ -1232,7 +1238,7 @@ begin
   Time startt,tt;
   Boolean testf;
 
-  oldcomp = CurrentCompany;
+  oldcomp = CurrentCompany; 
   if (nonblank(arg)) then begin
     testf = true;
     if (oldcomp!=StringToInt(arg)) then begin
@@ -1247,9 +1253,9 @@ begin
         startt = CurrentTime;
         tt = startt;
         if (nonblanktime(CDb.RestUpdStockMaintTime) and TimeToSeconds2(CDb.RestUpdStockMaintTime)!=0) then begin
-          tt.minute = tt.minute + TimeToSeconds2(CDb.RestUpdStockMaintTime)/60;
+          tt = AddMinutes(tt,TimeToSeconds2(CDb.RestUpdStockMaintTime)/60);
         end else begin
-          tt.minute = tt.minute + 1;
+          tt = AddMinutes(tt,1);
         end;
         if (tt<startt) then begin
           td = AddDay(td,1);
@@ -1273,8 +1279,8 @@ begin
   record CashierDefBlock CDb;
   Date td;
   Time startt,tt;
-
-  oldcomp = CurrentCompany;
+  
+  oldcomp = CurrentCompany;  
   BlockLoad(Cb);
   rwcnt = MatRowCnt(Cb);
   for (i=0;i<rwcnt;i=i+1) begin
@@ -1352,7 +1358,7 @@ begin
   Time t,startt;
   Date td;
   record GSXSettingsBlock GSb;
-
+  
   BlockLoad(GSb);
   if (nonblanktime(GSb.AutoEnrollmentInterval)) then begin
   if (GetHour(GSb.AutoEnrollmentInterval)!=0 or GetMinute(GSb.AutoEnrollmentInterval)!=0 or GetSecond(GSb.AutoEnrollmentInterval)!=0) then begin
@@ -1373,7 +1379,7 @@ function Boolean ReplaceUpdatePackage(string os,LongInt oldvernr,LongInt newvern
 begin
   Boolean res;
   string 255 filename,oldfilename,newfilename,folder;
-
+  
   res = false;
   folder = "updateclients";
   if (!DirExists(folder)) then begin
@@ -1413,7 +1419,7 @@ begin
     otherwise
       goto LReplaceUpdatePackage;
   end;
-
+  
   if (FileExists(folder & "/" & filename)) then begin
     if (backupold) then begin
       if (RenameFile(folder & "/" & filename,folder & "/" & oldfilename)!=0) then begin
@@ -1423,7 +1429,7 @@ begin
       Delete_File(folder & "/" & filename);
     end;
   end;
-
+  
   if (FileExists(folder & "/" & newfilename)) then begin
     if (RenameFile(folder & "/" & newfilename,folder & "/" & filename)!=0) then begin
       goto LReplaceUpdatePackage;
@@ -1431,9 +1437,9 @@ begin
   end else begin
     goto LReplaceUpdatePackage;
   end;
-
+  
   res = true;
-
+  
 LReplaceUpdatePackage:;
   ReplaceUpdatePackage = res;
 end;
@@ -1441,12 +1447,12 @@ end;
 updating procedure DoAvailClientUpdateVersion(string os)
 begin
   record AvailClientBlock ACb;
-
+  
   BlockLoad(ACb);
-
+  
   switch (os) begin
     case "windows":
-      if (ACb.NextVerNrWindows>ACb.VerNrWindows) then begin
+      if (ACb.NextVerNrWindows>=ACb.VerNrWindows) then begin
         if (ReplaceUpdatePackage(os,ACb.VerNrWindows,ACb.NextVerNrWindows,false)) then begin
           ACb.VerNrWindows = ACb.NextVerNrWindows;
           ACb.NextVerNrWindows = -1;
@@ -1455,7 +1461,7 @@ begin
         ACb.NextVerNrWindows = -1;
       end;
     case "macosx":
-      if (ACb.NextVerNrOSXCocoa>ACb.VerNrOSXCocoa) then begin
+      if (ACb.NextVerNrOSXCocoa>=ACb.VerNrOSXCocoa) then begin
         if (ReplaceUpdatePackage(os,ACb.VerNrOSXCocoa,ACb.NextVerNrOSXCocoa,false)) then begin
           ACb.VerNrOSXCocoa = ACb.NextVerNrOSXCocoa;
           ACb.NextVerNrOSXCocoa = -1;
@@ -1464,7 +1470,7 @@ begin
         ACb.NextVerNrOSXCocoa = -1;
       end;
     case "ios":
-      if (ACb.NextVerNriPhone>ACb.VerNriPhone) then begin
+      if (ACb.NextVerNriPhone>=ACb.VerNriPhone) then begin
         if (ReplaceUpdatePackage(os,ACb.VerNriPhone,ACb.NextVerNriPhone,false)) then begin
           ACb.VerNriPhone = ACb.NextVerNriPhone;
           ACb.NextVerNriPhone = -1;
@@ -1473,7 +1479,7 @@ begin
         ACb.NextVerNriPhone = -1;
       end;
     case "android":
-      if (ACb.NextVerNrAndroid>ACb.VerNrAndroid) then begin
+      if (ACb.NextVerNrAndroid>=ACb.VerNrAndroid) then begin
         if (ReplaceUpdatePackage(os,ACb.VerNrAndroid,ACb.NextVerNrAndroid,false)) then begin
           ACb.VerNrAndroid = ACb.NextVerNrAndroid;
           ACb.NextVerNrAndroid = -1;
@@ -1482,7 +1488,7 @@ begin
         ACb.NextVerNrAndroid = -1;
       end;
     case "windows8":
-      if (ACb.NextVerNrMetro>ACb.VerNrMetro) then begin
+      if (ACb.NextVerNrMetro>=ACb.VerNrMetro) then begin
         if (ReplaceUpdatePackage(os,ACb.VerNrMetro,ACb.NextVerNrMetro,false)) then begin
           ACb.VerNrMetro = ACb.NextVerNrMetro;
           ACb.NextVerNrMetro = -1;
@@ -1491,7 +1497,7 @@ begin
         ACb.NextVerNrMetro = -1;
       end;
     case "windowsnet":
-      if (ACb.NextVerNrWindowsNet>ACb.VerNrWindowsNet) then begin
+      if (ACb.NextVerNrWindowsNet>=ACb.VerNrWindowsNet) then begin
         if (ReplaceUpdatePackage(os,ACb.VerNrWindowsNet,ACb.NextVerNrWindowsNet,false)) then begin
           ACb.VerNrWindowsNet = ACb.NextVerNrWindowsNet;
           ACb.NextVerNrWindowsNet = -1;
@@ -1500,7 +1506,7 @@ begin
         ACb.NextVerNrWindowsNet = -1;
       end;
     case "linux":
-      if (ACb.NextVerNrLinux>ACb.VerNrLinux) then begin
+      if (ACb.NextVerNrLinux>=ACb.VerNrLinux) then begin
         if (ReplaceUpdatePackage(os,ACb.VerNrLinux,ACb.NextVerNrLinux,false)) then begin
           ACb.VerNrLinux = ACb.NextVerNrLinux;
           ACb.NextVerNrLinux = -1;
@@ -1509,7 +1515,7 @@ begin
         ACb.NextVerNrLinux = -1;
       end;
   end;
-
+  
   BlockStore(ACb);
 end;
 
@@ -1517,34 +1523,34 @@ global
 updating procedure AvailClientUpdateVersions()
 begin
   record AvailClientBlock ACb;
-
+  
   BlockLoad(ACb);
-
-  if (ACb.NextVerNrWindows>0) then begin
+  
+  if (ACb.NextVerNrWindows>=0) then begin
     DoAvailClientUpdateVersion("windows");
   end;
-
-  if (ACb.NextVerNrOSXCocoa>0) then begin
+  
+  if (ACb.NextVerNrOSXCocoa>=0) then begin
     DoAvailClientUpdateVersion("macosx");
   end;
-
-  if (ACb.NextVerNriPhone>0) then begin
+  
+  if (ACb.NextVerNriPhone>=0) then begin
     DoAvailClientUpdateVersion("ios");
   end;
-
-  if (ACb.NextVerNrAndroid>0) then begin
+  
+  if (ACb.NextVerNrAndroid>=0) then begin
     DoAvailClientUpdateVersion("android");
   end;
-
-  if (ACb.NextVerNrMetro>0) then begin
+  
+  if (ACb.NextVerNrMetro>=0) then begin
     DoAvailClientUpdateVersion("windows8");
   end;
-
-  if (ACb.NextVerNrWindowsNet>0) then begin
+  
+  if (ACb.NextVerNrWindowsNet>=0) then begin
     DoAvailClientUpdateVersion("windowsnet");
   end;
-
-  if (ACb.NextVerNrLinux>0) then begin
+  
+  if (ACb.NextVerNrLinux>=0) then begin
     DoAvailClientUpdateVersion("linux");
   end;
 end;
@@ -1552,11 +1558,11 @@ end;
 function Boolean IsAvailClientImportFile(string filename)
 begin
   Boolean res;
-
+  
   res = false;
-
+  
   if (Right(filename,12)!=".version.txt") then begin goto LIsAvailClientImportFile; end;
-
+  
   if (Left(filename,8)=="windows." or
       Left(filename,7)=="macosx." or
       Left(filename,4)=="ios." or
@@ -1566,7 +1572,7 @@ begin
       Left(filename,6)=="linux.") then begin
     res = true;
   end;
-
+  
 LIsAvailClientImportFile:;
   IsAvailClientImportFile = res;
 end;
@@ -1577,12 +1583,12 @@ begin
   Time t;
   record AvailClientBlock ACb;
   Integer i,filecnt,rownr;
-  LongInt vernr;
+  LongInt pkgvernr,curvernr,nextvernr;
   string 255 filename,folder,os,tstr;
   area a;
   array string 255 importedfiles;
-  Boolean storef,deletef;
-
+  Boolean storef,deletef,testf;
+  
   LogText2(0,"Checking updateclients for client autoupdate information",kVerbosityDebugDetailed);
 
   BlockLoad(ACb);
@@ -1602,73 +1608,68 @@ begin
     deletef = true;
   end;
   for (i = 0; i<filecnt; i = i + 1) begin
+    curvernr = 0;
+    nextvernr = 0;
     filename = GetFileNameInDir(folder,i);
     if (IsAvailClientImportFile(filename)) then begin
       SetAreaZeroSize(a);
       AddFileToArea(folder & "/" & filename,a,false);
 
       os = GetTabTextFromArea(0,0,a);
-      vernr = StringToLongInt(GetTabTextFromArea(1,0,a));
+      pkgvernr = StringToLongInt(GetTabTextFromArea(1,0,a));
 
-      if (vernr<=0) then begin goto LSkipFile; end;
+      if (pkgvernr<=0) then begin goto LSkipFile; end;
 
       switch (os) begin
-        case "windows":
-          if (vernr>ACb.VerNrWindows and vernr>ACb.NextVerNrWindows) then begin
-            ACb.NextVerNrWindows = vernr;
-            storef = true;
-          end;
-        case "macosx":
-          if (vernr>ACb.VerNrOSXCocoa and vernr>ACb.NextVerNrOSXCocoa) then begin
-            ACb.NextVerNrOSXCocoa = vernr;
-            storef = true;
-          end;
-        case "ios":
-          if (vernr>ACb.VerNriPhone and vernr>ACb.NextVerNriPhone) then begin
-            ACb.NextVerNriPhone = vernr;
-            storef = true;
-          end;
-        case "android":
-          if (vernr>ACb.VerNrAndroid and vernr>ACb.NextVerNrAndroid) then begin
-            ACb.NextVerNrAndroid = vernr;
-            storef = true;
-          end;
-        case "windows8":
-          if (vernr>ACb.VerNrMetro and vernr>ACb.NextVerNrMetro) then begin
-            ACb.NextVerNrMetro = vernr;
-            storef = true;
-          end;
-        case "windowsnet":
-          if (vernr>ACb.VerNrWindowsNet and vernr>ACb.NextVerNrWindowsNet) then begin
-            ACb.NextVerNrWindowsNet = vernr;
-            storef = true;
-          end;
-        case "linux":
-          if (vernr>ACb.VerNrLinux and vernr>ACb.NextVerNrLinux) then begin
-            ACb.NextVerNrLinux = vernr;
-            storef = true;
-          end;
+        case "windows":     curvernr = ACb.VerNrWindows;    nextvernr = ACb.NextVerNrWindows;
+        case "macosx":      curvernr = ACb.VerNrOSXCocoa;   nextvernr = ACb.NextVerNrOSXCocoa;
+        case "ios":         curvernr = ACb.VerNriPhone;     nextvernr = ACb.NextVerNriPhone;
+        case "android":     curvernr = ACb.VerNrAndroid;    nextvernr = ACb.NextVerNrAndroid;
+        case "windows8":    curvernr = ACb.VerNrMetro;      nextvernr = ACb.NextVerNrMetro;
+        case "windowsnet":  curvernr = ACb.VerNrWindowsNet; nextvernr = ACb.NextVerNrWindowsNet;
+        case "linux":       curvernr = ACb.VerNrLinux;      nextvernr = ACb.NextVerNrLinux;
         otherwise
           goto LSkipFile;
       end;
 
+      testf = false;
+      if (pkgvernr>curvernr and pkgvernr>nextvernr) then begin testf = true; end;
+      if (deletef) then begin
+        //if (pkgvernr>=curvernr and pkgvernr>nextvernr) then begin
+        testf = true; // Should only be one anyway (deletef is true for CN versions)
+        //end;
+      end;
+
+      if (testf) then begin
+        switch (os) begin
+          case "windows":     ACb.NextVerNrWindows = pkgvernr;
+          case "macosx":      ACb.NextVerNrOSXCocoa = pkgvernr;
+          case "ios":         ACb.NextVerNriPhone = pkgvernr;
+          case "android":     ACb.NextVerNrAndroid = pkgvernr;
+          case "windows8":    ACb.NextVerNrMetro = pkgvernr;
+          case "windowsnet":  ACb.NextVerNrWindowsNet = pkgvernr;
+          case "linux":       ACb.NextVerNrLinux = pkgvernr;
+        end;
+        storef = true;
+      end;
       importedfiles[importedfiles.length] = folder & "/" & filename;
     end;
+
 LSkipFile:;
   end;
 
-  if (deletef==true) then begin
+  if (deletef) then begin
     for (i = 0; i<importedfiles.length; i = i + 1) begin
       Delete_File(importedfiles[i]);
     end;
   end;
-
+  
   if (storef) then begin
     LogText2(0,"Saving new client autoupdate information",kVerbosityDebugDetailed);
     BlockStore(ACb);
     AvailClientUpdateVersions;
   end;
-
+  
   t = CurrentTime;
   t.minute = t.minute + 3;
   NewTimedTask("AvailClientIdleTask","Check for available clients","AvailClientIdleTask","",CurrentDate,t,"","");
@@ -1679,4 +1680,120 @@ updating procedure InitAvailClientIdleTask()
 begin
   LogText2(0,"Setting up automatic import of client autoupdate information",kVerbosityDebug);
   AvailClientIdleTask("");
+end;
+
+global
+procedure PullBookingComStatusIdleTask(string arg)
+begin
+  Integer oldcomp;
+  Boolean testf;
+
+  oldcomp = CurrentCompany; 
+  if (nonblank(arg)) then begin
+    testf = true;
+    if (oldcomp!=StringToInt(arg)) then begin
+      if (SetCompany(StringToInt(arg),false)==false) then begin
+        testf = false;
+      end;
+    end;
+    if (testf) then begin
+      PullBookingComStatus;
+    end;
+  end;
+  ResetCompany(oldcomp);
+  return;
+end;
+
+procedure StartHotelPullBookingComStatusIdleTask(string arg)
+begin
+  record BookingComBlock BCb;
+  Boolean testf;
+
+  if (nonblank(arg)) then begin
+    testf = true;
+    BlockLoad(BCb);
+    if (BCb.Enable==0) then begin testf = false; end;
+    if (testf) then begin
+      NewPeriodicTask2("PullBookingComStatusIdleTaskInCompany-" & CurrentCompany,"Pull Booking.com Status","PullBookingComStatusIdleTask",CurrentCompany,180,"");        
+    end;
+  end;
+  return;
+end;
+
+global
+updating procedure RetriveSiteMinderReservationsIdleTask(string arg)
+begin
+  Integer oldcomp;
+  Boolean testf;
+
+  oldcomp = CurrentCompany; 
+  if (nonblank(arg)) then begin
+    testf = true;
+    if (oldcomp!=StringToInt(arg)) then begin
+      if (SetCompany(StringToInt(arg),false)==false) then begin
+        testf = false;
+      end;
+    end;
+    if (testf) then begin
+      RetriveSiteMinderReservations;
+    end;
+  end;
+  ResetCompany(oldcomp);
+  return;
+end;
+
+updating procedure StartHotel_RetriveSiteMinderReservationsIdleTask(string arg)
+begin
+  record SiteMinderBlock SMb;
+  Boolean testf;
+  Date td;
+  Time tt;
+
+  if (nonblank(arg)) then begin
+    testf = true;
+    BlockLoad(SMb);
+    if (SMb.Enable==0) then begin testf = false; end;
+    if (testf) then begin
+      NewPeriodicTask("RetriveSiteMinderReservationsInCompany-" & CurrentCompany,"Retrive SiteMinder Reservations","RetriveSiteMinderReservationsIdleTask",CurrentCompany,180,"");        
+      if (SMb.ResyncRequired) then begin
+        tt = CurrentTime; 
+        if (tt.hour>=0 and tt.hour<=5) then begin
+          tt.minute = tt.minute + 1;
+        end else begin
+          td = AddDay(td,1);
+          tt.hour = 1;
+        end;
+        NewTimedTask("SiteMinderFullResyncInCompany-" & CurrentCompany,"SiteMinder Full Resync","SiteMinderFullResync",CurrentCompany,td,tt,"","");        
+      end;
+      NewPeriodicTask("SiteMinderSyncInCompany-" & CurrentCompany,"SiteMinder Sync","SiteMinderSyncIdleTask",CurrentCompany,60,"");        
+    end;
+  end;
+  return;
+end;
+
+global
+updating procedure InitHotelIdleTasks()
+begin
+  record CompaniesBlock Cb;
+  row CompaniesBlock Cbrw;
+  Integer i,rwcnt;
+  Boolean testf;
+  Integer oldcomp;
+  
+  oldcomp = CurrentCompany;  
+  BlockLoad(Cb);
+  rwcnt = MatRowCnt(Cb);
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowGet(Cb,i,Cbrw);
+    testf = true;
+    if (nonblank(Cbrw.TCPIP)) then begin testf = false; end;
+    if (testf) then begin
+      if (SetServerCompanyCode(Cbrw.CompCode)) then begin
+        StartHotelPullBookingComStatusIdleTask(CurrentCompany);
+        StartHotel_RetriveSiteMinderReservationsIdleTask(CurrentCompany);
+      end;
+    end;
+  end;
+  ResetCompany(oldcomp);
+  return;
 end;

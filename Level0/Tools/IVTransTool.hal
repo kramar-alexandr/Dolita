@@ -1,6 +1,7 @@
+external procedure GetProjMaterialsUsageAcc(record AccBlock,record INVc,Integer,var string,var string);
 external function Boolean HasModIN();
-external function Boolean HasModNL();
-external function Boolean HasIncomeAndExpenseBook();
+external function Boolean HasIntegratedNL();
+external function Boolean HasSLIntegratedWithNL();
 external procedure ExtractObj(string,var Integer,var string);
 external function string 60 AddObjectToObjectList(string,string);
 external function Integer VATCalcRule(string);
@@ -24,11 +25,13 @@ external function val MulRateToBase1(var string,val,val,val,val,val,val,roundmod
 external function Boolean ReadFirstItem(string,var record INVc,Boolean,Boolean);
 external procedure AddEuroTrRow(record TRVc,string,string,string,string,val,val,val,Boolean,Boolean,var val,Boolean,string,string,string);
 external procedure AddEuroTrRowType(record TRVc,string,string,string,string,val,val,val,Boolean,Boolean,var val,Boolean,string,string,string,Integer);
+external procedure AddEuroTrRowTypeQty(record TRVc,string,string,string,string,val,val,val,Boolean,Boolean,var val,Boolean,string,string,string,Integer,val);
 external function Boolean ExpandStructItem(string,string,val,var record SHVc);
 external procedure AddEuroCurncySmRow(var record SMVc,Date,string,string,string,string,val,Boolean,Boolean,var val,string,
                                       val,val,val,val,val,val,val);
 external procedure RoundRowSum(string,string,string,var val);
 external procedure MulM4ProcVal(val,val,var val);
+external procedure AddEuroCurncyTrRow2(record TRVc,string,string,string,string,string,val,Boolean,Boolean,var val,string,val,val,val,val,val,val,val,LongInt,Boolean,string);
 external procedure AddEuroCurncyTrRow(record TRVc,string,string,string,string,val,Boolean,Boolean,var val,string,val,val,val,val,val,val,val,LongInt,Boolean,string);
 external function Integer GetAccNamCurVAT(string,var string,var string,Integer,string);
 external procedure AddVATBase(var record SMVc,string,val,val,Integer,Integer,Integer);
@@ -128,8 +131,8 @@ BEGIN
         end else begin
         end;
       end else begin
-        t = base1valp + totsum;
-        tcur = ivrwsump + totsumcur;
+        t = base1valp - totsum;
+        tcur = ivrwsump - totsumcur;
       end;
     end else begin
       tstr = ASPrw.calc;
@@ -159,12 +162,12 @@ BEGIN
 END;
 
 global
-function Integer PrepareAddIVTransRowNew(record IVVc IVp,Integer rownr,string object,
+function Integer PrepareAddIVTransRowNew2(record IVVc IVp,Integer rownr,string object,
                                       var array string asalesacc,var array string asalesobj,var array val asalessum,var array val asalesrowsum,var array val asalesqty,
-                                      var array string asalesvatcode,var array string asalestaxtemplatecode,var array string asalesperiodcode,var array Integer asalesstp,var array val asalestax2,var array val asalestax2reb,
+                                      var array string asalesvatcode,var array string asalesrvrsvatcode,var array string asalestaxtemplatecode,var array string asalesperiodcode,var array Integer asalesstp,var array val asalestax2,var array val asalestax2reb,
                                       Array record TaxMatrixVc aTMr,
                                       var Integer asalescnt)
-BEGIN
+begin
   Integer errstrno;
   row IVVc IVrw;
   string 255 objstr;
@@ -179,7 +182,9 @@ BEGIN
   record TaxMatrixVc TMr;
   record HotelBlock Hotelb;
   Boolean SLdiscountf;
+  record CYBlock CYb;
 
+  BlockLoad(CYb);
   BlockLoad(ARAccb);
   BlockLoad(Hotelb);
   MatRowGet(IVp,rownr,IVrw);
@@ -225,10 +230,7 @@ BEGIN
   end;
   if (IVrw.stp==kInvoiceRowTypeNormal or (IVrw.stp==kInvoiceRowTypeStructuredItemComponent) or (IVrw.stp==kInvoiceRowTypeDebtorsTransfer) or IVrw.stp==kInvoiceRowTypeLoan or IVrw.stp==kInvoiceRowTypeLoanInterest) or (IVrw.stp==kInvoiceRowTypeCorrection) or (IVrw.stp==kInvoiceRowTypeRetention) or (IVrw.stp==kInvoiceRowTypeMultiBuyDiscount) then begin
     if (nonblank(IVrw.Objects)) then begin
-      if (nonblank(objstr)) then begin
-        objstr = objstr & ",";
-      end;  
-      objstr = objstr & IVrw.Objects;
+      objstr = AddObjectToObjectList(objstr,IVrw.Objects);
     end;
   end;
   switch (IVrw.stp) begin
@@ -274,9 +276,11 @@ already checked in IVVcRecordCheckRows
         testf = true;
       end;
     end else begin
-      if ((asalesacc[i]==ivraccno) and (asalesobj[i]==objstr) and (asalesvatcode[i]==IVrw.VATCode) and (asalesperiodcode[i]==IVrw.PeriodCode) 
-          and (asalesstp[i]==stp)) then begin
-        testf = true;
+      if (ARAccb.SalesAccSeparateRows==0) then begin
+        if ((asalesacc[i]==ivraccno) and (asalesobj[i]==objstr) and (asalesvatcode[i]==IVrw.VATCode) and (asalesrvrsvatcode[i]==IVrw.RvrsVATCode) and (asalesperiodcode[i]==IVrw.PeriodCode) 
+            and (asalesstp[i]==stp)) then begin
+          testf = true;
+        end;
       end;
     end;
     if (testf) then begin
@@ -293,6 +297,7 @@ already checked in IVVcRecordCheckRows
   asalesacc[asalescnt] = ivraccno;
   asalesobj[asalescnt] = objstr;
   asalesvatcode[asalescnt] = IVrw.VATCode;
+  asalesrvrsvatcode[asalescnt] = IVrw.RvrsVATCode;
   asalestaxtemplatecode[asalescnt] = IVrw.TaxTemplateCode;
   asalesperiodcode[asalescnt] = IVrw.PeriodCode;
   asalesstp[asalescnt] = stp;
@@ -301,9 +306,25 @@ already checked in IVVcRecordCheckRows
   aTMr[asalescnt] = TMr;
   asalescnt = asalescnt + 1;
 LPrepareAddIVTransRowNew:;  
-  PrepareAddIVTransRowNew = errstrno;
-  RETURN;
-END;
+  PrepareAddIVTransRowNew2 = errstrno;
+  return;
+end;
+
+global
+function Integer PrepareAddIVTransRowNew(record IVVc IVp,Integer rownr,string object,
+                                      var array string asalesacc,var array string asalesobj,var array val asalessum,var array val asalesrowsum,var array val asalesqty,
+                                      var array string asalesvatcode,var array string asalestaxtemplatecode,var array string asalesperiodcode,var array Integer asalesstp,var array val asalestax2,var array val asalestax2reb,
+                                      Array record TaxMatrixVc aTMr,
+                                      var Integer asalescnt)
+begin   
+  array string 255 asalesrvrsvatcode;
+  
+  PrepareAddIVTransRowNew = PrepareAddIVTransRowNew2(IVp,rownr,object,
+                                      asalesacc,asalesobj,asalessum,asalesrowsum,asalesqty,
+                                      asalesvatcode,asalesrvrsvatcode,asalestaxtemplatecode,asalesperiodcode,asalesstp,asalestax2,asalestax2reb,aTMr,asalescnt);
+  return;
+end;
+
 
 global
 function string 255 TaxTemplateVATCodeOnTRRows(record TaxMatrixVc TMr,string defvatcode)
@@ -324,7 +345,7 @@ begin
         res = defvatcode;
         if (blank(res)) then begin
           MatRowGet(TMr,0,TMrw);
-          res = AddObjectToObjectList(res,TTrw.VATCode);
+          res = AddObjectToObjectList(res,TMrw.VATCode);
 /*
           TTr.Code = TMrw.VATCode;
           ReadFirstMain(TTr,1,true);
@@ -364,25 +385,27 @@ begin
 end;
 
 global
-function Integer AddIVTransRowsNew(var record TRVc gTRp,var record SMVc gSMp,record IVVc IVp,
+function Integer AddIVTransRowsNew2(var record TRVc gTRp,var record SMVc gSMp,record IVVc IVp,
                                val frrate,val torate1,val torate2,val baserate1,val baserate2,
                                Boolean dc1,Boolean dc2,var val TotSum,record SMVc VATr,record SMVc DTVATr,var Integer vatcnt,
-                               Boolean inclqty,record VATCodeBlock VATCodeRec,
+                               Boolean inclqty,record VATCodeBlock VATCb,
                                array string asalesacc,array string asalesobj,array val asalessum,array val asalesrowsum,
                                array val asalesqty,
-                               array string asalesvatcode,var array string asalestaxtemplatecode,array string asalesperiodcode,array Integer asalesstp,
+                               array string asalesvatcode,array string asalesrvrsvatcode,var array string asalestaxtemplatecode,array string asalesperiodcode,array Integer asalesstp,
                                array val asalestax2,array val asalestax2reb,Array record TaxMatrixVc aTMr,
                                Integer asalescnt)
-BEGIN
+begin
   Integer errstrno;
   record AccBlock ARAccb;
   record AutSimPerVc ASPr;
-  row VATCodeBlock VATCoderw;
+  record RoundBlock Rb;
+  row IVVc IVrw;
+  row VATCodeBlock VATCbrw;
   val trev,tvat,btvat,t1,t2,rs,nilv;
   string 255 objstr,vatcodes;
   Boolean simneeded,opvataccf,negamf,UseTaxTemplatesforTaxCalcf;
   string 255 tstr,tstr2;
-  string 2 vatcod,taxtemplatecode;
+  string 2 vatcod,rvrsvatcode,taxtemplatecode;
   string 10 vatacc,revacc;
   string 20 ivraccno;
   Integer i,rwcnt;
@@ -398,7 +421,24 @@ BEGIN
   end;
   nilv = -1;
   errstrno = 1085; // Transaction could not be generated 
+  BlockLoad(Rb);
   BlockLoad(ARAccb);
+  if (Rb.VATCalcWay!=0) then begin
+    if ((IVp.ExportFlag==0) or (IVp.ExportFlag==3) or (IVp.ExportFlag==4)) begin    
+      rwcnt = MatRowCnt(IVp);
+      for (i=0;i<rwcnt;i=i+1) begin
+        MatRowGet(IVp,i,IVrw);
+        if (ivrwstp==kInvoiceRowTypeDebtorsTransfer) and (IVp.InclVAT!=0) then begin
+          AddVATBase(DTVATr,IVrw.VATCode,IVrw.Sum,blankval,vatcnt,IVp.InclVAT,IVp.NoTAXonVAT);
+        end else begin
+          if (VATCalcRule(vatcod)!=kVATCalcRuleSkip) then begin
+            AddVATBase(VATr,IVrw.VATCode,IVrw.Sum,blankval,vatcnt,IVp.InclVAT,IVp.NoTAXonVAT);
+          end;
+        end;
+      end;
+    end;
+  end;
+
   for (i=0;i<asalescnt;i=i+1) begin
     vatcodes = "";
     simneeded = false;
@@ -419,14 +459,17 @@ BEGIN
       errstrno = 1901;  
       goto LAddIVTransRowsNew;
     end;
+    rvrsvatcode = asalesrvrsvatcode[i];
     vatcod = asalesvatcode[i];
-    if (blank(vatcod)) then begin
-      switch (IVp.ExportFlag) begin
-        case 4: vatcod = ARAccb.VATCodeExp;
-        case 3: vatcod = ARAccb.VATCodeEUWithVAT; //EBS
-        case 2: vatcod = ARAccb.VATCodeExp;
-        case 1: vatcod = ARAccb.VATCodeEU;
-        otherwise vatcod = ARAccb.VATCodeDom;
+    if (blank(rvrsvatcode)) then begin
+      if (blank(vatcod)) then begin
+        switch (IVp.ExportFlag) begin
+          case 4: vatcod = ARAccb.VATCodeExp;
+        	case 3: vatcod = ARAccb.VATCodeEUWithVAT; //EBS
+          case 2: vatcod = ARAccb.VATCodeExp;
+          case 1: vatcod = ARAccb.VATCodeEU;
+          otherwise vatcod = ARAccb.VATCodeDom;
+        end;
       end;
     end;
     taxtemplatecode = asalestaxtemplatecode[i];
@@ -442,24 +485,29 @@ BEGIN
     if (blank(vatcod)) then begin
       if (UseTaxTemplatesforTaxCalcf) then begin
       end else begin
-        rwcnt = MatRowCnt(VATCodeRec);
+        rwcnt = MatRowCnt(VATCb);
         if (rwcnt>0) then begin
-          MatRowGet(VATCodeRec,0,VATCoderw);
-          vatcod = VATCoderw.VATCode;
+          MatRowGet(VATCb,0,VATCbrw);
+          vatcod = VATCbrw.VATCode;
         end;  
       end;
     end;
     if (blank(taxtemplatecode)) then begin
-      rwcnt = MatRowCnt(VATCodeRec);
+      rwcnt = MatRowCnt(VATCb);
       if (rwcnt>0) then begin
-        MatRowGet(VATCodeRec,0,VATCoderw);
-        taxtemplatecode = VATCoderw.VATCode;
+        MatRowGet(VATCb,0,VATCbrw);
+        taxtemplatecode = VATCbrw.VATCode;
       end;  
     end else begin
       TMr = aTMr[i];
       vatcodes = TaxTemplateVATCodeOnTRRows(TMr,vatcod);
     end;
     if (blank(vatcodes)) then begin vatcodes = vatcod; end;
+    if (HasLocalization("GBR")) then begin
+      if (ARAccb.IPBookVAT!=0) then begin
+        vatcodes = "";
+      end;
+    end;
     ivrwstp = asalesstp[i];
 /*
 
@@ -487,7 +535,9 @@ retention change
                              IVp.CurncyCode,frrate,torate1,torate2,baserate1,baserate2,trev,nilv,-1,negamf,taccnumber);
         end;                     
         if ((IVp.ExportFlag==0) or (IVp.ExportFlag==3) or (IVp.ExportFlag==4)) begin    
-          AddVATBase(DTVATr,vatcod,rowsum,blankval,vatcnt,IVp.InclVAT,IVp.NoTAXonVAT);
+          if (Rb.VATCalcWay==0) then begin
+            AddVATBase(DTVATr,vatcod,rowsum,blankval,vatcnt,IVp.InclVAT,IVp.NoTAXonVAT);
+          end;
         end;    
       end;
     end;
@@ -495,6 +545,26 @@ retention change
     //in AddIVPrePayRow
     end;
     if ((ivrwstp==kInvoiceRowTypeNormal) or (ivrwstp==kInvoiceRowTypeStructuredItemComponent) or ((ivrwstp==kInvoiceRowTypeDebtorsTransfer) and (IVp.InclVAT==0)) or (ivrwstp==kInvoiceRowTypeInterest) or (ivrwstp==kInvoiceRowTypeDownpayment) or (ivrwstp==kInvoiceRowTypeLoan) or (ivrwstp==kInvoiceRowTypeLoanInterest) or (ivrwstp==kInvoiceRowTypeCorrection) or (ivrwstp==kInvoiceRowTypeGiftVoucherSold) or (ivrwstp==kInvoiceRowTypeRetention) or (ivrwstp==kInvoiceRowTypeMultiBuyDiscount)) then begin
+      trev = salessum;
+      if (nonblank(rvrsvatcode)) then begin
+        ConvertSalesAcc(ivraccno,IVp.ExportFlag);        
+        errstrno = GetAccNamCurVAT(ivraccno,tstr,tstr2,60,IVp.CurncyCode);
+        if (errstrno!=0) then begin
+          errstrno = 1901;
+          goto LAddIVTransRowsNew;
+        end;
+        if (CheckTTRPerRow("IVVc",ivraccno,objstr,dc2,taccnumber,0)) then begin end;
+        rs = MulRateToBase1(IVp.CurncyCode,trev,frrate,torate1,torate2,baserate1,baserate2,DefaultCurRoundOff);
+        negamf = NegativeAmountsOnIVTrans(IVp.InvType,rs);
+        if (nonblank(rvrsvatcode)) then begin vatcodes = ""; end;
+        if (inclqty) then begin
+          AddEuroCurncyTrRow2(gTRp,ivraccno,objstr,vatcodes,rvrsvatcode,tstr,rs,ARAccb.SalesAccSeparateRows==0,dc2,TotSum,
+                              IVp.CurncyCode,frrate,torate1,torate2,baserate1,baserate2,trev,quant,-1,negamf,taccnumber);
+        end else begin
+          AddEuroCurncyTrRow2(gTRp,ivraccno,objstr,vatcodes,rvrsvatcode,tstr,rs,ARAccb.SalesAccSeparateRows==0,dc2,TotSum,
+                              IVp.CurncyCode,frrate,torate1,torate2,baserate1,baserate2,trev,nilv,-1,negamf ,taccnumber);
+        end;
+      end else begin
 /*    
       if (opvataccf) then begin
         GetVATCodePrelVATAcc(vatcod,vatacc);
@@ -505,133 +575,135 @@ retention change
         GetVATCodeSalesVatAcc(vatcod,vatacc);
       end;
 */      
-      GetVATCodeSalesVatAcc(vatcod,vatacc);
-      trev = salessum;
-      switch (ivrwstp) begin
-        case kInvoiceRowTypeGiftVoucherSold:
-          MulVATIV(vatcod,trev,tvat,t1,1,0);
-          switch (IVp.InclVAT) begin
-            case 0: 
-              salessum = salessum - tvat;
-              rowsum = rowsum - tvat;
-            otherwise ;
-          end;        
-          trev = salessum;
-        otherwise
-          if (UseTaxTemplatesforTaxCalc) then begin
-            if (ARAccb.BookedDiscount!=0) then begin
-              tvat = CalculateTotalVATFromTaxMatrix(aTMr[i],IVp.InclVAT);
+        GetVATCodeSalesVatAcc(vatcod,vatacc);
+        switch (ivrwstp) begin
+          case kInvoiceRowTypeGiftVoucherSold:
+            MulVATIV(vatcod,trev,tvat,t1,1,0);
+            switch (IVp.InclVAT) begin
+              case 0: 
+                salessum = salessum - tvat;
+                rowsum = rowsum - tvat;
+              otherwise ;
+            end;        
+            trev = salessum;
+          otherwise
+            if (UseTaxTemplatesforTaxCalc) then begin
+              if (ARAccb.BookedDiscount!=0) then begin
+                tvat = CalculateTotalVATFromTaxMatrix(aTMr[i],IVp.InclVAT);
+              end else begin
+                switch (IVp.InclVAT) begin
+                  case kBasePriceInclVAT:
+                    tvat = CalculateTotalVATFromTaxMatrix(aTMr[i],IVp.InclVAT);
+                  otherwise
+                    tvat = CalculateTotalVATFromTaxMatrix(aTMr[i],IVp.InclVAT);
+                end;
+              end;
             end else begin
-              switch (IVp.InclVAT) begin
-                case kBasePriceInclVAT:
-                  tvat = CalculateTotalVATFromTaxMatrix(aTMr[i],IVp.InclVAT);
-                otherwise
-                  tvat = CalculateTotalVATFromTaxMatrix(aTMr[i],IVp.InclVAT);
+              if (ARAccb.BookedDiscount!=0) then begin
+                MulVATIV(vatcod,trev,tvat,t1,IVp.InclVAT,IVp.NoTAXonVAT);
+              end else begin
+                 switch (IVp.InclVAT) begin
+                    case 2:
+                      switch (IVp.NoTAXonVAT) begin
+                        case 2:
+                          MulVATIV(vatcod,trev,tvat,t1,IVp.InclVAT,0);
+                        otherwise
+                          MulVATIV(vatcod,trev,tvat,t1,IVp.InclVAT,IVp.NoTAXonVAT);
+                      end;
+                    otherwise
+                      MulVATIV(vatcod,trev,tvat,t1,IVp.InclVAT,IVp.NoTAXonVAT);
+                 end;
               end;
             end;
-          end else begin
-            if (ARAccb.BookedDiscount!=0) then begin
-              MulVATIV(vatcod,trev,tvat,t1,IVp.InclVAT,IVp.NoTAXonVAT);
-            end else begin
-               switch (IVp.InclVAT) begin
-                  case 2:
-                    switch (IVp.NoTAXonVAT) begin
-                      case 2:
-                        MulVATIV(vatcod,trev,tvat,t1,IVp.InclVAT,0);
-                      otherwise
-                        MulVATIV(vatcod,trev,tvat,t1,IVp.InclVAT,IVp.NoTAXonVAT);
-                    end;
-                  otherwise
-                    MulVATIV(vatcod,trev,tvat,t1,IVp.InclVAT,IVp.NoTAXonVAT);
-               end;
+        end;
+        if ((IVp.ExportFlag==0) or (IVp.ExportFlag==3) or (IVp.ExportFlag==4)) begin    
+          if (VATCalcRule(vatcod)!=kVATCalcRuleSkip) then begin
+            if (Rb.VATCalcWay==0) then begin
+              AddVATBase(VATr,vatcod,rowsum,blankval,vatcnt,IVp.InclVAT,IVp.NoTAXonVAT);
             end;
           end;
-      end;
-      if ((IVp.ExportFlag==0) or (IVp.ExportFlag==3) or (IVp.ExportFlag==4)) begin    
-        if (VATCalcRule(vatcod)!=kVATCalcRuleSkip) then begin
-          AddVATBase(VATr,vatcod,rowsum,blankval,vatcnt,IVp.InclVAT,IVp.NoTAXonVAT);
-        end;
-      end;    
-      switch (IVp.InclVAT) begin
-        case 0:
-          if (ARAccb.RevInclVAT>0) then begin
-            trev = trev + tvat;
-          end;  
-        case 1:
-          if (ARAccb.RevInclVAT==0) then begin
-            trev = trev - tvat - t1;
-          end;  
-          t2 = FindTAX2(asalestax2[i],trev,IVp.InclVAT);
-          if (asalestax2reb[i]!=0) then begin
-            t2 = t2 - (t2*asalestax2reb[i])/100;
-          end;
-          trev = trev - t2;
-        otherwise
-          if (ARAccb.RevInclVAT==0) then begin
-            trev = trev - tvat;
-          end;          
-      end;      
+        end;    
+        switch (IVp.InclVAT) begin
+          case 0:
+            if (ARAccb.RevInclVAT>0) then begin
+              trev = trev + tvat;
+            end;  
+          case 1:
+            if (ARAccb.RevInclVAT==0) then begin
+              trev = trev - tvat - t1;
+            end;  
+            t2 = FindTAX2(asalestax2[i],trev,IVp.InclVAT);
+            if (asalestax2reb[i]!=0) then begin
+              t2 = t2 - (t2*asalestax2reb[i])/100;
+            end;
+            trev = trev - t2;
+          otherwise
+            if (ARAccb.RevInclVAT==0) then begin
+              trev = trev - tvat;
+            end;          
+        end;      
 
 
-      if ((IVp.ExportFlag==0) or (IVp.ExportFlag==3) or (IVp.ExportFlag==4)) then begin
-        if (ARAccb.BookVATOnlyFromDownpayment!=0) and (ivrwstp==kInvoiceRowTypeDownpayment) then begin
-          errstrno = 0;          
-          goto LAddIVTransRowsNewRow;
-        end;  
-        rs = MulRateToBase1(IVp.CurncyCode,trev,frrate,torate1,torate2,baserate1,baserate2,DefaultCurRoundOff);
-        ConvertSalesAcc(ivraccno,IVp.ExportFlag);        
-        if (rs!=0) then begin
-          negamf = NegativeAmountsOnIVTrans(IVp.InvType,rs);
-          errstrno = GetAccNamCurVAT(ivraccno,tstr,tstr2,60,IVp.CurncyCode);
-          if (errstrno!=0) then begin
-            errstrno = 1901;
-            goto LAddIVTransRowsNew;
-          end;
-          if (CheckTTRPerRow("IVVc",ivraccno,objstr,dc2,taccnumber,0)) then begin end;
-          if (inclqty) then begin
-            AddEuroCurncyTrRow(gTRp,ivraccno,objstr,vatcodes,tstr,rs,true,dc2,TotSum,IVp.CurncyCode,
-                               frrate,torate1,torate2,baserate1,baserate2,trev,quant,-1,negamf,taccnumber);
-          end else begin
-            AddEuroCurncyTrRow(gTRp,ivraccno,objstr,vatcodes,tstr,rs,true,dc2,TotSum,IVp.CurncyCode,
-                               frrate,torate1,torate2,baserate1,baserate2,trev,nilv,-1,negamf ,taccnumber);
-          end;
-        end;
-        btvat = MulRateToBase1(IVp.CurncyCode,tvat,frrate,torate1,torate2,baserate1,baserate2,DefaultCurRoundOff);
-        if ((IVp.InclVAT>0) and (ARAccb.RevInclVAT!=0)) then begin
-          if (btvat!=0) then begin
-            errstrno = GetAccNamCurVAT(ARAccb.VATBAcc,tstr,tstr2,60,IVp.CurncyCode);
+        if ((IVp.ExportFlag==0) or (IVp.ExportFlag==3) or (IVp.ExportFlag==4)) then begin
+          if (ARAccb.BookVATOnlyFromDownpayment!=0) and (ivrwstp==kInvoiceRowTypeDownpayment) then begin
+            errstrno = 0;          
+            goto LAddIVTransRowsNewRow;
+          end;  
+          rs = MulRateToBase1(IVp.CurncyCode,trev,frrate,torate1,torate2,baserate1,baserate2,DefaultCurRoundOff);
+          ConvertSalesAcc(ivraccno,IVp.ExportFlag);        
+          if (rs!=0) then begin
+            negamf = NegativeAmountsOnIVTrans(IVp.InvType,rs);
+            errstrno = GetAccNamCurVAT(ivraccno,tstr,tstr2,60,IVp.CurncyCode);
             if (errstrno!=0) then begin
-              errstrno = 1903;
+              errstrno = 1901;
               goto LAddIVTransRowsNew;
             end;
-            if (CheckTTRPerRow("IVVc",ARAccb.VATBAcc,"",dc1,taccnumber,0)) then begin end;
+            if (CheckTTRPerRow("IVVc",ivraccno,objstr,dc2,taccnumber,0)) then begin end;
             if (inclqty) then begin
-              AddEuroCurncyTrRow(gTRp,ARAccb.VATBAcc,"","",tstr,btvat,true,dc1,TotSum,IVp.CurncyCode,
-                                 frrate,torate1,torate2,baserate1,baserate2,tvat,quant,-1,(IVp.InvType==kInvoiceTypeCredit or IVp.InvType==kInvoiceTypeCreditSpecialSales) and btvat>0,taccnumber);
+              AddEuroCurncyTrRow(gTRp,ivraccno,objstr,vatcodes,tstr,rs,ARAccb.SalesAccSeparateRows==0,dc2,TotSum,IVp.CurncyCode,
+                                 frrate,torate1,torate2,baserate1,baserate2,trev,quant,-1,negamf,taccnumber);
             end else begin
-              AddEuroCurncyTrRow(gTRp,ARAccb.VATBAcc,"","",tstr,btvat,true,dc1,TotSum,IVp.CurncyCode,
-                                 frrate,torate1,torate2,baserate1,baserate2,tvat,nilv,-1,(IVp.InvType==kInvoiceTypeCredit or IVp.InvType==kInvoiceTypeCreditSpecialSales) and btvat>0,taccnumber);
+              AddEuroCurncyTrRow(gTRp,ivraccno,objstr,vatcodes,tstr,rs,ARAccb.SalesAccSeparateRows==0,dc2,TotSum,IVp.CurncyCode,
+                                 frrate,torate1,torate2,baserate1,baserate2,trev,nilv,-1,negamf ,taccnumber);
             end;
           end;
-        end;
-      end else begin
-        rs = MulRateToBase1(IVp.CurncyCode,trev,frrate,torate1,torate2,baserate1,baserate2,DefaultCurRoundOff);
-        if (rs!=0) then begin
-          ConvertSalesAcc(ivraccno,IVp.ExportFlag);
-          negamf = NegativeAmountsOnIVTrans(IVp.InvType,rs);
-          errstrno = GetAccNamCurVAT(ivraccno,tstr,tstr2,60,IVp.CurncyCode);
-          if (errstrno!=0) then begin
-            errstrno = 1901;
-            goto LAddIVTransRowsNew;
+          btvat = MulRateToBase1(IVp.CurncyCode,tvat,frrate,torate1,torate2,baserate1,baserate2,DefaultCurRoundOff);
+          if ((IVp.InclVAT>0) and (ARAccb.RevInclVAT!=0)) then begin
+            if (btvat!=0) then begin
+              errstrno = GetAccNamCurVAT(ARAccb.VATBAcc,tstr,tstr2,60,IVp.CurncyCode);
+              if (errstrno!=0) then begin
+                errstrno = 1903;
+                goto LAddIVTransRowsNew;
+              end;
+              if (CheckTTRPerRow("IVVc",ARAccb.VATBAcc,"",dc1,taccnumber,0)) then begin end;
+              if (inclqty) then begin
+                AddEuroCurncyTrRow(gTRp,ARAccb.VATBAcc,"","",tstr,btvat,ARAccb.SalesAccSeparateRows==0,dc1,TotSum,IVp.CurncyCode,
+                                   frrate,torate1,torate2,baserate1,baserate2,tvat,quant,-1,(IVp.InvType==kInvoiceTypeCredit or IVp.InvType==kInvoiceTypeCreditSpecialSales) and btvat>0,taccnumber);
+              end else begin
+                AddEuroCurncyTrRow(gTRp,ARAccb.VATBAcc,"","",tstr,btvat,ARAccb.SalesAccSeparateRows==0,dc1,TotSum,IVp.CurncyCode,
+                                   frrate,torate1,torate2,baserate1,baserate2,tvat,nilv,-1,(IVp.InvType==kInvoiceTypeCredit or IVp.InvType==kInvoiceTypeCreditSpecialSales) and btvat>0,taccnumber);
+              end;
+            end;
           end;
-          if (CheckTTRPerRow("IVVc",ivraccno,objstr,dc2,taccnumber,0)) then begin end;
-          if (inclqty) then begin
-            AddEuroCurncyTrRow(gTRp,ivraccno,objstr,vatcodes,tstr,rs,true,dc2,TotSum,
-                               IVp.CurncyCode,frrate,torate1,torate2,baserate1,baserate2,trev,quant,-1,negamf,taccnumber);
-          end else begin
-            AddEuroCurncyTrRow(gTRp,ivraccno,objstr,vatcodes,tstr,rs,true,dc2,TotSum,
-                               IVp.CurncyCode,frrate,torate1,torate2,baserate1,baserate2,trev,nilv,-1,negamf,taccnumber);
-          end;                     
+        end else begin
+          rs = MulRateToBase1(IVp.CurncyCode,trev,frrate,torate1,torate2,baserate1,baserate2,DefaultCurRoundOff);
+          if (rs!=0) then begin
+            ConvertSalesAcc(ivraccno,IVp.ExportFlag);
+            negamf = NegativeAmountsOnIVTrans(IVp.InvType,rs);
+            errstrno = GetAccNamCurVAT(ivraccno,tstr,tstr2,60,IVp.CurncyCode);
+            if (errstrno!=0) then begin
+              errstrno = 1901;
+              goto LAddIVTransRowsNew;
+            end;
+            if (CheckTTRPerRow("IVVc",ivraccno,objstr,dc2,taccnumber,0)) then begin end;
+            if (inclqty) then begin
+              AddEuroCurncyTrRow(gTRp,ivraccno,objstr,vatcodes,tstr,rs,ARAccb.SalesAccSeparateRows==0,dc2,TotSum,
+                                 IVp.CurncyCode,frrate,torate1,torate2,baserate1,baserate2,trev,quant,-1,negamf,taccnumber);
+            end else begin
+              AddEuroCurncyTrRow(gTRp,ivraccno,objstr,vatcodes,tstr,rs,ARAccb.SalesAccSeparateRows==0,dc2,TotSum,
+                                 IVp.CurncyCode,frrate,torate1,torate2,baserate1,baserate2,trev,nilv,-1,negamf,taccnumber);
+            end;                     
+          end;
         end;
       end;
     end;
@@ -642,9 +714,30 @@ LAddIVTransRowsNewRow:;
   end;  
   errstrno = 0;
 LAddIVTransRowsNew:;
-  AddIVTransRowsNew = errstrno;
-  RETURN;
-END;
+  AddIVTransRowsNew2 = errstrno;
+  return;
+end;
+
+global
+function Integer AddIVTransRowsNew(var record TRVc gTRp,var record SMVc gSMp,record IVVc IVp,
+                               val frrate,val torate1,val torate2,val baserate1,val baserate2,
+                               Boolean dc1,Boolean dc2,var val TotSum,record SMVc VATr,record SMVc DTVATr,var Integer vatcnt,
+                               Boolean inclqty,record VATCodeBlock VATCb,
+                               array string asalesacc,array string asalesobj,array val asalessum,array val asalesrowsum,
+                               array val asalesqty,
+                               array string asalesvatcode,var array string asalestaxtemplatecode,array string asalesperiodcode,array Integer asalesstp,
+                               array val asalestax2,array val asalestax2reb,Array record TaxMatrixVc aTMr,
+                               Integer asalescnt)
+begin
+  array string 255 asalesrvrsvatcode;
+  
+  AddIVTransRowsNew = AddIVTransRowsNew2(gTRp,gSMp,IVp,frrate,torate1,torate2,baserate1,baserate2,
+                                         dc1,dc2,TotSum,VATr,DTVATr,vatcnt,inclqty,VATCb,
+                                         asalesacc,asalesobj,asalessum,asalesrowsum,asalesqty,
+                                         asalesvatcode,asalesrvrsvatcode,asalestaxtemplatecode,asalesperiodcode,asalesstp,
+                                         asalestax2,asalestax2reb,aTMr,asalescnt);
+  return;
+end;
 
 /*
 roundoff problems,
@@ -658,7 +751,7 @@ global
 function Integer AddIVTransRow(var record TRVc gTRp,var record SMVc gSMp,record IVVc IVp,Integer rownr,string object,
                                val frrate,val torate1,val torate2,val baserate1,val baserate2,
                                Boolean dc1,Boolean dc2,var string tstr,var val TotSum,record SMVc VATr,
-                               var Integer vatcnt,Boolean inclqty,record VATCodeBlock VATCodeRec)
+                               var Integer vatcnt,Boolean inclqty,record VATCodeBlock VATCb)
 BEGIN
   Integer errstrno;
   record TRGenBlock TRGenRec;
@@ -666,7 +759,7 @@ BEGIN
   record INVc INr;
   record AutSimPerVc ASPr;
   row IVVc IVrw;
-  row VATCodeBlock VATCoderw;
+  row VATCodeBlock VATCbrw;
   val trev,tvat,btvat,t1,rs,nilv;
   string 255 objstr;
   Boolean infound;
@@ -737,10 +830,10 @@ BEGIN
     end;
   end;
   if (blank(vatcod)) then begin
-    rwcnt = MatRowCnt(VATCodeRec);
+    rwcnt = MatRowCnt(VATCb);
     if (rwcnt>0) then begin
-      MatRowGet(VATCodeRec,0,VATCoderw);
-      vatcod = VATCoderw.VATCode;
+      MatRowGet(VATCb,0,VATCbrw);
+      vatcod = VATCbrw.VATCode;
     end;  
   end;
   if ((IVrw.stp==kInvoiceRowTypeNormal) or (IVrw.stp==kInvoiceRowTypeStructuredItemComponent) or (IVrw.stp==kInvoiceRowTypeInterest) or (IVrw.stp==kInvoiceRowTypeDownpayment) or (IVrw.stp==kInvoiceRowTypeLoan) or (IVrw.stp==kInvoiceRowTypeLoanInterest) or (IVrw.stp==kInvoiceRowTypeCorrection) or (IVrw.stp==kInvoiceRowTypeRetention) or (IVrw.stp==kInvoiceRowTypeGiftVoucherSold)) then begin
@@ -1120,7 +1213,7 @@ L22StructAddIVCostRow:;
               lobjstr = objstr;
               if (CAb.ObjOnStock==0) then begin lobjstr = ""; end;
               if (CheckTTRPerRow("IVVc",rowstockacc,lobjstr,dc2,taccnumber,0)) then begin end;
-              AddEuroTrRowType(gTRp,rowstockacc,lobjstr,"",tstr,t1,baserate1,baserate2,true,dc2,TotSum,IVp.InvType==kInvoiceTypeCredit or IVp.InvType==kInvoiceTypeCreditSpecialSales,taccnumber,"","",kTransactionRowTypeStock);
+              AddEuroTrRowTypeQty(gTRp,rowstockacc,lobjstr,"",tstr,t1,baserate1,baserate2,true,dc2,TotSum,IVp.InvType==kInvoiceTypeCredit or IVp.InvType==kInvoiceTypeCreditSpecialSales,taccnumber,"","",kTransactionRowTypeStock,SHrw.Ship);
             end;
 L66StructAddIVCostRow:;
           end;
@@ -1136,7 +1229,7 @@ LStructAddIVCostRow:;
 END;
 
 global
-function Integer AddIVCostRow(var record TRVc gTRp,record IVVc IVp,Integer ordertype,Integer rownr,string object,
+function Integer AddIVCostRow(var record TRVc gTRp,record IVVc IVp,Integer aordertype,Integer rownr,string object,
                               val frrate,val torate1,val torate2,val baserate1,val baserate2,
                               Boolean dc1,Boolean dc2,Boolean accf,var string tstr,var val TotSum)
 BEGIN
@@ -1157,18 +1250,21 @@ BEGIN
   Boolean infound,defaultcostmodel,bbtrf;
   Boolean ivcostmodel,isstruct,checkf;
   LongInt credord;
-  Boolean creditshipment,costaccf;
+  Boolean creditshipment,costaccf,rowstockaccf;
   val lbaserate2;
   Boolean ldc1,ldc2,laccf,plf,negamf,testf;
   string 255 location,pbbvaracc;
   record PLVc PLr;
   record ORVc ORr;
+  row ORVc ORrw;
+  Integer ordertype;
 
   if (IsStandardProduct) then begin
-    if (HasModIN==false or (HasModNL==false and HasIncomeAndExpenseBook==false)) then begin
+    if (HasModIN==false or HasIntegratedNL==false) then begin
       goto LAddIVCostRow;
     end;
   end;
+  ordertype = aordertype;
   lbaserate2 = baserate2;
   CostModel = 0;
   errstrno = 1085; // Transaction could not be generated 
@@ -1177,6 +1273,17 @@ BEGIN
   BlockLoad(TRGenRec);
 
   MatRowGet(IVp,rownr,IVrw);
+  if ((IVrw.OrdRow>=0) and (IVp.OrderNr!=-1)) then begin
+    ORr.SerNr = IVp.OrderNr;
+    if (ReadFirstMain(ORr,1,true)) then begin
+      MatRowGet(ORr,IVrw.OrdRow,ORrw);
+      switch (ORrw.OrderType) begin
+        case kOrderTypeDefault: ordertype = aordertype;
+        case kOrderTypeNormal: ordertype = kOrderTypeNormal;
+        case kOrderTypeDropShip: ordertype = kOrderTypeDropShip;
+      end;
+    end;
+  end; 
   t1 = blankval;
   if (nonblank(IVp.PriceList)) then begin
     PLDefr.Code = IVp.PriceList;
@@ -1237,7 +1344,13 @@ what about dont post cost on deliveries ?
             if (CAb.NoNLCostOnShip==2) then begin
               if ((IVrw.OrdRow!=-1) and (IVp.OrderNr!=-1)) or
                  (IVp.SVONr!=-1) or (nonblank(IVp.PRCode) and IVrw.SHNr>0) then begin
-                rowstockacc = ARAccb.COSAccrualAcc;
+                if (nonblank(IVp.PRCode)) then begin
+                  GetProjMaterialsUsageAcc(ARAccb,INr,CAb.ItemGroupAccounts,rowstockacc,tstr);
+                  rowstockaccf = nonblank(rowstockacc);
+                end;
+                if (blank(rowstockacc)) then begin
+                  rowstockacc = ARAccb.COSAccrualAcc;
+                end;
               end; 
             end else begin
               if (nonblank(ARAccb.StockAcc)) then begin
@@ -1253,7 +1366,9 @@ what about dont post cost on deliveries ?
             switch (ordertype) begin
               case kOrderTypeDropShip:
               otherwise
-                rowstockacc = ITr.InvAcc;
+                if (rowstockaccf==false) then begin
+                  rowstockacc = ITr.InvAcc;
+                end;
             end;
           end;  
         end;  
@@ -1268,7 +1383,9 @@ what about dont post cost on deliveries ?
               switch (ordertype) begin
                 case kOrderTypeDropShip:
                 otherwise
-                  rowstockacc = LocRec.StockAcc;
+                  if (rowstockaccf==false) then begin
+                    rowstockacc = LocRec.StockAcc;
+                  end;
               end;
             end;      
             locobjstr = LocRec.Objects;
@@ -1459,11 +1576,22 @@ L22AddIVCostRow:;
                   rowstockacc = ARAccb.StockAcc;
                   GetConsigmentStockAcc(IVrw.ArtCode,IVrw.SerialNr,rowstockacc);
                 end;
-                if (CAb.NoNLCostOnShip==2) then begin
-                  if ((IVrw.OrdRow!=-1) and (IVp.OrderNr!=-1)) or
-                     (IVp.SVONr!=-1) or (nonblank(IVp.PRCode) and IVrw.SHNr>0) then begin
-                    rowstockacc = ARAccb.COSAccrualAcc;
-                  end; 
+                switch (ordertype) begin
+                  case kOrderTypeDropShip:
+                    rowstockacc = ARAccb.DropShipCOSAccrualAcc;
+                  otherwise
+                    if (CAb.NoNLCostOnShip==2) then begin
+                      if ((IVrw.OrdRow!=-1) and (IVp.OrderNr!=-1)) or
+                         (IVp.SVONr!=-1) or (nonblank(IVp.PRCode) and IVrw.SHNr>0) then begin
+                         if (nonblank(IVp.PRCode)) then begin
+                           GetProjMaterialsUsageAcc(ARAccb,INr,CAb.ItemGroupAccounts,rowstockacc,tstr);
+                           rowstockaccf = nonblank(rowstockacc);
+                         end;
+                         if (rowstockaccf==false) then begin
+                           rowstockacc = ARAccb.COSAccrualAcc;
+                          end;
+                      end; 
+                    end;
                 end;
                 if (GetAccName(rowstockacc,tstr,60)==false) then begin
                   switch (ordertype) begin
@@ -1489,11 +1617,11 @@ L22AddIVCostRow:;
 
                   lobjstr = AddObjectToObjectList(lobjstr,locobjstr);
                   if (CheckTTRPerRow("IVVc",rowstockacc,lobjstr,ldc2,taccnumber,0)) then begin end;
-                  AddEuroTrRowType(gTRp,rowstockacc,lobjstr,"",tstr,IVrw.Quant*IVrw.BasePrice,baserate1,lbaserate2,laccf,ldc2,TotSum,negamf,taccnumber,"","",kTransactionRowTypeStock);
+                  AddEuroTrRowTypeQty(gTRp,rowstockacc,lobjstr,"",tstr,IVrw.Quant*IVrw.BasePrice,baserate1,lbaserate2,laccf,ldc2,TotSum,negamf,taccnumber,"","",kTransactionRowTypeStock,IVrw.Quant);
                 end else begin
                   lobjstr = AddObjectToObjectList(lobjstr,locobjstr);
                   if (CheckTTRPerRow("IVVc",rowstockacc,lobjstr,ldc2,taccnumber,0)) then begin end;
-                  AddEuroTrRowType(gTRp,rowstockacc,lobjstr,"",tstr,t1,baserate1,lbaserate2,laccf,ldc2,TotSum,negamf,taccnumber,"","",kTransactionRowTypeStock);
+                  AddEuroTrRowTypeQty(gTRp,rowstockacc,lobjstr,"",tstr,t1,baserate1,lbaserate2,laccf,ldc2,TotSum,negamf,taccnumber,"","",kTransactionRowTypeStock,IVrw.Quant);
                 end;
               end;
              end;

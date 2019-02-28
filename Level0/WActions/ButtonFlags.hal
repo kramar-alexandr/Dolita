@@ -1,17 +1,21 @@
+external function Boolean HasPersons();
+remote function Integer MailAcceptanceStatus(LongInt);
+remote procedure ShouldOpenItemStatusWindowForWindow(Integer,string);
+remote outer function Integer HMTLApprovalStatus(record HMTravelLogVc,var record AcceptanceRulesVc);
+remote function Integer ExpApprovalStatus(record ExpVc,var record AcceptanceRulesVc);
+remote function Integer POApprovalStatus(record POVc,var record AcceptanceRulesVc);
+remote function Integer VIApprovalStatus(record VIVc,var record AcceptanceRulesVc);
+remote function Integer PUApprovalStatus(record PUVc,var record AcceptanceRulesVc);
+remote function Integer OPApprovalStatus(record OPVc,var record AcceptanceRulesVc);
+remote function Integer IntORApprovalStatus(record IntORVc,var record AcceptanceRulesVc);
+remote function Integer QTApprovalStatus(record QTVc,var record AcceptanceRulesVc);
+remote function Integer ORApprovalStatus(record ORVc,var record AcceptanceRulesVc);
+remote function Integer IVApprovalStatus(record IVVc,var record AcceptanceRulesVc);
+remote function Integer SDApprovalStatus(record SDVc,var record AcceptanceRulesVc);
+remote function Integer TBBUApprovalStatus(record TBBUVc,var record AcceptanceRulesVc);
+remote function Integer LAApprovalStatus(record LeaveApplicationVc,var record AcceptanceRulesVc);
+remote function Integer LTApprovalStatus(record LeaveTransferVc,var record AcceptanceRulesVc);
 external function Boolean IsEnterprise();
-external function Integer ExpApprovalStatus(record ExpVc,var record AcceptanceRulesVc);
-external function Integer POApprovalStatus(record POVc,var record AcceptanceRulesVc);
-external function Integer VIApprovalStatus(record VIVc,var record AcceptanceRulesVc);
-external function Integer PUApprovalStatus(record PUVc,var record AcceptanceRulesVc);
-external function Integer OPApprovalStatus(record OPVc,var record AcceptanceRulesVc);
-external function Integer IntORApprovalStatus(record IntORVc,var record AcceptanceRulesVc);
-external function Integer QTApprovalStatus(record QTVc,var record AcceptanceRulesVc);
-external function Integer ORApprovalStatus(record ORVc,var record AcceptanceRulesVc);
-external function Integer IVApprovalStatus(record IVVc,var record AcceptanceRulesVc);
-external function Integer SDApprovalStatus(record SDVc,var record AcceptanceRulesVc);
-external function Integer TBBUApprovalStatus(record TBBUVc,var record AcceptanceRulesVc);
-external function Integer LAApprovalStatus(record LeaveApplicationVc,var record AcceptanceRulesVc);
-external function Integer LTApprovalStatus(record LeaveTransferVc,var record AcceptanceRulesVc);
 external function Boolean TestConfigurationEnabler(string);
 
 global
@@ -76,7 +80,7 @@ global
 procedure RestAccDClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
 begin
   record RestAccVc RestAccr;
-
+  
   if (wn>0) then begin
     if (WindowState(wn)==Rs_insert) then begin
       GetWindowRecord(wn,RestAccr);
@@ -95,7 +99,7 @@ global
 procedure RestAccOldDClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
 begin
   record RestAccVc RestAccr;
-
+  
   if (wn>0) then begin
     if (WindowState(wn)==Rs_insert) then begin
       GetWindowRecord(wn,RestAccr);
@@ -109,7 +113,7 @@ begin
   end;
   return;
 end;
-
+ 
 global
 procedure JobDClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
 begin // Temporary fix for the RecordList
@@ -130,7 +134,7 @@ begin // Temporary fix for the RecordList
   saveOK = true;
   return;
 end;
-
+ 
 global
 procedure SVODClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
 begin // Temporary fix for the RecordList
@@ -144,14 +148,14 @@ begin // Temporary fix for the RecordList
   saveOK = true;
   return;
 end;
-
+ 
 global
 procedure COCUServiceDClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
 begin // Temporary fix for the RecordList
   saveOK = true;
   return;
 end;
-
+ 
 global
 procedure DocPageSumVClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
 begin
@@ -167,7 +171,7 @@ begin
   restOK = true;
   return;
 end;
-
+ 
 global
 procedure DocTextVClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
 begin
@@ -175,7 +179,7 @@ begin
   restOK = true;
   return;
 end;
-
+ 
 global
 procedure DocFrameVClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
 begin
@@ -183,7 +187,7 @@ begin
   restOK = true;
   return;
 end;
-
+ 
 global
 procedure DocPictVClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
 begin
@@ -191,7 +195,7 @@ begin
   restOK = true;
   return;
 end;
-
+ 
 global
 procedure DocMainVClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
 begin
@@ -207,7 +211,7 @@ begin
   restOK = true;
   return;
 end;
-
+ 
 global
 procedure DocLineVClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
 begin
@@ -215,7 +219,7 @@ begin
   restOK = true;
   return;
 end;
-
+ 
 global
 procedure DocCopiesVClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
 begin
@@ -223,7 +227,7 @@ begin
   restOK = true;
   return;
 end;
-
+ 
 global
 procedure DocPCVClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
 begin
@@ -232,7 +236,7 @@ begin
   return;
 end;
 
-
+    
 global
 procedure RepGenSectTextVClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
 begin
@@ -240,7 +244,7 @@ begin
   restOK = true;
   return;
 end;
-
+ 
 global
 procedure RepGenSectFieldVClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
 begin
@@ -248,7 +252,7 @@ begin
   restOK = true;
   return;
 end;
-
+ 
 global
 procedure RepGenSectTotalVClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
 begin
@@ -256,7 +260,7 @@ begin
   restOK = true;
   return;
 end;
-
+ 
 global
 procedure RepGenSectFormatVClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
 begin
@@ -264,7 +268,7 @@ begin
   restOK = true;
   return;
 end;
-
+ 
 global
 procedure RepGenSectDividerVClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
 begin
@@ -272,7 +276,7 @@ begin
   restOK = true;
   return;
 end;
-
+ 
 global
 procedure RepGenSectLineVClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
 begin
@@ -280,7 +284,7 @@ begin
   restOK = true;
   return;
 end;
-
+ 
 global
 procedure RepGenSectionVClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
 begin
@@ -288,7 +292,7 @@ begin
   restOK = true;
   return;
 end;
-
+ 
 global
 procedure RepGenSetVClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
 begin
@@ -320,7 +324,7 @@ begin
   restOK = true;
   return;
 end;
-
+ 
 global
 procedure RepGenRadioButtonVClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
 begin
@@ -328,7 +332,7 @@ begin
   restOK = true;
   return;
 end;
-
+ 
 global
 procedure RepGenSelTextVClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
 begin
@@ -336,7 +340,7 @@ begin
   restOK = true;
   return;
 end;
-
+ 
 global
 procedure RepGenLookupVClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
 begin
@@ -344,7 +348,7 @@ begin
   restOK = true;
   return;
 end;
-
+ 
 global
 procedure RepGenVariableVClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
 begin
@@ -352,8 +356,8 @@ begin
   restOK = true;
   return;
 end;
-
-
+ 
+    
 global
 procedure RepGenNewLineVClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
 begin
@@ -410,14 +414,14 @@ begin
   restOK = true;
   return;
 end;
-
+ 
 global
 procedure ErrorClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
 begin
   restOK = true;
   return;
 end;
-
+ 
 global
 procedure YesNoCancelWClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
 begin
@@ -425,7 +429,7 @@ begin
   restOK = true;
   return;
 end;
-
+ 
 global
 procedure YesNoWClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
 begin
@@ -433,14 +437,14 @@ begin
   restOK = true;
   return;
 end;
-
+ 
 global
 procedure AboutClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
 begin
   saveOK = true;
   return;
 end;
-
+ 
 global
 procedure OpenFileWClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
 begin
@@ -448,7 +452,7 @@ begin
   restOK = true;
   return;
 end;
-
+ 
 global
 procedure IVDClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
 begin
@@ -459,7 +463,7 @@ begin
   end;
   return;
 end;
-
+ 
 global
 procedure EDIIVDClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
 begin
@@ -467,7 +471,7 @@ begin
   newOK = false;
   return;
 end;
-
+ 
 global
 procedure EDIIVLClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
 begin
@@ -475,7 +479,7 @@ begin
   newOK = false;
   return;
 end;
-
+      
 global
 procedure EDIORDClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
 begin
@@ -483,7 +487,7 @@ begin
   newOK = false;
   return;
 end;
-
+ 
 global
 procedure EDIORLClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
 begin
@@ -491,18 +495,18 @@ begin
   newOK = false;
   return;
 end;
-
+      
 global
 procedure ConferenceWClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
-begin
+begin  
   duplOK = false;
   newOK = true;
-/*
+/*  
   if ((ProgramType!=typFirstOfficePro) and (ProgramType!=typBooksJobCost) and (UserModuleAccess("modEmail")==5)) then begin // FirstOffice Pro
     newOK = false;
   end;
 */
-
+  
   switch (ProgramType) begin
     case typFirstOfficePro:
     case typBusinessOrganizer:
@@ -524,7 +528,7 @@ begin
       if (UserModuleAccess("modEmail")==kAccessLevelNone) then begin
         newOK = false;
       end;
-  end;
+  end;  
   return;
 end;
 
@@ -641,7 +645,7 @@ begin
   newOK = false;
   return;
 end;
-
+    
 global
 procedure SHLClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
 begin
@@ -843,7 +847,7 @@ begin
   newOK = false;
   return;
 end;
-
+    
 /*
 global
 procedure DayWClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
@@ -899,7 +903,7 @@ begin
   saveOK = true;
   return;
 end;
-
+    
 global
 procedure GCSLClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
 begin
@@ -931,7 +935,7 @@ begin
   newOK = false;
   return;
 end;
-
+    
 global
 procedure VEDClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
 begin
@@ -1046,7 +1050,7 @@ begin // Temporary fix for the RecordList
   saveOK = true;
   return;
 end;
-
+ 
 global
 procedure EInvoiceQueDClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
 begin
@@ -1131,7 +1135,7 @@ global
 procedure WHCertificateLClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
 begin
   duplOK = false;
-  newOK = false;
+  newOK = UserCanAction("CreatingWithholdingCertificates",false);
   return;
 end;
 
@@ -1139,7 +1143,7 @@ global
 procedure WHCertificateDClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
 begin
   duplOK = false;
-  newOK = false;
+  newOK = UserCanAction("CreatingWithholdingCertificates",false);
   return;
 end;
 
@@ -1150,7 +1154,7 @@ begin
   newOK = false;
   return;
 end;
-
+ 
 global
 procedure JobPriceLClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
 begin
@@ -1158,7 +1162,7 @@ begin
   newOK = false;
   return;
 end;
-
+ 
 global
 procedure BankTRDClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
 begin
@@ -1397,7 +1401,7 @@ end;
 
 global
 procedure PointsHistLClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
-begin
+begin 
   newOK = false;
   duplOK = false;
   return;
@@ -1405,7 +1409,7 @@ end;
 
 global
 procedure PointsHistDClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
-begin
+begin 
   newOK = false;
   duplOK = false;
   return;
@@ -1413,20 +1417,20 @@ end;
 
 global
 procedure ReportSetDClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
-begin
+begin 
   saveOK = true;
   return;
 end;
 
 global
 procedure ReportSetLClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
-begin
+begin 
   return;
 end;
 
 global
 procedure RcDClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
-begin
+begin 
   newOK = false;
   duplOK = false;
   return;
@@ -1434,7 +1438,7 @@ end;
 
 global
 procedure RcLClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
-begin
+begin 
   newOK = false;
   duplOK = false;
   return;
@@ -1442,7 +1446,7 @@ end;
 
 global
 procedure ASProductStatusLClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
-begin
+begin 
   newOK = false;
   duplOK = false;
   return;
@@ -1450,7 +1454,7 @@ end;
 
 global
 procedure ASProductStatusDClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
-begin
+begin 
   newOK = false;
   duplOK = false;
   return;
@@ -1458,7 +1462,7 @@ end;
 
 global
 procedure ASProdStatHistLClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
-begin
+begin 
   newOK = false;
   duplOK = false;
   return;
@@ -1466,7 +1470,7 @@ end;
 
 global
 procedure ASProdStatHistDClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
-begin
+begin 
   newOK = false;
   duplOK = false;
   return;
@@ -1474,7 +1478,7 @@ end;
 
 global
 procedure ASSubmHistLClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
-begin
+begin 
   newOK = false;
   duplOK = false;
   return;
@@ -1482,7 +1486,7 @@ end;
 
 global
 procedure ASSubmHistDClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
-begin
+begin 
   newOK = false;
   duplOK = false;
   return;
@@ -1557,8 +1561,8 @@ end;
 function string 255 LClassAcceptanceStatus(Integer AcceptanceStatus)
 begin
   string 255 res;
-
-
+  
+  
 //more colourfull
   switch (AcceptanceStatus) begin
     case kAcceptanceStateNotRequired: res = " " & " ";
@@ -1568,9 +1572,9 @@ begin
     case kAcceptanceStateApproved: res = " " & uchr(10004);//9989
     case kAcceptanceStateRejected: res = " " & uchr(10060);
   end;
-
-
-/*
+  
+ 
+/* 
 // less colourfull
   switch (AcceptanceStatus) begin
     case kAcceptanceStateNotRequired: res = " " & " ";
@@ -1580,7 +1584,7 @@ begin
     case kAcceptanceStateApproved: res = " " & uchr(10003);
     case kAcceptanceStateRejected: res = " " & uchr(9747);
   end;
-*/
+*/  
   LClassAcceptanceStatus = res;
   return;
 end;
@@ -1589,7 +1593,7 @@ global
 function string 255 ExpLClassAcceptanceStatus(var record ExpVc Expr)
 begin
   record AcceptanceRulesVc Acptr;
-
+  
   ExpLClassAcceptanceStatus = LClassAcceptanceStatus(ExpApprovalStatus(Expr,Acptr));
   return;
 end;
@@ -1713,9 +1717,21 @@ begin
 end;
 
 global
+function string 255 HMTLogLClassAcceptanceStatus(var record HMTravelLogVc HMTravelLogr)
+begin
+  record AcceptanceRulesVc Acptr;
+  string 255 res;
+  
+  res = LClassAcceptanceStatus(HMTLApprovalStatus(HMTravelLogr,Acptr));
+  
+  HMTLogLClassAcceptanceStatus = res;
+  return;
+end;
+
+global
 procedure CCMerchantIDSClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
 begin
-  if (IsEnterprise==false) then begin
+  if (IsEnterprise==false) then begin 
     duplOK = false;
     newOK = false;
   end;
@@ -1735,5 +1751,208 @@ procedure WebNGStatLClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean n
 begin
   duplOK = false;
   newOK = false;
+  return;
+end;
+
+global
+function string 255 MailLClassAcceptanceStatus(record MailVc Mailr)
+begin
+  string 255 res;
+  
+  switch (MailAcceptanceStatus(Mailr.SerNr)) begin    
+    case kMailStatusAccepted: res = " " & uchr(9989);
+    case kMailStatusRejected: res = " " & uchr(10060);
+    otherwise
+      res = " " & uchr(10067);
+  end;
+
+  MailLClassAcceptanceStatus = res;
+  return;
+end;
+
+global
+procedure CUClassSClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
+begin
+  restOK = true;
+  return;
+end;
+
+global
+procedure DIClassSClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
+begin
+  restOK = true;
+  return;
+end;
+
+global
+procedure OpenItemStatus(Integer wn,Boolean spawnwindowf,string menuname)
+begin
+  if (MenuExists(wn,spawnwindowf,menuname)) then begin
+    if (ClientMode) then begin
+      asyncremote.ShouldOpenItemStatusWindowForWindow(wn,GetWindowClass(wn));
+    end else begin
+      ShouldOpenItemStatusWindowForWindow(wn,GetWindowClass(wn));
+    end;
+  end;
+  return;
+end;
+
+global
+procedure OpenItemStatusWindowForWindow2(Integer mwn,string wclass,Integer showitempicture)
+begin
+  Integer wn,wnp;
+  record RcVc RepSpec;
+  record INVc INr;
+  
+  if (FindWindow("ArtStatIClass")>0) then begin goto LOpenItemStatusWindowForWindow_Out; end;
+  if (WindowValid(mwn)==false) then begin goto LOpenItemStatusWindowForWindow_Out; end;
+  if (wclass<>"" and wclass<>GetWindowClass(mwn)) then begin goto LOpenItemStatusWindowForWindow_Out; end;
+  if (GuiType==kGuiiPhone or GuiType==kGuiAndroid) then begin goto LOpenItemStatusWindowForWindow_Out; end;
+
+  wn = OpenWindow("ArtStatIClass",0,mwn+1,"","",RepSpec);
+  if (wn>0) then begin
+    if (showitempicture) then begin
+      wnp = OpenWindow("ItemPictureOClass",0,mwn+1,"","",INr);
+    end;
+  end;
+  SelectWindow(mwn+1); // mwn+1? should it be wn?
+LOpenItemStatusWindowForWindow_Out:;  
+  return;
+end;
+
+global
+procedure OpenItemStatusWindowForWindow(Integer mwn,string wclass)
+begin
+  OpenItemStatusWindowForWindow2(mwn,wclass,0);
+  return;
+end;
+
+global
+procedure OpenItemStatusWindow(Integer mwn)
+begin
+  OpenItemStatusWindowForWindow(mwn,"");
+end;
+
+global
+procedure UserLClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
+begin
+  duplOK = UserRegisterAccessTest("UserVc",kAccessInsert);
+  newOK = UserRegisterAccessTest("UserVc",kAccessInsert);
+  if (IsStandardProduct and HasPersons==false) then begin
+    duplOK = false;
+    newOK = false;
+  end;
+  return;
+end;
+
+global
+procedure USDClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
+begin
+  duplOK = UserRegisterAccessTest("UserVc",kAccessInsert);
+  newOK = UserRegisterAccessTest("UserVc",kAccessInsert);
+  if (IsStandardProduct and HasPersons==false) then begin
+    duplOK = false;
+    newOK = false;
+  end;
+  return;
+end;
+
+global
+procedure SiteMinderUUIDLogLClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
+begin
+  duplOK = false;
+  newOK = false;
+  return;
+end;
+
+global
+procedure SiteMinderUUIDLogDClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
+begin
+  duplOK = false;
+  newOK = false;
+  return;
+end;
+
+global
+procedure ASSubmissionDClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
+begin // Temporary fix for the RecordList
+  saveOK = true;
+  return;
+end;
+
+global
+procedure ASSubmLocDClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
+begin
+  duplOK = false;
+  newOK = false;
+  return;
+end;
+
+global
+procedure ASSubmLocLClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
+begin
+  duplOK = false;
+  newOK = false;
+  return;
+end;
+
+
+global
+function string 255 StdIdAccessLClassClosedStatus(record StdIdAccessVc SIAr)
+begin
+  string 255 res;
+
+  if (SIAr.Closed==1) begin
+    res = " " & uchr(10004);
+  end;
+
+  StdIdAccessLClassClosedStatus = res;
+  return;
+end;
+
+global
+procedure INSClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
+begin
+  duplOK = true;
+  newOK = true;
+  if (GetWindowClass(MotherWindow(wn))=="NPTSButtonDefineWClass") then begin
+    duplOK = false;
+    newOK = false;
+  end;
+  return;
+end;
+
+global
+procedure IN2SClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
+begin
+  INSClassButtonFlags(wn,duplOK,newOK,saveOK,restOK);
+  return;
+end;
+
+global
+procedure IN3SClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
+begin
+  INSClassButtonFlags(wn,duplOK,newOK,saveOK,restOK);
+  return;
+end;
+
+global
+procedure ForSaleINSClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
+begin
+  INSClassButtonFlags(wn,duplOK,newOK,saveOK,restOK);
+  return;
+end;
+
+global
+procedure ForSaleIN2SClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
+begin
+  INSClassButtonFlags(wn,duplOK,newOK,saveOK,restOK);
+  return;
+end;
+
+global
+procedure ForSaleIN3SClassButtonFlags(Integer wn,var Boolean duplOK,var Boolean newOK,var Boolean saveOK,var Boolean restOK)
+begin
+  INSClassButtonFlags(wn,duplOK,newOK,saveOK,restOK);
   return;
 end;

@@ -1,3 +1,5 @@
+external updating function Integer ResendEIVRemote(record IVVc);
+external updating procedure StoreItemHistory_Out2(record MainStockBlock,string,string,string,string,Date,val,val,val,LongInt,Integer,Integer,string,record TempStockVc,Boolean,string);
 external function string 60 AddStringToStringList(string,string);
 external procedure AutomatedSales(string,Integer);
 external updating function Boolean IVCreateAndAttachSVNeInvoice(record IVVc);
@@ -108,7 +110,7 @@ begin
   Integer rwcnt,i;
   val vatprc,vatval,vatexclprc,vatinclprc,rowtax;
   val s,t,t2,v;
-
+  
   s = 0;
   BlockLoad(CUAccountSettb);
   if (nonblank(CUAccountSettb.AccountItem)) then begin
@@ -133,7 +135,7 @@ end;
 updating procedure RemoveFromCustomerAccount(record IVVc IVr)
 begin
   record CUAccountHistVc CUAccountHistr;
-
+  
   CUAccountHistr.CustCode = IVr.CustCode;
   CUAccountHistr.TransDate = IVr.TransDate;
   CUAccountHistr.FileName = "IVVc";
@@ -150,7 +152,7 @@ begin
  record RentChrgVc oldRentCharger;
  Integer cnt;
  Boolean TrHs;
-
+ 
  TrHs = true;
  RentCharger.InvNr = InvNr;
  while (LoopKey("FillUpCharge",RentCharger,1,TrHs)) begin
@@ -177,7 +179,7 @@ END;
 updating procedure CheckCUBalDate(string cucode,Date TransDate)
 BEGIN
   record CUBalVc CUBalr;
-
+  
   CUBalr.CUCode = cucode;
   if (ReadLastMain(CUBalr,1,true)) then begin
     if (CUBalr.TransDate<=TransDate) then begin
@@ -191,7 +193,7 @@ global
 function LongInt IVVcRecordReset(var record IVVc IVr,record IVVc IV2r,LongInt long3,LongInt long4)
 begin
   LongInt res;
-
+  
   IVr.OKFlag = 0;
   IVVcRecordReset = res;
   RETURN;
@@ -201,7 +203,7 @@ global
 function LongInt IVVcRecordImportTest(var record IVVc IVr,record IVVc IV2r,LongInt long3,LongInt long4)
 begin
   LongInt res;
-
+  
   res = 1;
   if (IVr.SerNr==-1) then begin res = 0; end;
   IVVcRecordImportTest = res;
@@ -232,13 +234,13 @@ BEGIN
       CancelGSXEnrollmentContracts(IVr);
     end;
     PRInvoiceRemoved(IVr);
-    DeleteCOIVs(IVr);
-    DeleteRentIVs(IVr.SerNr);
-    DeleteXSrsVcs(IVr);
+    DeleteCOIVs(IVr);    
+    DeleteRentIVs(IVr.SerNr);  
+    DeleteXSrsVcs(IVr);    
     RemoveFromCustomerAccount(IVr);
     InvalidateJob(IVr);
     IVUpdateCredMan(IVr,CredManEventr,false,true);
-    if (nonblank(IVr.OfficialSerNr)) then begin
+    if (nonblank(IVr.OfficialSerNr)) then begin 
       DeleteOffSerNr(IVr.SerNr,"IVVc");
     end;
     if (IVr.RoyaltyIVFlag!=0) then begin
@@ -246,7 +248,7 @@ BEGIN
     end;
   end;
 LIVVcRecordRemove:;
-  IVVcRecordRemove = res;
+  IVVcRecordRemove = res; 
   RETURN;
 END;
 
@@ -281,7 +283,7 @@ begin
   SetDocumentFilename("");
   Delete_File(fname);
   gIVCreateAndAttachPdf = false;
-
+  
   return;
 end;
 
@@ -292,7 +294,7 @@ begin
   record RLinkVc RLr;
   record Attach2Vc Attach2r;
   string 255 ivnr;
-
+    
   if (HasLocalization("FIN,NOR,SVN,SWE")) then begin
     ivnr = IVr.SerNr;
     filenr = 1;
@@ -347,7 +349,7 @@ BEGIN
       IVr.UpdStockFlag = 0;
     end;
     if ((IVr.OKFlag!=0) and (IVr.UpdStockFlag!=0) and (IVr.OrderNr==-1) and (IVr.SVONr==-1)) then begin
-//locationperrow
+//locationperrow    
       IVr.LocOKNr = NextLocOKNr(IVr.Location);
     end;
     if (blankdate(IVr.ServiceDelDate)) then begin
@@ -373,11 +375,12 @@ BEGIN
     UpdateQTFromIV(IVr,true,IV2r,false);
     UpdateJobFromIV(IVr,true,IV2r,false);
     UpdatePRFromIV(IVr,true,IV2r,false);
-    if (IVr.OKFlag!=0) then begin
+    RecalculetWeightVolumeIVVc(IVr,false);
+    if (IVr.OKFlag!=0) then begin  
       if (IVr.InvType==kInvoiceTypeCredit or IVr.InvType==kInvoiceTypeCreditSpecialSales) then begin
         UpdateTBIVFromCredInv(IVr);
       end;
-      if (PDFFileForCustomerEInvoice(IVr.CustCode,IVr.CurncyCode)) then begin
+      if (PDFFileForCustomerEInvoice(IVr.CustCode,IVr.CurncyCode)) then begin 
         IVCreateAndAttachPdf(IVr);
       end;
       if (HasLocalization("FIN,NOR,SWE")) then begin
@@ -397,11 +400,11 @@ BEGIN
     if (HasLocalization("HRV")==false or IVr.FiscalFlag!=0) then begin
       if (HasLocalization("ARG")==false) then begin
         FindNextIVVcOfficialSerialNr(IVr); //should be done in recordcheck
-      end;
+      end;    
     end;
   end;
 LIVVcRecordSave:;
-  IVVcRecordSave = res;
+  IVVcRecordSave = res; 
   RETURN;
 END;
 
@@ -412,7 +415,7 @@ begin
   record KPIDefVc oldKPIr;
   Boolean found;
   string 255 modulestr;
-
+  
   if (IsStandardProduct) and (BuildProductCode!="StandardCRM") and (BuildProductCode!="StandardExpenses") then begin
     KPIr.SerNr = -1;
     ResetLoop(KPIr);
@@ -449,9 +452,10 @@ end;
 
 global
 updating function LongInt IVVcRecordSaveAfter(var record IVVc IVr,record IVVc IV2r,LongInt long3,LongInt long4)
-BEGIN
+begin
   LongInt res;
   Boolean testf;
+  record IVTBlock IVTb;
   record EInvoiceBlock EIb;
   string 255 autmsgfunciontags;
 
@@ -463,7 +467,7 @@ BEGIN
       CheckCUBalDate(IVr.CustCode,IVr.TransDate);
       if (BatchStat(IVr,false,false)) then begin end;
       SalesmanStats(IVr,IV2r,false);
-      MakeActFromSubSys_IVVc(IVr,false);
+      MakeActFromSubSys_IVVc(IVr,false);  
       AddToCustomerAccount(IVr);
       if (IVr.InvType==kInvoiceTypeCredit or IVr.InvType==kInvoiceTypeCreditSpecialSales) then begin
         res = PUFromCreditNote(IVr,true);
@@ -485,6 +489,9 @@ BEGIN
           testf = false;
         end;
       end;
+      if (HasLocalization("ARG")) then begin
+        testf = false;
+      end;
       if (testf) then begin
         if (EInvoiceQueTransaction(IVr,USetStr(1150),0,0)) then begin
           IVr.Prntdf = 1; // This isn't working very well... This is SaveAFTER, meaning this change will just get lost.... and you MUST NOT update IVr in this function...
@@ -492,17 +499,25 @@ BEGIN
       end;
       BAEMailFromCreditNote(IVr);
       SetKPIsStatus("modSL",kKPIStatusInvalid);
-      if (IsStandardProduct) then begin
+      if (IsStandardProduct) then begin 
+        BlockLoad(IVTb);
         if (IVr.Sum3==0) then begin
-          if (CountRecords("IVVc")>=10) then begin
-            autmsgfunciontags = AddStringToStringList(autmsgfunciontags,"HasVATZone");
-          end;
+          autmsgfunciontags = AddStringToStringList(autmsgfunciontags,"HasVATZone+OK_IVVc");
+        end;
+        autmsgfunciontags = AddStringToStringList(autmsgfunciontags,"HasIntegratedNL,HasEInvoicing");
+        if (IVr.CustCode==IVTb.DefCustCode) then begin
+          autmsgfunciontags = AddStringToStringList(autmsgfunciontags,"HasModPOS+OK_IVVc");
         end;
       end;
-      autmsgfunciontags = AddStringToStringList(autmsgfunciontags,"HasIntegratedNL,HasEInvoicing");
+      switch (IVr.InvType) begin
+        case kInvoiceTypeCash:
+          autmsgfunciontags = AddStringToStringList(autmsgfunciontags,"HasModCL+OK_IVVc");
+        case kInvoiceTypeCredit:
+          autmsgfunciontags = AddStringToStringList(autmsgfunciontags,"HasReturnedGoods+OK_IVVc");
+      end;
+      autmsgfunciontags = AddStringToStringList(autmsgfunciontags,"HasModSO");
     end;
     UpdateRetFromInv(IVr.OrderNr,IVr,false);
-    autmsgfunciontags = AddStringToStringList(autmsgfunciontags,"HasModSO");
   end;
   if (nonblank(IVr.OfficialSerNr)) then begin
     UpdateOffSerNr(IVr.SerNr,"IVVc",IVr.InvType,IVr.OfficialSerNr,false);
@@ -514,16 +529,16 @@ BEGIN
     if (nonblank(IVr.LoyaltyCardNr) and (IVr.Points!=0)) then begin
       AddPointsHist(IVr.SerNr,"IVVc",IVr.InvType);
       IVVc_LoyaltyCardPointsRedemption(IVr,false);
-    end;
+    end;   
   end;
 LIVVcRecordSaveAfter:;
   AutomatedSales(autmsgfunciontags,kAutomatedSalesTagRandom);
-  IVVcRecordSaveAfter = res;
-  RETURN;
-END;
+  IVVcRecordSaveAfter = res; 
+  return;
+end;
 
 procedure IVVcConvertB1ToB2(record IVVc IVr,string curncy,val fr,var val to1,var val to2,var val br1,var val br2)
-BEGIN
+begin
   row IVVc IVrw;
   val t;
   Integer i,rwcnt;
@@ -546,19 +561,19 @@ BEGIN
     IVrw.BasePriceB2 = t;
     MatRowPut(IVr,i,IVrw);
   end;
-  RETURN;
-END;
+  return;
+end;
 
 global
 procedure IVRowInsertValues(record IVVc IVp,row IVVc ivrp,Integer UseDiscount)
-BEGIN
+begin
   record INVc INr;
   Boolean calcpricef;
   val t,s,rowsum,price,reb,tax2prc,p;
   string 255 curitemname,salesacc,tax2code,location,taxtemplatecode;
   Boolean dummyf;
   record TaxMatrixVc TMr;
-
+  
   if (GetFirstItem(ivrp.ArtCode,INr)) then begin
     ivrp.ArtCode = INr.Code;
     location = ivrp.Location;
@@ -570,7 +585,7 @@ BEGIN
                 IVp.LangCode,IVp.CustCat,IVp.PriceList,IVp.RebCode,
                 price,curitemname,reb,
                 ivrp.VATCode,t,salesacc,IVp.ExportFlag,calcpricef,IVp.TransDate,IVp.TransTime,IVp.CustCode,true,dummyf,IVp.PayDeal,tax2code,tax2prc,IVp.Region,location,taxtemplatecode)) then begin
-
+                
       if (blank(ivrp.Price)) then begin
         ivrp.Price = price;
       end;
@@ -595,9 +610,9 @@ BEGIN
         ivrp.Recepy = "";
       end;
       ivrp.Objects = FindINObjects(INr.Objects,INr.Group);
-      p = ivrp.Price;
+      p = ivrp.Price; 
       CalcPrice(ivrp.BasePrice,ivrp.PriceFactor,ivrp.vRebate,p,UseDiscount);
-      ivrp.Price = p;
+      ivrp.Price = p;  
       CalcSum(ivrp.Quant,ivrp.Price,ivrp.PriceFactor,ivrp.vRebate,s,UseDiscount);
       ivrp.Sum = s;
       ivrp.PriceFactor = INr.PriceFactor;
@@ -619,7 +634,7 @@ begin
   record AccBlock ARAb;
   Integer i,rwcnt;
   row IVVc IVrw;
-
+  
   BlockLoad(ARAb);
   if (IVp.InvType<=0) then begin
     IVp.InvType = kInvoiceTypeNormal;
@@ -662,7 +677,7 @@ procedure CalculateTotGP(var record IVVc IVr)
 begin
   Integer i,rwcnt;
   row IVVc IVrw;
-
+  
   rwcnt = MatRowCnt(IVr);
   for (i=0;i<rwcnt;i=i+1) begin
     MatRowGet(IVr,i,IVrw);
@@ -686,6 +701,8 @@ BEGIN
   val fr,to1,to2,br1,br2,t;
   string 255 tstr;
   row LegalInvNrBlock LINrbrw;
+  record IVVc cIVr;
+  transaction Boolean gIVVcRecordImport_RecordExists;
 
   if (IVr.SerNr==-99) then begin
     IVr.SerNr = NextSerNr("IVVc",IVr.TransDate,-1,false,IVr.LangCode);
@@ -697,7 +714,7 @@ BEGIN
         IVr.GPProc = IVr.TotGP/IVr.Sum1;
       end else begin
         IVr.GPProc = IVr.TotGP/(IVr.Sum1-IVr.Sum3);
-      end;
+      end; 
       IVr.GPProc = IVr.GPProc*100;
     end;
   end;
@@ -757,11 +774,11 @@ BEGIN
 // we cannot create nor delete shop basket records on import!
 
 /*
-      if (IVr.OKFlag!=0) then begin
+      if (IVr.OKFlag!=0) then begin  
         if (IVr.InvType==kInvoiceTypeCredit or IVr.InvType==kInvoiceTypeCreditSpecialSales) then begin
           UpdateTBIVFromCredInv(IVr);
         end;
-      end;
+      end;  
 */
     end;
   end;
@@ -774,9 +791,79 @@ BEGIN
     IVr.OfficialSerNr2Serie = GetLegalInvoiceNrSerie(LINrbrw,IVr.OfficialSerNr2);
   end;
 LIVVcRecordImport:;
-  IVVcRecordImport = res;
+  cIVr.SerNr = IVr.SerNr;
+  gIVVcRecordImport_RecordExists = ReadFirstMain(cIVr,1,true);
+  IVVcRecordImport = res; 
   RETURN;
 END;
+
+updating procedure IVUpdateItemHistoryOnImport(record IVVc IVr)
+begin
+  row IVVc IVrw;
+  Integer i,rwcnt;
+  record INVc INr;
+  record ItemHistVc IHr;
+  record ItemHistVc oIHr;
+  record MainStockBlock MSb;
+  record TempStockVc TSr;
+  string 255 location;
+  transaction string 255 gItemHistImportTag;
+  
+  if (IsCloningOtherSystem) then begin goto LIVUpdateItemHistoryOnImport;end;
+  if (gItemHistImportTag=="ItemHistVc" or gItemHistImportTag=="ItemHistVc2") then begin
+    if (IVr.InvType==kInvoiceTypeCredit or IVr.InvType==kInvoiceTypeCreditSpecialSales) then begin
+    end else begin
+      BlockLoad(MSb);
+      rwcnt = MatRowCnt(IVr);
+      for (i=0;i<rwcnt;i=i+1) begin
+        MatRowGet(IVr,i,IVrw);
+        switch (IVrw.stp) begin
+          case kInvoiceRowTypeNormal:
+            if (nonblank(IVrw.Recepy)) then begin
+              location = IVrw.Location;
+              if (blank(location)) then begin
+                location = IVr.Location;
+              end;
+              if (blank(location)) then begin
+                location = MSb.MainStock;
+              end;
+              StoreItemHistory_Out2(MSb,IVrw.ArtCode,IVrw.SerialNr,location,"IVVc",IVr.TransDate,IVrw.Quant,IVrw.Coefficient,IVrw.FIFORowVal,IVr.SerNr,i,1,IVrw.PosCode,TSr,false,IVrw.Recepy);
+
+              IHr.FileName = "IVVc";
+              IHr.TransNr = IVr.SerNr;
+              IHr.Row = i;
+              if (ReadFirstKey("FNTransNr",IHr,3,true)) then begin
+                if (blank(IHr.Recepy)) then begin
+                  RecordCopy(oIHr,IHr);
+                  IHr.Recepy = IVrw.Recepy;
+                  RecordUpdate(oIHr,IHr,false);
+                end;
+              end;
+            end;
+          case kInvoiceRowTypeStructuredItemComponent:
+            if (nonblank(IVrw.MotherArtCode)) then begin
+              IHr.FileName = "IVVc";
+              IHr.TransNr = IVr.SerNr;
+              IHr.Row = i;
+              if (ReadFirstKey("FNTransNr",IHr,3,true)) then begin
+                if (blank(IHr.Recepy)) then begin
+                  INr.Code = IVrw.MotherArtCode;
+                  ReadFirstMain(INr,1,true);
+                  if (nonblank(INr.Recepy)) then begin
+                    RecordCopy(oIHr,IHr);
+                    IHr.Recepy = INr.Recepy;
+                    RecordUpdate(oIHr,IHr,false);
+                  end;
+                end;
+              end;
+            end;
+        end;
+      end;
+    end;
+  end;
+LIVUpdateItemHistoryOnImport:;
+  return;
+end;
 
 global
 updating function LongInt IVVcRecordImportAfter(var record IVVc IVr,record IVVc IV2r,LongInt long3,LongInt long4)
@@ -784,45 +871,48 @@ BEGIN
   LongInt res;
   Integer err;
   record IVVc locIVr;
-  Boolean overridef;
+  transaction Boolean gIVVcRecordImport_RecordExists;
 
   if (IVr.Invalid==0) then begin
     if (IVr.OKFlag!=0) then begin
-      locIVr.SerNr = IVr.SerNr;
-      overridef = ReadFirstMain(locIVr,1,true);
-      if (overridef==false) or (ImportingTextBackup) then begin
+      if (gIVVcRecordImport_RecordExists==false) or (ImportingTextBackup) then begin
         IVUpdateSerialNr(IVr,false,true);
+        IVUpdateItemHistoryOnImport(IVr);
         if (BatchStat(IVr,false,false)) then begin end;
-    end else begin
+      end else begin
+        locIVr.SerNr = IVr.SerNr;
+        ReadFirstMain(locIVr,1,true);
         if (BatchStat(locIVr,true,true)) then begin end;
         if (BatchStat(IVr,false,false)) then begin end;
       end;
       SalesmanStats(IVr,IV2r,false);
-      if (ImportingTextBackup==false) and (overridef==false) then begin
-        if (CanOKStockRecord(err)==true) then begin
-          IVUpdateItemHist(IVr);
-          IVUpdateCashupHist(IVr);
-          IVUpdateStock(IVr,false);
+      if (ImportingTextBackup==false) and (gIVVcRecordImport_RecordExists==false) then begin
+        if (gIVVcRecordImport_RecordExists==false) then begin
+          if (CanOKStockRecord(err)==true) then begin
+            IVUpdateItemHist(IVr);
+            IVUpdateCashupHist(IVr);
+            IVUpdateStock(IVr,false);
+          end;
         end;
       end;
     end;
   end;
 LIVVcRecordImportAfter:;
-  IVVcRecordImportAfter = res;
-  RETURN;
-END;
+  IVVcRecordImportAfter = res; 
+  return;
+end;
 
 global
 updating function LongInt IVVcRecordUpdate(var record IVVc IVr,record IVVc IV2r,LongInt stat,LongInt long4)
-BEGIN
+begin
   LongInt res;
   record AccBlock ARAb;
   Integer i,rwcnt;
   row IVVc IVrw;
   Boolean ihef,testf;
-
+  
   SetFinRef(IVr);
-  ihef = ItemHistExists("IVVc",IVr.SerNr);
+  ihef = ItemHistExists("IVVc",IVr.SerNr);  
   if ((IVr.OKFlag!=0) and (IV2r.OKFlag!=0)) then begin
   end else begin
     if ((IV2r.Invalid==0) and (IVr.Invalid==0)) then begin
@@ -838,12 +928,13 @@ BEGIN
       if (blankdate(IVr.ServiceDelDate)) then begin
         IVr.ServiceDelDate = IVr.InvDate;
       end;
-      if (ARAb.DueDateBasedOnServDelDate!=0) then begin
+      if (ARAb.DueDateBasedOnServDelDate!=0) then begin      
         IVVc_CalculatePayDate(IVr);
       end;
     end;
   end;
   if ((IV2r.Invalid==0) and (IVr.Invalid==0)) then begin
+    RecalculetWeightVolumeIVVc(IVr,false);
     if ((IVr.OKFlag!=0) and (IV2r.OKFlag==0)) then begin
       if (IVr.Status==4 or IVr.Status==5) then begin
         AddPortugueseSAFTHashToIV(IVr);
@@ -858,7 +949,7 @@ BEGIN
             testf = true;
             i = rwcnt;
           end;
-        end;
+        end;  
         if (testf) then begin
           IVr.LocOKNr = NextLocOKNr(IVr.Location);
         end;
@@ -867,14 +958,14 @@ BEGIN
       InvOK(IVr,true,true);
       if (IVr.InvType==kInvoiceTypeCredit or IVr.InvType==kInvoiceTypeCreditSpecialSales) then begin
         UpdateTBIVFromCredInv(IVr);
-      end;
+      end;                  
       if (IVr.InvType==kInvoiceTypeCredit or IVr.InvType==kInvoiceTypeCreditSpecialSales) then begin
         res = PUFromCreditNote(IVr,true);
-      end;
-      if (PDFFileForCustomerEInvoice(IVr.CustCode,IVr.CurncyCode)) then begin
+      end;      
+      if (PDFFileForCustomerEInvoice(IVr.CustCode,IVr.CurncyCode)) then begin 
         IVCreateAndAttachPdf(IVr);
       end;
-      if (HasLocalization("FIN,NOR,SWE")) then begin
+      if (HasLocalization("FIN,NOR,SWE")) then begin 
         if (IVCreateAndAttachFinvoice(IVr)) then begin
           IVr.FInvExpFlag = 1;
         end;
@@ -885,7 +976,6 @@ BEGIN
         end;
       end;
     end;
-    RecalculetWeightVolumeIVVc(IVr,false);
   end;
   if ((IV2r.Invalid==0) and (IVr.Invalid!=0)) then begin
     if (IV2r.OKFlag!=0) then begin
@@ -896,11 +986,11 @@ BEGIN
         IVr.InvalidLocOKNr = NextLocOKNr(IVr.Location);
       end;
       switch (IVr.InvType)  begin
-        case kInvoiceTypeCreditSpecialSales:
+        case kInvoiceTypeCreditSpecialSales: 
           goto LkInvoiceTypeCredit;
         case kInvoiceTypeCredit:
 LkInvoiceTypeCredit:;
-          if (IVr.CredInv>0) then begin
+          if (IVr.CredInv>0) then begin            
             UpdateLiqInfoFromCreditNote(IVr.CredInv,-IVr.Sum4,IVr.CurncyCode,-IVr.BaseSum4,IVr.SerNr,-1,true);
           end;
       end;
@@ -911,22 +1001,22 @@ LkInvoiceTypeCredit:;
         case kInvoiceTypeCreditSpecialSales: goto LkInvoiceTypeCredit;
         case kInvoiceTypeCredit:
           LkInvoiceTypeCredit:;
-          if (IVr.CredInv>0) then begin
+          if (IVr.CredInv>0) then begin            
             UpdateLiqInfoFromCreditNote(IVr.CredInv,-IVr.Sum4,IVr.CurncyCode,-IVr.BaseSum4,IVr.SerNr,-1,true);
           end;
       end;
       IVr.Prntdf = 0;
   end;
 LIVVcRecordUpdate:;
-  IVVcRecordUpdate = res;
-  RETURN;
-END;
+  IVVcRecordUpdate = res; 
+  return;
+end;
 
 updating procedure ARInstallmentDelete(record IVVc IVp)
 begin
   record ARInstallVc ARIr;
   Boolean found;
-
+  
   found = true;
   ARIr.InvoiceNr = IVp.SerNr;
   while (LoopKey("InvoiceNr",ARIr,1,found)) begin
@@ -960,8 +1050,9 @@ begin
   DeleteLiqInfoFromOrg(IVr.SerNr,IVYc);
 //  UpdateCUServiceIV(IVr,"IVVc",IVr.SerNr,IVr.PayDate); //moved to ahansamail
   RemoveFromCustomerAccount(IVr);
+  SalesmanStats(IVr,IV2r,true);
   UpdateRecalcStockNeeded(1);
-  if (IVr.UpdStockFlag==0) then begin
+  if (IVr.UpdStockFlag==0) then begin  
     DeleteItemHistVc("IVVc",IVr.SerNr,-1);
   end;
   if (deltrf) then begin
@@ -978,6 +1069,7 @@ BEGIN
   record ARVc ARr;
   record ARVc oldARr;
   Boolean testf;
+  record IVTBlock IVTb;
   record EInvoiceBlock EIb;
   record CredManEventVc CredManEventr;
   Boolean ihef;
@@ -987,14 +1079,14 @@ BEGIN
   record RLinkVc oldRLinkr;
   Integer notenr;
   string 255 autmsgfunciontags;
-
+  
   ihef = ItemHistExists("IVVc",IVr.SerNr);
   if (IVr.OKFlag==1) then begin
     if (ihef==false) then begin
-      CheckCUBalDate(IVr.CustCode,IVr.TransDate);
+      CheckCUBalDate(IVr.CustCode,IVr.TransDate);    
       SalesmanStats(IVr,IV2r,true);
     end;
-  end;
+  end;  
   if (IVr.OKFlag!=0) and (IV2r.OKFlag==0) then begin
     if (ihef==false) then begin
       BAEMailFromCreditNote(IVr);
@@ -1017,7 +1109,7 @@ BEGIN
         UpdateRentChrFromIV(IV2r.SerNr,IVr.SerNr);
       end;
     end;
-    if ((IVr.OKFlag!=0) and (IV2r.OKFlag==0)) then begin
+    if ((IVr.OKFlag!=0) and (IV2r.OKFlag==0)) then begin      
       if (ihef==false) then begin
         UpdateCOIV(IVr);
         IVUpdateItemHist(IVr);
@@ -1025,7 +1117,7 @@ BEGIN
       end;
       if (BatchStat(IVr,false,false)) then begin end;
       IVUpdateSerialNr(IVr,false,true);
-      MakeActFromSubSys_IVVc(IVr,false);
+      MakeActFromSubSys_IVVc(IVr,false);   
 //      UpdateSHFromInv(IVr); done in UpdateOrderFromInv
       if (ihef==false) then begin
 //        UpdateCUServiceIV(IVr,"IVVc",IVr.SerNr,IVr.PayDate);  //moved to ahansamail
@@ -1050,7 +1142,10 @@ BEGIN
           testf = false;
         end;
       end;
-      if (testf) then begin
+      if (HasLocalization("ARG")) then begin
+        testf = false;
+      end;
+      if (testf) then begin         
         if (EInvoiceQueTransaction(IVr,USetStr(1150),0,0)) then begin
           IVr.Prntdf = 1; // This isn't working very well... This is SaveAFTER, meaning this change will just get lost.... and you MUST NOT update IVr in this function...
         end;
@@ -1059,10 +1154,10 @@ BEGIN
         if (IVr.CredInv>0) then begin
           orgIVr.SerNr = IVr.CredInv;
           if (ReadFirstMain(orgIVr,1,true)) then begin
-            CreateRecordLink(orgIVr,CurrentCompany,IVr,CurrentCompany);
-            CreateRecordLink(IVr,CurrentCompany,orgIVr,CurrentCompany);
+            CreateRecordLink(orgIVr,CurrentCompany,IVr,CurrentCompany);  
+            CreateRecordLink(IVr,CurrentCompany,orgIVr,CurrentCompany);  
             if (IVr.SVONr>0) then begin
-              SVOr.SerNr = IVr.SVONr;
+              SVOr.SerNr = IVr.SVONr;    
               if (ReadFirstMain(SVOr,1,true)) then begin
                 CreateRecordLink(SVOr,CurrentCompany,IVr,CurrentCompany);
                 CreateRecordLink(IVr,CurrentCompany,SVOr,CurrentCompany);
@@ -1089,16 +1184,24 @@ BEGIN
           end;
         end;
       end;
-      if (IsStandardProduct) then begin
+      if (IsStandardProduct) then begin 
+        BlockLoad(IVTb);
         if (IVr.Sum3==0) then begin
-          if (CountRecords("IVVc")>=10) then begin
-            autmsgfunciontags = AddStringToStringList(autmsgfunciontags,"HasVATZone");
-          end;
+          autmsgfunciontags = AddStringToStringList(autmsgfunciontags,"HasVATZone+OK_IVVc");
+        end;
+        autmsgfunciontags = AddStringToStringList(autmsgfunciontags,"HasIntegratedNL,HasEInvoicing");
+        if (IVr.CustCode==IVTb.DefCustCode) then begin
+          autmsgfunciontags = AddStringToStringList(autmsgfunciontags,"HasModPOS+OK_IVVc");
         end;
       end;
-      autmsgfunciontags = AddStringToStringList(autmsgfunciontags,"HasIntegratedNL,HasEInvoicing");
+      switch (IVr.InvType) begin
+        case kInvoiceTypeCash:
+          autmsgfunciontags = AddStringToStringList(autmsgfunciontags,"HasModCL+OK_IVVc");
+        case kInvoiceTypeCredit:
+          autmsgfunciontags = AddStringToStringList(autmsgfunciontags,"HasReturnedGoods+OK_IVVc");
+      end;
+      autmsgfunciontags = AddStringToStringList(autmsgfunciontags,"HasModSO");
     end;
-    autmsgfunciontags = AddStringToStringList(autmsgfunciontags,"HasModSO");
   end;
   if ((IVr.OKFlag!=0) and (IV2r.OKFlag==1)) then begin
     if (IVr.PayDate!=IV2r.PayDate) then begin
@@ -1110,10 +1213,10 @@ BEGIN
         end;
       end;
     end;
-  end;
+  end;  
   if ((IV2r.Invalid==0) and (IVr.Invalid!=0)) then begin//invalidate
     if (IV2r.OKFlag!=0) then begin
-//same as UnOKInvoice ?
+//same as UnOKInvoice ?     
       if (IVr.OrderNr!=-1) then begin
         UpdateOrderFromInv(IVr,false,IV2r,true);
       end;
@@ -1125,7 +1228,7 @@ BEGIN
       ARInstallmentDelete(IVr);
       if (BatchStat(IVr,true,false)) then begin end;
       InvalidateTR(IVYc,IVr.SerNr);
-      DeleteXSrsVcs(IVr);
+      DeleteXSrsVcs(IVr);    
       ReverseInvoice(IVr);
       InvalidateJob(IVr);
       IVUpdateCredMan(IVr,CredManEventr,false,true);
@@ -1136,6 +1239,11 @@ BEGIN
       IVVc_LoyaltyCardPointsRedemption(IVr,true);
       CancelGSXEnrollmentContracts(IVr);
       InvalidatePlannedPayment("IVVc",IVr.SerNr);
+      if (HasLocalization("HUN")) then begin
+        ResendEIVRemote(IVr);
+//        if (EInvoiceQueTransaction(IVr,USetStr(1150),0,)) then begin
+//        end;
+      end;
     end;
   end;
   if ((IVr.Invalid==0) and (IV2r.Invalid==0)) then begin
@@ -1171,13 +1279,14 @@ BEGIN
     end;
     if ((IVr.OKFlag==0) and (IV2r.OKFlag!=0)) then begin
       DeletePointsHist(IVr.SerNr,"IVVc");
-    end;
+    end; 
     if ((IVr.Invalid!=9) and (IV2r.Invalid==0)) then begin
       DeletePointsHist(IVr.SerNr,"IVVc");
-    end;
+    end;   
   end;
 LIVVcRecordUpdateAfter:;
   AutomatedSales(autmsgfunciontags,kAutomatedSalesTagRandom);
-  IVVcRecordUpdateAfter = res;
+  IVVcRecordUpdateAfter = res; 
   RETURN;
 END;
+

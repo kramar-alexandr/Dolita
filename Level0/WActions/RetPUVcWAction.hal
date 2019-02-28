@@ -421,7 +421,12 @@ BEGIN
   record RetPUVc RetPUr;
 
   res = false;
-  GetWindowRecord(wn,RetPUr);
+  switch (WindowState(wn)) begin
+    case Rs_update:
+      GetPrevWindowRecord(wn,RetPUr);
+    case Rs_normal:
+      GetWindowRecord(wn,RetPUr);
+  end;
   if (RetPUr.OKFlag==0) then begin
     res = true;
   end;

@@ -1,3 +1,4 @@
+remote function Boolean ReadFirstItem(string,var record INVc,Boolean,Boolean);
 external function string 40 ObjSClassPasteSpecialWindowClass(string);
 remote procedure SRVc_PasteSerialNr(var record SRVc,Integer);
 external function val CalculateSerialNrQuantity(string,string,string,Boolean,val,val,val,val);
@@ -146,7 +147,7 @@ end;
 function Boolean SRDClassArtCodeEFAfter(Integer wn,Integer rownr,Boolean changedf)
 begin
   record SRVc SRr;
-  row SRVc SRrw;
+  row SRVc SRrw;//EBS
   Boolean res;
   string 255 inwarn;
   
@@ -288,23 +289,31 @@ begin
   Boolean res;
   record SRVc SRr;
   row SRVc SRrw;
+  record INVc INr;
 
   res = true;
   if (WindowState(wn)==Rs_update) then begin
-    GetPrevWindowRecord(wn,SRr);
+    GetPrevWindowRecord(wn,SRr);    
     if (SRr.OKFlag!=0) then begin res = false; end;
   end;
   if (WindowState(wn)==Rs_normal) then begin
     GetWindowRecord(wn,SRr);    
     if (SRr.OKFlag!=0) then begin res = false; end;
   end;
+  if (WindowState(wn)==Rs_insert) then begin
+    GetWindowRecord(wn,SRr);    
+  end;
   if (res) then begin
-    // EVS: DOL-110 rm
-//    MatRowGet(SRr,rownr,SRrw);
-//    res = blank(SRrw.ArtCode);
-//    if (res==false) then begin
-//      res = nonblank(SRrw.SerialNr);
-//    end;
+   /* MatRowGet(SRr,rownr,SRrw);// EVS: DOL-110 rm
+    res = blank(SRrw.ArtCode);
+    if (res==false) then begin
+      res = true;
+      if (ReadFirstItem(SRrw.ArtCode,INr,false,false)) then begin
+        if (INr.SerNrf==2) then begin
+          res = false;
+        end;
+      end;
+    end;*/
   end;
   SRDClassDeleteRowTest = res;
   return;

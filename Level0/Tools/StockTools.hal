@@ -635,6 +635,7 @@ BEGIN
     location = MainStockRec.MainStock;
   end;
   rwcnt = MatRowCnt(POp);
+
   for (i=0;i<rwcnt;i=i+1) begin
     MatRowGet(POp,i,POrw);
     if (POrw.stp==1 and POrw.OrderType!=kOrderTypeDropShip) then begin
@@ -967,7 +968,9 @@ begin
         if (vponr[PONr]>=0) then begin
           pos = vponr[PONr];
           RecordCopy(POr,aPOr[pos]);
+          UpdatePOOut(POr,false,false);    
           UpdatePORowWithPURow(PU2p,PUrw,false,shipd1f,true,POr);
+          UpdatePOOut(POr,true,false);    
           aPOr[pos] = POr;
         end;
       end;
@@ -975,8 +978,8 @@ begin
     for (i=0;i<apocnt;i=i+1) begin
       RecordCopy(POr,aPOr[i]);
       RecordCopy(oldPOr,aoldPOr[i]);
-//      RecordUpdate(POr,oldPOr,true);//why record update dont work here ? 
-      RecordStore(POr,true);
+      RecordUpdate(oldPOr,POr,false);//why record update dont work here ? 
+//      RecordStore(POr,true);
     end;
   end;
   
@@ -989,13 +992,15 @@ begin
     rwcnt = MatRowCnt(PUp);
     for (i=0;i<rwcnt;i=i+1) begin
       MatRowGet(PUp,i,PUrw);
-      if (PUrw.PONr!=-1) and (PUrw.OrdRow>=0) and (PUrw.ovst==0) then begin
-        if (vponr[PUrw.PONr]<0) then begin
-          POr.SerNr = PUrw.PONr;
+      PONr = PUrw.PONr;
+      if (PONr<=0) then begin PONr = PUp.PONr; end;
+      if (PONr!=-1) and (PUrw.OrdRow>=0) and (PUrw.ovst==0) then begin
+        if (vponr[PONr]<0) then begin
+          POr.SerNr = PONr;
           if (ReadFirstMain(POr,1,true)) then begin
             aPOr[apocnt] = POr;
             aoldPOr[apocnt] = POr;
-            vponr[POr.SerNr] = apocnt;
+            vponr[PONr] = apocnt;
             apocnt = apocnt + 1;
           end;
         end;
@@ -1004,11 +1009,15 @@ begin
 
     for (i=0;i<rwcnt;i=i+1) begin
       MatRowGet(PUp,i,PUrw);
-      if (PUrw.PONr!=-1) and (PUrw.OrdRow>=0) and (PUrw.ovst==0) then begin
-        if (vponr[PUrw.PONr]>=0) then begin
-          pos = vponr[PUrw.PONr];
+      PONr = PUrw.PONr;
+      if (PONr<=0) then begin PONr = PUp.PONr; end;
+      if (PONr!=-1) and (PUrw.OrdRow>=0) and (PUrw.ovst==0) then begin
+        if (vponr[PONr]>=0) then begin
+          pos = vponr[PONr];
           RecordCopy(POr,aPOr[pos]);
+          UpdatePOOut(POr,false,false);    
           UpdatePORowWithPURow(PUp,PUrw,true,shipd1f,true,POr);
+          UpdatePOOut(POr,true,false);    
           aPOr[pos] = POr;
         end;
       end;
@@ -1016,8 +1025,8 @@ begin
     for (i=0;i<apocnt;i=i+1) begin
       RecordCopy(POr,aPOr[i]);
       RecordCopy(oldPOr,aoldPOr[i]);
-//      err = RecordUpdate(POr,oldPOr,true);//why record update dont work here ? 
-      RecordStore(POr,true);
+      err = RecordUpdate(oldPOr,POr,false);//why record update dont work here ? 
+//      RecordStore(POr,true);
     end;
   end;
 //  UpdatePOOut(POr,true,false);
@@ -1033,6 +1042,7 @@ begin
   Integer i,rwcnt;
   row PUVc PUrw;
   Integer apocnt,pos;
+  LongInt PONr;
   record POVc POr;
   record POVc oldPOr;
   vector LongInt vponr;
@@ -1043,9 +1053,11 @@ begin
   rwcnt = MatRowCnt(PUp);
   for (i=0;i<rwcnt;i=i+1) begin
     MatRowGet(PUp,i,PUrw);
-    if (PUrw.PONr!=-1) and (PUrw.OrdRow>=0) and (PUrw.ovst==0) then begin
-      if (vponr[PUrw.PONr]<0) then begin
-        POr.SerNr = PUrw.PONr;
+    PONr = PUrw.PONr;
+    if (PONr<=0) then begin PONr = PUp.PONr; end;
+    if (PONr!=-1) and (PUrw.OrdRow>=0) and (PUrw.ovst==0) then begin
+      if (vponr[PONr]<0) then begin
+        POr.SerNr = PONr;
         if (ReadFirstMain(POr,1,true)) then begin
           aPOr[apocnt] = POr;
           aoldPOr[apocnt] = POr;
@@ -1058,9 +1070,11 @@ begin
   
   for (i=0;i<rwcnt;i=i+1) begin
     MatRowGet(PUp,i,PUrw);
-    if (PUrw.PONr!=-1) and (PUrw.OrdRow>=0) and (PUrw.ovst==0) then begin
-      if (vponr[PUrw.PONr]>=0) then begin
-        pos = vponr[PUrw.PONr];
+    PONr = PUrw.PONr;
+    if (PONr<=0) then begin PONr = PUp.PONr; end;
+    if (PONr!=-1) and (PUrw.OrdRow>=0) and (PUrw.ovst==0) then begin
+      if (vponr[PONr]>=0) then begin
+        pos = vponr[PONr];
         RecordCopy(POr,aPOr[pos]);
         UpdatePORowWithPURow(PUp,PUrw,false,true,true,POr);
         aPOr[pos] = POr;

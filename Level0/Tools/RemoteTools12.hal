@@ -88,7 +88,7 @@ begin
 
   AddTextToArea(tstr,chain);
   AddTextToArea(";",chain);
-
+  
   GetLegalInvNrRow(OfficialSerNr,LINrbrw);
   switch (filename) begin
     case "QTVc":
@@ -119,7 +119,7 @@ begin
           journalid = "MOVGL";
       end;
     case "ConsStockMovInvVc":
-      journalid = "FCCS";
+      journalid = "FCCS";      
     case "ORVc":
 //      journalid = USetStr(1641);
       journalid = "ENC";
@@ -147,7 +147,12 @@ begin
       end;
     case "IVCashVc":
 //      YcToStr(RestAccYc,journalid);
-      journalid = "POS";
+      switch (Type) begin
+        case kPOSInvoiceTypeCredit:
+          journalid = "NCPOS";
+        otherwise
+          journalid = "POS";
+      end;
   end;
   InvoiceNo = journalid & " " & GetLegalInvoiceNrSerie(LINrbrw,OfficialSerNr) & "/" & GetLegalInvoiceNrString(LINrbrw,OfficialSerNr);
   AddTextToArea(InvoiceNo,chain);
@@ -169,7 +174,7 @@ global
 function string 255 SAFTHashControl(string hash)
 begin
   string 255 res;
-
+  
   if (nonblank(hash)) then begin
     res = mid(hash,0,1);
     res = res & "";
@@ -181,7 +186,7 @@ begin
     res = res & "-";
     res = res & USetStr(26700) & " " & USetStr(990) & " /AT " & USetStr(1802);
   end;
-
+  
   SAFTHashControl = res;
   return;
 end;
@@ -193,18 +198,18 @@ begin
   Date fsd,fed;
   row LegalInvNrBlock LINrbrw;
   Boolean testf;
-
+  
   FindFiscalYear(curORr.OrdDate,fsd,fed);
   GetLegalInvNrRow(curORr.OfficialSerNr,LINrbrw);
 
-//1st invoice in Number series
+//1st invoice in Number series  
   if (curORr.OfficialSerNr==LINrbrw.Serie & LINrbrw.TSerStart) then begin
     res = "";
     goto LGetPreviousORHash;
   end;
-
-/*
-//1st invoice in FIscal year
+  
+/*  
+//1st invoice in FIscal year  
   ResetLoop(prevORr);
   prevORr.RegDate = curORr.RegDate;
   prevORr.RegTime = curORr.RegTime;
@@ -220,7 +225,7 @@ begin
       goto LGetPreviousORHash;
     end;
   end;
-*/
+*/  
   ResetLoop(prevORr);
   prevORr.OfficialSerNr = curORr.OfficialSerNr;
   if (LoopBackKey("OfficialSerNr",prevORr,1,true)) then begin
@@ -230,7 +235,7 @@ begin
     end;
     res = prevORr.Hash;
   end;
-LGetPreviousORHash:;
+LGetPreviousORHash:;  
   GetPreviousORHash = res;
   return;
 end;
@@ -239,11 +244,11 @@ procedure AddPortugueseSAFTHashToOR(var record ORVc ORr)
 begin
   string 255 tstr;
   val v;
-
+  
   if (HasLocalization("PRT")==false) then begin
     goto LAddPortugueseSAFTHashToOR;
   end;
-
+  
   //YcToStr(IVYc,tstr);
   //tstr = tstr & " 1/" & IVr.SerNr;
 
@@ -264,20 +269,20 @@ begin
   Date fsd,fed;
   row LegalInvNrBlock LINrbrw;
   Boolean testf;
-
+  
   FindFiscalYear(curIVr.InvDate,fsd,fed);
   if (nonblank(curIVr.OfficialSerNr)) then begin
     GetLegalInvNrRow(curIVr.OfficialSerNr,LINrbrw);
 
-//1st invoice in Number series
+//1st invoice in Number series  
     if (curIVr.OfficialSerNr==LINrbrw.Serie & LINrbrw.TSerStart) then begin
       res = "";
       goto LGetPreviousIVHash;
     end;
   end;
-
-/*
-//1st invoice in FIscal year
+    
+/*    
+//1st invoice in FIscal year  
   ResetLoop(prevIVr);
   prevIVr.RegDate = curIVr.RegDate;
   prevIVr.RegTime = curIVr.RegTime;
@@ -292,9 +297,9 @@ begin
       res = "";
       goto LGetPreviousIVHash;
     end;
-  end;
+  end;  
 */
-
+  
   ResetLoop(prevIVr);
   prevIVr.OfficialSerNr = curIVr.OfficialSerNr;
   if (LoopBackKey("OfficialSerNr",prevIVr,1,true)) then begin
@@ -306,8 +311,8 @@ begin
       res = prevIVr.Hash;
     end;
   end;
-//LogText(0,"GetPreviousIVHash prevIVr.SerNr " & prevIVr.SerNr);
-LGetPreviousIVHash:;
+//LogText(0,"GetPreviousIVHash prevIVr.SerNr " & prevIVr.SerNr);  
+LGetPreviousIVHash:;  
   GetPreviousIVHash = res;
   return;
 end;
@@ -317,20 +322,20 @@ procedure AddPortugueseSAFTHashToIV(var record IVVc IVr)
 begin
   string 255 tstr;
   val v;
-
+  
   if (HasLocalization("PRT")==false) then begin
     goto LAddPortugueseSAFTHashToIV;
   end;
-
+  
   //YcToStr(IVYc,tstr);
   //tstr = tstr & " 1/" & IVr.SerNr;
-
+  
   if (IVr.InclVAT>0) then begin
     v = MulRateToBase1(IVr.CurncyCode,IVr.Sum1,IVr.FrRate,IVr.ToRateB1,IVr.ToRateB2,IVr.BaseRate1,IVr.BaseRate2,DefaultCurRoundOff);  //Sum4 excludes some taxes
   end else begin
     v = MulRateToBase1(IVr.CurncyCode,IVr.Sum3+IVr.Sum1,IVr.FrRate,IVr.ToRateB1,IVr.ToRateB2,IVr.BaseRate1,IVr.BaseRate2,DefaultCurRoundOff);  //Sum4 excludes some taxes
   end;
-
+  
   if (blank(v)) then begin v = 0.00; end;
 
   IVr.Hash = GenerateSAFTHash(IVr.InvType,"IVVc",IVr.InvDate,IVr.RegDate,IVr.RegTime,IVr.OfficialSerNr,v,GetPreviousIVHash(IVr),"");
@@ -346,17 +351,17 @@ begin
   Date fsd,fed;
   row LegalInvNrBlock LINrbrw;
   Boolean testf;
-
+  
   FindFiscalYear(curIVCashr.InvDate,fsd,fed);
   GetLegalInvNrRow(curIVCashr.OfficialSerNr,LINrbrw);
 
-//1st invoice in Number series
+//1st invoice in Number series  
   if (curIVCashr.OfficialSerNr==LINrbrw.Serie & LINrbrw.TSerStart) then begin
     res = "";
     goto LGetPreviousIVCashHash;
   end;
-
-//1st invoice in FIscal year
+  
+//1st invoice in FIscal year  
   ResetLoop(prevIVCashr);
   prevIVCashr.RegDate = curIVCashr.RegDate;
   prevIVCashr.RegTime = curIVCashr.RegTime;
@@ -372,7 +377,7 @@ begin
       goto LGetPreviousIVCashHash;
     end;
   end;
-
+  
   ResetLoop(prevIVCashr);
   prevIVCashr.OfficialSerNr = curIVCashr.OfficialSerNr;
   if (LoopBackKey("OfficialSerNr",prevIVCashr,1,true)) then begin
@@ -382,7 +387,7 @@ begin
     end;
     res = prevIVCashr.Hash;
   end;
-LGetPreviousIVCashHash:;
+LGetPreviousIVCashHash:;  
   GetPreviousIVCashHash = res;
   return;
 end;
@@ -394,17 +399,17 @@ begin
   Date fsd,fed;
   row LegalInvNrBlock LINrbrw;
   Boolean testf;
-
+  
   FindFiscalYear(curRestAccp.TransDate,fsd,fed);
   GetLegalInvNrRow(curRestAccp.OfficialSerNr,LINrbrw);
 
-//1st invoice in Number series
+//1st invoice in Number series  
   if (curRestAccp.OfficialSerNr==LINrbrw.Serie & LINrbrw.TSerStart) then begin
     res = "";
     goto LGetPreviousRestAccVcHash;
   end;
-
-//1st invoice in FIscal year
+  
+//1st invoice in FIscal year  
   ResetLoop(prevRestAccp);
   prevRestAccp.TransDate = curRestAccp.TransDate;
   prevRestAccp.TransTime = curRestAccp.TransTime;
@@ -420,7 +425,7 @@ begin
       goto LGetPreviousRestAccVcHash;
     end;
   end;
-
+  
   ResetLoop(prevRestAccp);
   prevRestAccp.OfficialSerNr = curRestAccp.OfficialSerNr;
   if (LoopBackKey("OfficialSerNr",prevRestAccp,1,true)) then begin
@@ -430,7 +435,7 @@ begin
     end;
     res = prevRestAccp.Hash;
   end;
-LGetPreviousRestAccVcHash:;
+LGetPreviousRestAccVcHash:;  
   GetPreviousRestAccVcHash = res;
   return;
 end;
@@ -438,7 +443,7 @@ end;
 procedure AddPortugueseSAFTHashToIVCash(var record IVCashVc IVCashr)
 begin
   val v;
-
+  
   if (HasLocalization("PRT")==false) then begin
     goto LAddPortugueseSAFTHashToIVCash;
   end;
@@ -446,30 +451,30 @@ begin
   v = MulRateToBase1(IVCashr.CurncyCode,IVCashr.Sum4,IVCashr.FrRate,IVCashr.ToRateB1,IVCashr.ToRateB2,IVCashr.BaseRate1,IVCashr.BaseRate2,DefaultCurRoundOff);
   if (blank(v)) then begin v = 0.00; end;
 
-  IVCashr.Hash = GenerateSAFTHash(1,"IVCashVc",IVCashr.InvDate,IVCashr.RegDate,IVCashr.RegTime,IVCashr.OfficialSerNr,v,GetPreviousIVCashHash(IVCashr),"");
+  IVCashr.Hash = GenerateSAFTHash(IVCashr.InvType,"IVCashVc",IVCashr.InvDate,IVCashr.RegDate,IVCashr.RegTime,IVCashr.OfficialSerNr,v,GetPreviousIVCashHash(IVCashr),"");
   IVCashr.HashKeyVersion = CryptSAFTHashKeyVersion;
 
-LAddPortugueseSAFTHashToIVCash:;
+LAddPortugueseSAFTHashToIVCash:;  
   return;
 end;
 
 procedure AddPortugueseSAFTHashToRestAccVc(var record RestAccVc RestAccp)
 begin
   val v;
-
+  
   if (HasLocalization("PRT")==false) then begin
     goto LAddPortugueseSAFTHashToRestAccVc;
   end;
 
   //v = MulRateToBase1(RestAccp.CurncyCode,RestAccp.Sum4,RestAccp.FrRate,RestAccp.ToRateB1,RestAccp.ToRateB2,RestAccp.BaseRate1,RestAccp.BaseRate2,DefaultCurRoundOff);
-
+  
   // No base rate variables in the header
   v = RestAccp.Sum4;
   if (blank(v)) then begin v = 0.00; end;
   RestAccp.Hash = GenerateSAFTHash(1,"RestAccVc",RestAccp.TransDate,RestAccp.TransDate,RestAccp.TransTime,RestAccp.OfficialSerNr,v,GetPreviousRestAccVcHash(RestAccp),"");
   RestAccp.HashKeyVersion = CryptSAFTHashKeyVersion;
 
-LAddPortugueseSAFTHashToRestAccVc:;
+LAddPortugueseSAFTHashToRestAccVc:;  
   return;
 end;
 
@@ -480,17 +485,17 @@ begin
   Date fsd,fed;
   row LegalInvNrBlock LINrbrw;
   Boolean testf;
-
+  
   FindFiscalYear(curStockMovr.TransDate,fsd,fed);
   GetLegalInvNrRow(curStockMovr.OfficialSerNr,LINrbrw);
 
-//1st invoice in Number series
+//1st invoice in Number series  
   if (curStockMovr.OfficialSerNr==LINrbrw.Serie & LINrbrw.TSerStart) then begin
     res = "";
     goto LGetPreviousStockMovHash;
   end;
-
-//1st invoice in FIscal year
+  
+//1st invoice in FIscal year  
   ResetLoop(prevStockMovr);
   prevStockMovr.RegDate = curStockMovr.RegDate;
   prevStockMovr.RegTime = curStockMovr.RegTime;
@@ -503,15 +508,17 @@ begin
       if (prevStockMovr.SentTransDate<fsd) then begin testf = true; end;
       if (prevStockMovr.SentTransDate>fed) then begin testf = true; end;
     end else begin
-      if (prevStockMovr.TransDate<fsd) then begin testf = true; end;
-      if (prevStockMovr.TransDate>fed) then begin testf = true; end;
+      if (nonblank(prevStockMovr.TransDate)) then begin
+        if (prevStockMovr.TransDate<fsd) then begin testf = true; end;
+        if (prevStockMovr.TransDate>fed) then begin testf = true; end;
+      end;
     end;
     if (testf) then begin
       res = "";
       goto LGetPreviousStockMovHash;
     end;
-  end;
-
+  end; 
+  
   ResetLoop(prevStockMovr);
   prevStockMovr.OfficialSerNr = curStockMovr.OfficialSerNr;
   if (LoopBackKey("OfficialSerNr",prevStockMovr,1,true)) then begin
@@ -521,7 +528,7 @@ begin
     end;
     res = prevStockMovr.Hash;
   end;
-LGetPreviousStockMovHash:;
+LGetPreviousStockMovHash:;  
   GetPreviousStockMovHash = res;
   return;
 end;
@@ -532,7 +539,7 @@ begin
   val v,sum4;
   row StockMovVc SMrw;
   Integer i,rwcnt;
-
+  
   if (HasLocalization("PRT")==false) then begin
     goto LAddPortugueseSAFTHashToStockMov;
   end;
@@ -548,13 +555,13 @@ begin
       sum4 = sum4 + SMrw.FIFORowVal;
     end;
   end;
-
+    
   v = MulRateToBase1(StockMovr.CurncyCode,sum4,StockMovr.FrRate,StockMovr.ToRateB1,StockMovr.ToRateB2,StockMovr.BaseRate1,StockMovr.BaseRate2,DefaultCurRoundOff);
   if (blank(v)) then begin v = 0.00; end;
 
   StockMovr.Hash = GenerateSAFTHash(StockMovr.StockMovType,"StockMovVc",StockMovr.TransDate,StockMovr.RegDate,StockMovr.RegTime,StockMovr.OfficialSerNr,0.00,GetPreviousStockMovHash(StockMovr),"");
   StockMovr.HashKeyVersion = CryptSAFTHashKeyVersion;
-
+  
   if (blank(StockMovr.PlanSendDate)) then begin
     StockMovr.PlanSendDate = CurrentDate;
   end;
@@ -562,7 +569,7 @@ begin
     StockMovr.PlanSendTime = CurrentTime;
   end;
 
-LAddPortugueseSAFTHashToStockMov:;
+LAddPortugueseSAFTHashToStockMov:;  
   return;
 end;
 
@@ -573,17 +580,17 @@ begin
   Date fsd,fed;
   row LegalInvNrBlock LINrbrw;
   Boolean testf;
-
+  
   FindFiscalYear(curSHr.ShipDate,fsd,fed);
   GetLegalInvNrRow(curSHr.OfficialSerNr,LINrbrw);
 
-//1st invoice in Number series
+//1st invoice in Number series  
   if (curSHr.OfficialSerNr==LINrbrw.Serie & LINrbrw.TSerStart) then begin
     res = "";
     goto LGetPreviousSHHash;
   end;
-
-//1st invoice in FIscal year
+  
+//1st invoice in FIscal year  
   ResetLoop(prevSHr);
   prevSHr.RegDate = curSHr.RegDate;
   prevSHr.RegTime = curSHr.RegTime;
@@ -599,7 +606,7 @@ begin
       goto LGetPreviousSHHash;
     end;
   end;
-
+  
   ResetLoop(prevSHr);
   prevSHr.OfficialSerNr = curSHr.OfficialSerNr;
   if (LoopBackKey("OfficialSerNr",prevSHr,1,true)) then begin
@@ -609,7 +616,7 @@ begin
     end;
     res = prevSHr.Hash;
   end;
-LGetPreviousSHHash:;
+LGetPreviousSHHash:;  
   GetPreviousSHHash = res;
   return;
 end;
@@ -620,7 +627,7 @@ begin
   val v;
   row SHVc SHrw;
   Integer i,rwcnt;
-
+  
   if (HasLocalization("PRT")==false) then begin
     goto LAddPortugueseSAFTHashToSH;
   end;
@@ -638,7 +645,7 @@ begin
   SHr.Hash = GenerateSAFTHash(1,"SHVc",SHr.ShipDate,SHr.RegDate,SHr.RegTime,SHr.OfficialSerNr,0.00,GetPreviousSHHash(SHr),"");
   SHr.HashKeyVersion = CryptSAFTHashKeyVersion;
 
-LAddPortugueseSAFTHashToSH:;
+LAddPortugueseSAFTHashToSH:;  
   return;
 end;
 
@@ -674,12 +681,12 @@ begin
   Boolean testf,loopf;
   Boolean testlocmach,testbranch,testclass;
   Integer loopcnt;
-
-  BlockLoad(orgLINrb);
+  
+  BlockLoad(orgLINrb);  
   rwcnt = MatRowCnt(orgLINrb);
   for (i=0;i<rwcnt;i=i+1) begin
     MatRowGet(orgLINrb,i,LINrbrw);
-    if ((LINrbrw.RegType==kOfficialNumTypeAllIVVc) or
+    if ((LINrbrw.RegType==kOfficialNumTypeAllIVVc) or 
         (LINrbrw.RegType==kOfficialNumTypeInterestIVVc) or
         (LINrbrw.RegType==kOfficialNumTypeCashIVVc) or
         (LINrbrw.RegType==kOfficialNumTypeCreditIVVc) or
@@ -693,22 +700,22 @@ begin
         (LINrbrw.RegType==kOfficialNumTypeRecoverdPOSIVVc) or
         (LINrbrw.RegType==kOfficialNumTypeRecoverdCreditIVVc) or
         (LINrbrw.RegType==kOfficialNumTypeRecoverdInterestIVVc) or
-        (LINrbrw.RegType==kOfficialNumTypeManualCreditIVVc) or
-        (LINrbrw.RegType==kOfficialNumTypeCashInvoiceReceiptPRTIVVc) or
-        (LINrbrw.RegType==kOfficialNumTypeRecoverdCashInvoiceReceiptIVVc) or
-        (LINrbrw.RegType==kOfficialNumTypeManualCashInvoiceReceiptIVVc) or
-        (LINrbrw.RegType==kOfficialNumTypeLiquidationIVVc) or
-        (LINrbrw.RegType==kOfficialNumTypeReceiptIVVc) or
+        (LINrbrw.RegType==kOfficialNumTypeManualCreditIVVc) or 
+        (LINrbrw.RegType==kOfficialNumTypeCashInvoiceReceiptPRTIVVc) or 
+        (LINrbrw.RegType==kOfficialNumTypeRecoverdCashInvoiceReceiptIVVc) or 
+        (LINrbrw.RegType==kOfficialNumTypeManualCashInvoiceReceiptIVVc) or 
+        (LINrbrw.RegType==kOfficialNumTypeLiquidationIVVc) or 
+        (LINrbrw.RegType==kOfficialNumTypeReceiptIVVc) or 
         (LINrbrw.RegType==kOfficialNumTypeManualInterestIVVc)
-        )
-    then begin
+        ) 
+    then begin 
       MatRowPut(tmpLINrb,MatRowCnt(tmpLINrb),LINrbrw);
     end;
   end;
 
   rwcnt = MatRowCnt(tmpLINrb);
-
-  loopcnt = 1;
+  
+  loopcnt = 1;    
   loopf = true;
   while (loopf) begin
     switch (loopcnt) begin
@@ -783,21 +790,21 @@ global
 function Boolean TestNextOfficialSerialNr_IVVc(row LegalInvNrBlock LINrbrw,string cuclass,record IVVc IVr,Boolean notmanualf)
 begin
   Boolean testf;
-
+  
   testf = false;
   switch (LINrbrw.RegType) begin
     case kOfficialNumTypeAllIVVc:
       testf = true;
     case kOfficialNumTypeInterestIVVc:
-      if (IVr.InvType==kInvoiceTypeInterest or IVr.InvType==kInvoiceTypeDebit) and (IVr.Status==kRecordStatusNone) then begin
+      if (IVr.InvType==kInvoiceTypeInterest or IVr.InvType==kInvoiceTypeDebit) and (IVr.Status==kRecordStatusNone) then begin 
         testf = true;
       end;
     case kOfficialNumTypeManualInterestIVVc:
-      if  (IVr.InvType==kInvoiceTypeInterest or IVr.InvType==kInvoiceTypeDebit) and (IVr.Status==kRecordStatusManual) then begin
+      if  (IVr.InvType==kInvoiceTypeInterest or IVr.InvType==kInvoiceTypeDebit) and (IVr.Status==kRecordStatusManual) then begin 
         testf = true;
       end;
     case kOfficialNumTypeRecoverdInterestIVVc:
-      if ((IVr.InvType==kInvoiceTypeInterest) or (IVr.InvType==kInvoiceTypeDebit)) and (IVr.Status==kRecordStatusRecovered) then begin
+      if ((IVr.InvType==kInvoiceTypeInterest) or (IVr.InvType==kInvoiceTypeDebit)) and (IVr.Status==kRecordStatusRecovered) then begin 
         testf = true;
       end;
     case kOfficialNumTypeCashIVVc:
@@ -813,126 +820,126 @@ begin
     case kOfficialNumTypeRecoverdCashInvoiceReceiptIVVc:
       if (IVr.InvType==kInvoiceTypeCashInvoiceReceiptPRT) and (IVr.Status==kRecordStatusRecovered) then begin testf = true; end;
     case kOfficialNumTypeCreditIVVc:
-      if (IVr.InvType==kInvoiceTypeCredit or IVr.InvType==kInvoiceTypeCreditSpecialSales) and (IVr.Status!=kRecordStatusManual) then begin
+      if (IVr.InvType==kInvoiceTypeCredit or IVr.InvType==kInvoiceTypeCreditSpecialSales) and (IVr.Status!=kRecordStatusManual) then begin 
         testf = true;
-      end;
+      end; 
     case kOfficialNumTypeRecoverdCreditIVVc:
-      if (IVr.InvType==kInvoiceTypeCredit or IVr.InvType==kInvoiceTypeCreditSpecialSales) and (IVr.Status!=kRecordStatusManual) then begin
+      if (IVr.InvType==kInvoiceTypeCredit or IVr.InvType==kInvoiceTypeCreditSpecialSales) and (IVr.Status!=kRecordStatusManual) then begin 
         testf = true;
-      end;
+      end; 
     case kOfficialNumTypeManualCreditIVVc:
-      if (IVr.InvType==kInvoiceTypeCredit or IVr.InvType==kInvoiceTypeCreditSpecialSales) and (IVr.Status==kRecordStatusManual) then begin
+      if (IVr.InvType==kInvoiceTypeCredit or IVr.InvType==kInvoiceTypeCreditSpecialSales) and (IVr.Status==kRecordStatusManual) then begin 
         testf = true;
-      end;
+      end; 
     case kOfficialNumTypeSpecialSalesIVVc:
       if (IVr.InvType==kInvoiceTypeNormalSpecialSales) then begin testf = true; end;
     case kOfficialNumTypeLiquidationIVVc:
-      if (IVr.InvType==kInvoiceTypeNormal or IVr.InvType==kInvoiceTypeDownpayment or IVr.InvType==kInvoiceTypePrepayment) and (IVr.TaxInvType==kTaxInvTypeLiquidation) then begin
+      if (IVr.InvType==kInvoiceTypeNormal or IVr.InvType==kInvoiceTypeDownpayment or IVr.InvType==kInvoiceTypePrepayment) and (IVr.TaxInvType==kTaxInvTypeLiquidation) then begin 
         testf = true;
       end;
     case kOfficialNumTypeReceiptIVVc:
-      if (IVr.InvType==kInvoiceTypeNormal or IVr.InvType==kInvoiceTypeDownpayment or IVr.InvType==kInvoiceTypePrepayment) and (IVr.TaxInvType==kTaxInvTypeReceipt) then begin
+      if (IVr.InvType==kInvoiceTypeNormal or IVr.InvType==kInvoiceTypeDownpayment or IVr.InvType==kInvoiceTypePrepayment) and (IVr.TaxInvType==kTaxInvTypeReceipt) then begin 
         testf = true;
       end;
     case kOfficialNumTypeIVVc:
-      if (IVr.InvType==kInvoiceTypeNormal or IVr.InvType==kInvoiceTypeDownpayment or IVr.InvType==kInvoiceTypePrepayment) and (IVr.TaxInvType==kTaxInvTypeNormal)  then begin
+      if (IVr.InvType==kInvoiceTypeNormal or IVr.InvType==kInvoiceTypeDownpayment or IVr.InvType==kInvoiceTypePrepayment) and (IVr.TaxInvType==kTaxInvTypeNormal)  then begin 
         testf = true;
       end;
     case kOfficialNumTypeManualIVVc:
-      if (IVr.InvType==kInvoiceTypeNormal or IVr.InvType==kInvoiceTypeDownpayment or IVr.InvType==kInvoiceTypePrepayment) and (IVr.TaxInvType==kTaxInvTypeNormal) then begin
+      if (IVr.InvType==kInvoiceTypeNormal or IVr.InvType==kInvoiceTypeDownpayment or IVr.InvType==kInvoiceTypePrepayment) and (IVr.TaxInvType==kTaxInvTypeNormal) then begin 
         testf = true;
       end;
     case kOfficialNumTypeRecoverdIVVc:
-      if (IVr.InvType==kInvoiceTypeNormal or IVr.InvType==kInvoiceTypeDownpayment or IVr.InvType==kInvoiceTypePrepayment) and (IVr.TaxInvType==kTaxInvTypeNormal) then begin
+      if (IVr.InvType==kInvoiceTypeNormal or IVr.InvType==kInvoiceTypeDownpayment or IVr.InvType==kInvoiceTypePrepayment) and (IVr.TaxInvType==kTaxInvTypeNormal) then begin 
         testf = true;
       end;
   end;
 
 /*
-  if (LINrbrw.RegType==kOfficialNumTypeAllIVVc) then begin
+  if (LINrbrw.RegType==kOfficialNumTypeAllIVVc) then begin 
     testf = true;
   end;
-  if (LINrbrw.RegType==kOfficialNumTypeInterestIVVc) and (IVr.InvType==kInvoiceTypeInterest or IVr.InvType==kInvoiceTypeDebit) and (IVr.Status==0) then begin
+  if (LINrbrw.RegType==kOfficialNumTypeInterestIVVc) and (IVr.InvType==kInvoiceTypeInterest or IVr.InvType==kInvoiceTypeDebit) and (IVr.Status==0) then begin 
     testf = true;
   end;
-  if (LINrbrw.RegType==kOfficialNumTypeManualInterestIVVc) and (IVr.InvType==kInvoiceTypeInterest or IVr.InvType==kInvoiceTypeDebit) and (IVr.Status==kRecordStatusManual) then begin
+  if (LINrbrw.RegType==kOfficialNumTypeManualInterestIVVc) and (IVr.InvType==kInvoiceTypeInterest or IVr.InvType==kInvoiceTypeDebit) and (IVr.Status==kRecordStatusManual) then begin 
     testf = true;
   end;
-  if (LINrbrw.RegType==kOfficialNumTypeRecoverdInterestIVVc) and ((IVr.InvType==kInvoiceTypeInterest) or (IVr.InvType==kInvoiceTypeDebit)) and (IVr.Status==kRecordStatusRecovered) then begin
+  if (LINrbrw.RegType==kOfficialNumTypeRecoverdInterestIVVc) and ((IVr.InvType==kInvoiceTypeInterest) or (IVr.InvType==kInvoiceTypeDebit)) and (IVr.Status==kRecordStatusRecovered) then begin 
     testf = true;
   end;
-  if (LINrbrw.RegType==kOfficialNumTypeCashIVVc or LINrbrw.RegType==kOfficialNumTypeManualCashIVVc) and (IVr.InvType==kInvoiceTypeCash) and (IVr.Status!=kRecordStatusRecovered) then begin
+  if (LINrbrw.RegType==kOfficialNumTypeCashIVVc or LINrbrw.RegType==kOfficialNumTypeManualCashIVVc) and (IVr.InvType==kInvoiceTypeCash) and (IVr.Status!=kRecordStatusRecovered) then begin 
     testf = true;
   end;
-  if (LINrbrw.RegType==kOfficialNumTypeRecoverdCashIVVc) and (IVr.InvType==kInvoiceTypeCash) and (IVr.Status==kRecordStatusRecovered) then begin
+  if (LINrbrw.RegType==kOfficialNumTypeRecoverdCashIVVc) and (IVr.InvType==kInvoiceTypeCash) and (IVr.Status==kRecordStatusRecovered) then begin 
     testf = true;
   end;
-  if (LINrbrw.RegType==kOfficialNumTypeCashInvoiceReceiptPRTIVVc or LINrbrw.RegType==kOfficialNumTypeManualCashInvoiceReceiptIVVc) and (IVr.InvType==kInvoiceTypeCashInvoiceReceiptPRT) and (IVr.Status!=kRecordStatusRecovered) then begin
+  if (LINrbrw.RegType==kOfficialNumTypeCashInvoiceReceiptPRTIVVc or LINrbrw.RegType==kOfficialNumTypeManualCashInvoiceReceiptIVVc) and (IVr.InvType==kInvoiceTypeCashInvoiceReceiptPRT) and (IVr.Status!=kRecordStatusRecovered) then begin 
     testf = true;
   end;
-  if (LINrbrw.RegType==kOfficialNumTypeRecoverdCashInvoiceReceiptIVVc) and (IVr.InvType==kInvoiceTypeCashInvoiceReceiptPRT) and (IVr.Status==kRecordStatusRecovered) then begin
+  if (LINrbrw.RegType==kOfficialNumTypeRecoverdCashInvoiceReceiptIVVc) and (IVr.InvType==kInvoiceTypeCashInvoiceReceiptPRT) and (IVr.Status==kRecordStatusRecovered) then begin 
     testf = true;
   end;
-  if (LINrbrw.RegType==kOfficialNumTypeCreditIVVc or LINrbrw.RegType==kOfficialNumTypeRecoverdCreditIVVc) and (IVr.InvType==kInvoiceTypeCredit or IVr.InvType==kInvoiceTypeCreditSpecialSales) and (IVr.Status!=kRecordStatusManual) then begin
+  if (LINrbrw.RegType==kOfficialNumTypeCreditIVVc or LINrbrw.RegType==kOfficialNumTypeRecoverdCreditIVVc) and (IVr.InvType==kInvoiceTypeCredit or IVr.InvType==kInvoiceTypeCreditSpecialSales) and (IVr.Status!=kRecordStatusManual) then begin 
+    testf = true;
+  end; 
+  if (LINrbrw.RegType==kOfficialNumTypeManualCreditIVVc) and (IVr.InvType==kInvoiceTypeCredit or IVr.InvType==kInvoiceTypeCreditSpecialSales) and (IVr.Status==kRecordStatusManual) then begin 
+    testf = true;
+  end; 
+  if (LINrbrw.RegType==kOfficialNumTypeSpecialSalesIVVc) and (IVr.InvType==kInvoiceTypeNormalSpecialSales) then begin 
     testf = true;
   end;
-  if (LINrbrw.RegType==kOfficialNumTypeManualCreditIVVc) and (IVr.InvType==kInvoiceTypeCredit or IVr.InvType==kInvoiceTypeCreditSpecialSales) and (IVr.Status==kRecordStatusManual) then begin
+  if (LINrbrw.RegType==kOfficialNumTypeIVVc or LINrbrw.RegType==kOfficialNumTypeManualIVVc or LINrbrw.RegType==kOfficialNumTypeRecoverdIVVc) and (IVr.InvType==kInvoiceTypeNormal or IVr.InvType==kInvoiceTypeDownpayment or IVr.InvType==kInvoiceTypePrepayment) then begin 
     testf = true;
   end;
-  if (LINrbrw.RegType==kOfficialNumTypeSpecialSalesIVVc) and (IVr.InvType==kInvoiceTypeNormalSpecialSales) then begin
-    testf = true;
-  end;
-  if (LINrbrw.RegType==kOfficialNumTypeIVVc or LINrbrw.RegType==kOfficialNumTypeManualIVVc or LINrbrw.RegType==kOfficialNumTypeRecoverdIVVc) and (IVr.InvType==kInvoiceTypeNormal or IVr.InvType==kInvoiceTypeDownpayment or IVr.InvType==kInvoiceTypePrepayment) then begin
-    testf = true;
-  end;
-*/
-  if (testf==true) then begin
+*/  
+  if (testf==true) then begin 
     if (notmanualf) then begin
-      if (LINrbrw.SelectionType==kLegalInvNrSelectionTypeManual) then begin
-        testf = false;
-      end;
+      if (LINrbrw.SelectionType==kLegalInvNrSelectionTypeManual) then begin 
+        testf = false; 
+      end; 
     end;
-    if (LINrbrw.SelectionType==kLegalInvNrSelectionTypeAtOK) and (IVr.OKFlag!=1)  then begin
-      testf = false;
-    end;
-/*
+    if (LINrbrw.SelectionType==kLegalInvNrSelectionTypeAtOK) and (IVr.OKFlag!=1)  then begin 
+      testf = false; 
+    end; 
+/*    
     switch (kLegalInvNrSelectionType) begin
       case -1:
-         if (LINrbrw.SelectionType==kLegalInvNrSelectionTypeAtSendingERecord) then begin
-           testf = false;
-         end;
+         if (LINrbrw.SelectionType==kLegalInvNrSelectionTypeAtSendingERecord) then begin 
+           testf = false; 
+         end; 
       case -2:
       otherwise
-        if (LINrbrw.SelectionType!=kLegalInvNrSelectionType) then begin
-          testf = false;
-        end;
+        if (LINrbrw.SelectionType!=kLegalInvNrSelectionType) then begin 
+          testf = false; 
+        end; 
     end;
-*/
-    if (nonblank(LINrbrw.Branch)) then begin
-      if (nonblank(IVr.BranchID)) then begin
-        if (LINrbrw.Branch!=IVr.BranchID) then begin
-          testf = false;
+*/    
+    if (nonblank(LINrbrw.Branch)) then begin 
+      if (nonblank(IVr.BranchID)) then begin 
+        if (LINrbrw.Branch!=IVr.BranchID) then begin 
+          testf = false; 
         end;
       end else begin
-        testf = false;
+        testf = false; 
       end;
     end;
-    if (nonblank(LINrbrw.LocalMachineCode)) then begin
-      if (nonblank(IVr.MachineName)) then begin
-        if (LINrbrw.LocalMachineCode!=IVr.MachineName) then begin
-          testf = false;
+    if (nonblank(LINrbrw.LocalMachineCode)) then begin 
+      if (nonblank(IVr.MachineName)) then begin 
+        if (LINrbrw.LocalMachineCode!=IVr.MachineName) then begin 
+          testf = false; 
         end;
       end else begin
-        testf = false;
+        testf = false; 
       end;
     end;
     if (nonblank(LINrbrw.CClass)) then begin
       if (nonblank(cuclass)) then begin
-        if (SetInSet(LINrbrw.CClass,cuclass)==false) then begin
-          testf = false;
+        if (SetInSet(LINrbrw.CClass,cuclass)==false) then begin 
+          testf = false; 
         end;
       end else begin
-        testf = false;
+        testf = false; 
       end;
     end;
     if (nonblankdate(LINrbrw.PurchDate)) then begin
@@ -960,7 +967,7 @@ BEGIN
 
   CUr.Code = IVr.CustCode;
   ReadFirstMain(CUr,1,true);
-
+  
   NextOfficialSerNr("IVVc",IVr.SerNr,IVr.InvDate,"",res);
   if (blank(res)) then begin
     OffSerNrIVr.IVNr = IVr.SerNr;
@@ -971,13 +978,13 @@ BEGIN
     end;
     PrepareOfficialSerialNrBlock_IVVc(LINrb);
     rwcnt = MatRowCnt(LINrb);
-    if (rwcnt>0) then begin
+    if (rwcnt>0) then begin    
       for (i=0;i<rwcnt;i=i+1) begin
         MatRowGet(LINrb,i,LINrbrw);
         testf = TestNextOfficialSerialNr_IVVc(LINrbrw,CUr.Classification,IVr,true);
         if (testf) then begin
           res = NextLegalSerNr("IVVc",IVr.SerNr,IVr.InvDate,LINrbrw.Serie,LINrbrw.TSerStart,LINrbrw.TSerEnd);
-          if (nonblank(res)) then begin
+          if (nonblank(res)) then begin 
             if (LINrbrw.PerPage==1) then begin
               pages = CountNumberOfInvoicePrintPages(IVr);
               if (pages>1) then begin
@@ -994,13 +1001,13 @@ BEGIN
           end;
         end;
       end;
-    end;
+    end;   
   end;
-LFindNextIVVcOfficialSerialNr:;
-  if (nonblank(res)) then begin
+LFindNextIVVcOfficialSerialNr:; 
+  if (nonblank(res)) then begin 
     IVr.OfficialSerNr = res;
     AddPortugueseSAFTHashToIV(IVr);
-  end;
+  end;  
   RETURN;
 END;
 
@@ -1014,19 +1021,19 @@ begin
   Boolean testf,loopf;
   Boolean testlocmach,testbranch,testclass;
   Integer loopcnt;
-
-  BlockLoad(orgLINrb);
+  
+  BlockLoad(orgLINrb);  
   rwcnt = MatRowCnt(orgLINrb);
   for (i=0;i<rwcnt;i=i+1) begin
     MatRowGet(orgLINrb,i,LINrbrw);
-    if (LINrbrw.RegType==kOfficialNumType) then begin
+    if (LINrbrw.RegType==kOfficialNumType) then begin 
       MatRowPut(tmpLINrb,MatRowCnt(tmpLINrb),LINrbrw);
     end;
   end;
 
   rwcnt = MatRowCnt(tmpLINrb);
-
-  loopcnt = 1;
+  
+  loopcnt = 1;    
   loopf = true;
   while (loopf) begin
     switch (loopcnt) begin
@@ -1194,48 +1201,142 @@ begin
 end;
 
 global
-function Boolean TestNextOfficialSerialNr_RestAccVc(row LegalInvNrBlock LINrbrw,string cuclass,record RestAccVc RestAccr,Boolean manualf)
+function Boolean TestNextOfficialSerialNr_IVCashVc(row LegalInvNrBlock LINrbrw,string cuclass,record IVCashVc IVCashr,Boolean manualf)
 begin
   Boolean testf;
-
+  
   testf = false;
-  if (LINrbrw.RegType==kOfficialNumTypeRestAccVc) then begin
-    testf = true;
+  switch (LINrbrw.RegType) begin
+    case kOfficialNumTypeCreditIVCashVc:
+      if (IVCashr.InvType==kPOSInvoiceTypeCredit and IVCashr.Status!=kRecordStatusManual and IVCashr.Status!=kRecordStatusRecovered) then begin 
+        testf = true;
+      end; 
+    case kOfficialNumTypeManualCreditIVCashVc:
+      if (IVCashr.InvType==kPOSInvoiceTypeCredit and IVCashr.Status==kRecordStatusManual) then begin 
+        testf = true;
+      end; 
+    case kOfficialNumTypeRecoverdCreditIVCashVc:
+      if (IVCashr.InvType==kPOSInvoiceTypeCredit and IVCashr.Status==kRecordStatusRecovered) then begin 
+        testf = true;
+      end; 
+    case kOfficialNumTypePOSIVVc:
+      if (HasLocalization("PHL")) then begin
+        if (IVCashr.InvType!=kPOSInvoiceTypeCredit and IVCashr.Status!=kRecordStatusRecovered) then begin 
+          testf = true;
+        end; 
+      end else begin
+        if (IVCashr.InvType!=kPOSInvoiceTypeCredit and IVCashr.Status!=kRecordStatusManual and IVCashr.Status!=kRecordStatusRecovered) then begin 
+          testf = true;
+        end; 
+      end;
+    case kOfficialNumTypeManualPOSIVVc:
+      if (IVCashr.InvType!=kPOSInvoiceTypeCredit and IVCashr.Status==kRecordStatusManual) then begin 
+        testf = true;
+      end; 
+    case kOfficialNumTypeRecoverdPOSIVVc:
+      if (IVCashr.InvType!=kPOSInvoiceTypeCredit and IVCashr.Status!=kRecordStatusRecovered) then begin 
+        testf = true;
+      end; 
   end;
-  if (testf==true) then begin
+  
+  if (testf==true) then begin 
     if (manualf) then begin
-      if (LINrbrw.SelectionType==kLegalInvNrSelectionTypeManual) then begin
-        testf = false;
+      if (LINrbrw.SelectionType==kLegalInvNrSelectionTypeManual) then begin 
+        testf = false; 
+      end; 
+    end;
+    if (HasLocalization("PHL")) then begin
+      if (IVCashr.Status!=kRecordStatusManual) then begin
+        if (LINrbrw.SelectionType==kLegalInvNrSelectionTypeAtOK)  and  (IVCashr.OKFlag!=1)  then begin 
+          testf = false; 
+        end; 
       end;
+    end else begin
+      if (LINrbrw.SelectionType==kLegalInvNrSelectionTypeAtOK)  and  (IVCashr.OKFlag!=1)  then begin 
+        testf = false; 
+      end; 
     end;
-    if (LINrbrw.SelectionType==kLegalInvNrSelectionTypeAtOK)  and  (RestAccr.Closed!=1)  then begin
-      testf = false;
-    end;
-    if (nonblank(LINrbrw.Branch)) then begin
-      if (nonblank(RestAccr.BranchID)) then begin
-        if (LINrbrw.Branch!=RestAccr.BranchID) then begin
-          testf = false;
+    if (nonblank(LINrbrw.Branch)) then begin 
+      if (nonblank(IVCashr.BranchID)) then begin 
+        if (LINrbrw.Branch!=IVCashr.BranchID) then begin 
+          testf = false; 
         end;
       end else begin
-        testf = false;
+        testf = false; 
       end;
     end;
-    if (nonblank(LINrbrw.LocalMachineCode)) then begin
-      if (nonblank(RestAccr.MachineName)) then begin
-        if (LINrbrw.LocalMachineCode!=RestAccr.MachineName) then begin
-          testf = false;
+    if (nonblank(LINrbrw.LocalMachineCode)) then begin 
+      if (nonblank(IVCashr.LocalMachineCode)) then begin 
+        if (LINrbrw.LocalMachineCode!=IVCashr.LocalMachineCode) then begin 
+          testf = false; 
         end;
       end else begin
-        testf = false;
+        testf = false; 
       end;
     end;
     if (nonblank(LINrbrw.CClass)) then begin
       if (nonblank(cuclass)) then begin
-        if (SetInSet(LINrbrw.CClass,cuclass)==false) then begin
-          testf = false;
+        if (SetInSet(LINrbrw.CClass,cuclass)==false) then begin 
+          testf = false; 
         end;
       end else begin
-        testf = false;
+        testf = false; 
+      end;
+    end;
+    if (nonblankdate(LINrbrw.PurchDate)) then begin
+      if (IVCashr.InvDate<LINrbrw.PurchDate) then begin testf = false; end;
+    end;
+    if (nonblankdate(LINrbrw.EndDate)) then begin
+      if (IVCashr.InvDate>LINrbrw.EndDate) then begin testf = false; end;
+    end;
+  end;
+  TestNextOfficialSerialNr_IVCashVc = testf;
+  return;
+end;
+
+global
+function Boolean TestNextOfficialSerialNr_RestAccVc(row LegalInvNrBlock LINrbrw,string cuclass,record RestAccVc RestAccr,Boolean manualf)
+begin
+  Boolean testf;
+  
+  testf = false;
+  if (LINrbrw.RegType==kOfficialNumTypeRestAccVc) then begin 
+    testf = true;
+  end;
+  if (testf==true) then begin 
+    if (manualf) then begin
+      if (LINrbrw.SelectionType==kLegalInvNrSelectionTypeManual) then begin 
+        testf = false; 
+      end; 
+    end;
+    if (LINrbrw.SelectionType==kLegalInvNrSelectionTypeAtOK)  and  (RestAccr.Closed!=1)  then begin 
+      testf = false; 
+    end; 
+    if (nonblank(LINrbrw.Branch)) then begin 
+      if (nonblank(RestAccr.BranchID)) then begin 
+        if (LINrbrw.Branch!=RestAccr.BranchID) then begin 
+          testf = false; 
+        end;
+      end else begin
+        testf = false; 
+      end;
+    end;
+    if (nonblank(LINrbrw.LocalMachineCode)) then begin 
+      if (nonblank(RestAccr.MachineName)) then begin 
+        if (LINrbrw.LocalMachineCode!=RestAccr.MachineName) then begin 
+          testf = false; 
+        end;
+      end else begin
+        testf = false; 
+      end;
+    end;
+    if (nonblank(LINrbrw.CClass)) then begin
+      if (nonblank(cuclass)) then begin
+        if (SetInSet(LINrbrw.CClass,cuclass)==false) then begin 
+          testf = false; 
+        end;
+      end else begin
+        testf = false; 
       end;
     end;
     if (nonblankdate(LINrbrw.PurchDate)) then begin
@@ -1262,7 +1363,7 @@ BEGIN
 
   CUr.Code = RestAccp.CustCode;
   ReadFirstMain(CUr,1,true);
-
+  
 //  NextOfficialSerNr("RestAccVc",RestAccp.SerNr,RestAccp.InvDate,"",res);
 //no code for IVCashVc inside
   if (blank(res)) then begin
@@ -1277,13 +1378,13 @@ BEGIN
 //    PrepareOfficialSerialNrBlock(kOfficialNumTypeManualPOSIVVc,LINrb);
 //    PrepareOfficialSerialNrBlock(kOfficialNumTypeRecoverdPOSIVVc,LINrb);
     rwcnt = MatRowCnt(LINrb);
-    if (rwcnt>0) then begin
+    if (rwcnt>0) then begin    
       for (i=0;i<rwcnt;i=i+1) begin
         MatRowGet(LINrb,i,LINrbrw);
         testf = TestNextOfficialSerialNr_RestAccVc(LINrbrw,CUr.Classification,RestAccp,true);
         if (testf) then begin
           res = NextLegalSerNr("RestAccVc",RestAccp.SerNr,RestAccp.TransDate,LINrbrw.Serie,LINrbrw.TSerStart,LINrbrw.TSerEnd);
-          if (nonblank(res)) then begin
+          if (nonblank(res)) then begin 
             /*
             if (LINrbrw.PerPage==1) then begin
               pages = CountNumberOfInvoicePrintPages(IVr);
@@ -1301,13 +1402,13 @@ BEGIN
           end;
         end;
       end;
-    end;
+    end;   
   end;
-  if (nonblank(res)) then begin
+  if (nonblank(res)) then begin 
     RestAccp.OfficialSerNr = res;
     AddPortugueseSAFTHashToRestAccVc(RestAccp);
-  end;
-LFindNextRestAccVcOfficialSerialNr:;
+  end;  
+LFindNextRestAccVcOfficialSerialNr:;  
   RETURN;
 END;
 
@@ -1341,19 +1442,19 @@ begin
   Boolean testf,loopf;
   Boolean testlocmach,testbranch,testclass;
   Integer loopcnt;
-
-  BlockLoad(orgLINrb);
+  
+  BlockLoad(orgLINrb);  
   rwcnt = MatRowCnt(orgLINrb);
   for (i=0;i<rwcnt;i=i+1) begin
     MatRowGet(orgLINrb,i,LINrbrw);
-    if (LINrbrw.RegType==kOfficialNumType) then begin
+    if (LINrbrw.RegType==kOfficialNumType) then begin 
       MatRowPut(tmpLINrb,MatRowCnt(tmpLINrb),LINrbrw);
     end;
   end;
 
   rwcnt = MatRowCnt(tmpLINrb);
-
-  loopcnt = 1;
+  
+  loopcnt = 1;    
   loopf = true;
   while (loopf) begin
     switch (loopcnt) begin
@@ -1425,45 +1526,45 @@ global
 function Boolean TestNextOfficialSerialNr2_RestAccVc(row LegalInvNr2Block LINrbrw,string cuclass,record RestAccVc RestAccr,Boolean manualf)
 begin
   Boolean testf;
-
+  
   testf = false;
-  if (LINrbrw.RegType==kOfficialNumTypeRestAccVc) then begin
+  if (LINrbrw.RegType==kOfficialNumTypeRestAccVc) then begin 
     testf = true;
   end;
-  if (testf==true) then begin
+  if (testf==true) then begin 
     if (manualf) then begin
-      if (LINrbrw.SelectionType==kLegalInvNrSelectionTypeManual) then begin
-        testf = false;
-      end;
+      if (LINrbrw.SelectionType==kLegalInvNrSelectionTypeManual) then begin 
+        testf = false; 
+      end; 
     end;
-    if (LINrbrw.SelectionType==kLegalInvNrSelectionTypeAtOK)  and  (RestAccr.Closed!=1)  then begin
-      testf = false;
-    end;
-    if (nonblank(LINrbrw.Branch)) then begin
-      if (nonblank(RestAccr.BranchID)) then begin
-        if (LINrbrw.Branch!=RestAccr.BranchID) then begin
-          testf = false;
+    if (LINrbrw.SelectionType==kLegalInvNrSelectionTypeAtOK)  and  (RestAccr.Closed!=1)  then begin 
+      testf = false; 
+    end; 
+    if (nonblank(LINrbrw.Branch)) then begin 
+      if (nonblank(RestAccr.BranchID)) then begin 
+        if (LINrbrw.Branch!=RestAccr.BranchID) then begin 
+          testf = false; 
         end;
       end else begin
-        testf = false;
+        testf = false; 
       end;
     end;
-    if (nonblank(LINrbrw.LocalMachineCode)) then begin
-      if (nonblank(RestAccr.MachineName)) then begin
-        if (LINrbrw.LocalMachineCode!=RestAccr.MachineName) then begin
-          testf = false;
+    if (nonblank(LINrbrw.LocalMachineCode)) then begin 
+      if (nonblank(RestAccr.MachineName)) then begin 
+        if (LINrbrw.LocalMachineCode!=RestAccr.MachineName) then begin 
+          testf = false; 
         end;
       end else begin
-        testf = false;
+        testf = false; 
       end;
     end;
     if (nonblank(LINrbrw.CClass)) then begin
       if (nonblank(cuclass)) then begin
-        if (SetInSet(LINrbrw.CClass,cuclass)==false) then begin
-          testf = false;
+        if (SetInSet(LINrbrw.CClass,cuclass)==false) then begin 
+          testf = false; 
         end;
       end else begin
-        testf = false;
+        testf = false; 
       end;
     end;
     if (nonblankdate(LINrbrw.PurchDate)) then begin
@@ -1490,7 +1591,7 @@ BEGIN
 
   CUr.Code = RestAccp.CustCode;
   ReadFirstMain(CUr,1,true);
-
+  
 //  NextOfficialSerNr("RestAccVc",RestAccp.SerNr,RestAccp.InvDate,"",res);
 //no code for IVCashVc inside
   if (blank(res)) then begin
@@ -1505,13 +1606,13 @@ BEGIN
 //    PrepareOfficialSerialNr2Block(kOfficialNumTypeManualPOSIVVc,LINrb);
 //    PrepareOfficialSerialNr2Block(kOfficialNumTypeRecoverdPOSIVVc,LINrb);
     rwcnt = MatRowCnt(LINrb);
-    if (rwcnt>0) then begin
+    if (rwcnt>0) then begin    
       for (i=0;i<rwcnt;i=i+1) begin
         MatRowGet(LINrb,i,LINrbrw);
         testf = TestNextOfficialSerialNr2_RestAccVc(LINrbrw,CUr.Classification,RestAccp,true);
         if (testf) then begin
           res = NextLegalSerNr("RestAccVc2",RestAccp.SerNr,RestAccp.TransDate,LINrbrw.Serie,LINrbrw.TSerStart,LINrbrw.TSerEnd);
-          if (nonblank(res)) then begin
+          if (nonblank(res)) then begin 
             /*
             if (LINrbrw.PerPage==1) then begin
               pages = CountNumberOfInvoicePrintPages(IVr);
@@ -1529,13 +1630,87 @@ BEGIN
           end;
         end;
       end;
-    end;
+    end;   
   end;
-  if (nonblank(res)) then begin
+  if (nonblank(res)) then begin 
     RestAccp.OfficialSerNr2 = res;
 //    AddPortugueseSAFTHashToRestAccVc(RestAccp);
+  end;  
+LFindNextRestAccVcOfficialSerialNr2:;  
+  RETURN;
+END;
+
+global
+procedure FindNextIVCashVcOfficialSerialNr(var record IVCashVc IVCashr)
+BEGIN
+  record CUVc CUr;
+  string 255 res,tstr;
+  record LegalInvNrBlock LINrb;
+  row LegalInvNrBlock LINrbrw;
+  Integer i,rwcnt,pages;
+  Boolean testf;
+  record OffSerNrIVVc OffSNIVr;
+
+  CUr.Code = IVCashr.CustCode;
+  ReadFirstMain(CUr,1,true);
+  
+//  NextOfficialSerNr("IVCashVc",IVCashr.SerNr,IVCashr.InvDate,"",res);
+//no code for IVCashVc inside
+  if (blank(res)) then begin
+    OffSNIVr.IVNr = IVCashr.SerNr;
+    OffSNIVr.FileName = "IVCashVc";
+    if (ReadFirstKey("MainKey",OffSNIVr,2,true)) then begin
+      res = OffSNIVr.OfficialSerNr;
+      goto LFindNextIVCashVcOfficialSerialNr;
+    end;
+    PrepareOfficialSerialNrBlock(kOfficialNumTypePOSIVVc,LINrb);
+    PrepareOfficialSerialNrBlock(kOfficialNumTypeManualPOSIVVc,LINrb);
+    PrepareOfficialSerialNrBlock(kOfficialNumTypeRecoverdPOSIVVc,LINrb);
+    PrepareOfficialSerialNrBlock(kOfficialNumTypeCreditIVCashVc,LINrb);
+    PrepareOfficialSerialNrBlock(kOfficialNumTypeManualCreditIVCashVc,LINrb);
+    PrepareOfficialSerialNrBlock(kOfficialNumTypeRecoverdCreditIVCashVc,LINrb);
+    rwcnt = MatRowCnt(LINrb);
+    if (rwcnt>0) then begin    
+      for (i=0;i<rwcnt;i=i+1) begin
+        MatRowGet(LINrb,i,LINrbrw);
+        testf = TestNextOfficialSerialNr_IVCashVc(LINrbrw,CUr.Classification,IVCashr,true);
+        if (testf) then begin
+          res = NextLegalSerNr("IVCashVc",IVCashr.SerNr,IVCashr.InvDate,LINrbrw.Serie,LINrbrw.TSerStart,LINrbrw.TSerEnd);
+          if (nonblank(res)) then begin 
+            /*
+            if (LINrbrw.PerPage==1) then begin
+              pages = CountNumberOfInvoicePrintPages(IVr);
+              if (pages>1) then begin
+                res = res & ":";
+                tstr = Right(res,len(LINrbrw.TSerStart));
+                tstr = StringToLongInt(tstr) + pages - 1;
+                M4PadString(tstr,len(LINrbrw.TSerStart),"0",true,tstr);
+                tstr = LINrbrw.Serie & tstr;
+                res = res & tstr;
+              end;
+            end;
+            */
+            i = rwcnt;
+          end;
+        end;
+      end;
+    end else begin
+      if (HasLocalization("PHL")) then begin
+        rwcnt = MatRowCnt(LINrb);
+        if (rwcnt>0) then begin
+          OffSNIVr.FileName = "IVCashVc";
+          if (ReadLastKey("FileNameOfficialSerNr",OffSNIVr,1,false)) then begin
+            NextM4SerialNumber(OffSNIVr.OfficialSerNr,res);
+          end;
+        end;
+      end;
+    end;
   end;
-LFindNextRestAccVcOfficialSerialNr2:;
+  if (nonblank(res)) then begin 
+    IVCashr.OfficialSerNr = res;
+    AddPortugueseSAFTHashToIVCash(IVCashr);
+  end;  
+LFindNextIVCashVcOfficialSerialNr:;  
   RETURN;
 END;
 
@@ -1611,45 +1786,68 @@ global
 function Boolean TestNextOfficialSerialNr2_IVCashVc(row LegalInvNr2Block LINrbrw,string cuclass,record IVCashVc IVCashr,Boolean manualf)
 begin
   Boolean testf;
-
+  
   testf = false;
-  if (LINrbrw.RegType==kOfficialNumTypePOSIVVc or LINrbrw.RegType==kOfficialNumTypeManualPOSIVVc or LINrbrw.RegType==kOfficialNumTypeRecoverdPOSIVVc) then begin
-    testf = true;
+  switch (LINrbrw.RegType) begin
+    case kOfficialNumTypeCreditIVCashVc:
+      if (IVCashr.InvType==kPOSInvoiceTypeCredit and IVCashr.Status!=kRecordStatusManual and IVCashr.Status!=kRecordStatusRecovered) then begin 
+        testf = true;
+      end; 
+    case kOfficialNumTypeManualCreditIVCashVc:
+      if (IVCashr.InvType==kPOSInvoiceTypeCredit and IVCashr.Status==kRecordStatusManual) then begin 
+        testf = true;
+      end; 
+    case kOfficialNumTypeRecoverdCreditIVCashVc:
+      if (IVCashr.InvType==kPOSInvoiceTypeCredit and IVCashr.Status==kRecordStatusRecovered) then begin 
+        testf = true;
+      end; 
+    case kOfficialNumTypePOSIVVc:
+      if (IVCashr.InvType!=kPOSInvoiceTypeCredit and IVCashr.Status!=kRecordStatusManual and IVCashr.Status!=kRecordStatusRecovered) then begin 
+        testf = true;
+      end; 
+    case kOfficialNumTypeManualPOSIVVc:
+      if (IVCashr.InvType!=kPOSInvoiceTypeCredit and IVCashr.Status==kRecordStatusManual) then begin 
+        testf = true;
+      end; 
+    case kOfficialNumTypeRecoverdPOSIVVc:
+      if (IVCashr.InvType!=kPOSInvoiceTypeCredit and IVCashr.Status!=kRecordStatusRecovered) then begin 
+        testf = true;
+      end; 
   end;
-  if (testf==true) then begin
+  if (testf==true) then begin 
     if (manualf) then begin
-      if (LINrbrw.SelectionType==kLegalInvNrSelectionTypeManual) then begin
-        testf = false;
-      end;
+      if (LINrbrw.SelectionType==kLegalInvNrSelectionTypeManual) then begin 
+        testf = false; 
+      end; 
     end;
-    if (LINrbrw.SelectionType==kLegalInvNrSelectionTypeAtOK)  and  (IVCashr.OKFlag!=1)  then begin
-      testf = false;
-    end;
-    if (nonblank(LINrbrw.Branch)) then begin
-      if (nonblank(IVCashr.BranchID)) then begin
-        if (LINrbrw.Branch!=IVCashr.BranchID) then begin
-          testf = false;
+    if (LINrbrw.SelectionType==kLegalInvNrSelectionTypeAtOK)  and  (IVCashr.OKFlag!=1)  then begin 
+      testf = false; 
+    end; 
+    if (nonblank(LINrbrw.Branch)) then begin 
+      if (nonblank(IVCashr.BranchID)) then begin 
+        if (LINrbrw.Branch!=IVCashr.BranchID) then begin 
+          testf = false; 
         end;
       end else begin
-        testf = false;
+        testf = false; 
       end;
     end;
-    if (nonblank(LINrbrw.LocalMachineCode)) then begin
-      if (nonblank(IVCashr.LocalMachineCode)) then begin
-        if (LINrbrw.LocalMachineCode!=IVCashr.LocalMachineCode) then begin
-          testf = false;
+    if (nonblank(LINrbrw.LocalMachineCode)) then begin 
+      if (nonblank(IVCashr.LocalMachineCode)) then begin 
+        if (LINrbrw.LocalMachineCode!=IVCashr.LocalMachineCode) then begin 
+          testf = false; 
         end;
       end else begin
-        testf = false;
+        testf = false; 
       end;
     end;
     if (nonblank(LINrbrw.CClass)) then begin
       if (nonblank(cuclass)) then begin
-        if (SetInSet(LINrbrw.CClass,cuclass)==false) then begin
-          testf = false;
+        if (SetInSet(LINrbrw.CClass,cuclass)==false) then begin 
+          testf = false; 
         end;
       end else begin
-        testf = false;
+        testf = false; 
       end;
     end;
     if (nonblankdate(LINrbrw.PurchDate)) then begin
@@ -1676,7 +1874,7 @@ BEGIN
 
   CUr.Code = IVCashr.CustCode;
   ReadFirstMain(CUr,1,true);
-
+  
 //  NextOfficialSerNr("IVCashVc",IVCashr.SerNr,IVCashr.InvDate,"",res);
 //no code for IVCashVc inside
   if (blank(res)) then begin
@@ -1693,13 +1891,13 @@ BEGIN
     PrepareOfficialSerialNr2Block(kOfficialNumTypeManualCreditIVCashVc,LINrb);
     PrepareOfficialSerialNr2Block(kOfficialNumTypeRecoverdCreditIVCashVc,LINrb);
     rwcnt = MatRowCnt(LINrb);
-    if (rwcnt>0) then begin
+    if (rwcnt>0) then begin    
       for (i=0;i<rwcnt;i=i+1) begin
         MatRowGet(LINrb,i,LINrbrw);
         testf = TestNextOfficialSerialNr2_IVCashVc(LINrbrw,CUr.Classification,IVCashr,true);
         if (testf) then begin
           res = NextLegalSerNr("IVCashVc2",IVCashr.SerNr,IVCashr.InvDate,LINrbrw.Serie,LINrbrw.TSerStart,LINrbrw.TSerEnd);
-          if (nonblank(res)) then begin
+          if (nonblank(res)) then begin 
             /*
             if (LINrbrw.PerPage==1) then begin
               pages = CountNumberOfInvoicePrintPages(IVr);
@@ -1717,58 +1915,58 @@ BEGIN
           end;
         end;
       end;
-    end;
+    end;   
   end;
-  if (nonblank(res)) then begin
+  if (nonblank(res)) then begin 
     IVCashr.OfficialSerNr2 = res;
 //    AddPortugueseSAFTHashToIVCash(IVCashr);
-  end;
-LFindNextIVCashVcOfficialSerialNr2:;
+  end;  
+LFindNextIVCashVcOfficialSerialNr2:;  
   RETURN;
 END;
 
 function Boolean TestNextOfficialSerialNr2_IVVc(row LegalInvNr2Block LINrbrw,string cuclass,record IVVc IVr,Boolean manualf)
 begin
   Boolean testf;
-
+  
   testf = false;
-  if (LINrbrw.RegType==kOfficialNumTypeAllIVVc or LINrbrw.RegType==kOfficialNumTypeIVVc or LINrbrw.RegType==kOfficialNumTypeManualIVVc or LINrbrw.RegType==kOfficialNumTypeRecoverdIVVc or LINrbrw.RegType==kOfficialNumTypeLiquidationIVVc or LINrbrw.RegType==kOfficialNumTypeReceiptIVVc) then begin
+  if (LINrbrw.RegType==kOfficialNumTypeAllIVVc or LINrbrw.RegType==kOfficialNumTypeIVVc or LINrbrw.RegType==kOfficialNumTypeManualIVVc or LINrbrw.RegType==kOfficialNumTypeRecoverdIVVc or LINrbrw.RegType==kOfficialNumTypeLiquidationIVVc or LINrbrw.RegType==kOfficialNumTypeReceiptIVVc) then begin 
     testf = true;
   end;
-  if (testf==true) then begin
+  if (testf==true) then begin 
     if (manualf) then begin
-      if (LINrbrw.SelectionType==kLegalInvNrSelectionTypeManual) then begin
-        testf = false;
-      end;
+      if (LINrbrw.SelectionType==kLegalInvNrSelectionTypeManual) then begin 
+        testf = false; 
+      end; 
     end;
-    if (LINrbrw.SelectionType==kLegalInvNrSelectionTypeAtOK)  and  (IVr.OKFlag!=1)  then begin
-      testf = false;
-    end;
-    if (nonblank(LINrbrw.Branch)) then begin
-      if (nonblank(IVr.BranchID)) then begin
-        if (LINrbrw.Branch!=IVr.BranchID) then begin
-          testf = false;
+    if (LINrbrw.SelectionType==kLegalInvNrSelectionTypeAtOK)  and  (IVr.OKFlag!=1)  then begin 
+      testf = false; 
+    end; 
+    if (nonblank(LINrbrw.Branch)) then begin 
+      if (nonblank(IVr.BranchID)) then begin 
+        if (LINrbrw.Branch!=IVr.BranchID) then begin 
+          testf = false; 
         end;
       end else begin
-        testf = false;
+        testf = false; 
       end;
     end;
-    if (nonblank(LINrbrw.LocalMachineCode)) then begin
-      if (nonblank(IVr.MachineName)) then begin
-        if (LINrbrw.LocalMachineCode!=IVr.MachineName) then begin
-          testf = false;
+    if (nonblank(LINrbrw.LocalMachineCode)) then begin 
+      if (nonblank(IVr.MachineName)) then begin 
+        if (LINrbrw.LocalMachineCode!=IVr.MachineName) then begin 
+          testf = false; 
         end;
       end else begin
-        testf = false;
+        testf = false; 
       end;
     end;
     if (nonblank(LINrbrw.CClass)) then begin
       if (nonblank(cuclass)) then begin
-        if (SetInSet(LINrbrw.CClass,cuclass)==false) then begin
-          testf = false;
+        if (SetInSet(LINrbrw.CClass,cuclass)==false) then begin 
+          testf = false; 
         end;
       end else begin
-        testf = false;
+        testf = false; 
       end;
     end;
     if (nonblankdate(LINrbrw.PurchDate)) then begin
@@ -1795,7 +1993,7 @@ begin
 
   CUr.Code = IVr.CustCode;
   ReadFirstMain(CUr,1,true);
-
+  
 //  NextOfficialSerNr("IVVc",IVr.SerNr,IVr.InvDate,"",res);
 //no code for IVVc inside
   if (blank(res)) then begin
@@ -1812,13 +2010,13 @@ begin
     PrepareOfficialSerialNr2Block(kOfficialNumTypeReceiptIVVc,LINrb);
     PrepareOfficialSerialNr2Block(kOfficialNumTypeLiquidationIVVc,LINrb);
     rwcnt = MatRowCnt(LINrb);
-    if (rwcnt>0) then begin
+    if (rwcnt>0) then begin    
       for (i=0;i<rwcnt;i=i+1) begin
         MatRowGet(LINrb,i,LINrbrw);
         testf = TestNextOfficialSerialNr2_IVVc(LINrbrw,CUr.Classification,IVr,true);
         if (testf) then begin
           res = NextLegalSerNr("IVVc2",IVr.SerNr,IVr.InvDate,LINrbrw.Serie,LINrbrw.TSerStart,LINrbrw.TSerEnd);
-          if (nonblank(res)) then begin
+          if (nonblank(res)) then begin 
             /*
             if (LINrbrw.PerPage==1) then begin
               pages = CountNumberOfInvoicePrintPages(IVr);
@@ -1836,12 +2034,12 @@ begin
           end;
         end;
       end;
-    end;
+    end;   
   end;
-  if (nonblank(res)) then begin
+  if (nonblank(res)) then begin 
     IVr.OfficialSerNr2 = res;
-  end;
-LFindNextIVVcOfficialSerialNr2:;
+  end;  
+LFindNextIVVcOfficialSerialNr2:;  
   return;
 end;
 
@@ -1849,101 +2047,101 @@ global
 function Boolean TestNextOfficialSerialNr_StockMovVc(row LegalInvNrBlock LINrbrw,string cuclass,record StockMovVc StockMovr,Boolean notmanualf,Integer kLegalInvNrSelectionType)
 begin
   Boolean testf;
-
+  
   testf = false;
-  if (LINrbrw.RegType==kOfficialNumTypeStockMovVc or LINrbrw.RegType==kOfficialNumTypeManualStockMovVc)
-     and (StockMovr.StockMovType==kStockMovTypeNormal) then begin
+  if (LINrbrw.RegType==kOfficialNumTypeStockMovVc or LINrbrw.RegType==kOfficialNumTypeManualStockMovVc) 
+     and (StockMovr.StockMovType==kStockMovTypeNormal) then begin 
     testf = true;
   end;
-  if (LINrbrw.RegType==kOfficialNumTypeRecoverdStockMovVc) and (StockMovr.StockMovType==kStockMovTypeNormal)
-     and (StockMovr.Status==kRecordStatusRecovered) then begin
+  if (LINrbrw.RegType==kOfficialNumTypeRecoverdStockMovVc) and (StockMovr.StockMovType==kStockMovTypeNormal) 
+     and (StockMovr.Status==kRecordStatusRecovered) then begin 
     testf = true;
   end;
-  if (LINrbrw.RegType==kOfficialNumTypeOwnGoodsTransStockMovVc or LINrbrw.RegType==kOfficialNumTypeManualOwnGoodsTransStockMovVc)
-      and (StockMovr.StockMovType==kStockMovTypeOwnGoodsTransport) then begin
+  if (LINrbrw.RegType==kOfficialNumTypeOwnGoodsTransStockMovVc or LINrbrw.RegType==kOfficialNumTypeManualOwnGoodsTransStockMovVc) 
+      and (StockMovr.StockMovType==kStockMovTypeOwnGoodsTransport) then begin 
     testf = true;
   end;
-  if (LINrbrw.RegType==kOfficialNumTypeRecoverdOwnGoodsTransStockMovVc) and (StockMovr.StockMovType==kStockMovTypeOwnGoodsTransport)
-     and (StockMovr.Status==kRecordStatusRecovered) then begin
+  if (LINrbrw.RegType==kOfficialNumTypeRecoverdOwnGoodsTransStockMovVc) and (StockMovr.StockMovType==kStockMovTypeOwnGoodsTransport) 
+     and (StockMovr.Status==kRecordStatusRecovered) then begin 
+    testf = true;
+  end;  
+  if (LINrbrw.RegType==kOfficialNumTypeGlobalTransStockMovVc or LINrbrw.RegType==kOfficialNumTypeManualGlobalTransStockMovVc) 
+     and (StockMovr.StockMovType==kStockMovTypeGlobalTransport) then begin 
     testf = true;
   end;
-  if (LINrbrw.RegType==kOfficialNumTypeGlobalTransStockMovVc or LINrbrw.RegType==kOfficialNumTypeManualGlobalTransStockMovVc)
-     and (StockMovr.StockMovType==kStockMovTypeGlobalTransport) then begin
+  if (LINrbrw.RegType==kOfficialNumTypeRecoverdGlobalTransStockMovVc) and (StockMovr.StockMovType==kStockMovTypeGlobalTransport) 
+     and (StockMovr.Status==kRecordStatusRecovered) then begin 
+    testf = true;
+  end;  
+  if (LINrbrw.RegType==kOfficialNumTypeConsigmentStockMovVc or LINrbrw.RegType==kOfficialNumTypeManualConsigmentStockMovVc) 
+     and (StockMovr.StockMovType==kStockMovTypeConsigment) then begin 
     testf = true;
   end;
-  if (LINrbrw.RegType==kOfficialNumTypeRecoverdGlobalTransStockMovVc) and (StockMovr.StockMovType==kStockMovTypeGlobalTransport)
-     and (StockMovr.Status==kRecordStatusRecovered) then begin
+  if (LINrbrw.RegType==kOfficialNumTypeRecoverdConsigmentStockMovVc) and (StockMovr.StockMovType==kStockMovTypeConsigment) 
+     and (StockMovr.Status==kRecordStatusRecovered) then begin 
     testf = true;
   end;
-  if (LINrbrw.RegType==kOfficialNumTypeConsigmentStockMovVc or LINrbrw.RegType==kOfficialNumTypeManualConsigmentStockMovVc)
-     and (StockMovr.StockMovType==kStockMovTypeConsigment) then begin
+  
+  if (LINrbrw.RegType==kOfficialNumTypeThirdEntGoodsTransStockMovVc or LINrbrw.RegType==kOfficialNumTypeManualThirdEntGoodsTransStockMovVc) 
+     and (StockMovr.StockMovType==kStockMovTypeThirdEntGoodsTransport) then begin 
     testf = true;
   end;
-  if (LINrbrw.RegType==kOfficialNumTypeRecoverdConsigmentStockMovVc) and (StockMovr.StockMovType==kStockMovTypeConsigment)
-     and (StockMovr.Status==kRecordStatusRecovered) then begin
+  if (LINrbrw.RegType==kOfficialNumTypeRecoverdThirdEntGoodsTransStockMovVc) and (StockMovr.StockMovType==kStockMovTypeThirdEntGoodsTransport) 
+     and (StockMovr.Status==kRecordStatusRecovered) then begin 
     testf = true;
   end;
-
-  if (LINrbrw.RegType==kOfficialNumTypeThirdEntGoodsTransStockMovVc or LINrbrw.RegType==kOfficialNumTypeManualThirdEntGoodsTransStockMovVc)
-     and (StockMovr.StockMovType==kStockMovTypeThirdEntGoodsTransport) then begin
-    testf = true;
-  end;
-  if (LINrbrw.RegType==kOfficialNumTypeRecoverdThirdEntGoodsTransStockMovVc) and (StockMovr.StockMovType==kStockMovTypeThirdEntGoodsTransport)
-     and (StockMovr.Status==kRecordStatusRecovered) then begin
-    testf = true;
-  end;
-
-  if (testf==true) then begin
+  
+  if (testf==true) then begin 
     if (notmanualf) then begin
-      if (LINrbrw.SelectionType==kLegalInvNrSelectionTypeManual) then begin
-        testf = false;
-      end;
+      if (LINrbrw.SelectionType==kLegalInvNrSelectionTypeManual) then begin 
+        testf = false; 
+      end; 
     end;
     switch (kLegalInvNrSelectionType) begin
       case -1:
-         if (LINrbrw.SelectionType==kLegalInvNrSelectionTypeAtSendingERecord) then begin
-           testf = false;
-         end;
+         if (LINrbrw.SelectionType==kLegalInvNrSelectionTypeAtSendingERecord) then begin 
+           testf = false; 
+         end; 
       case -2:
       otherwise
-        if (LINrbrw.SelectionType!=kLegalInvNrSelectionType) then begin
-          testf = false;
-        end;
+        if (LINrbrw.SelectionType!=kLegalInvNrSelectionType) then begin 
+          testf = false; 
+        end; 
     end;
     if (nonblank(StockMovr.ThrouLocation)) then begin
-      if ((LINrbrw.SelectionType==kLegalInvNrSelectionTypeAtOK) and (StockMovr.SentOKFlag!=1))  then begin
-        testf = false;
-      end;
+      if ((LINrbrw.SelectionType==kLegalInvNrSelectionTypeAtOK) and (StockMovr.SentOKFlag!=1))  then begin 
+        testf = false; 
+      end; 
     end else begin
-      if ((LINrbrw.SelectionType==kLegalInvNrSelectionTypeAtOK) and (StockMovr.OKFlag!=1))  then begin
-        testf = false;
-      end;
+      if ((LINrbrw.SelectionType==kLegalInvNrSelectionTypeAtOK) and (StockMovr.OKFlag!=1))  then begin 
+        testf = false; 
+      end; 
     end;
-    if (nonblank(LINrbrw.Branch)) then begin
-      if (nonblank(StockMovr.BranchID)) then begin
-        if (LINrbrw.Branch!=StockMovr.BranchID) then begin
-          testf = false;
+    if (nonblank(LINrbrw.Branch)) then begin 
+      if (nonblank(StockMovr.BranchID)) then begin 
+        if (LINrbrw.Branch!=StockMovr.BranchID) then begin 
+          testf = false; 
         end;
       end else begin
-        testf = false;
+        testf = false; 
       end;
     end;
-    if (nonblank(LINrbrw.LocalMachineCode)) then begin
-      if (nonblank(StockMovr.LocalMachineCode)) then begin
-        if (LINrbrw.LocalMachineCode!=StockMovr.LocalMachineCode) then begin
-          testf = false;
+    if (nonblank(LINrbrw.LocalMachineCode)) then begin 
+      if (nonblank(StockMovr.LocalMachineCode)) then begin 
+        if (LINrbrw.LocalMachineCode!=StockMovr.LocalMachineCode) then begin 
+          testf = false; 
         end;
       end else begin
-        testf = false;
+        testf = false; 
       end;
     end;
     if (nonblank(LINrbrw.CClass)) then begin
       if (nonblank(cuclass)) then begin
-        if (SetInSet(LINrbrw.CClass,cuclass)==false) then begin
-          testf = false;
+        if (SetInSet(LINrbrw.CClass,cuclass)==false) then begin 
+          testf = false; 
         end;
       end else begin
-        testf = false;
+        testf = false; 
       end;
     end;
     if (nonblankdate(LINrbrw.PurchDate)) then begin
@@ -1969,63 +2167,63 @@ global
 function Boolean TestNextOfficialSerialNr_ConsStockMovVcInv(row LegalInvNrBlock LINrbrw,string cuclass,record StockMovVc StockMovr,Boolean notmanualf,Integer kLegalInvNrSelectionType)
 begin
   Boolean testf;
-
+  
   testf = false;
-  if (LINrbrw.RegType==kOfficialNumTypeConsignmentInvoiceStockMovVc) then begin
+  if (LINrbrw.RegType==kOfficialNumTypeConsignmentInvoiceStockMovVc) then begin 
     testf = true;
   end;
-
-  if (testf==true) then begin
+  
+  if (testf==true) then begin 
     if (notmanualf) then begin
-      if (LINrbrw.SelectionType==kLegalInvNrSelectionTypeManual) then begin
-        testf = false;
-      end;
+      if (LINrbrw.SelectionType==kLegalInvNrSelectionTypeManual) then begin 
+        testf = false; 
+      end; 
     end;
     switch (kLegalInvNrSelectionType) begin
       case -1:
-         if (LINrbrw.SelectionType==kLegalInvNrSelectionTypeAtSendingERecord) then begin
-           testf = false;
-         end;
+         if (LINrbrw.SelectionType==kLegalInvNrSelectionTypeAtSendingERecord) then begin 
+           testf = false; 
+         end; 
       case -2:
       otherwise
-        if (LINrbrw.SelectionType!=kLegalInvNrSelectionType) then begin
-          testf = false;
-        end;
+        if (LINrbrw.SelectionType!=kLegalInvNrSelectionType) then begin 
+          testf = false; 
+        end; 
     end;
     if (nonblank(StockMovr.ThrouLocation)) then begin
-      if ((LINrbrw.SelectionType==kLegalInvNrSelectionTypeAtOK) and (StockMovr.SentOKFlag!=1))  then begin
-        testf = false;
-      end;
+      if ((LINrbrw.SelectionType==kLegalInvNrSelectionTypeAtOK) and (StockMovr.SentOKFlag!=1))  then begin 
+        testf = false; 
+      end; 
     end else begin
-      if ((LINrbrw.SelectionType==kLegalInvNrSelectionTypeAtOK) and (StockMovr.OKFlag!=1))  then begin
-        testf = false;
-      end;
+      if ((LINrbrw.SelectionType==kLegalInvNrSelectionTypeAtOK) and (StockMovr.OKFlag!=1))  then begin 
+        testf = false; 
+      end; 
     end;
-    if (nonblank(LINrbrw.Branch)) then begin
-      if (nonblank(StockMovr.BranchID)) then begin
-        if (LINrbrw.Branch!=StockMovr.BranchID) then begin
-          testf = false;
+    if (nonblank(LINrbrw.Branch)) then begin 
+      if (nonblank(StockMovr.BranchID)) then begin 
+        if (LINrbrw.Branch!=StockMovr.BranchID) then begin 
+          testf = false; 
         end;
       end else begin
-        testf = false;
+        testf = false; 
       end;
     end;
-    if (nonblank(LINrbrw.LocalMachineCode)) then begin
-      if (nonblank(StockMovr.LocalMachineCode)) then begin
-        if (LINrbrw.LocalMachineCode!=StockMovr.LocalMachineCode) then begin
-          testf = false;
+    if (nonblank(LINrbrw.LocalMachineCode)) then begin 
+      if (nonblank(StockMovr.LocalMachineCode)) then begin 
+        if (LINrbrw.LocalMachineCode!=StockMovr.LocalMachineCode) then begin 
+          testf = false; 
         end;
       end else begin
-        testf = false;
+        testf = false; 
       end;
     end;
     if (nonblank(LINrbrw.CClass)) then begin
       if (nonblank(cuclass)) then begin
-        if (SetInSet(LINrbrw.CClass,cuclass)==false) then begin
-          testf = false;
+        if (SetInSet(LINrbrw.CClass,cuclass)==false) then begin 
+          testf = false; 
         end;
       end else begin
-        testf = false;
+        testf = false; 
       end;
     end;
     if (nonblankdate(LINrbrw.PurchDate)) then begin
@@ -2039,6 +2237,7 @@ begin
   return;
 end;
 
+
 global
 procedure FindNextConsStockMovInvVcOfficialSerialNr(var record StockMovVc StockMovr,Integer kLegalInvNrSelectionType)
 BEGIN
@@ -2048,11 +2247,11 @@ BEGIN
   row LegalInvNrBlock LINrbrw;
   Integer i,rwcnt,pages;
   Boolean testf;
-  Date docdate;
+  Date docdate;  
   record OffSerNrIVVc OffSerNrIVr;
 
   docdate = StockMovr.InvDate;
-
+ 
 //   NextOfficialSerNr("StockMovVc",StockMovr.SerNr,docdate,"",res);
   if (blank(res)) then begin
     OffSerNrIVr.IVNr = StockMovr.InvoiceNr;  //    SerNr
@@ -2066,13 +2265,13 @@ BEGIN
         PrepareOfficialSerialNrBlock(kOfficialNumTypeConsignmentInvoiceStockMovVc,LINrb);
     end;
     rwcnt = MatRowCnt(LINrb);
-    if (rwcnt>0) then begin
+    if (rwcnt>0) then begin    
       for (i=0;i<rwcnt;i=i+1) begin
         MatRowGet(LINrb,i,LINrbrw);
         testf = TestNextOfficialSerialNr_ConsStockMovVcInv(LINrbrw,"",StockMovr,true,-2);
         if (testf) then begin
           res = NextLegalSerNr("ConsStockMovInvVc",StockMovr.InvoiceNr,docdate,LINrbrw.Serie,LINrbrw.TSerStart,LINrbrw.TSerEnd);
-          if (nonblank(res)) then begin
+          if (nonblank(res)) then begin 
             /*
             if (LINrbrw.PerPage==1) then begin
               pages = CountNumberOfInvoicePrintPages(IVr);
@@ -2090,15 +2289,15 @@ BEGIN
           end;
         end;
       end;
-    end;
+    end;   
   end;
-  if (nonblank(res)) then begin
+  if (nonblank(res)) then begin 
     StockMovr.InvoiceOfficialSerNr = res;
     StockMovr.InvDate = CurrentDate;
     StockMovr.InvRegTime = CurrentTime;
 //    AddPortugueseSAFTHashToStockMov(StockMovr);// must be after FIFO  filled in
-  end;
-LFindNextStockMovVcOfficialSerialNr:;
+  end;  
+LFindNextStockMovVcOfficialSerialNr:;  
   RETURN;
 END;
 
@@ -2106,45 +2305,45 @@ global
 function Boolean TestNextOfficialSerialNr_ORVc(row LegalInvNrBlock LINrbrw,string cuclass,record ORVc ORr,Boolean manualf)
 begin
   Boolean testf;
-
+  
   testf = false;
-  if (LINrbrw.RegType==kOfficialNumTypeORVc) then begin
+  if (LINrbrw.RegType==kOfficialNumTypeORVc) then begin 
     testf = true;
   end;
-  if (testf==true) then begin
+  if (testf==true) then begin 
     if (manualf) then begin
-      if (LINrbrw.SelectionType==kLegalInvNrSelectionTypeManual) then begin
-        testf = false;
-      end;
+      if (LINrbrw.SelectionType==kLegalInvNrSelectionTypeManual) then begin 
+        testf = false; 
+      end; 
     end;
-    if (LINrbrw.SelectionType==kLegalInvNrSelectionTypeAtOK)  and  (ORr.OKFlag!=1)  then begin
-      testf = false;
-    end;
-    if (nonblank(LINrbrw.Branch)) then begin
-      if (nonblank(ORr.BranchID)) then begin
-        if (LINrbrw.Branch!=ORr.BranchID) then begin
-          testf = false;
+    if (LINrbrw.SelectionType==kLegalInvNrSelectionTypeAtOK)  and  (ORr.OKFlag!=1)  then begin 
+      testf = false; 
+    end; 
+    if (nonblank(LINrbrw.Branch)) then begin 
+      if (nonblank(ORr.BranchID)) then begin 
+        if (LINrbrw.Branch!=ORr.BranchID) then begin 
+          testf = false; 
         end;
       end else begin
-        testf = false;
+        testf = false; 
       end;
     end;
-    if (nonblank(LINrbrw.LocalMachineCode)) then begin
-      if (nonblank(ORr.LocalMachineCode)) then begin
-        if (LINrbrw.LocalMachineCode!=ORr.LocalMachineCode) then begin
-          testf = false;
+    if (nonblank(LINrbrw.LocalMachineCode)) then begin 
+      if (nonblank(ORr.LocalMachineCode)) then begin 
+        if (LINrbrw.LocalMachineCode!=ORr.LocalMachineCode) then begin 
+          testf = false; 
         end;
       end else begin
-        testf = false;
+        testf = false; 
       end;
     end;
     if (nonblank(LINrbrw.CClass)) then begin
       if (nonblank(cuclass)) then begin
-        if (SetInSet(LINrbrw.CClass,cuclass)==false) then begin
-          testf = false;
+        if (SetInSet(LINrbrw.CClass,cuclass)==false) then begin 
+          testf = false; 
         end;
       end else begin
-        testf = false;
+        testf = false; 
       end;
     end;
     if (nonblankdate(LINrbrw.PurchDate)) then begin
@@ -2168,10 +2367,10 @@ BEGIN
   Integer i,rwcnt,pages;
   Boolean testf;
   record OffSerNrIVVc OffSerNrIVr;
-
+  
   CUr.Code = ORr.CustCode;
   ReadFirstMain(CUr,1,true);
-
+ 
   NextOfficialSerNr("ORVc",ORr.SerNr,ORr.OrdDate,"",res);
   if (blank(res)) then begin
     OffSerNrIVr.IVNr = ORr.SerNr;
@@ -2182,13 +2381,13 @@ BEGIN
     end;
     PrepareOfficialSerialNrBlock(kOfficialNumTypeORVc,LINrb);
     rwcnt = MatRowCnt(LINrb);
-    if (rwcnt>0) then begin
+    if (rwcnt>0) then begin    
       for (i=0;i<rwcnt;i=i+1) begin
         MatRowGet(LINrb,i,LINrbrw);
         testf = TestNextOfficialSerialNr_ORVc(LINrbrw,CUr.Classification,ORr,true);
         if (testf) then begin
           res = NextLegalSerNr("ORVc",ORr.SerNr,ORr.OrdDate,LINrbrw.Serie,LINrbrw.TSerStart,LINrbrw.TSerEnd);
-          if (nonblank(res)) then begin
+          if (nonblank(res)) then begin 
             /*
             if (LINrbrw.PerPage==1) then begin
               pages = CountNumberOfInvoicePrintPages(IVr);
@@ -2206,13 +2405,13 @@ BEGIN
           end;
         end;
       end;
-    end;
+    end;   
   end;
-  if (nonblank(res)) then begin
+  if (nonblank(res)) then begin 
     ORr.OfficialSerNr = res;
     AddPortugueseSAFTHashToOR(ORr);
-  end;
-LFindNextORVcOfficialSerialNr:;
+  end;  
+LFindNextORVcOfficialSerialNr:;  
   RETURN;
 END;
 
@@ -2220,52 +2419,52 @@ global
 function Boolean TestNextOfficialSerialNr_IPVc(row LegalInvNrBlock LINrbrw,string cuclass,record IPVc IPp,Boolean manualf)
 begin
   Boolean testf;
-
+  
   testf = false;
-  if (LINrbrw.RegType==kOfficialNumTypeIPVc) then begin
+  if (LINrbrw.RegType==kOfficialNumTypeIPVc) then begin 
     testf = true;
   end;
-  if (testf==true) then begin
+  if (testf==true) then begin 
     if (manualf) then begin
       if (HasLocalization("PRT")) then begin
         if (blank(IPp.OfficialSerNr) and IPp.OKFlag!=0) then begin
         end else begin
-          testf = false;
+          testf = false; 
         end;
       end else begin
-        if (LINrbrw.SelectionType==kLegalInvNrSelectionTypeManual) then begin
-          testf = false;
-        end;
+        if (LINrbrw.SelectionType==kLegalInvNrSelectionTypeManual) then begin 
+          testf = false; 
+        end; 
       end;
     end;
-    if (LINrbrw.SelectionType==kLegalInvNrSelectionTypeAtOK) and (IPp.OKFlag!=1)  then begin
-      testf = false;
-    end;
-    if (nonblank(LINrbrw.Branch)) then begin
-      if (nonblank(IPp.BranchID)) then begin
-        if (LINrbrw.Branch!=IPp.BranchID) then begin
-          testf = false;
+    if (LINrbrw.SelectionType==kLegalInvNrSelectionTypeAtOK) and (IPp.OKFlag!=1)  then begin 
+      testf = false; 
+    end; 
+    if (nonblank(LINrbrw.Branch)) then begin 
+      if (nonblank(IPp.BranchID)) then begin 
+        if (LINrbrw.Branch!=IPp.BranchID) then begin 
+          testf = false; 
         end;
       end else begin
-        testf = false;
+        testf = false; 
       end;
     end;
-    if (nonblank(LINrbrw.LocalMachineCode)) then begin
-      if (nonblank(IPp.MachineName)) then begin
-        if (LINrbrw.LocalMachineCode!=IPp.MachineName) then begin
-          testf = false;
+    if (nonblank(LINrbrw.LocalMachineCode)) then begin 
+      if (nonblank(IPp.MachineName)) then begin 
+        if (LINrbrw.LocalMachineCode!=IPp.MachineName) then begin 
+          testf = false; 
         end;
       end else begin
-        testf = false;
+        testf = false; 
       end;
     end;
     if (nonblank(LINrbrw.CClass)) then begin
       if (nonblank(cuclass)) then begin
-        if (SetInSet(LINrbrw.CClass,cuclass)==false) then begin
-          testf = false;
+        if (SetInSet(LINrbrw.CClass,cuclass)==false) then begin 
+          testf = false; 
         end;
       end else begin
-        testf = false;
+        testf = false; 
       end;
     end;
     if (nonblankdate(LINrbrw.PurchDate)) then begin
@@ -2290,18 +2489,18 @@ BEGIN
   Boolean testf;
   record OffSerNrIVVc OffSerNrIVr;
   row IPVc IPrw;
-
-  if (MatRowCnt(IPp)>=0) then begin
+  
+  if (MatRowCnt(IPp)>=0) then begin 
     MatRowGet(IPp,0,IPrw);
-    if (NonBlank(IPrw.CustCode)) then begin
+    if (NonBlank(IPrw.CustCode)) then begin 
       CUr.Code = IPrw.CustCode;
       if (ReadFirstMain(CUr,1,true)==false) then begin
-        goto LFindNextIPVcOfficialSerialNr;
+        goto LFindNextIPVcOfficialSerialNr;  
       end;
     end else begin
-      goto LFindNextIPVcOfficialSerialNr;
+      goto LFindNextIPVcOfficialSerialNr;     
     end;
-  end;
+  end;  
   NextOfficialSerNr("IPVc",IPp.SerNr,IPp.TransDate,"",res);
   if (blank(res)) then begin
     OffSerNrIVr.IVNr = IPp.SerNr;
@@ -2312,13 +2511,13 @@ BEGIN
     end;
     PrepareOfficialSerialNrBlock(kOfficialNumTypeIPVc,LINrb);
     rwcnt = MatRowCnt(LINrb);
-    if (rwcnt>0) then begin
+    if (rwcnt>0) then begin    
       for (i=0;i<rwcnt;i=i+1) begin
         MatRowGet(LINrb,i,LINrbrw);
         testf = TestNextOfficialSerialNr_IPVc(LINrbrw,CUr.Classification,IPp,true);
-        if (testf) then begin
+        if (testf) then begin 
           res = NextLegalSerNr("IPVc",IPp.SerNr,IPp.TransDate,LINrbrw.Serie,LINrbrw.TSerStart,LINrbrw.TSerEnd);
-          if (nonblank(res)) then begin
+          if (nonblank(res)) then begin 
             /*
             if (LINrbrw.PerPage==1) then begin
               pages = CountNumberOfInvoicePrintPages(IVr);
@@ -2336,13 +2535,13 @@ BEGIN
           end;
         end;
       end;
-    end;
+    end;   
   end;
-  if (nonblank(res)) then begin
+  if (nonblank(res)) then begin 
     IPp.OfficialSerNr = res;
 //    AddPortugueseSAFTHashToIP(IPp);
-  end;
-LFindNextIPVcOfficialSerialNr:;
+  end;  
+LFindNextIPVcOfficialSerialNr:;  
   RETURN;
 END;
 
@@ -2359,15 +2558,15 @@ begin
 
   PrepareOfficialSerialNrBlock(kOfficialNumTypeIPVc,LINrb);
   rwcnt = MatRowCnt(LINrb);
-  if (rwcnt>0) then begin
+  if (rwcnt>0) then begin    
     for (i=0;i<rwcnt;i=i+1) begin
       MatRowGet(LINrb,i,LINrbrw);
       testf = TestNextOfficialSerialNr_IPVc(LINrbrw,CUr.Classification,IPp,false);
-      if (testf) then begin
+      if (testf) then begin 
         tstr = Left(IPp.OfficialSerNr,len(LINrbrw.Serie));
         testf = LINrbrw.Serie==tstr;
       end;
-      if (testf) then begin
+      if (testf) then begin 
         OffSNIVr.IVNr = IPp.SerNr;
         OffSNIVr.FileName = "IPVc";
         if (ReadLastKey("MainKey",OffSNIVr,2,true)) then begin
@@ -2379,7 +2578,7 @@ begin
         end else begin
           res = NextLegalSerNr("IPVc",IPp.SerNr,IPp.TransDate,LINrbrw.Serie,LINrbrw.TSerStart,LINrbrw.TSerEnd);
         end;
-        if (nonblank(res)) then begin
+        if (nonblank(res)) then begin 
           i = rwcnt;
         end;
       end;
@@ -2393,45 +2592,45 @@ global
 function Boolean TestNextOfficialSerialNr_ProformaQTVc(row LegalInvNrBlock LINrbrw,string cuclass,record QTVc QTr,Boolean manualf)
 begin
   Boolean testf;
-
+  
   testf = false;
-  if (LINrbrw.RegType==kOfficialNumTypeQTProformaVc) then begin
+  if (LINrbrw.RegType==kOfficialNumTypeQTProformaVc) then begin 
     testf = true;
   end;
-  if (testf==true) then begin
+  if (testf==true) then begin 
     if (manualf) then begin
-      if (LINrbrw.SelectionType==kLegalInvNrSelectionTypeManual) then begin
-        testf = false;
-      end;
+      if (LINrbrw.SelectionType==kLegalInvNrSelectionTypeManual) then begin 
+        testf = false; 
+      end; 
     end;
-//    if (LINrbrw.SelectionType==kLegalInvNrSelectionTypeAtOK) and (QTr.Rejected!=2)  then begin
-//      testf = false;
-//    end;
-    if (nonblank(LINrbrw.Branch)) then begin
-      if (nonblank(QTr.BranchID)) then begin
-        if (LINrbrw.Branch!=QTr.BranchID) then begin
-          testf = false;
+//    if (LINrbrw.SelectionType==kLegalInvNrSelectionTypeAtOK) and (QTr.Rejected!=2)  then begin 
+//      testf = false; 
+//    end; 
+    if (nonblank(LINrbrw.Branch)) then begin 
+      if (nonblank(QTr.BranchID)) then begin 
+        if (LINrbrw.Branch!=QTr.BranchID) then begin 
+          testf = false; 
         end;
       end else begin
-        testf = false;
+        testf = false; 
       end;
     end;
-    if (nonblank(LINrbrw.LocalMachineCode)) then begin
-      if (nonblank(QTr.LocalMachineCode)) then begin
-        if (LINrbrw.LocalMachineCode!=QTr.LocalMachineCode) then begin
-          testf = false;
+    if (nonblank(LINrbrw.LocalMachineCode)) then begin 
+      if (nonblank(QTr.LocalMachineCode)) then begin 
+        if (LINrbrw.LocalMachineCode!=QTr.LocalMachineCode) then begin 
+          testf = false; 
         end;
       end else begin
-        testf = false;
+        testf = false; 
       end;
     end;
     if (nonblank(LINrbrw.CClass)) then begin
       if (nonblank(cuclass)) then begin
-        if (SetInSet(LINrbrw.CClass,cuclass)==false) then begin
-          testf = false;
+        if (SetInSet(LINrbrw.CClass,cuclass)==false) then begin 
+          testf = false; 
         end;
       end else begin
-        testf = false;
+        testf = false; 
       end;
     end;
     if (nonblankdate(LINrbrw.PurchDate)) then begin
@@ -2452,18 +2651,18 @@ begin
   Date fsd,fed;
   row LegalInvNrBlock LINrbrw;
   Boolean testf;
-
+  
   FindFiscalYear(curQTr.QTDate,fsd,fed);
   GetLegalInvNrRow(curQTr.ProformaOfficialSerNr,LINrbrw);
 
-//1st invoice in Number series
+//1st invoice in Number series  
   if (curQTr.ProformaOfficialSerNr==LINrbrw.Serie & LINrbrw.TSerStart) then begin
     res = "";
     goto LGetPreviousQTHash;
   end;
-
-/*
-//1st invoice in FIscal year
+  
+/*  
+//1st invoice in FIscal year  
   ResetLoop(prevQTr);
   prevQTr.RegDate = curQTr.RegDate;
   prevQTr.RegTime = curQTr.RegTime;
@@ -2481,7 +2680,7 @@ begin
       goto LGetPreviousQTHash;
     end;
   end;
-*/
+*/  
   ResetLoop(prevQTr);
   prevQTr.ProformaOfficialSerNr = curQTr.ProformaOfficialSerNr;
   if (LoopBackKey("ProformaOfficialSerNr",prevQTr,1,true)) then begin
@@ -2491,7 +2690,7 @@ begin
     end;
     res = prevQTr.Hash;
   end;
-LGetPreviousQTHash:;
+LGetPreviousQTHash:;  
   GetPreviousQTHash = res;
   return;
 end;
@@ -2501,7 +2700,7 @@ procedure AddPortugueseSAFTHashToProformaQT(var record QTVc QTr)
 begin
   string 255 tstr;
   val v;
-
+  
   if (HasLocalization("PRT")==false) then begin
     goto LAddPortugueseSAFTHashToProformaQT;
   end;
@@ -2531,10 +2730,10 @@ BEGIN
   Integer i,rwcnt,pages;
   Boolean testf;
   record OffSerNrIVVc OffSerNrIVr;
-
+  
   CUr.Code = QTr.CustCode;
   ReadFirstMain(CUr,1,true);
-
+ 
   NextOfficialSerNr("ProformaQTVc",QTr.SerNr,QTr.QTDate,"",res);
   if (blank(res)) then begin
     OffSerNrIVr.IVNr = QTr.SerNr;
@@ -2545,13 +2744,13 @@ BEGIN
     end;
     PrepareOfficialSerialNrBlock(kOfficialNumTypeQTProformaVc,LINrb);
     rwcnt = MatRowCnt(LINrb);
-    if (rwcnt>0) then begin
+    if (rwcnt>0) then begin    
       for (i=0;i<rwcnt;i=i+1) begin
         MatRowGet(LINrb,i,LINrbrw);
         testf = TestNextOfficialSerialNr_ProformaQTVc(LINrbrw,CUr.Classification,QTr,true);
         if (testf) then begin
           res = NextLegalSerNr("ProformaQTVc",QTr.SerNr,QTr.QTDate,LINrbrw.Serie,LINrbrw.TSerStart,LINrbrw.TSerEnd);
-          if (nonblank(res)) then begin
+          if (nonblank(res)) then begin 
             /*
             if (LINrbrw.PerPage==1) then begin
               pages = CountNumberOfInvoicePrintPages(IVr);
@@ -2569,13 +2768,13 @@ BEGIN
           end;
         end;
       end;
-    end;
+    end;   
   end;
-  if (nonblank(res)) then begin
+  if (nonblank(res)) then begin 
     QTr.ProformaOfficialSerNr = res;
 //   AddPortugueseSAFTHashToProformaQT(QTr);
-  end;
-LFindNextProformaQTVcOfficialSerialNr:;
+  end;  
+LFindNextProformaQTVcOfficialSerialNr:;  
   RETURN;
 END;
 
@@ -2583,59 +2782,59 @@ global
 function Boolean TestNextOfficialSerialNr_SHVc(row LegalInvNrBlock LINrbrw,string cuclass,record SHVc SHr,Boolean notmanualf,Integer kLegalInvNrSelectionType)
 begin
   Boolean testf;
-
+  
   testf = false;
-  if (LINrbrw.RegType==kOfficialNumTypeSHVc or LINrbrw.RegType==kOfficialNumTypeManualSHVc or LINrbrw.RegType==kOfficialNumTypeRecoverdSHVc) then begin
+  if (LINrbrw.RegType==kOfficialNumTypeSHVc or LINrbrw.RegType==kOfficialNumTypeManualSHVc or LINrbrw.RegType==kOfficialNumTypeRecoverdSHVc) then begin 
     testf = true;
   end;
-  if (LINrbrw.RegType==kOfficialNumTypeRecoverdSHVc) and (SHr.Status==kRecordStatusRecovered) then begin
+  if (LINrbrw.RegType==kOfficialNumTypeRecoverdSHVc) and (SHr.Status==kRecordStatusRecovered) then begin 
     testf = true;
   end;
-  if (testf) then begin
+  if (testf) then begin 
     if (notmanualf) then begin
-      if (LINrbrw.SelectionType==kLegalInvNrSelectionTypeManual) then begin
-        testf = false;
-      end;
+      if (LINrbrw.SelectionType==kLegalInvNrSelectionTypeManual) then begin 
+        testf = false; 
+      end; 
     end;
-    if (LINrbrw.SelectionType==kLegalInvNrSelectionTypeAtOK) and (SHr.OKFlag!=1)  then begin
-      testf = false;
-    end;
+    if (LINrbrw.SelectionType==kLegalInvNrSelectionTypeAtOK) and (SHr.OKFlag!=1)  then begin 
+      testf = false; 
+    end; 
     switch (kLegalInvNrSelectionType) begin
       case -1:
-         if (LINrbrw.SelectionType==kLegalInvNrSelectionTypeAtSendingERecord) then begin
-           testf = false;
-         end;
+         if (LINrbrw.SelectionType==kLegalInvNrSelectionTypeAtSendingERecord) then begin 
+           testf = false; 
+         end; 
       case -2:
       otherwise
-        if (LINrbrw.SelectionType!=kLegalInvNrSelectionType) then begin
-          testf = false;
-        end;
+        if (LINrbrw.SelectionType!=kLegalInvNrSelectionType) then begin 
+          testf = false; 
+        end; 
     end;
-    if (nonblank(LINrbrw.Branch)) then begin
-      if (nonblank(SHr.BranchID)) then begin
-        if (LINrbrw.Branch!=SHr.BranchID) then begin
-          testf = false;
+    if (nonblank(LINrbrw.Branch)) then begin 
+      if (nonblank(SHr.BranchID)) then begin 
+        if (LINrbrw.Branch!=SHr.BranchID) then begin 
+          testf = false; 
         end;
       end else begin
-        testf = false;
+        testf = false; 
       end;
     end;
-    if (nonblank(LINrbrw.LocalMachineCode)) then begin
-      if (nonblank(SHr.LocalMachineCode)) then begin
-        if (LINrbrw.LocalMachineCode!=SHr.LocalMachineCode) then begin
-          testf = false;
+    if (nonblank(LINrbrw.LocalMachineCode)) then begin 
+      if (nonblank(SHr.LocalMachineCode)) then begin 
+        if (LINrbrw.LocalMachineCode!=SHr.LocalMachineCode) then begin 
+          testf = false; 
         end;
       end else begin
-        testf = false;
+        testf = false; 
       end;
     end;
     if (nonblank(LINrbrw.CClass)) then begin
       if (nonblank(cuclass)) then begin
-        if (SetInSet(LINrbrw.CClass,cuclass)==false) then begin
-          testf = false;
+        if (SetInSet(LINrbrw.CClass,cuclass)==false) then begin 
+          testf = false; 
         end;
       end else begin
-        testf = false;
+        testf = false; 
       end;
     end;
     if (nonblankdate(LINrbrw.PurchDate)) then begin
@@ -2662,7 +2861,7 @@ begin
 
   CUr.Code = SHr.CustCode;
   ReadFirstMain(CUr,1,true);
-
+ 
   NextOfficialSerNr("SHVc",SHr.SerNr,SHr.ShipDate,"",res);
   if (blank(res)) then begin
     OffSerNrIVr.IVNr = SHr.SerNr;
@@ -2675,24 +2874,24 @@ begin
     PrepareOfficialSerialNrBlock(kOfficialNumTypeManualSHVc,LINrb);
     PrepareOfficialSerialNrBlock(kOfficialNumTypeRecoverdSHVc,LINrb);
     rwcnt = MatRowCnt(LINrb);
-    if (rwcnt>0) then begin
+    if (rwcnt>0) then begin    
       for (i=0;i<rwcnt;i=i+1) begin
         MatRowGet(LINrb,i,LINrbrw);
         testf = TestNextOfficialSerialNr_SHVc(LINrbrw,CUr.Classification,SHr,true,kLegalInvNrSelectionType);
         if (testf) then begin
           res = NextLegalSerNr("SHVc",SHr.SerNr,SHr.ShipDate,LINrbrw.Serie,LINrbrw.TSerStart,LINrbrw.TSerEnd);
-          if (nonblank(res)) then begin
+          if (nonblank(res)) then begin 
             i = rwcnt;
           end;
         end;
       end;
-    end;
+    end;   
   end;
-  if (nonblank(res)) then begin
+  if (nonblank(res)) then begin 
     SHr.OfficialSerNr = res;
 //    AddPortugueseSAFTHashToSH(SHr);// must be after FIFO  filled in
-  end;
-LFindNextSHVcOfficialSerialNr:;
+  end;  
+LFindNextSHVcOfficialSerialNr:;  
   return;
 end;
 
@@ -2707,21 +2906,21 @@ begin
   if (HasLocalization("PRT")==false) then begin
     goto LOfficialSerNrDefined;
   end;
-  BlockLoad(LINb);
+  BlockLoad(LINb);  
   rwcnt = MatRowCnt(LINb);
-  if (rwcnt>0) then begin
+  if (rwcnt>0) then begin    
     for (i=0;i<rwcnt;i=i+1) begin
       MatRowGet(LINb,i,LINbrw);
       switch (filename) begin
         case "ORVc":
-          if (LINbrw.RegType==kOfficialNumTypeORVc) then begin
+          if (LINbrw.RegType==kOfficialNumTypeORVc) then begin 
             res = true;
             goto LOfficialSerNrDefined;
           end;
       end;
     end;
   end;
-LOfficialSerNrDefined:;
+LOfficialSerNrDefined:;  
   OfficialSerNrDefined = res;
   return;
 end;
@@ -2943,7 +3142,7 @@ begin
   record RetPUVc locRetPUr;
   LongInt l,testl;
   Date bd;
-
+  
   alloweddate = bd;
   locRetPUr.OfficialSerNr = LINrbrw.Serie & LINrbrw.TSerEnd;
   if (ReadLastKey("OfficialSerNr",locRetPUr,1,false)) then begin
@@ -3040,13 +3239,13 @@ function Boolean ValidateOfficialSerialNrChronology(string filename,string Offic
 begin
   Boolean res;
   row LegalInvNrBlock LINrbrw;
-
+  
   res = true;
   GetLegalInvNrRow(OfficialSerNr,LINrbrw);
   if (LINrbrw.Chronology!=kLegalInvNrChronologyTypeForced) then begin
     goto LValidateOfficialSerialNrChronology;
   end;
-  if (blank(OfficialSerNr)) then begin
+  if (blank(OfficialSerNr)) then begin    
     goto LValidateOfficialSerialNrChronology;
   end;
   switch (filename) begin
@@ -3071,7 +3270,7 @@ begin
     case "QTVc":
       res = ValidateOfficialSerialNrChronology_QTVc(LINrbrw,OfficialSerNr,testSerNr,testDate,alloweddate);
   end;
-LValidateOfficialSerialNrChronology:;
+LValidateOfficialSerialNrChronology:;  
   ValidateOfficialSerialNrChronology = res;
   return;
 end;
@@ -3079,85 +3278,85 @@ end;
 function Boolean OfficialSerialNrCanBeBlankPRT_IVVc(row LegalInvNrBlock LINrbrw,string cuclass,string BranchID,string LocalMachineCode,Date td,Integer InvType,Integer Status)
 begin
   Boolean testf;
-
+  
   testf = false;
   switch (LINrbrw.RegType) begin
-    case kOfficialNumTypeAllIVVc:
+    case kOfficialNumTypeAllIVVc:  
       testf = true;
-    case kOfficialNumTypeInterestIVVc:
+    case kOfficialNumTypeInterestIVVc:  
       if (InvType==kInvoiceTypeInterest or InvType==kInvoiceTypeDebit) then begin testf = true; end;
-    case kOfficialNumTypeCashInvoiceReceiptPRTIVVc:
+    case kOfficialNumTypeCashInvoiceReceiptPRTIVVc:  
       if (InvType==kInvoiceTypeCashInvoiceReceiptPRT) and (Status!=kRecordStatusRecovered) then begin testf = true; end;
-    case kOfficialNumTypeManualCashInvoiceReceiptIVVc:
+    case kOfficialNumTypeManualCashInvoiceReceiptIVVc:  
       if (InvType==kInvoiceTypeCashInvoiceReceiptPRT) and (Status!=kRecordStatusRecovered) then begin testf = true; end;
-    case kOfficialNumTypeCreditIVVc:
+    case kOfficialNumTypeCreditIVVc:  
       if (InvType==kInvoiceTypeCredit or InvType==kInvoiceTypeCreditSpecialSales) and (Status!=kRecordStatusManual) then begin testf = true; end;
-    case kOfficialNumTypeRecoverdCreditIVVc:
+    case kOfficialNumTypeRecoverdCreditIVVc:  
       if (InvType==kInvoiceTypeCredit or InvType==kInvoiceTypeCreditSpecialSales) and (Status!=kRecordStatusManual) then begin testf = true; end;
-//    case kOfficialNumTypeManualCreditIVVc:
+//    case kOfficialNumTypeManualCreditIVVc:  
 //      if (InvType==kInvoiceTypeCredit or InvType==kInvoiceTypeCreditSpecialSales) and (Status!=kRecordStatusManual) then begin testf = true; end;
-    case kOfficialNumTypeSpecialSalesIVVc:
+    case kOfficialNumTypeSpecialSalesIVVc:  
       if (InvType==kInvoiceTypeNormalSpecialSales) then begin testf = true; end;
-    case kOfficialNumTypeIVVc:
+    case kOfficialNumTypeIVVc:  
       if (InvType==kInvoiceTypeNormal or InvType==kInvoiceTypeDownpayment or InvType==kInvoiceTypePrepayment) then begin testf = true; end;
-    case kOfficialNumTypeIVVc:
+    case kOfficialNumTypeIVVc:  
       if (InvType==kInvoiceTypeNormal or InvType==kInvoiceTypeDownpayment or InvType==kInvoiceTypePrepayment) then begin testf = true; end;
-    case kOfficialNumTypeManualIVVc:
+    case kOfficialNumTypeManualIVVc:  
       if (InvType==kInvoiceTypeNormal or InvType==kInvoiceTypeDownpayment or InvType==kInvoiceTypePrepayment) then begin testf = true; end;
-/*
-    case kOfficialNumTypeLiquidationIVVc:
+/*      
+    case kOfficialNumTypeLiquidationIVVc:  
       if (InvType==kInvoiceTypeNormal or InvType==kInvoiceTypeDownpayment or InvType==kInvoiceTypePrepayment) and (taxtype==kTaxInvTypeLiquidation) then begin testf = true; end;
-    case kOfficialNumTypeReceiptIVVc:
+    case kOfficialNumTypeReceiptIVVc:  
       if (InvType==kInvoiceTypeNormal or InvType==kInvoiceTypeDownpayment or InvType==kInvoiceTypePrepayment) and (taxtype==kTaxInvTypeReceipt) then begin testf = true; end;
-*/
+*/      
   end;
 
 /*
-  if (LINrbrw.RegType==kOfficialNumTypeAllIVVc) then begin
+  if (LINrbrw.RegType==kOfficialNumTypeAllIVVc) then begin 
     testf = true;
   end;
-  if (LINrbrw.RegType==kOfficialNumTypeInterestIVVc) and (InvType==kInvoiceTypeInterest or InvType==kInvoiceTypeDebit) then begin
+  if (LINrbrw.RegType==kOfficialNumTypeInterestIVVc) and (InvType==kInvoiceTypeInterest or InvType==kInvoiceTypeDebit) then begin 
     testf = true;
   end;
-  if (LINrbrw.RegType==kOfficialNumTypeCashInvoiceReceiptPRTIVVc or LINrbrw.RegType==kOfficialNumTypeManualCashInvoiceReceiptIVVc) and (InvType==kInvoiceTypeCashInvoiceReceiptPRT) and (Status!=kRecordStatusRecovered) then begin
+  if (LINrbrw.RegType==kOfficialNumTypeCashInvoiceReceiptPRTIVVc or LINrbrw.RegType==kOfficialNumTypeManualCashInvoiceReceiptIVVc) and (InvType==kInvoiceTypeCashInvoiceReceiptPRT) and (Status!=kRecordStatusRecovered) then begin 
+    testf = true;
+  end;  
+  if (LINrbrw.RegType==kOfficialNumTypeCreditIVVc or LINrbrw.RegType==kOfficialNumTypeRecoverdCreditIVVc) and (InvType==kInvoiceTypeCredit or InvType==kInvoiceTypeCreditSpecialSales) and (Status!=kRecordStatusManual) then begin 
+    testf = true;
+  end;   
+  if (LINrbrw.RegType==kOfficialNumTypeSpecialSalesIVVc) and (InvType==kInvoiceTypeNormalSpecialSales) then begin 
     testf = true;
   end;
-  if (LINrbrw.RegType==kOfficialNumTypeCreditIVVc or LINrbrw.RegType==kOfficialNumTypeRecoverdCreditIVVc) and (InvType==kInvoiceTypeCredit or InvType==kInvoiceTypeCreditSpecialSales) and (Status!=kRecordStatusManual) then begin
+  if (LINrbrw.RegType==kOfficialNumTypeIVVc or LINrbrw.RegType==kOfficialNumTypeManualIVVc or LINrbrw.RegType==kOfficialNumTypeRecoverdIVVc) and (InvType==kInvoiceTypeNormal or InvType==kInvoiceTypeDownpayment or InvType==kInvoiceTypePrepayment) then begin 
     testf = true;
-  end;
-  if (LINrbrw.RegType==kOfficialNumTypeSpecialSalesIVVc) and (InvType==kInvoiceTypeNormalSpecialSales) then begin
-    testf = true;
-  end;
-  if (LINrbrw.RegType==kOfficialNumTypeIVVc or LINrbrw.RegType==kOfficialNumTypeManualIVVc or LINrbrw.RegType==kOfficialNumTypeRecoverdIVVc) and (InvType==kInvoiceTypeNormal or InvType==kInvoiceTypeDownpayment or InvType==kInvoiceTypePrepayment) then begin
-    testf = true;
-  end;
-*/
+  end;  
+*/  
   if (testf) then begin
-    if (nonblank(LINrbrw.Branch)) then begin
-      if (nonblank(BranchID)) then begin
-        if (LINrbrw.Branch!=BranchID) then begin
-          testf = false;
+    if (nonblank(LINrbrw.Branch)) then begin 
+      if (nonblank(BranchID)) then begin 
+        if (LINrbrw.Branch!=BranchID) then begin 
+          testf = false; 
         end;
       end else begin
-        testf = false;
+        testf = false; 
       end;
     end;
-    if (nonblank(LINrbrw.LocalMachineCode)) then begin
-      if (nonblank(LocalMachineCode)) then begin
-        if (LINrbrw.LocalMachineCode!=LocalMachineCode) then begin
-          testf = false;
+    if (nonblank(LINrbrw.LocalMachineCode)) then begin 
+      if (nonblank(LocalMachineCode)) then begin 
+        if (LINrbrw.LocalMachineCode!=LocalMachineCode) then begin 
+          testf = false; 
         end;
       end else begin
-        testf = false;
+        testf = false; 
       end;
     end;
     if (nonblank(LINrbrw.CClass)) then begin
       if (nonblank(cuclass)) then begin
-        if (SetInSet(LINrbrw.CClass,cuclass)==false) then begin
-          testf = false;
+        if (SetInSet(LINrbrw.CClass,cuclass)==false) then begin 
+          testf = false; 
         end;
       end else begin
-        testf = false;
+        testf = false; 
       end;
     end;
     if (nonblankdate(LINrbrw.PurchDate)) then begin
@@ -3171,35 +3370,35 @@ end;
 function Boolean OfficialSerialNrCanBeBlankPRT_IPVc(row LegalInvNrBlock LINrbrw,string cuclass,string BranchID,string LocalMachineCode,Date td,Integer InvType,Integer Status)
 begin
   Boolean testf;
-
+  
   testf = false;
   /* Should Never possible to have a blank Official Number for Receipts  */
   if (testf) then begin
-    if (nonblank(LINrbrw.Branch)) then begin
-      if (nonblank(BranchID)) then begin
-        if (LINrbrw.Branch!=BranchID) then begin
-          testf = false;
+    if (nonblank(LINrbrw.Branch)) then begin 
+      if (nonblank(BranchID)) then begin 
+        if (LINrbrw.Branch!=BranchID) then begin 
+          testf = false; 
         end;
       end else begin
-        testf = false;
+        testf = false; 
       end;
     end;
-    if (nonblank(LINrbrw.LocalMachineCode)) then begin
-      if (nonblank(LocalMachineCode)) then begin
-        if (LINrbrw.LocalMachineCode!=LocalMachineCode) then begin
-          testf = false;
+    if (nonblank(LINrbrw.LocalMachineCode)) then begin 
+      if (nonblank(LocalMachineCode)) then begin 
+        if (LINrbrw.LocalMachineCode!=LocalMachineCode) then begin 
+          testf = false; 
         end;
       end else begin
-        testf = false;
+        testf = false; 
       end;
     end;
     if (nonblank(LINrbrw.CClass)) then begin
       if (nonblank(cuclass)) then begin
-        if (SetInSet(LINrbrw.CClass,cuclass)==false) then begin
-          testf = false;
+        if (SetInSet(LINrbrw.CClass,cuclass)==false) then begin 
+          testf = false; 
         end;
       end else begin
-        testf = false;
+        testf = false; 
       end;
     end;
     if (nonblankdate(LINrbrw.PurchDate)) then begin
@@ -3216,7 +3415,7 @@ begin
   record LegalInvNrBlock LINrb;
   row LegalInvNrBlock LINrbrw;
   Integer i,rwcnt;
-
+  
   res = true;
   if (nonblank(officialsernr)) then begin
     goto LOfficialSerialNrCanBeBlankPRT;
@@ -3224,25 +3423,25 @@ begin
   if (Status==kRecordStatusManual or Status==kRecordStatusRecovered) then begin
     goto LOfficialSerialNrCanBeBlankPRT;
   end;
-  BlockLoad(LINrb);
+  BlockLoad(LINrb);  
   rwcnt = MatRowCnt(LINrb);
-  if (rwcnt>0) then begin
+  if (rwcnt>0) then begin    
     for (i=0;i<rwcnt;i=i+1) begin
       MatRowGet(LINrb,i,LINrbrw);
       switch (filename) begin
         case "IVVc":
           testf = OfficialSerialNrCanBeBlankPRT_IVVc(LINrbrw,cuclass,branchid,lm,td,InvType,Status);
           if (testf) then begin
-            foundf = true;
+            foundf = true; 
             switch (LINrbrw.SelectionType) begin
               case kLegalInvNrSelectionTypeManual:
                 if (okflag!=0) then begin
                   res = false;
-                end;
+                end; 
               case kLegalInvNrSelectionTypeAtOK:
                 if (okflag!=0) then begin
                   res = false;
-                end;
+                end;             
               case kLegalInvNrSelectionTypeAtInsert:
                 res = false;
             end;
@@ -3250,16 +3449,16 @@ begin
         case "IPVc":
           testf = OfficialSerialNrCanBeBlankPRT_IPVc(LINrbrw,cuclass,branchid,lm,td,InvType,Status);
           if (testf) then begin
-            foundf = true;
+            foundf = true; 
             switch (LINrbrw.SelectionType) begin
               case kLegalInvNrSelectionTypeManual:
                 if (okflag!=0) then begin
                   res = false;
-                end;
+                end; 
               case kLegalInvNrSelectionTypeAtOK:
                 if (okflag!=0) then begin
                   res = false;
-                end;
+                end;             
               case kLegalInvNrSelectionTypeAtInsert:
                 res = false;
             end;
@@ -3267,7 +3466,7 @@ begin
       end;
     end;
   end;
-LOfficialSerialNrCanBeBlankPRT:;
+LOfficialSerialNrCanBeBlankPRT:;  
   if (foundf==false) then begin
     if (okflag!=0) then begin
       res = false;
@@ -3280,49 +3479,49 @@ end;
 function Boolean OfficialSerialNrCanBeBlankAGO_IVVc(row LegalInvNrBlock LINrbrw,string cuclass,string BranchID,string LocalMachineCode,Date td,Integer InvType,Integer Status)
 begin
   Boolean testf;
-
+  
   testf = false;
-  if (LINrbrw.RegType==kOfficialNumTypeAllIVVc) then begin
+  if (LINrbrw.RegType==kOfficialNumTypeAllIVVc) then begin 
     testf = true;
   end;
-  if (LINrbrw.RegType==kOfficialNumTypeInterestIVVc) and (InvType==kInvoiceTypeInterest or InvType==kInvoiceTypeDebit) then begin
+  if (LINrbrw.RegType==kOfficialNumTypeInterestIVVc) and (InvType==kInvoiceTypeInterest or InvType==kInvoiceTypeDebit) then begin 
     testf = true;
   end;
-  if (LINrbrw.RegType==kOfficialNumTypeCreditIVVc) and (InvType==kInvoiceTypeCredit or InvType==kInvoiceTypeCreditSpecialSales) then begin
+  if (LINrbrw.RegType==kOfficialNumTypeCreditIVVc) and (InvType==kInvoiceTypeCredit or InvType==kInvoiceTypeCreditSpecialSales) then begin 
+    testf = true;
+  end; 
+  if (LINrbrw.RegType==kOfficialNumTypeSpecialSalesIVVc) and (InvType==kInvoiceTypeNormalSpecialSales) then begin 
     testf = true;
   end;
-  if (LINrbrw.RegType==kOfficialNumTypeSpecialSalesIVVc) and (InvType==kInvoiceTypeNormalSpecialSales) then begin
+  if (LINrbrw.RegType==kOfficialNumTypeIVVc) and (InvType==kInvoiceTypeNormal or InvType==kInvoiceTypeDownpayment or InvType==kInvoiceTypePrepayment) then begin 
     testf = true;
-  end;
-  if (LINrbrw.RegType==kOfficialNumTypeIVVc) and (InvType==kInvoiceTypeNormal or InvType==kInvoiceTypeDownpayment or InvType==kInvoiceTypePrepayment) then begin
-    testf = true;
-  end;
+  end;  
   if (testf) then begin
-    if (nonblank(LINrbrw.Branch)) then begin
-      if (nonblank(BranchID)) then begin
-        if (LINrbrw.Branch!=BranchID) then begin
-          testf = false;
+    if (nonblank(LINrbrw.Branch)) then begin 
+      if (nonblank(BranchID)) then begin 
+        if (LINrbrw.Branch!=BranchID) then begin 
+          testf = false; 
         end;
       end else begin
-        testf = false;
+        testf = false; 
       end;
     end;
-    if (nonblank(LINrbrw.LocalMachineCode)) then begin
-      if (nonblank(LocalMachineCode)) then begin
-        if (LINrbrw.LocalMachineCode!=LocalMachineCode) then begin
-          testf = false;
+    if (nonblank(LINrbrw.LocalMachineCode)) then begin 
+      if (nonblank(LocalMachineCode)) then begin 
+        if (LINrbrw.LocalMachineCode!=LocalMachineCode) then begin 
+          testf = false; 
         end;
       end else begin
-        testf = false;
+        testf = false; 
       end;
     end;
     if (nonblank(LINrbrw.CClass)) then begin
       if (nonblank(cuclass)) then begin
-        if (SetInSet(LINrbrw.CClass,cuclass)==false) then begin
-          testf = false;
+        if (SetInSet(LINrbrw.CClass,cuclass)==false) then begin 
+          testf = false; 
         end;
       end else begin
-        testf = false;
+        testf = false; 
       end;
     end;
     if (nonblankdate(LINrbrw.PurchDate)) then begin
@@ -3339,28 +3538,28 @@ begin
   record LegalInvNrBlock LINrb;
   row LegalInvNrBlock LINrbrw;
   Integer i,rwcnt;
-
+  
   res = true;
   if (nonblank(officialsernr)) then begin
     goto LOfficialSerialNrCanBeBlankAGO;
   end;
-  BlockLoad(LINrb);
+  BlockLoad(LINrb);  
   rwcnt = MatRowCnt(LINrb);
-  if (rwcnt>0) then begin
+  if (rwcnt>0) then begin    
     for (i=0;i<rwcnt;i=i+1) begin
       MatRowGet(LINrb,i,LINrbrw);
       switch (filename) begin
         case "IVVc":
           testf = OfficialSerialNrCanBeBlankAGO_IVVc(LINrbrw,cuclass,branchid,lm,td,InvType,Status);
           if (testf) then begin
-            foundf = true;
+            foundf = true; 
             switch (LINrbrw.SelectionType) begin
               case kLegalInvNrSelectionTypeManual:
-                res = false;
+                res = false; 
               case kLegalInvNrSelectionTypeAtOK:
                 if (okflag!=0) then begin
                   res = false;
-                end;
+                end;             
               case kLegalInvNrSelectionTypeAtInsert:
                 res = false;
             end;
@@ -3368,7 +3567,7 @@ begin
       end;
     end;
   end;
-LOfficialSerialNrCanBeBlankAGO:;
+LOfficialSerialNrCanBeBlankAGO:;  
   if (foundf==false) then begin
     if (okflag!=0) then begin
       res = false;
@@ -3382,11 +3581,11 @@ global
 function Boolean OfficialSerialNrCanBeBlank(string filename,string cuclass,Integer okflag,string officialsernr,string branchid,string lm,Date td,Integer InvType,Integer Status)
 begin
   Boolean res;
-
+  
   if (HasLocalization("PRT")) then begin
     res = OfficialSerialNrCanBeBlankPRT(filename,cuclass,okflag,branchid,lm,officialsernr,td,InvType,Status);
   end;
-  if (HasLocalization("AGO")) then begin
+  if (HasLocalization("AGO")) then begin 
     res = OfficialSerialNrCanBeBlankAGO(filename,cuclass,okflag,branchid,lm,officialsernr,td,InvType,Status);
   end;
   OfficialSerialNrCanBeBlank = res;
@@ -3398,10 +3597,10 @@ function string 255 GetLegalInvoiceNrSerieFromLegalBlock(string OfficialSerNr)
 begin
   string 255 res;
   row LegalInvNrBlock LINrbrw;
-
+  
   GetLegalInvNrRow(OfficialSerNr,LINrbrw);
   res = Left(OfficialSerNr,len(LINrbrw.Serie));
-
+  
   GetLegalInvoiceNrSerieFromLegalBlock = res;
   return;
 end;
@@ -3411,18 +3610,18 @@ function string 255 UpdateOfficialSerNrSerie(Integer stat,Integer OKFlag,Integer
 begin
   string 255 res;
   Boolean transf;
-
+  
   transf = false;
   switch (stat) begin
     case Rs_insert: if (OKFlag==1) then begin transf = true; end;
-    case Rs_update:
+    case Rs_update: 
           if (OK2Flag==1) then begin transf = false; end;
-          if (OK2Flag!=1 and OKFlag!=0) then begin transf = true; end;
+          if (OK2Flag!=1 and OKFlag!=0) then begin transf = true; end; 
   end;
-  if (transf) then begin
+  if (transf) then begin 
     if (UpdateSeriesf and nonblank(OfficialSerNr)) then begin
       res = GetLegalInvoiceNrSerieFromLegalBlock(OfficialSerNr);
-    end;
+    end;       
   end;
   UpdateOfficialSerNrSerie = res;
   return;
@@ -3437,7 +3636,7 @@ begin
   row LegalInvNrBlock LINrbrw;
   Integer i,rwcnt,pages;
   Boolean testf;
-  Date docdate;
+  Date docdate;  
   record OffSerNrIVVc OffSerNrIVr;
 
   if (nonblank(StockMovr.ThrouLocation)) then begin
@@ -3445,7 +3644,7 @@ begin
   end else begin
     docdate = StockMovr.TransDate;
   end;
-
+ 
   NextOfficialSerNr("StockMovVc",StockMovr.SerNr,docdate,"",res);
   if (blank(res)) then begin
     OffSerNrIVr.IVNr = StockMovr.SerNr;
@@ -3477,13 +3676,13 @@ begin
         PrepareOfficialSerialNrBlock(kOfficialNumTypeRecoverdThirdEntGoodsTransStockMovVc,LINrb);
     end;
     rwcnt = MatRowCnt(LINrb);
-    if (rwcnt>0) then begin
+    if (rwcnt>0) then begin    
       for (i=0;i<rwcnt;i=i+1) begin
         MatRowGet(LINrb,i,LINrbrw);
         testf = TestNextOfficialSerialNr_StockMovVc(LINrbrw,"",StockMovr,true,kLegalInvNrSelectionType);
         if (testf) then begin
           res = NextLegalSerNr("StockMovVc",StockMovr.SerNr,docdate,LINrbrw.Serie,LINrbrw.TSerStart,LINrbrw.TSerEnd);
-          if (nonblank(res)) then begin
+          if (nonblank(res)) then begin 
             /*
             if (LINrbrw.PerPage==1) then begin
               pages = CountNumberOfInvoicePrintPages(IVr);
@@ -3501,12 +3700,13 @@ begin
           end;
         end;
       end;
-    end;
+    end;   
   end;
-  if (nonblank(res)) then begin
+  if (nonblank(res)) then begin 
     StockMovr.OfficialSerNr = res;
 //    AddPortugueseSAFTHashToStockMov(StockMovr);// must be after FIFO  filled in
-  end;
-LFindNextStockMovVcOfficialSerialNr:;
+  end;  
+LFindNextStockMovVcOfficialSerialNr:;  
   return;
 end;
+

@@ -22,7 +22,7 @@ external inner function Boolean AllowedInCountry(integer);
 external inner function Integer ResourceWindowResourceType();
 external inner function Boolean ResPlan_Rental();
 external inner function Boolean ResPlan_ProdOperations();
-remote inner function Boolean ReadPOSButtons(string,string,longint,var string,var string,var string,var record POSButtonsVc,var Integer);
+external function Boolean ReadPOSButtons(string,string,longint,var string,var string,var string,var record POSButtonsVc);
 external inner function Boolean TouchScreenLook();
 external inner procedure ExtractObj(string,var Integer,var string);
 external inner function Boolean IsSessionOpen(string,string,Date,Time);
@@ -3033,7 +3033,7 @@ begin
       page = 1;
     end;
     //stopalert("about to call ReadPOSButtons, page:" & page);
-    ReadPOSButtons("NPTSIVCashDClass",LMb.POSButtonGroup,page,bc1,bc2,compname,POSBr,acnt);
+    ReadPOSButtons("NPTSIVCashDClass",LMb.POSButtonGroup,page,bc1,bc2,compname,POSBr);  
     SetWRect(lt,tp,rt,bm); //    SetWRect(0,100,860,760);
 //    AbsoluteWindowSize;
     if (TestEnablerFile("EnNoFullscreenWindow")==false) then begin
@@ -8088,7 +8088,7 @@ end else begin
       page = 1;
     end;
     //stopalert("about to call ReadPOSButtons, page:" & page);
-    ReadPOSButtons("IVDClass",LMb.POSButtonGroup,page,bc1,bc2,compname,POSBr,acnt);
+  	ReadPOSButtons("IVDClass",LMb.POSButtonGroup,page,bc1,bc2,compname,POSBr);  
     SetWRect(lt,tp,rt,bm);
 //    AbsoluteWindowSize;
     if (TestEnablerFile("EnNoFullscreenWindow")==false) then begin

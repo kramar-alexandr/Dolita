@@ -82,7 +82,7 @@ LPrintItemTotals_OverviewExcel:;
         OutString(0,"DblINVc",INr.Code,false);          // JP: DOL-7
         OutString(70,0,INr.Name,false);
         switch (RepSpec.ArtMode) begin
-          case 0:                       
+          case 0:
             OutValBiDi(240,0,fwdqty,M4Qty,true,280);
             OutValBiDi(320,0,itemqin,M4Qty,true,360);
             OutValBiDi(400,0,itemqout,M4Qty,true,440);
@@ -231,19 +231,25 @@ begin
   switch (RepSpec.ArtMode) begin
     case 0:
       if (RepSpec.flags[12]!=0) then begin
-        OutVal(380,0,itemq2in,M45Val,true);
+        OutVal(375,0,itemq2in,M45Val,true);
+      end else begin
+        OutString(300,0,"",false);          
       end;
       OutVal(410,0,fwdqty+itemqin+itemqout,M4UVal,true);
       OutVal(480,0,bal,M45Val,true);
     case 1:
       if (RepSpec.flags[12]!=0) then begin
-        OutVal(380,0,itemq2in,M45Val,true);
+        OutVal(375,0,itemq2in,M45Val,true);
+      end else begin
+        OutString(300,0,"",false);                
       end;
       OutVal(300,0,fwdqty+itemqin+itemqout,M4UVal,true);
       OutVal(480,0,Round(fwdtotcp+itemcpin-itemcpout,SetRoundModeD(2)),M4Val,true);
     case 3:
       if (RepSpec.flags[12]!=0) then begin
-        OutVal(380,0,itemq2in,M45Val,true);
+        OutVal(375,0,itemq2in,M45Val,true);
+      end else begin
+        OutString(300,0,"",false);                
       end;
       OutVal(300,0,fwdqty+itemqin+itemqout,M4UVal,true);
       OutVal(480,0,bal,M45Val,true);
@@ -268,14 +274,14 @@ begin
         switch (RepSpec.ArtMode) begin
           case 0:
             if (RepSpec.flags[12]!=0) then begin
-              OutValBiDi(380,0,itemq2in,M4Qty,true,420);
+              OutValBiDi(375,0,itemq2in,M4Qty,true,420);
             end;
             OutValBiDi(410,0,fwdqty+itemqin+itemqout,M45Val,true,450);
             OutValBiDi(480,0,bal,M45Val,true,520);
           case 1:
             OutValBiDi(340,0,fwdqty+itemqin+itemqout,M45Val,true,350);
             if (RepSpec.flags[12]!=0) then begin
-              OutValBiDi(380,0,itemq2in,M45Val,true,420);
+              OutValBiDi(375,0,itemq2in,M45Val,true,420);
             end;
             if (UserCanAction("ViewCostPrice",true)) then begin
               OutValBiDi(480,0,Round(fwdtotcp+itemcpin-itemcpout,SetRoundModeD(2)),M4Val,true,500);
@@ -283,7 +289,7 @@ begin
           case 3:
             OutValBiDi(300,0,fwdqty+itemqin+itemqout,M45Val,true,340);
             if (RepSpec.flags[12]!=0) then begin
-              OutValBiDi(380,0,itemq2in,M45Val,true,420);
+              OutValBiDi(375,0,itemq2in,M45Val,true,420);
             end;
             OutValBiDi(480,0,bal,M45Val,true,520);
         end;
@@ -401,12 +407,12 @@ LPrintItemHist_PerLocationExcel:;
           end;
           OutString(310,0,Right(IHr.Variety,len(IHr.Variety)-1),false);      
           switch (RepSpec.flags[12]) begin
-            case 1: OutVal(380,0,IHr.Qty2,M4UVal,true);
+            case 1: OutVal(375,0,IHr.Qty2,M4UVal,true);
             case 2: 
               if (MSb.UnitConvCalc==0) then begin
-                OutVal(380,0,IHr.Qty/IHr.Qty2,M4Qty,true);
+                OutVal(375,0,IHr.Qty/IHr.Qty2,M4Qty,true);
               end else begin
-                OutVal(380,0,IHr.Qty2/IHr.Qty,M4Qty,true);
+                OutVal(375,0,IHr.Qty2/IHr.Qty,M4Qty,true);
               end;
           end;
           OutVal(410,0,IHr.Qty,M4UVal,true);
@@ -448,12 +454,12 @@ LPrintItemHist_PerLocationExcel:;
           end;
           OutString(300,0,Right(IHr.Variety,len(IHr.Variety)-1),false);
           switch (RepSpec.flags[12]) begin
-            case 1: OutValBiDi(380,0,IHr.Qty2,M4UVal,true,420);
+            case 1: OutValBiDi(375,0,IHr.Qty2,M4UVal,true,420);
             case 2: 
               if (MSb.UnitConvCalc==0) then begin
-                OutValBiDi(380,0,IHr.Qty/IHr.Qty2,M4Qty,true,420);
+                OutValBiDi(375,0,IHr.Qty/IHr.Qty2,M4Qty,true,420);
               end else begin
-                OutValBiDi(380,0,IHr.Qty2/IHr.Qty,M4Qty,true,420);
+                OutValBiDi(375,0,IHr.Qty2/IHr.Qty,M4Qty,true,420);
               end;
           end;
           OutValBiDi(410,0,IHr.Qty,M4UVal,true,450);
@@ -501,10 +507,16 @@ LPrintReportTotalsExcel:;
           OutString(0,0,"",false);
           OutString(0,0,"",false);
           OutString(0,0,"",false);
+          OutString(0,0,"",false);
+          OutString(0,0,"",false);
+          OutString(0,0,"",false);
+          OutString(0,0,"",false);
+          OutString(0,0,"",false);
+          OutString(0,0,"",false);
           switch (RepSpec.ArtMode) begin
             case 0:
               if (RepSpec.flags[12]!=0) then begin
-                OutVal(380,0,SumQ2,M4Qty,true);
+                OutVal(375,0,SumQ2,M4Qty,true);
               end;
               OutVal(480,0,SumQIn+SumQOut+SumQFwd,M4Qty,true);
             case 1:
@@ -512,7 +524,7 @@ LPrintReportTotalsExcel:;
               OutVal(480,0,SumCPIn-SumCPOut+SumCPFwd,M45Val,true);
             case 3:
               if (RepSpec.flags[12]!=0) then begin
-                OutVal(380,0,SumQ2,M4Qty,true);
+                OutVal(375,0,SumQ2,M4Qty,true);
               end;
               OutVal(480,0,SumQIn+SumQOut+SumQFwd,M4Qty,true);
           end;
@@ -546,7 +558,7 @@ LPrintReportTotalsExcel:;
           switch (RepSpec.ArtMode) begin
             case 0:
               if (RepSpec.flags[12]!=0) then begin
-                OutValBiDi(380,0,SumQ2,M4Qty,true,420);
+                OutValBiDi(375,0,SumQ2,M4Qty,true,420);
               end;
               OutValBiDi(480,0,SumQIn+SumQOut+SumQFwd,M4Qty,true,520);
             case 1:
@@ -556,7 +568,7 @@ LPrintReportTotalsExcel:;
               end;
             case 3:
               if (RepSpec.flags[12]!=0) then begin
-                OutValBiDi(380,0,SumQ2,M4Qty,true,420);
+                OutValBiDi(375,0,SumQ2,M4Qty,true,420);
               end;
               OutValBiDi(480,0,SumQIn+SumQOut+SumQFwd,M4Qty,true,520);
           end;
@@ -716,7 +728,6 @@ begin
 //  end;
 //
   itemcpout = itemcpout + cp;
-
   if (RepSpec.flags[9]==1) then begin      
     switch (RepSpec.ArtMode) begin
       case 0: bal = bal + IHr.Qty;

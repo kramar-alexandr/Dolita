@@ -91,7 +91,7 @@ begin
           res = true;
         end;  
       case 2:
-        if (rcvdok<qty) and (rcvdok!=0) then begin
+        if ((rcvdok<qty) and (rcvdok!=0)) or (rcvd!=0) then begin
           res = true;
         end;  
     end;
@@ -150,6 +150,9 @@ BEGIN
           prcode = POp.PRCode;
         end;
         if (RepSpec.AccStr!=prcode) then begin testf = false; end;
+      end;
+      if (blank(POrw.ArtCode)) then begin
+        testf = false;
       end;
       if (testf) then begin
         qty = POrw.Quant - POrw.Shipd1;
@@ -213,8 +216,9 @@ BEGIN
   EndFormat;
   StartFormat(15);
   OutStringAdjustBiDi(315,0,USetStr(2633),true,M4Val,365);
-  OutStringAdjustBiDi(360,0,USetStr(2631),true,M4Val,410);
-  OutStringAdjustBiDi(420,0,USetStr(5051),true,M4Val,460);
+  OutStringAdjustBiDi(350,0,USetStr(5050),true,M4Val,410);
+  OutStringAdjustBiDi(400,0,USetStr(18881),true,M4Val,460);
+  OutStringAdjustBiDi(440,0,USetStr(5051),true,M4Val,460);
   OutStringAdjustBiDi(480,0,USetStr(2630),true,M4Val,520);
   EndFormat;
   rwcnt = MatRowCnt(POp);
@@ -232,14 +236,18 @@ BEGIN
         end;
         if (RepSpec.AccStr!=prcode) then begin testf = false; end;
       end;
+      if (blank(POrw.ArtCode)) then begin
+        testf = false;
+      end;
       if (testf) then begin
         StartFormat(15);
         OutString(20,"DblINVc",POrw.ArtCode,false);    // JP: DOL-7
         OutString(104,0,POrw.Spec,false);
         OutValBiDi(315,0,POrw.Invd,M4UVal,true,365);
-        OutValBiDi(360,0,POrw.Quant,M4UVal,true,410);
-        OutValBiDi(420,0,POrw.Shipd2,M4UVal,true,460);
-        t = POrw.Quant - POrw.Shipd1;
+        OutValBiDi(350,0,POrw.Quant,M4UVal,true,410);
+        OutValBiDi(400,0,POrw.Shipd2,M4UVal,true,460);
+        OutValBiDi(440,0,POrw.Shipd1,M4UVal,true,460);
+        t = POrw.Quant - POrw.Shipd1 - POrw.Shipd2;
         OutValBiDi(480,0,t,M4UVal,true,520);
         EndFormat;
       end;
@@ -299,7 +307,7 @@ begin
   Integer i,rwcnt;
   Boolean item;
   string 255 frgr,togr;  
-  val TotQty,TotLev,TotNotLev,TotInv,TotSum,TotNotinvd;
+  val TotQty,TotLev,TotLevOK,TotNotLev,TotInv,TotSum,TotNotinvd;
   LongInt afr,ato;
   string 255 ckey;
   val minsum;
@@ -429,9 +437,10 @@ begin
       OutString(50,0,USetStr(5043),false);
       OutString(110,0,USetStr(5053),false);
       OutString(175,0,USetStr(5052),false);
-      OutStringAdjustBiDi(260,0,USetStr(2631),true,M4Val,320);
-      OutStringAdjustBiDi(330,0,USetStr(5051),true,M4Val,385);
-      OutStringAdjustBiDi(410,0,USetStr(5054),true,M4Val,455);
+      OutStringAdjustBiDi(260,0,USetStr(5050),true,M4Val,320);
+      OutStringAdjustBiDi(330,0,USetStr(18881),true,M4Val,385);
+      OutStringAdjustBiDi(380,0,USetStr(5051),true,M4Val,455);
+      OutStringAdjustBiDi(430,0,USetStr(5054),true,M4Val,455);
       OutStringAdjustBiDi(1,0,USetStr(18880),true,M4Val,520);
       EndFormat;
     end;
@@ -693,6 +702,9 @@ begin
                   prcode = POr.PRCode;
                 end;
                 if (RepSpec.AccStr!=prcode) then begin test2f = false; end;
+              end;
+              if (blank(POrw.ArtCode)) then begin
+                test2f = false;
               end;              
               if (test2f) then begin
                 StartFormat(15);
@@ -701,7 +713,7 @@ begin
                 OutString(110,0,planship,false);
                 OutString(165,"DblINVc",POrw.ArtCode,false); // JP: DOL-7
                 if (RepSpec.flags[10]==0) then begin
-                  t = POrw.Quant - POrw.Shipd1;
+                  t = POrw.Quant - POrw.Shipd1 - POrw.Shipd2;
                   CalcSum(t,POrw.Price,POrw.PriceFactor,POrw.vRebate,t2,GenOptRec.UseDiscount);
                   CalcSumFact(t2,POrw.PIFactor);
                   OutValBiDi(335,0,t,M4UVal,true,340);
@@ -714,16 +726,18 @@ begin
                 if (RepSpec.flags[10]==1) then begin
                       // here we should use the factor to calculate the correct price!!! 
                   OutValBiDi(260,0,POrw.Quant,M4UVal,true,320);
-                  OutValBiDi(330,0,POrw.Shipd1,M4UVal,true,385);
-                  t = POrw.Quant - POrw.Shipd1;
+                  OutValBiDi(330,0,POrw.Shipd2,M4UVal,true,385);
+                  OutValBiDi(380,0,POrw.Shipd1,M4UVal,true,445);
+                  t = POrw.Quant - POrw.Shipd1 - POrw.Shipd2;
                   if (t<0) then begin t = blankval; end;
                   TotNotLev = TotNotLev + t;
-                  OutValBiDi(410,0,t,M4UVal,true,455);
+                  OutValBiDi(430,0,t,M4UVal,true,495);
                   t = POrw.Quant - POrw.Invd;
                   OutValBiDi(1,0,t,M4UVal,true,520);
                   TotNotinvd = TotNotinvd + t;
                   TotLev = TotLev + POrw.Shipd1;
-                  TotQty = TotQty + POrw.Quant;
+                  TotLevOK = TotLevOK + POrw.Shipd2;
+                  TotQty = TotQty + POrw.Quant;                  
                 end;
                 EndFormat;
               end;
@@ -741,8 +755,9 @@ begin
     end;
     if (RepSpec.flags[10]==1) then begin
       OutValBiDi(260,0,TotQty,M4UVal,true,320);
-      OutValBiDi(330,0,TotLev,M4UVal,true,385);
-      OutValBiDi(410,0,TotNotLev,M4UVal,true,455);
+      OutValBiDi(330,0,TotLevOK,M4UVal,true,385);
+      OutValBiDi(380,0,TotLev,M4UVal,true,385);
+      OutValBiDi(430,0,TotNotLev,M4UVal,true,455);
       OutValBiDi(1,0,TotNotinvd,M4UVal,true,520);
     end;
     EndFormat;
