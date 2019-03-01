@@ -41,7 +41,7 @@ begin
   return;
 end;
 
-/*
+
 global
 updating procedure OnApplicationStartup()
 BEGIN
@@ -50,7 +50,10 @@ BEGIN
 	logtext(0,"fdfghjkjhgchgvbjn");
   setcompany(1,false);
   while(loopmain(USr,1,true))begin
-  	
+  	if(USr.Code=="SA")then begin
+  		//recorddelete(USr);
+  		//stepback(USr);
+  	end;
   	if(USr.Code=="ADM")then begin
   		USr.OldPassWord = "";//CalcPassword("",USr.Code,0);
   		//recordstore(USr,true);
@@ -65,4 +68,4 @@ BEGIN
   recordstore(USr,true);
  
 RETURN;
-END;*/
+END;

@@ -1679,6 +1679,7 @@ LSkipOffNoValidation:;
             tstr = tstr & IVCashrw.Objects;
           end;
         end;
+        logtext(0,tstr);
         errcode = CheckObjs(IVCashrw.SalesAcc,tstr,errstr);
         if (errcode!=0) then begin
           RecordCheckError(errcode,errstr,-1,"Objects");      

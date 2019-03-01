@@ -22,7 +22,7 @@ external inner function Boolean AllowedInCountry(integer);
 external inner function Integer ResourceWindowResourceType();
 external inner function Boolean ResPlan_Rental();
 external inner function Boolean ResPlan_ProdOperations();
-external function Boolean ReadPOSButtons(string,string,longint,var string,var string,var string,var record POSButtonsVc);
+external inner function Boolean ReadPOSButtons(string,string,longint,var string,var string,var string,var record POSButtonsVc);
 external inner function Boolean TouchScreenLook();
 external inner procedure ExtractObj(string,var Integer,var string);
 external inner function Boolean IsSessionOpen(string,string,Date,Time);
@@ -255,6 +255,8 @@ external inner function Boolean HasModDI();
 external inner function Boolean UsePostOKButton();
 external inner function Boolean HasBankImport();
 external inner function Boolean HasIntegratedNL();
+external inner function Boolean ReadNPTSWindowData(string,string,longint,string,string,Date,Time,var Boolean,var string,var string,var string,var record POSButtonsVc);
+external inner procedure DrawPOSInterface2_LIT(string,string,record POSButtonsVc,string,Integer,Integer);
 
 remote procedure DOLGetSalesmen(string, var array string, var integer);
 
@@ -2990,18 +2992,20 @@ begin
 
 end;
 
+
 window NPTSIVCashDClass:1
   wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
 begin
   date td;
   integer acnt,wn;
   longint bm,lt,rt,tp,page;
-  real h,h2,h3,h4,v,fntsz;
+  real h,h2,h3,h4,v,fntszfct,fntsz1,fntsz2;
   record IVCashVc IVCashr;
   record LocalMachineBlock LMb;
   record POSButtonsVc POSBr;
   string 255 bc1,bc2,compname,lmc,nr,sessdesc,sm;
   time tt;
+  Boolean sessionopenedf;
 
   BlockLoad(LMb);
   WindowBegin("POS Faktūra",NPTSIVCashDClass,CGview,-);
@@ -3033,10 +3037,27 @@ begin
       page = 1;
     end;
     //stopalert("about to call ReadPOSButtons, page:" & page);
-    ReadPOSButtons("NPTSIVCashDClass",LMb.POSButtonGroup,page,bc1,bc2,compname,POSBr);  
+  wn = CurWindow;
+  if (wn>0) then begin
+    switch (GetWindowClass(wn)) begin
+      case "NPTSIVCashDClass":
+        GetWindowRecord(wn,IVCashr);
+    end;
+  end;
+  td = IVCashr.TransDate;
+  if (blankdate(td)) then begin td = CurrentDate; end;
+  tt = IVCashr.TransTime;
+  if (blanktime(tt)) then begin tt = CurrentTime; end;
+  lmc = IVCashr.LocalMachineCode;
+  if (blank(lmc)) then begin lmc = LMb.LocalMachineCode; end;
+  sm = IVCashr.SalesMan;
+  if (blank(sm)) then begin sm = CurrentUser; end;
+	
+  ReadNPTSWindowData("NPTSIVCashDClass",LMb.POSButtonGroup,page,IVCashr.LocalMachineCode,IVCashr.DrawerCode,CurrentDate,CurrentTime,sessionopenedf,bc1,bc2,compname,POSBr);  
+//  ReadPOSButtons("",LMb.POSButtonGroup,page,bc1,bc2,compname,POSBr,acnt);    
     SetWRect(lt,tp,rt,bm); //    SetWRect(0,100,860,760);
 //    AbsoluteWindowSize;
-    if (TestEnablerFile("EnNoFullscreenWindow")==false) then begin
+    if (TestEnablerFile("EnNoFullscreenWindow")==false) then begin 
       FullscreenWindow;
     end;
     BrowseButtons(false);
@@ -3045,28 +3066,30 @@ begin
     DynamicWindow;
     UseView(IVCashVc);
     ActiveFieldOnNew("ivcashcommand");
+  if (GuiType==kGuiWindowsDesktop or GuiType==kGuiWPF) then begin
+    if (UserRegisterAccess("POSButtonsVc") and CompanyProgramMode!=kProgramModeLiveSync) then begin  
+      if (GetWindowString(CurWindow,"NPTSIVCashEditMode")=="false" or blank(GetWindowString(CurWindow,"NPTSIVCashEditMode"))) then begin
+        ColourPushButton(400,10,400+120,40,"NPTSIVCashEditModeDsm","Redaguoti mygtukus",kButtonColourGreen);
+      end else begin
+        ColourPushButton(400,10,400+120,40,"NPTSIVCashEditModeDsm","Baigti redagavimą",kButtonColourGreen);
+      end;
+    end;
+  end else begin
     ToolBar;
-//    PushButton(-340,5,-340 + 34,5+18,ToolPasteSpec,"v");
+    if (UserRegisterAccess("POSButtonsVc") and CompanyProgramMode!=kProgramModeLiveSync) then begin  
+      if (GetWindowString(CurWindow,"NPTSIVCashEditMode")=="false" or blank(GetWindowString(CurWindow,"NPTSIVCashEditMode"))) then begin
+        ColourPushButton(10,10,h+120,30,"NPTSIVCashEditModeDsm","Redaguoti mygtukus",kButtonColourGreen);
+      end else begin
+        ColourPushButton(10,10,h+120,30,"NPTSIVCashEditModeDsm","Baigti redagavimą",kButtonColourGreen);
+      end;
+    end;
     EndToolBar;
+  end;
 
     v = 20;
     h = -300; h2 = -150; h3 = -70; h4 = -10;
 
-    wn = CurWindow;
-    if (wn>0) then begin
-      switch (GetWindowClass(wn)) begin
-        case "NPTSIVCashDClass":
-          GetWindowRecord(wn,IVCashr);
-      end;
-    end;
-    td = IVCashr.TransDate;
-    if (blankdate(td)) then begin td = CurrentDate; end;
-    tt = IVCashr.TransTime;
-    if (blanktime(tt)) then begin tt = CurrentTime; end;
-    lmc = IVCashr.LocalMachineCode;
-    if (blank(lmc)) then begin lmc = LMb.LocalMachineCode; end;
-    sm = IVCashr.SalesMan;
-    if (blank(sm)) then begin sm = CurrentUser; end;
+   // nr = "Faktūra: ";
     nr = "Kvitas: "; // EVS: DOL-20
     if (IVCashr.SerNr>0) then begin
       nr = nr & IVCashr.SerNr;
@@ -3077,13 +3100,22 @@ begin
       end;
     end;
 
-    if (IsEnterprise) then begin
+  if (IsEnterprise or BuildProductCode=="PAYYAPERP") then begin
+/*  
       if (IsSessionOpen(IVCashr.LocalMachineCode,IVCashr.DrawerCode,CurrentDate,CurrentTime)) then begin
+      sessdesc = "POS Sesija atidaryta";  
+    end else begin
+      sessdesc = "*** POS Sesija uždaryta ***";  
+    end;
+*/    
+    if (sessionopenedf) then begin
         sessdesc = "POS Sesija atidaryta";
       end else begin
         sessdesc = "*** POS Sesija uždaryta ***";
       end;
     end;
+
+    // StopAlert("IsSessionOpen(" & IVCashr.LocalMachineCode & "," & IVCashr.DrawerCode & "," & IVCashr.TransDate & "," & IVCashr.TransTime & "); -> " & sessdesc);
 
     DisplayRecordDetails_LIT(10,26,compname,td,tt,lmc,sm,nr,IVCashr.CustCode,IVCashr.Addr0,
       IVCashr.Addr1,IVCashr.Addr2,IVCashr.Addr3,"",IVCashr.Objects,
@@ -3091,29 +3123,39 @@ begin
       IVCashr.DiscountCardNr,IVCashr.DiscountFwdBal,sessdesc,IsStandardProduct==false,IVCashr.OfficialSerNr,
       IVCashr.TaxAdminServSeal);
 
-    fntsz = 1.0;
+    fntszfct = 1.0;
     if (GuiType==kGuiWindowsDesktop or GuiType==kGuiWPF) then begin
       if ((rt-lt)<1200) then begin
-        fntsz = 1.0 - ((1200.0-(rt-lt))/600.0);
-        if (fntsz<0.3) then begin
-          fntsz = 0.3;
+        fntszfct = 1.0 - ((1200.0-(rt-lt))/600.0);
+        if (fntszfct<0.3) then begin
+          fntszfct = 0.3;
         end;
       end;
     end;
     if (bm<650) then begin
-      SoftEditFieldTLX(290,6,h4,"",M4Str,ViewOnly,100,20*fntsz,patM4black,"CustomerDisplayData_Line1",true,0);
-      SoftEditFieldTLX(290,36,h4,"",M4Str,ViewOnly,100,30*fntsz,patM4black,"CustomerDisplayData_Line2",true,0); //!!TRANSLATE
+      fntsz1 = LMb.IVCashPOSDisplayFontSize1;
+      if (fntsz1<=0) then begin fntsz1 = 20; end;
+      fntsz2 = LMb.IVCashPOSDisplayFontSize2;
+      if (fntsz2<=0) then begin fntsz2 = 30; end;
+
+      SoftEditFieldTLX(420,6,h4,"",M4Str,ViewOnly,100,fntsz1*fntszfct,patM4black,"CustomerDisplayData_Line1",true,0);
+      SoftEditFieldTLX(420,(fntsz1+16)*fntszfct,h4,"",M4Str,ViewOnly,100,fntsz2*fntszfct,patM4black,"CustomerDisplayData_Line2",true,0); 
     end else begin
-      SoftEditFieldTLX(290,6,h4,"",M4Str,ViewOnly,100,30*fntsz,patM4black,"CustomerDisplayData_Line1",true,0); //!!TRANSLATE
-      SoftEditFieldTLX(290,46,h4,"",M4Str,ViewOnly,100,50*fntsz,patM4black,"CustomerDisplayData_Line2",true,0); //!!TRANSLATE
+      fntsz1 = LMb.IVCashPOSDisplayFontSize1;
+      if (fntsz1<=0) then begin fntsz1 = 30; end;
+      fntsz2 = LMb.IVCashPOSDisplayFontSize2;
+      if (fntsz2<=0) then begin fntsz2 = 50; end;
+
+      SoftEditFieldTLX(520,6,h4,"",M4Str,ViewOnly,100,fntsz1*fntszfct,patM4black,"CustomerDisplayData_Line1",true,0);
+      SoftEditFieldTLX(520,(fntsz1+16)*fntszfct,h4,"",M4Str,ViewOnly,100,fntsz2*fntszfct,patM4black,"CustomerDisplayData_Line2",true,0); 
     end;
 
     switch (LMb.POSButtonsPosition) begin
       case kPOSButtonsPositionLeft:
-        SoftEditField(100,-20,200,"Prekės kodas"  ,Normal ,"ivcashcommand",false,0,M4Str,255); // JP DOL-56
+        SoftEditField(110,-22,200,"Prekė/Komanda"  ,Normal ,"ivcashcommand",false,0,M4Str,255);
       case kPOSButtonsPositionRight:
         StaticText(10,155+13,"Prekės kodas",false);
-        SoftEditField(80,155,200,""  ,Normal ,"ivcashcommand",false,0,M4Str,255); // JP DOL-56
+        SoftEditField(-260,-22,200,"Prekė/Komanda"  ,Normal ,"ivcashcommand",false,0,M4Str,255);
     end;
     SoftEditField(2000,-22,200,""  ,Normal ,"ivcashcommandlastitemsernrf",false,0,M4Str,255);
 
@@ -3121,20 +3163,19 @@ begin
       if (WindowState(wn)==Rs_Insert) then begin
         StaticText(h2,v,CurrentDate,false);
         StaticText(h3,v,Left(CurrentTime,5),false);
-        StaticText(h,v+=20,"Invoice: ",false);
-        StaticText(h2,v,"Till: " & LMb.LocalMachineCode,false);
+        StaticText(h,v+=20,"Faktūra: ",false); 
+        StaticText(h2,v,"Kasa: " & LMb.LocalMachineCode,false); 
         StaticText(h3,v,CurrentUser,false);
       end else begin
         StaticText(h2,v,IVCashr.TransDate,false);
         StaticText(h3,v,Left(IVCashr.TransTime,5),false);
-        StaticText(h,v+=20,"Invoice: " & IVCashr.SerNr,false);
-        StaticText(h2,v,"Till: " & IVCashr.LocalMachineCode,false);
+        StaticText(h,v+=20,"Faktūra: " & IVCashr.SerNr,false); 
+        StaticText(h2,v,"Kasa: " & IVCashr.LocalMachineCode,false); 
         StaticText(h3,v,IVCashr.SalesMan,false);
       end;
     */
-
-    DrawPOSInterface_LIT(bc1,bc2,POSBr,acnt,"",110);
-    BottomBar;
+  DrawPOSInterface2_LIT(bc1,bc2,POSBr,"",110,bm); 
+  //BottomBar;
     EndWindow;
 end;
 
