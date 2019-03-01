@@ -194,21 +194,8 @@ begin
   val Sum4;
   record IVVc IVr;
   row IVVc IVrw;
-  string 3 b1;
-  val received_amnt;
-  val fr,to1,to2,br1,br2;
-
-  record roundblock roundrec;
-  roundmode roundoff,roundlines,defrm,custroundmode;
 
   GetWindowRecord(wn, RepSpec);
-
-  GetBaseCurncy(1,b1);
-
-  blockload(roundrec);
-  roundoff = GetTotalRoundMode(RoundRec);
-  roundlines = GetRowSumRoundMode(RoundRec);
-  custroundmode = roundoff;
 
   mwn  = MotherWindow(wn);
   if (mwn>0) then begin
@@ -583,36 +570,24 @@ pls dont change this when merging
   end;
 */
 
-  if (GetFullCurncyPurchaseRate(acrncy[i],CurrentDate,fr,to1,to2,br1,br2)==false) then begin
-    GetFullCurncyRate(acrncy[i],CurrentDate,fr,to1,to2,br1,br2);
-  end;
-
   for (i=0;i<acrncnt;i=i+1) begin
     PutWindowString(wn,"NPTSCashPaymentCurrency" & i,acrncy[i]);
     PutWindowString(wn,"NPTSCashPaymentTotalDue" & i,acrncytotaldue[i]);
     PutWindowString(wn,"NPTSCashPaymentCashReceived" & i,vcrncyamount[acrncy[i]]);
-    if (acrncy[i] == b1) then begin
-      received_amnt = received_amnt + vcrncyamount[acrncy[i]];
-    end else begin
-      received_amnt = received_amnt + MulRateToBase1(acrncy[i],vcrncyamount[acrncy[i]],fr,to1,to2,br1,br2,custroundmode);
-    end;
+    PutWindowString(wn,"NPTSCashPaymentCashAmountDue" & i,acrncyval[i]);
     if (acrncyval[i]>0) then begin
-      PutWindowString(wn,"NPTSCashPaymentCashAmountDue" & i,acrncyval[i]);
       PutWindowString(wn,"NPTSCashPaymentChangeDue" & i,0.00);
     end else begin
-      PutWindowString(wn,"NPTSCashPaymentCashAmountDue" & i,0.00);
       PutWindowString(wn,"NPTSCashPaymentChangeDue" & i,-acrncyval[i]);
     end;
   end;
   if (Sum4>0) then begin
     if (RepSpec.vals0<0) then begin
       PutWindowString(wn,"NPTSCashPaymentChangeDueTotal",0.00);
-      PutWindowString(wn,"NPTSCashPaymentCashAmountDueTotal",-RepSpec.vals0);
     end else begin
       PutWindowString(wn,"NPTSCashPaymentChangeDueTotal",RepSpec.vals0);
-      PutWindowString(wn,"NPTSCashPaymentCashAmountDueTotal",0.00);
     end;
-//    PutWindowString(wn,"NPTSCashPaymentCashAmountDueTotal",-RepSpec.vals0);
+    PutWindowString(wn,"NPTSCashPaymentCashAmountDueTotal",-RepSpec.vals0);
   end else begin
     if (RepSpec.vals0>0) then begin
       PutWindowString(wn,"NPTSCashPaymentChangeDueTotal",0.00);
@@ -621,9 +596,6 @@ pls dont change this when merging
     end;
     PutWindowString(wn,"NPTSCashPaymentCashAmountDueTotal",RepSpec.vals0);
   end;
-
-  PutWindowString(wn,"NPTSCashPaymentCashReceivedTotal",received_amnt);
-
   PutWindowRecord(wn, RepSpec);
 //  WindowFieldGoto(wn,RepSpec,-1,"NPTSCashPaymentChangeGiven0",false);
   NPTSCashPaymentTClassOnOpenWindow = true;
