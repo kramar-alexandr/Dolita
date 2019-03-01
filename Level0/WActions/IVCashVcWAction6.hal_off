@@ -562,8 +562,7 @@ begin
         PutWindowRecord(mwn,RestAccr);
         RestAccDClass_RefreshStringList(mwn,RestAccr);
     end;
-    // if (WindowDoOK(mwn,0)) then begin
-    if (true) then begin // EVS: DOL-73
+    if (WindowDoOK(mwn,0)) then begin
       DeselectWindow(wn,false);
       GetWindowRecord(wn,RepSpec);
       CloseWindow(wn);

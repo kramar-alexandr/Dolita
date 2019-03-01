@@ -1523,33 +1523,31 @@ what is it for ?  , just makes line not to be selected
         OpenNPTSPaymentOneModeTClass(wn,IVCashr.SerNr,IVCashr.RetValue,IVCashr.Sum4,IVCashr.CurncyCode);
         goto LIVCashDClassTouchScreenPasteButtonDo;
       case kPOSButtonTypePayment:
-        if (!DOLCheckForInvReturn(IVCashr)) then begin // EVS: DOL-16
-					BlockLoad(Rahaxib);
-					switch (Rahaxib.TerminalType) begin
-						case kLocalCCTerminalNone:
-							// OpenCashPayTouchScreenDClass(wn,-1,IVCashr.SerNr,IVCashr.RetValue,IVCashr.Sum4-IVCashr.TendValue,IVCashr.CurncyCode,POSBrw.Code,POSBrw.Label);
-	/*
-	retval is calculted in sumup
-							rwcnt = MatRowCnt(IVCashr);
-							for (i=0;i<rwcnt;i=i+1) begin
-								MatRowGet(IVCashr,i,IVCashrw);
-								switch (IVCashrw.stp) begin
-									case kInvoiceRowTypeCashPayment:
-										IVCashr.RetValue = IVCashr.RetValue - MulRateToBase1(IVCashrw.CurncyCode,IVCashrw.Sum,IVCashrw.FrRate,IVCashrw.ToRateB1,IVCashrw.ToRateB2,IVCashrw.BaseRate1,IVCashrw.BaseRate2,DefaultCurRoundOff);
-									case kInvoiceRowTypeLoyaltyPointsPayment:
-										IVCashr.RetValue = IVCashr.RetValue - MulRateToBase1(IVCashrw.CurncyCode,IVCashrw.Sum,IVCashrw.FrRate,IVCashrw.ToRateB1,IVCashrw.ToRateB2,IVCashrw.BaseRate1,IVCashrw.BaseRate2,DefaultCurRoundOff);
-									case kInvoiceRowTypeCreditCardPayment:
-										IVCashr.RetValue = IVCashr.RetValue - IVCashrw.Sum;
-									case kInvoiceRowTypeChequePayment:
-										IVCashr.RetValue = IVCashr.RetValue - IVCashrw.Sum;
-									case kInvoiceRowTypeGiftVoucherPayment:
-										IVCashr.RetValue = IVCashr.RetValue - IVCashrw.Sum;
-								end;
-							end;
-	*/                
-							OpenNPTSPaymentTClass(wn,IVCashr.SerNr,IVCashr.RetValue,IVCashr.Sum4,IVCashr.CurncyCode);
-						end;
-					end;//EBS
+        BlockLoad(Rahaxib);
+        switch (Rahaxib.TerminalType) begin
+          case kLocalCCTerminalNone:
+            // OpenCashPayTouchScreenDClass(wn,-1,IVCashr.SerNr,IVCashr.RetValue,IVCashr.Sum4-IVCashr.TendValue,IVCashr.CurncyCode,POSBrw.Code,POSBrw.Label);
+/*
+retval is calculted in sumup
+            rwcnt = MatRowCnt(IVCashr);
+            for (i=0;i<rwcnt;i=i+1) begin
+              MatRowGet(IVCashr,i,IVCashrw);
+              switch (IVCashrw.stp) begin
+                case kInvoiceRowTypeCashPayment:
+                  IVCashr.RetValue = IVCashr.RetValue - MulRateToBase1(IVCashrw.CurncyCode,IVCashrw.Sum,IVCashrw.FrRate,IVCashrw.ToRateB1,IVCashrw.ToRateB2,IVCashrw.BaseRate1,IVCashrw.BaseRate2,DefaultCurRoundOff);
+                case kInvoiceRowTypeLoyaltyPointsPayment:
+                  IVCashr.RetValue = IVCashr.RetValue - MulRateToBase1(IVCashrw.CurncyCode,IVCashrw.Sum,IVCashrw.FrRate,IVCashrw.ToRateB1,IVCashrw.ToRateB2,IVCashrw.BaseRate1,IVCashrw.BaseRate2,DefaultCurRoundOff);
+                case kInvoiceRowTypeCreditCardPayment:
+                  IVCashr.RetValue = IVCashr.RetValue - IVCashrw.Sum;
+                case kInvoiceRowTypeChequePayment:
+                  IVCashr.RetValue = IVCashr.RetValue - IVCashrw.Sum;
+                case kInvoiceRowTypeGiftVoucherPayment:
+                  IVCashr.RetValue = IVCashr.RetValue - IVCashrw.Sum;
+              end;
+            end;
+*/                
+            OpenNPTSPaymentTClass(wn,IVCashr.SerNr,IVCashr.RetValue,IVCashr.Sum4,IVCashr.CurncyCode);
+          end;
           goto LIVCashDClassTouchScreenPasteButtonDo;
       case kPOSButtonTypeCashPayment:
 				if (!DOLCheckForInvReturn(IVCashr)) then begin // EVS: DOL-16
@@ -1557,9 +1555,7 @@ what is it for ?  , just makes line not to be selected
        	end;
         goto LIVCashDClassTouchScreenPasteButtonDo;
       case kPOSButtonTypeGiftVoucherPayment:
-        if (!DOLCheckForInvReturn(IVCashr)) then begin // EVS: DOL-16
-          OpenGiftVoucherTouchScreenDClass(wn,-1,IVCashr.SerNr,IVCashr.RetValue,IVCashr.Sum4-IVCashr.TendValue,IVCashr.CurncyCode,POSBrw.Code,POSBrw.Label);
-        end;
+        OpenGiftVoucherTouchScreenDClass(wn,-1,IVCashr.SerNr,IVCashr.RetValue,IVCashr.Sum4-IVCashr.TendValue,IVCashr.CurncyCode,POSBrw.Code,POSBrw.Label);
         goto LIVCashDClassTouchScreenPasteButtonDo;
       case kPOSButtonTypeGiftVoucherSales:
         OpenGiftVoucherSalesTouchScreenDClass(wn,POSBrw.Code,POSBrw.Label);
@@ -1574,34 +1570,36 @@ what is it for ?  , just makes line not to be selected
         qupdating.POSButtonTypeFullPayment(wn,IVCashr,POSBrw.Code,POSBrw.Label);
         goto LIVCashDClassTouchScreenPasteButtonDo;
       case kPOSButtonTypeCreditCardPayment:
-        if (!DOLCheckForInvReturn(IVCashr)) then begin // EVS: DOL-16
-          SetPOSWindowDisplayAmount(USetStr(27350),IVCashr.Sum4);
-          BlockLoad(Rahaxib);
-          switch (Rahaxib.TerminalType) begin
-            case kLocalCCTerminalNone:
-              OpenCCPayTouchScreenDClass(wn,-1,IVCashr.SerNr,IVCashr.Sum4,IVCashr.RetValue,IVCashr.Sum4-IVCashr.TendValue,IVCashr.CurncyCode,POSBrw.Code,POSBrw.Label);
-            case kLocalCCTerminalBambora:
-              OpenCCPayTouchScreenDClassWithVAT(wn,-1,IVCashr.SerNr,IVCashr.Sum4,IVCashr.RetValue,IVCashr.Sum4-IVCashr.TendValue,IVCashr.CurncyCode,POSBrw.Code,POSBrw.Label,IVCashr.Sum3);
-            case kLocalCCTerminalPCEFTPOS:
-              rwcnt = MatRowCnt(IVCashr);
-              for (i=0;i<rwcnt;i=i+1) begin
-                MatRowGet(IVCashr,i,IVCashrw);
-                switch (IVCashrw.stp) begin
-                  case kInvoiceRowTypeCreditCardPayment:
-                    ccval = ccval + IVCashrw.Sum;
-                end;
+        SetPOSWindowDisplayAmount(USetStr(27350),IVCashr.Sum4);
+        BlockLoad(Rahaxib);
+        switch (Rahaxib.TerminalType) begin
+          case kLocalCCTerminalNone:
+            OpenCCPayTouchScreenDClass(wn,-1,IVCashr.SerNr,IVCashr.Sum4,IVCashr.RetValue,IVCashr.Sum4-IVCashr.TendValue,IVCashr.CurncyCode,POSBrw.Code,POSBrw.Label);
+          case kLocalCCTerminalBambora:
+            OpenCCPayTouchScreenDClassWithVAT(wn,-1,IVCashr.SerNr,IVCashr.Sum4,IVCashr.RetValue,IVCashr.Sum4-IVCashr.TendValue,IVCashr.CurncyCode,POSBrw.Code,POSBrw.Label,IVCashr.Sum3);
+          case kLocalCCTerminalPCEFTPOS:
+            rwcnt = MatRowCnt(IVCashr);
+            for (i=0;i<rwcnt;i=i+1) begin
+              MatRowGet(IVCashr,i,IVCashrw);
+              switch (IVCashrw.stp) begin
+                case kInvoiceRowTypeCreditCardPayment:
+                  ccval = ccval + IVCashrw.Sum;
               end;
-              if (ccval==0) then begin
-                ccval = IVCashr.Sum4;
-              end;
-              OpenCCPayTouchScreenDClass(wn,-1,IVCashr.SerNr,ccval,IVCashr.RetValue,IVCashr.Sum4-IVCashr.TendValue,IVCashr.CurncyCode,POSBrw.Code,POSBrw.Label);
-            case kLocalCCTerminalYomaniBanksys:
-              CredCardPOSPIVCashsmExecute(POSBrw.Code,POSBrw.Label);
-            case kLocalCCTerminalIngenico6550:
-              CredCardPOSPIVCashsmExecute(POSBrw.Code,POSBrw.Label);
-            otherwise
-              CredCardPOSPIVCashsm;
-          end;
+            end;
+            if (ccval==0) then begin
+              ccval = IVCashr.Sum4;
+            end;          
+            OpenCCPayTouchScreenDClass(wn,-1,IVCashr.SerNr,ccval,IVCashr.RetValue,IVCashr.Sum4-IVCashr.TendValue,IVCashr.CurncyCode,POSBrw.Code,POSBrw.Label);
+          case kLocalCCTerminalYomaniBanksys:
+            CredCardPOSPIVCashsmExecute(POSBrw.Code,POSBrw.Label);
+          case kLocalCCTerminalVerifoneBanksys:
+            CredCardPOSPIVCashsmExecute(POSBrw.Code,POSBrw.Label);
+          case kLocalCCTerminalWorldPay:
+            CredCardPOSPIVCashsmExecute(POSBrw.Code,POSBrw.Label);
+          case kLocalCCTerminalIngenico6550:
+            CredCardPOSPIVCashsmExecute(POSBrw.Code,POSBrw.Label);
+          otherwise
+            CredCardPOSPIVCashsm;
         end;
         goto LIVCashDClassTouchScreenPasteButtonDo;
       case kPOSButtonTypeCreditCardPaymentReversal:
