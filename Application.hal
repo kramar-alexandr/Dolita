@@ -42,7 +42,7 @@ begin
 end;
 
 
-global
+/*global
 updating procedure OnApplicationStartup()
 BEGIN
   record UserVc USr;
@@ -68,4 +68,4 @@ BEGIN
   recordstore(USr,true);
  
 RETURN;
-END;
+END;*/
