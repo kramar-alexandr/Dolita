@@ -135,6 +135,8 @@ begin
   record CashierDefBlock CashierDefr;
   
   if (NextImportLine(false)) then begin
+		ImportField;
+		ImportField;
     CashierDefr.DefCustCode = ImportField;
     CashierDefr.POSNr = StringToLongint(ImportField);
     CashierDefr.CredAcc = ImportField;
@@ -183,6 +185,8 @@ begin
   record AccBlock Accr;
   
   if (NextImportLine(false)) then begin
+  	ImportField;
+  	ImportField;
     Accr.ARAcc = ImportField;
     Accr.RndAcc = ImportField;
     Accr.CredAcc = ImportField;
