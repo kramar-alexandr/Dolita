@@ -2950,7 +2950,7 @@ begin
   EndWindow;
 end;
 
-window INNPTSSClass:1
+/*window INNPTSSClass:1
   wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer,iPad,iPhone")
 begin
   real h;
@@ -2990,6 +2990,30 @@ begin
     EndWindow;
   end;
 
+end;*/
+
+
+window INNPTSSClass:1
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer,iPad,iPhone")
+begin
+  real h;
+
+  WindowBegin("Įstatyti prekę",INNPTSSClass,CGother,HBlRecType);
+  UseView(RcVc);
+  ToolBar;
+  h = -216;
+  ColourPushButton(h,5,h+90,45,"NPTSSearchItemCancel","Nutraukti",20);
+  ColourPushButton(-100,5,-10,45,"NPTSSearchItemOnceMore","Pakartotinė paieška",20);
+  EndToolBar;
+  SetWRect(140,80,700,398);
+  SoftEditField(60,20,100,"Ieškoti",Normal,"f1",false,0,M4Str,255); 
+  Sizeable(-1,-1,0,0);
+//  StringList2(9,9,-25,-10);
+  DataList(9,65,-22,-6,"NPTSItemSearch");
+  DataListColumn(1,6,120,AdjLeft,"ArtCode","ArtCode",M4Code);
+  DataListColumn(1,96,-105,AdjLeft,"ArtName","Pavadinimas",M4Str); //EBS edit pos
+  DataListColumn(1,-100,-23,AdjLeft,"ArtPrice","Kaina",M423Val); //EBS AdjLeft
+  EndWindow;
 end;
 
 
