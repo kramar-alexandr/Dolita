@@ -1836,7 +1836,7 @@ begin
   record RcVc RepSpec;
   val max_reb,gc_sum;
   boolean errf;
-
+		
   tagstr = PushButtonTag; //EBS
   wn = CurWindow;
   if (WindowValid(wn)==false) then begin
@@ -1936,7 +1936,6 @@ begin
     DOLUpdateSourceOrder(IVCashr.SrcORNr);
   end;
   // :EVS
-
   if (new_recordf) then begin
 //    sleep(5);
 
@@ -1977,7 +1976,7 @@ begin
   integer i,rwc,wn;
   boolean stand_probf;
   val max_reb,gc_sum;
-
+		
   wn = CurWindow;
   if (WindowValid(wn)==false) then begin
     goto L99IVCashDClassTouchScreenFinishButtonRun;
