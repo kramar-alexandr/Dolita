@@ -3174,7 +3174,8 @@ begin
         StaticText(h3,v,IVCashr.SalesMan,false);
       end;
     */
-  DrawPOSInterface2_LIT(bc1,bc2,POSBr,"",110,bm); 
+  DrawPOSInterface2_LIT(bc1,bc2,POSBr,"",110,bm); // Edit ************************** BPI Ukraine - KramarAlexandr - 02, 02 04 2019 y. at 11:02:46 AM
+  //DrawPOSInterface_LIT(bc1,bc2,POSBr,acnt,"",100);
   //BottomBar;
     EndWindow;
 end;
