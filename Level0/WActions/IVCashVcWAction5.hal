@@ -1089,8 +1089,8 @@ begin
   RepSpec.f3 = "IVCashDClass";
   RepSpec.repname = "SearchItemRn";
   RepSpec.Media = mtScreen;
-  nwn = OpenWindow("INNPTSSClass",0,mwn,"","",RepSpec);  
-//  nwn = OpenWindow("NPTSSearchItemRClass",0,mwn,"","",RepSpec);
+  //nwn = OpenWindow("INNPTSSClass",0,mwn,"","",RepSpec);  
+  nwn = OpenWindow("NPTSSearchItemRClass",0,mwn,"","",RepSpec);
   GetWindowRecord(nwn,RepSpec);
   switch (GetWindowFileName(mwn)) begin
     case "IVCashVc": 
