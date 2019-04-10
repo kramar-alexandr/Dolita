@@ -1446,6 +1446,7 @@ LSkipOffNoValidation:;
             end;
           end;
         end;
+        infound = true;// Edit ************************** BPI Ukraine - KramarAlexandr - 03, 10 04 2019 y. at 1:46:50 PM
       otherwise
         infound = infound or nonblank(IVCashrw.ArtCode);
 /*
