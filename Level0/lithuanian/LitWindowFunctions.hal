@@ -1388,63 +1388,36 @@ begin
   
   DataList(tx,ty,bx,by,"receipt");
   
-  switch (GuiType) begin
-    case kGuiiPhone:
-    if (TouchScreenLookVertical) then begin 
-      DataListColumn(1,6,90,AdjLeft,"qty","Kiekis",M4Val);
-        if (LMb.HideArtCode==0) then begin
-      DataListColumn(1,95,-130,AdjLeft,"artcode","Kodas",M4Code);      
-      DataListColumn(1,-125,-8,AdjRight,"rowsum","Suma",M4Val);      
-        end else begin
-          DataListColumn(1,95,-8,AdjRight,"rowsum","Suma",M4Val); 
-        end;
+  if (GuiType==kGuiiPhone) then begin
+    if (TouchScreenLookVertical) then begin
+      DataListColumn(1,6,90,AdjLeft,"qty","Kikis",M4Val);
+      DataListColumn(1,95,-130,AdjLeft,"artcode","Kodas",M4Code);
+      DataListColumn(1,-125,-8,AdjRight,"rowsum","Suma",M4Val);
       DataListColumn(2,6,-6,AdjLeft,"spec","",M4Str);
       DataListColumn(3,6,60,AdjLeft,"artcode1","",M4Code);
       DataListColumn(3,64,160,AdjLeft,"spec","",M4Str);
       DataListColumn(3,164,210,AdjRight,"qty","",M4Val);
       DataListColumn(3,214,320,AdjLeft,"artcode2","",M4Code);
-      DataListColumn(3,324,360,AdjLeft,"s","",M4Str);       
-    end else begin 
-        if (LMb.HideArtCode==0) then begin
+      DataListColumn(3,324,360,AdjLeft,"s","",M4Str);
+    end else begin
       DataListColumn(1,8,90,AdjLeft,"artcode","Kodas",M4Code);
       DataListColumn(1,105,-340,AdjLeft,"spec","Aprašymas",M4Str);
-        end else begin
-          DataListColumn(1,9,-340,AdjLeft,"spec","Apibūdinimas",M4Str); 
-        end;
       DataListColumn(1,-335,-270,AdjRight,"qty","Kiekis",M4Val);
       DataListColumn(1,-265,-190,AdjRight,"price","Kaina",M4Val);
       DataListColumn(1,-185,-130,AdjRight,"rebate","Nuol.",M4Val);
       DataListColumn(1,-125,-8,AdjRight,"rowsum","Suma",M4Val);
       //DataListColumn(1,-20,-6,AdjRight,"","",M4Str); // Added to provide some extra space for scroll bar.
-      
+
       DataListColumn(2,6,-1,AdjLeft,"spec","",M4Str);
-      
+
       DataListColumn(3,6,60,AdjLeft,"artcode1","",M4Code);
       DataListColumn(3,64,160,AdjLeft,"spec","",M4Str);
       DataListColumn(3,164,210,AdjRight,"qty","",M4Val);
       DataListColumn(3,214,320,AdjLeft,"artcode2","",M4Code);
-      DataListColumn(3,324,360,AdjLeft,"s","",M4Str); 
-    end; 
-    case kGuiAndroid:
-      DataListColumn(1,8,70,AdjLeft,"artcode","Kodas",M4Code);
-      DataListColumn(1,72,180,AdjLeft,"spec","Apibūdinimas",M4Str);
-      DataListColumn(1,185,215,AdjRight,"qty","Kiekis",M4Val);
-      DataListColumn(1,222,275,AdjRight,"price","Kaina",M4Val);
-      DataListColumn(1,280,320,AdjRight,"rebate","Nuol.",M4Val);
-      DataListColumn(1,325,-1,AdjRight,"rowsum","Suma",M4Val);
-      //DataListColumn(1,-20,-6,AdjRight,"","",M4Str); // Added to provide some extra space for scroll bar.
-
-      DataListColumn(2,6,-1,AdjLeft,"spec","",M4Str); 
-
-      DataListColumn(3,6,60,AdjLeft,"artcode1","",M4Code); 
-      DataListColumn(3,64,160,AdjLeft,"spec","",M4Str); 
-      DataListColumn(3,164,210,AdjRight,"qty","",M4Val); 
-      DataListColumn(3,214,320,AdjLeft,"artcode2","",M4Code); 
-      DataListColumn(3,324,360,AdjLeft,"s","",M4Str); 
-    otherwise
-      if (LMb.HideArtCode==0) then begin
+      DataListColumn(3,324,360,AdjLeft,"s","",M4Str);
+    end;
+  end else begin
     DataListColumn(1,6,90,AdjLeft,"artcode","Kodas",M4Code);
-      end;
     if (HasJewelleryInterface) then begin
       if (POSBr.WindowClass=="IVDClass") then begin//in 71 should be in for SL and POS Invoice
         DataListColumn(1,91,-500,AdjLeft,"spec","Aprašymas",M4Str);
@@ -1459,15 +1432,6 @@ begin
       DataListColumn(1,-205,-150,AdjRight,"rebate","Nuol.",M4Val);
       DataListColumn(1,-145,-21,AdjRight,"rowsum","Suma",M4Val);
     end else begin
-      /*  if (LMb.HideArtCode==0) then begin
-      DataListColumn(1,91,-340,AdjLeft,"spec","Aprašymas",M4Str);
-        end else begin
-          DataListColumn(1,6,-340,AdjLeft,"spec","Apibūdinimas",M4Str);
-        end;
-      DataListColumn(1,-335,-270,AdjRight,"qty","Kiekis",M4Val);
-      DataListColumn(1,-265,-190,AdjRight,"price","Kaina",M4Val);
-      DataListColumn(1,-185,-130,AdjRight,"rebate","Nuol.",M4Val);
-      DataListColumn(1,-125,-21,AdjRight,"rowsum","Suma",M4Val);*/
       if (GuiType!=kGuiCocoa) then begin
         DataListColumn(1,96,-265,AdjLeft,"spec","Aprašymas",M4Str);   //EBS edit
         DataListColumn(1,-260,-230,AdjLeft,"salesmen","Pard.",M4Str); //EBS new
@@ -1485,25 +1449,14 @@ begin
       end;
     end;
     DataListColumn(1,-20,-6,AdjRight,"","",M4Str); // Added to provide some extra space for scroll bar.
-    
+
     DataListColumn(2,6,-6,AdjLeft,"spec","",M4Str);
-    
+
     DataListColumn(3,6,60,AdjLeft,"artcode1","",M4Code);
     DataListColumn(3,64,160,AdjLeft,"spec","",M4Str);
     DataListColumn(3,164,210,AdjRight,"qty","",M4Val);
     DataListColumn(3,214,320,AdjLeft,"artcode2","",M4Code);
     DataListColumn(3,324,360,AdjLeft,"s","",M4Str);
-
-//      DataListColumn(6,-330,-130,AdjLeft,"spec","",M4Str);
-//      DataListColumn(6,-125,-8,AdjRight,"rowsum","Sum",M4Val);
-
-/*
-      DataListColumn(4,6,60,AdjLeft,"qtytotal","",M4Str);
-      DataListColumn(4,64,160,AdjLeft,"subtotaltext","",M4Str); 
-      DataListColumn(4,164,210,AdjRight,"subtotal","",M4Val); 
-      DataListColumn(4,214,320,AdjLeft,"vattotaltext","",M4Str); 
-      DataListColumn(5,324,360,AdjRight,"vattotal","",M4Val); 
-*/      
   end;
   if (GuiType==kGuiiPhone) then begin
     if (TouchScreenLookVertical==false and GetWindowClass(wn)!="RestAccDClass") then begin  
