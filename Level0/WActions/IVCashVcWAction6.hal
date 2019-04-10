@@ -562,7 +562,8 @@ begin
         PutWindowRecord(mwn,RestAccr);
         RestAccDClass_RefreshStringList(mwn,RestAccr);
     end;
-    if (WindowDoOK(mwn,0)) then begin
+    //if (WindowDoOK(mwn,0)) then begin//EBS
+    if (true) then begin
       DeselectWindow(wn,false);
       GetWindowRecord(wn,RepSpec);
       CloseWindow(wn);
