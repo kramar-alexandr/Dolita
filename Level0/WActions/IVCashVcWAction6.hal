@@ -511,11 +511,11 @@ begin
         MatRowPut(IVCashr,MatRowCnt(IVCashr),IVCashrw);
         POSAudit_LogIVCashVcRow(IVCashr,IVCashrw,kPOSEventTypeAddRow);
         IVCashSumup(IVCashr,true);
-        if (HasLocalization("HRV")==false) then begin  //DoXMLExport_IVCashVc
+        /*if (HasLocalization("HRV")==false) then begin  //DoXMLExport_IVCashVc// Edit ************************** BPI Ukraine - KramarAlexandr - 03, 10 04 2019 y. at 3:22:54 PM
           if (IVCashr.RetValue>=0) then begin
             IVCashr.OKFlag = 1;            
           end;
-        end;
+        end;*/
         PutWindowRecord(mwn,IVCashr);
         WindowFieldGoto(mwn,IVCashr,-1,"touchscreenitem",true);
         IVCashDClass_RefreshStringList(mwn,IVCashr);
@@ -2323,11 +2323,11 @@ begin
           end;
         end;
         NPTSPaymentPasteAmounts(IVCashr,alabel,acrncy,apaymenttype,apaymentmode,apaymentv,apaymentchecknr,apaymentauthcode,acrncnt);
-        if (HasLocalization("HRV")==false) then begin  //DoXMLExport_IVCashVc
+        /*if (HasLocalization("HRV")==false) then begin  //DoXMLExport_IVCashVc// Edit ************************** BPI Ukraine - KramarAlexandr - 03, 10 04 2019 y. at 3:23:27 PM
           if (IVCashr.RetValue>=0) then begin
             IVCashr.OKFlag = 1;            
           end;
-        end;
+        end;*/
         PutWindowRecord(mwn,IVCashr);
         WindowFieldGotoForTouchScreen(mwn,-1,"ivcashcommand",true);
         IVCashDClass_RefreshStringList(mwn,IVCashr);
