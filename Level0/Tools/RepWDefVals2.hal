@@ -2461,10 +2461,10 @@ begin
   BlockLoad(CDb);  
   RepSpec.d1 = CurrentDate;
   RepSpec.sStartTime = CurrentTime;
-  RepSpec.flags[1] = 1;
+  RepSpec.flags[1] = 0;// Edit ************************** BPI Ukraine - KramarAlexandr - 04, 11 04 2019 y. at 2:35:31 PM
   RepSpec.flags[2] = 1;
-  RepSpec.flags[3] = 1;
-  RepSpec.flags[8] = 1;
+  RepSpec.flags[3] = 0;// Edit ************************** BPI Ukraine - KramarAlexandr - 04, 11 04 2019 y. at 2:35:33 PM
+  RepSpec.flags[8] = 0;// Edit ************************** BPI Ukraine - KramarAlexandr - 04, 11 04 2019 y. at 2:35:34 PM
   RepSpec.flags[9] = CDb.PrintZReportatCashup;
   RepSpec.f1 = LMb.LocalMachineCode;
   RepSpec.f4 = CurDrawerCode(LMb.LocalMachineCode);

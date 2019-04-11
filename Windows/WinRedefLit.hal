@@ -5419,99 +5419,127 @@ end;
 window CashierDefTClass:1
   wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
 begin
-  real h,h2,v,vm,vs;
-
-  WindowBegin("POS Nustatymai",CashierDefTClass,CGSbl,-); //!!TRANSLATE
+  real h,h2,v,vm,vm2,vs,chkbx;
+  
+  WindowBegin("POS Nustatymai",CashierDefTClass,CGSbl,-);
   SetWRect(64,80,700,600);
   SetBlid(CashierDefBlock);
   v = 6; vs = 20; h = 150; h2 = 290; vm=0;
-  EditField(h,v,70,"Pagr. pirkėjas",Normal,DefCustCode,false,CUSClass);
-  EditField(h,v+=vs,70,"Default Loyalty Customer",Normal,DefLoyaltyCustomer,false,CUSClass);
+  EditField(h,v,70,"Pagr. pirkėjas",Normal,DefCustCode,false,CUSClass); 
   if (HasModNL) then begin
-  EditField(h,v+=vs,70,"Back office sąsk.",Normal,CredAcc,false,AccSClass);
-  EditField(h,v+=vs,70,"Nurašymo sąsk.",Normal,WriteOffAcc,false,AccSClass);
+  EditField(h,v+=vs,70,"Back office sąsk.",Normal,CredAcc,false,AccSClass); 
+  EditField(h,v+=vs,70,"Nurašymo sąsk.",Normal,WriteOffAcc,false,AccSClass); 
+    EditField(h,v+=vs,70,"Grynųjų išėmimo sąsk.",Normal,CashWithdrawalAcc,false,AccSClass); 
   end;
   if (HasModRest) then begin
-  EditField(h,v+=vs,70,"Arbatp. mok. būdas",Normal,TipPMCode,false,PMSClass);
+  EditField(h,v+=vs,70,"Arbatp. mok. būdas",Normal,TipPMCode,false,PMSClass);   
   end;
   if (IsEnterprise) then begin
-    EditField(h,v+=vs,70,"Spausdintuvas",Normal,Printer,false,SetSClass);
+    EditField(h,v+=vs,70,"Spausdintuvas",Normal,Printer,false,SetSClass);   
     if (StandardHansa==false) then begin
-    EditField(h,v+=vs,70,"Pensininkų nuol. prekė",Normal,DiscountItem,false,INSClass);
+    EditField(h,v+=vs,70,"Pensininkų nuol. prekė",Normal,DiscountItem,false,INSClass);   
     end;
   end;
   EditField(h,v+=vs,70,"Operacijos Objektai",Normal,TRObjects,false,ObjSClass);    // EVS: DOL-88
   if (HasModIN) then begin
     if (IsEnterprise) then begin
-      ButtonFrame(h-130,v+=3*vs+2*16,490,2,"POS");
-    end else begin
-      if (HasModRest) then begin
-        ButtonFrame(h-130,v+=40,490,2,"POS");
+      chkbx = 2;
+      if (HasLocalization("LVA")) then begin
+        chkbx = 4;
+      end;
+      ButtonFrame(h-130,v+=3*vs+chkbx*16,490,2,"Automatinis sandėlio atnaujinimas POS modulyje");
       end else begin
         v = v + 40;
+      if (HasLocalization("LVA")) then begin
+        v = v+3*16;
+      end;
+      if (HasModRest) then begin
+        ButtonFrame(h-130,v,490,2,"Automatinis sandėlio atnaujinimas POS modulyje");
+      end else begin
+        v = v;
       end;
     end;
-      EditField(h,v,70,"Atnaujinti sandėlio intervalą",Normal,UpdStockMaintTime,false,PasteCurTime);
+      EditField(h,v,70,"Atnaujinimo intervalas",Normal,UpdStockMaintTime,false,PasteCurTime); 
 //    ButtonFrame(h2,v,170,3,"Run Update #Stock# Maintenance");
 //    RadioButton(h2,v,0,0,"Manually",UpdStockMaint);
 //    RadioButton(h2,v+=16,1,0,"Periodically",UpdStockMaint);
 //    RadioButton(h2,v+=16,2,0,"When OKing POS Invoice",UpdStockMaint);
 
-    CheckBox(h2,v,0,"Paleisti sandėlio atnaujinimo apdorojimą",UpdStockMaint);
-    CheckBox(h2,v+=18,0,"Nusidėvėjimai sandėlyje",POSOKSD); //!!TRANSLATE
+    CheckBox(h2,v,0,"Vykdyti sandėlio atnaujinimą",UpdStockMaint); 
+    CheckBox(h2,v+=18,0,"Kurti patvirtintus sandėlio nurašymus",POSOKSD);
   end;
-  if (HasModRest) then begin
-    ButtonFrame(h-130,v+=40,490,2,"Restoranas");
-    EditField(h,v,70,"Atnaujinti #Sandėlį# intervalas",Normal,RestUpdStockMaintTime,false,PasteCurTime);
-    CheckBox(h2,v,0,"Vykdyti #Sandėlio# atnaujinimo apdorojimą",RestUpdStockMaint);
-    CheckBox(h2,v+=18,0,"OK #Sandėlio nurašymą#",RestOKSD);
+  if (HasModIN) then begin
+    ButtonFrame(h-130,v+=40,490,2,"Automatinis sandėlio atnaujinimas Restorano modulyje");
+    EditField(h,v,70,"Atnaujinimo intervalas",Normal,RestUpdStockMaintTime,false,PasteCurTime);
+    CheckBox(h2,v,0,"Vykdyti sandėlio atnaujinimą",RestUpdStockMaint);
+    CheckBox(h2,v+=18,0,"Kurti patvirtintus sandėlio nurašymus",RestOKSD);
 //    CheckBox(h2,v,0,"OK #Goods Receipts#",OKPU);
   end;
   if (IsEnterprise) then begin
-    EditField(h,v+=(vs+5),70,"Kasos intervalas",Normal,CashupMaintInterval,false,PasteCurTime);
-    CheckBox(h2,v,0,"Paleisti kasos uždarymo apdorojimą",CashupMaint);
+    ButtonFrame(h-130,v+=40,490,3,"Automatinis kasos sesijų uždarymas");
+    EditField(h,v,70,"Atnaujinimo intervalas",Normal,CashupMaintInterval,false,PasteCurTime); 
+    CheckBox(h2,v,0,"Vykdyti kasos sesijų uždarymą",CashupMaint); 
+    CheckBox(h2,v+=18,0,"Atidaryta kasos sesija - privaloma",RequireOpenSession);
+    CheckBox(h2,v+=18,0,"Spausdinti Z ataskaitą",PrintZReportatCashup); 
   end;
-//  EditField(h,v+=vs,60,"POS nr.",Normal,POSNr,false,0);
+//  EditField(h,v+=vs,60,"POS nr.",Normal,POSNr,false,0); 
+  ButtonFrame(h-130,vm2=(v+=37+vs),220,3,"Prekės paveiksliukas kasininko ekrane");
+  RadioButton(h,v,kPOSItemPictureDefault,0,"Numatytasis",ItemPictureCashier);
+  RadioButton(h,v+=16,kPOSItemPictureOn,0,"Įjungtas",ItemPictureCashier);
+  RadioButton(h,v+=16,kPOSItemPictureOff,0,"Išjungtas",ItemPictureCashier);
+  if (BuildProductCode=="PAYYAPERP") then begin
+    CheckBox(h2,vm2,0,"Atidaryta kasos sesija - privaloma",RequireOpenSession); 
+  end;
+  ButtonFrame(h-130,v+=40,220,3,"Prekės paveiksliukas kliento ekrane");
+  RadioButton(h,v,kPOSItemPictureDefault,0,"Numatytasis",ItemPictureCustomer);
+  RadioButton(h,v+=16,kPOSItemPictureOn,0,"Įjungtas",ItemPictureCustomer);
+  RadioButton(h,v+=16,kPOSItemPictureOff,0,"Išjungtas",ItemPictureCustomer);
   v = vm + 3;
   if (HasModRest) then begin
-    CheckBox(h2,v,0,"Įtraukti arbatpinigius į kasos pajamas",InclTipInCashup);
+    CheckBox(h2,v,0,"Įtraukti arbatpinigius į kasos ataskaitą",InclTipInCashup);
     v = v + 16;
   end;
   if (IsEnterprise) then begin
   if (HasModSL) then begin
-    CheckBox(h2,v,0,"Įtraukti neapm. faktūros sumą į kasos pajamas",InclOpenInvCashup);
-    v = v + 16;
+//      CheckBox(h2,v,0,"Include Open Invoice value in Cash Up",InclOpenInvCashup);
+//      v = v + 16;
   end;
+  end;
+  if (HasLocalization("LVA")) then begin
+    CheckBox(h2,v,0,"Neleisti nulinių kiekių",NoZeroQty);v = v + 16; 
+    CheckBox(h2,v,0,"Tikrinti PVM reg. nr. įterpiant prekę su atvirkštiniu PVM",CheckVATNo);v = v + 16; 
   end;
   if (IsEnterprise) then begin
     if (StandardHansa==false) then begin
-    CheckBox(h2,v,0,"Registruoti pard. Fiscal Control Unit",CashSalesToFiscalControlUnit);
+    CheckBox(h2,v,0,"Registruoti pardavimus fiskaliniame įrenginyje",CashSalesToFiscalControlUnit); 
       v = v + 16;
     end;
-    CheckBox(h2,v,0,"Leisti kelias sesijas tame pačiame įrenginyje",MultipleSessionsPerLocalMachine);
-    CheckBox(h2,v+=16,0,"Neleisti pakeitimų patvirtinoms POS faktūroms Live Sync klientams",NoChangesPOSOnLiveSyncClient);
+    CheckBox(h2,v,0,"Leisti kelias sesijas tame pačiame įrenginyje",MultipleSessionsPerLocalMachine); 
+    CheckBox(h2,v+=16,0,"Neleisti keisti patvirtintų POS faktūrų LiveSync klientams",NoChangesPOSOnLiveSyncClient); 
+		CheckBox(h2,v+=16,0,"Reikalauti grąžinimo priežasties",RequireReturnReason); 
+		CheckBox(h2,v+=16,0,"Reikalauti pirkėjo grąžinimui",RequireReturnCustomer); 
+    CheckBox(h2,v+=16,0,"Neleisti pardavimų su 0 suma",NoZeroSum);v = v + 16; 
+    if (HasLocalization("LVA")) then begin
+      CheckBox(h2,v+=16,0,"Neleisti nulinių kiekių",NoZeroQty); 
+  	end;
   end;
-  if (IsEnterprise) then begin
-  CheckBox(h2,v+=16,0,"Reikalauti Grąž. priež.",RequireReturnReason);
-  CheckBox(h2,v+=16,0,"Reikalauti Grąž. pirkėjo",RequireReturnCustomer);
-  end;
+  CheckBox(h2,v,0,"Reikalauti atid. sesiją",RequireOpenSession); //EBS edit
   CheckBox(h2,v+=16,0,"Update POS customer display",UpdateCustDisplay); //EBS
-  CheckBox(h2,v+=16,0,"Cashup maintennace when closing session",CushUpOnCloseSession); //EBS
+  CheckBox(h2,v+=16,0,"Cashup maintennace when closing session",CushUpOnCloseSession);v = v + 16; //EBS
   if (HasModNL) then begin
-  ButtonFrame(h2,v+=45,220,2,"Kasos pajamos per Funkcijų Meniu");
-  CheckBox(h2,v,0,"Pradėti nuo ankstesnio POS balanso",StartFromLastPOSBal);
+    ButtonFrame(h2,v+=29,220,2,"Kasos ataskaita per operacijų meniu");
+  CheckBox(h2,v,0,"Pradėti nuo ankstesnio POS balanso",StartFromLastPOSBal); 
   if (HasModNL) then begin
-  CheckBox(h2,v+=16,0,"Spausdinti detalią DK operaciją",PrintDetNLTrans);
+  CheckBox(h2,v+=16,0,"Spausdinti detalią DK operaciją",PrintDetNLTrans); 
   end;
     EndFrame;
   end;
   if (IsEnterprise) then begin
-    CheckBox(h2,v+=160,0,"Reikalauti atid. sesiją",RequireOpenSession); //EBS edit
-  ButtonFrame(h2,vm=(v+=41),170,3,"Privalomas laukas naujoje faktūroje");
-  RadioButton(h2,v,0,0,"Privaloma",DefInvoiceField);
+  ButtonFrame(h2,v=vm2,170,3,"Numatytasis laukas naujoje faktūroje"); 
+  RadioButton(h2,v,0,0,"Numatytasis",DefInvoiceField); 
   RadioButton(h2,v+=16,1,0,"Prekė",DefInvoiceField);
     if (HasSerialNumbers) then begin
-  RadioButton(h2,v+=16,2,0,"Serij.nr.",DefInvoiceField);
+  RadioButton(h2,v+=16,2,0,"Serijinis nr.",DefInvoiceField);
     end;
     EndFrame;
   end;
