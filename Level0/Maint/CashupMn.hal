@@ -1,3 +1,4 @@
+external outer procedure PrintDayReport_SendToFiscal(string); //EBS
 remote procedure TouchScreenZReading();
 external function Boolean TransInFiscal(Date);
 //external procedure GetIVCashData(Date,time,Date,time,string,string,var vector val,var array string,var array string,var array string,var array string,var array string,var array string,var array string,var array string);
@@ -449,7 +450,9 @@ begin
   RunTheCashupMn(RepSpec.f1,RepSpec.f4,RepSpec.f5,RepSpec.d1,RepSpec.sStartTime,RepSpec.ArtMode,RepSpec.flags[1],RepSpec.flags[2],RepSpec.flags[3],RepSpec.flags[4],RepSpec.flags[8]);
 LCashupMn:;  
   if (RepSpec.flags[9]!=0) then begin
-    ClientRemoteAsync.TouchScreenZReading;
+  	//messagebox(0,"CashupMn");
+    //ClientRemoteAsync.TouchScreenZReading;
+    ClientRemoteAsync.PrintDayReport_SendToFiscal(2);// Edit ************************** BPI Ukraine - KramarAlexandr - 04, 11 04 2019 y. at 4:45:32 PM
   end;
   return;
 end;
