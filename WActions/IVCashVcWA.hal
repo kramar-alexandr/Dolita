@@ -394,6 +394,7 @@ begin
   // Save customer
   Putwindowrecord(wn,CUr);
   if !WindowDoOk(wn,0) then begin
+  	messagebox(0,"Save Error");
     GoTo LSaveCUNPTDSClass;
   end;
 
