@@ -297,7 +297,27 @@ begin
   val sign;
   
   wn = CurWindow;
-  SoftKey(wn,anumberstr);
+  
+  
+  switch (GetWindowClass(wn)) begin
+		case "EBS_ChooseSalesManVClass":
+			activefield = WindowActiveField(wn);
+			switch (activefield) begin
+				case "f2": 
+				DeselectWindow(wn,true);
+				GetWindowRecord(wn,RepSpec); 
+				RepSpec.f2 = RepSpec.f2 & anumberstr;
+				PutWindowRecord(wn,RepSpec);
+				WindowFieldGoto(wn,RepSpec,-1,activefield,false);
+				
+				otherwise
+				SoftKey(wn,anumberstr);
+			end;
+		otherwise
+		SoftKey(wn,anumberstr);
+	end;
+  
+  
 /*
   activefield = WindowActiveField(wn);
   numberstr = anumberstr;
