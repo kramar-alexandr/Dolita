@@ -357,7 +357,7 @@ begin
   end;
 
   if nonblank(tstr) then begin
-    if !DOL_LoyaltyCardIsUnassigned(tstr) then begin
+    if (!DOL_LoyaltyCardIsUnassigned(tstr)) then begin
       MessageBox(1000134,"");
       GoTo LSaveCUNPTDSClass;
     end;
@@ -367,7 +367,7 @@ begin
   email_str = GetWindowString(wn,"sf_email_first");
   email_str = email_str & "@";
   email_str = email_str & GetWindowString(wn,"sf_email_second");
-  if email_str != "@" then begin
+  if (email_str != "@") then begin
     CUr.eMail = email_str;
     // Putwindowrecord(wn,CUr);
   end;
@@ -393,7 +393,7 @@ begin
   // LogText(0,"359 CUr.Code = " & CUr.Code & " cucode=" & cucode);
   // Save customer
   Putwindowrecord(wn,CUr);
-  if !WindowDoOk(wn,0) then begin
+  if (!WindowDoOk(wn,0)) then begin
   	messagebox(0,"Save Error");
     GoTo LSaveCUNPTDSClass;
   end;
