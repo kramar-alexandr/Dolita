@@ -245,7 +245,7 @@ begin
 /* A casher count should be allowed inside or outside of session
 it cannot be outside of session cause then we dont know what session count is linked to
 */
-    /*if (IsSessionOpen(Cashr.MachineName,Cashr.Drawer,Cashr.TransDate,Cashr.TransTime)==false) then begin
+    /*if (IsSessionOpen(Cashr.MachineName,Cashr.Drawer,Cashr.TransDate,Cashr.TransTime)==false) then begin// Edit ************************** BPI Ukraine - KramarAlexandr - 05, 12 04 2019 y. at 3:01:23 PM
       RecordCheckError(2195,"",-1,"SerNr");      
       res = -1;
       goto LCashVcRecordCheck;
