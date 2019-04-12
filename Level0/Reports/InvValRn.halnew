@@ -1,3 +1,6 @@
+external function Boolean SetInSet2(string,string);
+external procedure HTLocationClassification(string,string,var string);
+external procedure HTLocationGroup(string,string,var string);
 external function Boolean HasContactClassification();
 external function Boolean HasCategories();
 external procedure HTCustCat(string,var string);
@@ -7,8 +10,8 @@ external function Boolean IsEnterprise();
 external function Boolean HasItemGroups();
 external function Boolean HasContactClassification();
 external function Boolean HasItemClassification();
-external procedure InvListVarieties(record RcVc,record INVc,string,string,string,string,record CostAccBlock,Boolean,var Boolean,
-                                    var Boolean,var string,var val,var val,var val,var val,roundmode,var val,string,vector val);
+external procedure InvListVarieties2(record RcVc,record INVc,string,string,string,string,record CostAccBlock,Boolean,var Boolean,
+                                    var Boolean,var string,var val,var val,var val,var val,roundmode,var val,string,vector val,vector val);
 external procedure HTConsigment(Integer, var string);
 external procedure FindStockValueAtPosition(string,string,string,var record PISVc);
 external procedure AddSupersessionsInvList(record RcVc,record INVc,string,record CostAccBlock,roundmode,string,var val,var val,var val);
@@ -153,7 +156,7 @@ begin
   return;
 end;
 
-procedure FindAllStocksValueFIFO(string artcode,record INVc INp,val instock,var val totvalp,Date todatp,Integer printf,Integer OverwriteCostModel,Integer sumf,Integer consigstock,Integer repcalcwa)
+procedure FindAllStocksValueFIFO(string artcode,record INVc INp,val instock,val adjstockq,var val totvalp,Date todatp,Integer printf,Integer OverwriteCostModel,Integer sumf,Integer consigstock,Integer repcalcwa)
 begin
   Boolean TrHs,testf;
   record LocationVc Locr;
@@ -174,7 +177,7 @@ begin
       end;
       if (linstock!=0) then begin
 //        if (linstock>0) then begin
-          loctotval = FindCostPriceFIFOBackDated(perloc,INp,Locr.Code,"",linstock,0,todatp,false,printf,false,OverwriteCostModel,consigstock,repcalcwa);
+          loctotval = FindCostPriceFIFOBackDated(perloc,INp,Locr.Code,"",linstock,adjstockq,todatp,false,printf,false,OverwriteCostModel,consigstock,repcalcwa);
 /*
         end else begin
           if (blankdate(todatp)) or (todatp==CurrentDate) then begin
@@ -240,12 +243,12 @@ begin
   return;
 end;
 
-function val GetFIFOPrice(record CostAccBlock CAb,record RcVc RepSpec,string artcode,record INVc INp,Boolean fManyLocations,val instock,Integer printf)
+function val GetFIFOPrice(record CostAccBlock CAb,record RcVc RepSpec,string artcode,record INVc INp,Boolean fManyLocations,val instock,val adjstockq,Integer printf)
 begin
   val restotprice;
 
   if (blank(RepSpec.f2) and fManyLocations) then begin
-    FindAllStocksValueFIFO(artcode,INp,instock,restotprice,RepSpec.d1,printf,0,RepSpec.flags[19],RepSpec.flags[12],RepSpec.flags[20]);
+    FindAllStocksValueFIFO(artcode,INp,instock,adjstockq,restotprice,RepSpec.d1,printf,0,RepSpec.flags[19],RepSpec.flags[12],RepSpec.flags[20]);
   end else begin
     restotprice = FindCostPriceFIFOBackDated(ItemCostPerLocation(INp),INp,RepSpec.f2,"",instock,0,RepSpec.d1,false,printf,false,0,RepSpec.flags[12],RepSpec.flags[20]);
   end;
@@ -271,7 +274,7 @@ begin
   val restotprice;
 
   if (blank(RepSpec.f2) and fManyLocations) then begin
-    FindAllStocksValueFIFO(artcode,INp,instock,restotprice,RepSpec.d1,2,3,RepSpec.flags[19],RepSpec.flags[12],RepSpec.flags[20]);
+    FindAllStocksValueFIFO(artcode,INp,instock,0,restotprice,RepSpec.d1,2,3,RepSpec.flags[19],RepSpec.flags[12],RepSpec.flags[20]);
   end else begin
     restotprice = FindCostPriceFIFOBackDated(ItemCostPerLocation(INp),INp,RepSpec.f2,"",instock,0,RepSpec.d1,false,2,false,3,RepSpec.flags[12],RepSpec.flags[20]);
   end;
@@ -284,7 +287,7 @@ begin
   val restotprice;
 
   if (blank(RepSpec.f2) and fManyLocations) then begin
-    FindAllStocksValueFIFO(artcode,INp,instock,restotprice,RepSpec.d1,2,2,RepSpec.flags[19],RepSpec.flags[12],RepSpec.flags[20]);
+    FindAllStocksValueFIFO(artcode,INp,instock,0,restotprice,RepSpec.d1,2,2,RepSpec.flags[19],RepSpec.flags[12],RepSpec.flags[20]);
   end else begin
     restotprice = FindCostPriceFIFOBackDated(ItemCostPerLocation(INp),INp,RepSpec.f2,"",instock,0,RepSpec.d1,false,2,false,2,RepSpec.flags[12],RepSpec.flags[20]);
   end;
@@ -297,7 +300,7 @@ begin
   val restotprice;
 
   if (blank(RepSpec.f2) and fManyLocations) then begin
-    FindAllStocksValueFIFO(artcode,INp,instock,restotprice,RepSpec.d1,2,1,RepSpec.flags[19],RepSpec.flags[12],RepSpec.flags[20]);
+    FindAllStocksValueFIFO(artcode,INp,instock,0,restotprice,RepSpec.d1,2,1,RepSpec.flags[19],RepSpec.flags[12],RepSpec.flags[20]);
   end else begin
     restotprice = FindCostPriceFIFOBackDated(ItemCostPerLocation(INp),INp,RepSpec.f2,"",instock,0,RepSpec.d1,false,2,false,1,RepSpec.flags[12],RepSpec.flags[20]);
   end;
@@ -307,7 +310,7 @@ end;
 
 procedure GetCostPrice(record RcVc pRepSpec,record INVc INp,record INVc orgINr,Boolean varf,Boolean fManyLocations,
                        record CostAccBlock CAb,
-                       Integer UseDiscount,roundmode roundof,val instock,val instockwithconsig,val orginstock,var val resprice,var val restotprice)
+                       Integer UseDiscount,roundmode roundof,val instock,val instockwithconsig,val orginstock,var val resprice,var val restotprice,var val adjstockq)
 begin
   record WeigAvVc war;
   record RcVc RepSpec;
@@ -331,6 +334,7 @@ begin
     StockListCostModel = 4;
   end;
   GetItemCostPrc(INp,CAb,ITr,primary,costprc);
+
   switch (StockListCostModel) begin
     case 1:
       switch (RepSpec.ArtMode) begin
@@ -395,14 +399,14 @@ begin
       switch (RepSpec.ArtMode) begin
         case 0:
           switch (queuecostmodel) begin // What about the others and why checking only CAb?
-            case 0: restotprice = GetFIFOPrice(CAb,RepSpec,INp.Code,orgINr,fManyLocations,instock,0);
+            case 0: restotprice = GetFIFOPrice(CAb,RepSpec,INp.Code,orgINr,fManyLocations,instock,adjstockq,0);            
             case 1: restotprice = GetLIFOPrice(CAb,RepSpec,INp.Code,orgINr,fManyLocations,instock,0);
             case 20: 
               restotprice = GetSerialNumberPrice(CAb,RepSpec,INp.Code,orgINr,fManyLocations,instock,0);
           end;
         case 1:
           switch (queuecostmodel) begin // What about the others and why checking only CAb?
-            case 0: restotprice = GetFIFOPrice(CAb,RepSpec,INp.Code,orgINr,fManyLocations,instock,2);
+            case 0: restotprice = GetFIFOPrice(CAb,RepSpec,INp.Code,orgINr,fManyLocations,instock,adjstockq,2);
             case 1: restotprice = GetLIFOPrice(CAb,RepSpec,INp.Code,orgINr,fManyLocations,instock,2);
             case 20: restotprice = GetSerialNumberPrice(CAb,RepSpec,INp.Code,orgINr,fManyLocations,instock,2);
           end;
@@ -504,9 +508,9 @@ begin
 end;
  
 global
-procedure InvListOneItem(record RcVc RepSpec,Integer inpos,record INVc INp,string variety,record CostAccBlock CAb,Boolean printf,
+procedure InvListOneItem3(record RcVc RepSpec,Integer inpos,record INVc INp,string variety,record CostAccBlock CAb,Boolean printf,
                          var Boolean itemoutp,var Boolean groutp,var string lastgroup,var val sum1p,var val nrp,var val groupqtyp,var val groupsump,roundmode roundof,var val nrq2p,string dblstr,
-                         vector val vlocationtotals)
+                         vector val vlocationtotals,vector val vreptotals,var val adjstockq)
 BEGIN
   Integer typ;
   Boolean plhit;
@@ -643,6 +647,7 @@ BEGIN
     if (RepSpec.flags[17]!=0) then begin
       if (instock>0) then begin goto LInvListOneItem; end;
     end;
+    vreptotals["itemscount"] = vreptotals["itemscount"] + 1;
     if (RepSpec.ArtMode==1) begin// Detailed 
       if (printf) then begin
         StartFormat(15);
@@ -662,7 +667,7 @@ BEGIN
         end;
         EndFormat;
       end;
-      GetCostPrice(RepSpec,INp,orgINr,varf,fManyLocations,CAb,GOb.UseDiscount,roundof,instock,instockwithconsig,orginstock,t2,t); 
+      GetCostPrice(RepSpec,INp,orgINr,varf,fManyLocations,CAb,GOb.UseDiscount,roundof,instock,instockwithconsig,orginstock,t2,t,adjstockq); 
       t = t + totcpsin;
       if (desummarisedkoef!=0) and (RepSpec.flags[19]==2) then begin 
         instockwithconsig = Round(instockwithconsig/desummarisedkoef,DefaultRoundMode);
@@ -700,8 +705,10 @@ BEGIN
       groupqtyp = groupqtyp + instockwithconsig;
       nrq2p = nrq2p + instock2;      
     end;
-    if (RepSpec.ArtMode==0 or RepSpec.ArtMode == 4) then begin// Overview 
-      GetCostPrice(RepSpec,INp,orgINr,varf,fManyLocations,CAb,GOb.UseDiscount,roundof,instock,instockwithconsig,orginstock,t2,t);
+    if (RepSpec.ArtMode==0) then begin// Overview 
+      INp.Code = INp.Code & variety;
+      GetCostPrice(RepSpec,INp,orgINr,varf,fManyLocations,CAb,GOb.UseDiscount,roundof,instock,instockwithconsig,orginstock,t2,t,adjstockq);
+      INp.Code = Left(INp.Code,len(INp.Code)-len(variety));
 
 //Trace("INp.Code " & INp.Code," instock " & instock & " t " & t);  
 
@@ -800,9 +807,9 @@ BEGIN
       groupsump = groupsump + t;
       groupqtyp = groupqtyp + instockwithconsig;
       if (printf) then begin
-      if (RepSpec.flags[10]!=0) then begin
-        PrintSerialNumbers_InvVal2(INp,INp.Code & variety,INp.ItemType,instock,RepSpec.d1,RepSpec.f2,RepSpec.flags[12],RepSpec.flags[22]); 
-      end;  
+        if (RepSpec.flags[10]!=0) then begin
+          PrintSerialNumbers_InvVal2(INp,INp.Code & variety,INp.ItemType,instock,RepSpec.d1,RepSpec.f2,RepSpec.flags[12],RepSpec.flags[22]); 
+        end;  
       end;
     end;
     if (RepSpec.ArtMode==2) then begin// Per location          
@@ -867,6 +874,31 @@ LInvListOneItem:;
   RETURN;
 END;
 
+global
+procedure InvListOneItem2(record RcVc RepSpec,Integer inpos,record INVc INp,string variety,record CostAccBlock CAb,Boolean printf,
+                         var Boolean itemoutp,var Boolean groutp,var string lastgroup,var val sum1p,var val nrp,var val groupqtyp,var val groupsump,roundmode roundof,var val nrq2p,string dblstr,
+                         vector val vlocationtotals,vector val vreptotals)
+BEGIN
+  val adjstockq;
+  
+  InvListOneItem3(RepSpec,inpos,INp,variety,CAb,printf,itemoutp,groutp,lastgroup,sum1p,nrp,groupqtyp,groupsump,roundof,nrq2p,dblstr,
+                  vlocationtotals,vreptotals,adjstockq);
+  RETURN;
+END;
+
+global
+procedure InvListOneItem(record RcVc RepSpec,Integer inpos,record INVc INp,string variety,record CostAccBlock CAb,Boolean printf,
+                         var Boolean itemoutp,var Boolean groutp,var string lastgroup,var val sum1p,var val nrp,var val groupqtyp,var val groupsump,roundmode roundof,var val nrq2p,string dblstr,
+                         vector val vlocationtotals)
+begin
+  vector val vreptotals;
+  
+
+  InvListOneItem2(RepSpec,inpos,INp,variety,CAb,printf,itemoutp,groutp,lastgroup,sum1p,nrp,groupqtyp,groupsump,roundof,nrq2p,dblstr,
+                  vlocationtotals,vreptotals);
+  return;
+end;
+
 /*
 procedure InvListVarieties(record RcVc RepSpec,record INVc INr,record CostAccBlock CAb,Boolean printf,var Boolean itemoutp,
   var Boolean groutp,var string lastgroup,var val sum1p,var val nrp,var val groupsump,roundmode roundof,var val nrq2p,string dblstr,
@@ -891,7 +923,7 @@ end;
 
 procedure ShowSupersessionItems(record RcVc RepSpec,record INVc INp,string variety,record CostAccBlock CAb,
                          var Boolean itemout,var Boolean grout,var string lastgroup,var val sum1p,var val nrp,var val groupqty,var val groupsum,roundmode roundof,var val nrq2p,string dblstr,
-                         vector val vlocationtotals)
+                         vector val vlocationtotals,vector val vreptotals)
 begin
   record SupersessionINVc SINr;
   record INVc INr;
@@ -904,7 +936,7 @@ begin
     if (found) then begin
       INr.Code = SINr.OldArtCode;
       if (ReadFirstMain(INr,1,true)) then begin
-        InvListOneItem(RepSpec,12,INr,"",CAb,true,itemout,grout,lastgroup,sum1p,nrp,groupqty,groupsum,roundof,nrq2p,dblstr,vlocationtotals);
+        InvListOneItem2(RepSpec,12,INr,"",CAb,true,itemout,grout,lastgroup,sum1p,nrp,groupqty,groupsum,roundof,nrq2p,dblstr,vlocationtotals,vreptotals);
       end;
     end;
   end;
@@ -917,13 +949,14 @@ BEGIN
   record PIVc PIr;
   record INVc INr;
   record ItemStatusVc ISr;
+  record LocationVc Locr;
   string 255 lastgroup;
   Boolean itemout,grout;
   Boolean testf;
   string 255 fromart,toart;
   string 255 frvariety,tovariety;
   string 255 frcc,tocc;
-  Boolean TrHs,found,ShowVarieties;
+  Boolean TrHs,found,ShowVarieties,locationgroupf;
   string 255 lastitem,dblstr;
   val groupsum,groupqty;
   string 60 sz,msk,mskrep;  
@@ -963,13 +996,27 @@ BEGIN
   keystr = "Code";
   ISr.Code = fromart;    
   if (nonblank(frvariety)) or (nonblank(tovariety)) then begin
-    keys = 2;
+    keys = 1;
     keystr = "CodeVariety";
     ISr.Variety = frvariety;    
   end;
   while (LoopKey(keystr,ISr,keys,TrHs)) begin  
     if (ReadFirstItemInclClosed(ISr.Code,INr,false,false)==false) then begin goto LILLoopISEnd; end;
-    if (INr.Code==lastitem) then begin goto LILLoopISEnd; end;
+    if (nonblank(RepSpec.f10) or nonblank(RepSpec.f11)) and (blank(RepSpec.f2)) then begin
+      if (ISr.Location==";;;") then begin goto LILLoopISEnd; end;
+      Locr.Code = ISr.Location;
+      ReadFirstMain(Locr,1,true);
+      if (nonblank(RepSpec.f10)) then begin
+        if (Locr.Group!=RepSpec.f10) then begin goto LILLoopISEnd; end;
+      end;
+      if (nonblank(RepSpec.f11)) then begin
+        if (SetInSet2(RepSpec.f11,Locr.Classification)==false) then begin goto LILLoopISEnd; end;
+      end;
+      RepSpec.f2 = ISr.Location;
+      locationgroupf = true;
+    end else begin
+      if (INr.Code==lastitem) then begin goto LILLoopISEnd; end;
+    end;
 //    ISr.Code = INr.Code; // ??
 
     lastitem = INr.Code;
@@ -1029,6 +1076,20 @@ BEGIN
         end;
       end;
     end;      
+/*    
+    if (testf) then begin
+      if (nonblank(RepSpec.f10) or nonblank(RepSpec.f11)) then begin
+        Locr.Code = ISr.Location;
+        ReadFirstMain(Locr,1,true);
+        if (nonblank(RepSpec.f10)) then begin
+          if (Locr.Group!=RepSpec.f10) then begin testf = false; end;
+        end;
+        if (nonblank(RepSpec.f11)) then begin
+          if (SetInSet2(RepSpec.f11,Locr.Classification)==false) then begin testf = false; end;
+        end;
+      end;
+    end;
+*/    
     if (testf) then begin
       if (nonblank(RepSpec.LastAcc) or nonblank(RepSpec.f8) or nonblank(RepSpec.f9)) then begin
         PIr.ItemCode = INr.Code;
@@ -1134,28 +1195,30 @@ BEGIN
         end;
       end;
       if (ShowVarieties) then begin
-        InvListVarieties(RepSpec,INr,sz,msk,mskrep,varsubset,CAb,true,itemout,grout,lastgroup,sum1p,nrp,groupqty,groupsum,roundof,nrq2p,dblstr,vlocationtotals);
+        InvListVarieties2(RepSpec,INr,sz,msk,mskrep,varsubset,CAb,true,itemout,grout,lastgroup,sum1p,nrp,groupqty,groupsum,roundof,nrq2p,dblstr,vlocationtotals,vreptotals);
       end else begin
         if (nonblank(frvariety)) then begin
-          InvListOneItem(RepSpec,0,INr,ISr.Variety,CAb,true,itemout,grout,lastgroup,sum1p,nrp,groupqty,groupsum,roundof,nrq2p,dblstr,vlocationtotals);
+          InvListOneItem2(RepSpec,0,INr,ISr.Variety,CAb,true,itemout,grout,lastgroup,sum1p,nrp,groupqty,groupsum,roundof,nrq2p,dblstr,vlocationtotals,vreptotals);
         end else begin
-          InvListOneItem(RepSpec,0,INr,"",CAb,true,itemout,grout,lastgroup,sum1p,nrp,groupqty,groupsum,roundof,nrq2p,dblstr,vlocationtotals);
+          InvListOneItem2(RepSpec,0,INr,"",CAb,true,itemout,grout,lastgroup,sum1p,nrp,groupqty,groupsum,roundof,nrq2p,dblstr,vlocationtotals,vreptotals);
         end;
         if (ISb.UseSupersessionIN!=0) then begin
           switch (RepSpec.flags[21]) begin
             case 1:        
-              ShowSupersessionItems(RepSpec,INr,"",CAb,itemout,grout,lastgroup,sum1p,nrp,groupqty,groupsum,roundof,nrq2p,dblstr,vlocationtotals);    
+              ShowSupersessionItems(RepSpec,INr,"",CAb,itemout,grout,lastgroup,sum1p,nrp,groupqty,groupsum,roundof,nrq2p,dblstr,vlocationtotals,vreptotals);    
           end;
         end;
       end;
-      vreptotals["itemscount"] = vreptotals["itemscount"] + 1;
     end;
 LILLoopISEnd:;
+    if (locationgroupf) then begin
+      RepSpec.f2 = "";
+    end;
   end;
   RETURN;
 END;
 
-procedure ILLoopINDICode(record RcVc RepSpec,var val sum1p,var val nrp,roundmode roundof,var val nrq2p,vector val vlocationtotals)
+procedure ILLoopINDICode(record RcVc RepSpec,var val sum1p,var val nrp,roundmode roundof,var val nrq2p,vector val vlocationtotals,vector val vreptotals)
 BEGIN
   record PIVc PIr;
   record INVc INr;
@@ -1173,28 +1236,13 @@ BEGIN
   record ItemSettingBlock ISb;
   record SupersessionINVc SINr;
   integer keys2;
-  string 20 frvariety,tovariety;
 
   BlockLoad(CAb);
   BlockLoad(ISb);
   frart = FirstInRange(RepSpec.f1,20);
   toart = LastInRange(RepSpec.f1,20);
   frit = FirstInRange(RepSpec.f3,20);
-  toit = LastInRange(RepSpec.f3,20);
-  
-  if (nonblank(frart)) then begin
-    if (ReadFirstItem(frart,INr,false,false)) then begin
-      frvariety = right(frart,len(frart)-len(INr.Code));
-      frart = INr.Code;
-    end;
-  end;
-  if (nonblank(toart)) then begin
-    if (ReadFirstItem(toart,INr,false,false)) then begin
-      tovariety = right(toart,len(toart)-len(INr.Code));
-      toart = INr.Code;
-    end;
-  end;
-  
+  toit = LastInRange(RepSpec.f3,20);  
   found = true;
   DIr.CType = RepSpec.f5;
   while (LoopKey("CType",DIr,1,found)) begin
@@ -1305,13 +1353,13 @@ BEGIN
             end;
           end;
           if (ShowVarieties) then begin
-            InvListVarieties(RepSpec,INr,sz,msk,mskrep,varsubset,CAb,true,itemout,grout,lastgroup,sum1p,nrp,groupqty,groupsum,roundof,nrq2p,dblstr,vlocationtotals);
+            InvListVarieties2(RepSpec,INr,sz,msk,mskrep,varsubset,CAb,true,itemout,grout,lastgroup,sum1p,nrp,groupqty,groupsum,roundof,nrq2p,dblstr,vlocationtotals,vreptotals);
           end else begin
-            InvListOneItem(RepSpec,0,INr,"",CAb,true,itemout,grout,lastgroup,sum1p,nrp,groupqty,groupsum,roundof,nrq2p,dblstr,vlocationtotals);
+            InvListOneItem2(RepSpec,0,INr,"",CAb,true,itemout,grout,lastgroup,sum1p,nrp,groupqty,groupsum,roundof,nrq2p,dblstr,vlocationtotals,vreptotals);
             if (ISb.UseSupersessionIN!=0) then begin
               switch (RepSpec.flags[21]) begin
                 case 1:        
-                  ShowSupersessionItems(RepSpec,INr,"",CAb,itemout,grout,lastgroup,sum1p,nrp,groupqty,groupsum,roundof,nrq2p,dblstr,vlocationtotals);    
+                  ShowSupersessionItems(RepSpec,INr,"",CAb,itemout,grout,lastgroup,sum1p,nrp,groupqty,groupsum,roundof,nrq2p,dblstr,vlocationtotals,vreptotals);
               end;
             end;
           end;
@@ -1397,7 +1445,7 @@ BEGIN
     INr.Code = fromart;
     ckey = "DICode";
     keys = 1;
-    ILLoopINDICode(RepSpec,sum1p,nrp,roundof,nrq2p,vlocationtotals);
+    ILLoopINDICode(RepSpec,sum1p,nrp,roundof,nrq2p,vlocationtotals,vreptotals);
     goto LILLoopIN;
   end;
   
@@ -1554,9 +1602,9 @@ BEGIN
         end;
       end;
       if (ShowVarieties) then begin
-        InvListVarieties(RepSpec,INr,sz,msk,mskrep,varsubset,CAb,true,itemout,grout,lastgroup,sum1p,nrp,groupqty,groupsum,roundof,nrq2p,dblstr,vlocationtotals);
+        InvListVarieties2(RepSpec,INr,sz,msk,mskrep,varsubset,CAb,true,itemout,grout,lastgroup,sum1p,nrp,groupqty,groupsum,roundof,nrq2p,dblstr,vlocationtotals,vreptotals);
       end else begin
-        InvListOneItem(RepSpec,0,INr,"",CAb,true,itemout,grout,lastgroup,sum1p,nrp,groupqty,groupsum,roundof,nrq2p,dblstr,vlocationtotals);
+        InvListOneItem2(RepSpec,0,INr,"",CAb,true,itemout,grout,lastgroup,sum1p,nrp,groupqty,groupsum,roundof,nrq2p,dblstr,vlocationtotals,vreptotals);
       end;
       vreptotals["itemscount"] = vreptotals["itemscount"] + 1;
     end;
@@ -1576,8 +1624,8 @@ BEGIN
     Gray_Divider(0,1);
   end;
 LILLoopIN:;
-  RETURN;
-END;
+  return;
+end;
 
 global
 procedure InvValRn(record RcVc RepSpec)
@@ -1591,7 +1639,7 @@ begin
   string 255 tstr;
   Integer rw;
   vector val vlocationtotals;
-  Boolean found;
+  Boolean found,testf;
   record LocationVc Locr;
   vector val vreptotals;
   array integer a_colx;
@@ -1615,7 +1663,7 @@ begin
     end;
     if (nonblank(RepSpec.f2)) then begin
       tstr = USetStr(2768);
-      tstr = RepSpec.f2;
+      tstr = tstr & RepSpec.f2;
       Header(rw,tstr,0);
     end;
     if (HasItemGroups) then begin
@@ -1639,8 +1687,7 @@ begin
     if (HasContactClassification) then begin
       HTCustClassType(RepSpec.f5,tstr);
       if (nonblank(tstr)) then begin
-        Header(rw,tstr,1);
-        rw = rw + 1;
+        Header(rw,tstr,0);
       end; 
     end;
     if (nonblank(RepSpec.LastAcc)) then begin
@@ -1651,9 +1698,12 @@ begin
     if (HasCategories) then begin
       HTCustCat(RepSpec.f9,tstr);
       if (nonblank(tstr)) then begin
-        Header(rw,tstr,1);
-        rw = rw + 1;
+        Header(rw,tstr,0);
       end;
+    end;
+    if (IsEnterprise) then begin
+      HTConsigment(RepSpec.flags[12],tstr);
+      Header(rw,tstr,0);
     end;
     if (HasContactClassification) then begin
       HTCustClass(RepSpec.f8,tstr);
@@ -1669,17 +1719,12 @@ begin
       if (RepSpec.flags[1]==1) then begin
         tstr = USetStr(2346);      
       end;  
-      Header(rw,tstr,1);
-      rw = rw + 1;
+      Header(rw,tstr,0);
     end;
     if (nonblankdate(RepSpec.d1)) then begin
       tstr = RepSpec.d1;
       Header(rw,tstr,1);
       rw = rw + 1;
-    end;
-    if (IsEnterprise) then begin
-      HTConsigment(RepSpec.flags[12],tstr);
-      Header(rw,tstr,0);
     end;
     switch (RepSpec.flags[11]) begin
       case 0: 
@@ -1705,7 +1750,15 @@ begin
     end;
     Header(rw,USetStr(10549) & ": " & tstr,1);
     rw = rw + 1;
-  end else begin
+    if (nonblank(RepSpec.f10)) then begin
+      HTLocationGroup(RepSpec.f10,RepSpec.f10,tstr);
+      Header(rw,tstr,0);
+    end;
+    if (nonblank(RepSpec.f11)) then begin
+      HTLocationClassification(RepSpec.f11,RepSpec.f11,tstr);
+      Header(rw,tstr,1);
+      rw = rw + 1;
+    end;
   end;
   EndHeader;
 
@@ -1740,14 +1793,12 @@ begin
     SetRepCol(4,400);
     SetRepCol(5,240);
   end;
-  if ((RepSpec.ArtMode==0) or (RepSpec.ArtMode==2) or RepSpec.ArtMode == 4) then begin
+  if ((RepSpec.ArtMode==0) or (RepSpec.ArtMode==2)) then begin
     if (RepSpec.PocketPC==0) then begin
       StartFormat(15);
       OutString(0,0,USetStr(2325),false);
       OutString(2,0,USetStr(2326),false);
-      if (RepSpec.Media==mtFile or RepSpec.Media==mtExcel) then begin
-        OutString(2,0,"",false);
-      end;
+      OutString(5,0,USetStr(2327),false);
       OutStringAdjust(3,0,USetStr(2330),true,M4Val);
       if (RepSpec.flags[15]==1) then begin
         OutStringAdjustBiDi(350,0,USetStr(7593),true,M4Val,390);
@@ -1822,12 +1873,21 @@ begin
         if (Locr.Code!=RepSpec.f2) then begin found = false; end;
       end;
       if (found) then begin
-        if (vlocationtotals[Locr.Code]!=0) then begin
-          StartFormat(15);
-          OutString(0,0,Locr.Code,false);
-          OutVal(5,0,vlocationtotals[Locr.Code],M4UVal,true);
-          sum1 = sum1 + vlocationtotals[Locr.Code];
-          EndFormat;
+        testf = true;
+        if (nonblank(RepSpec.f10)) then begin
+          if (Locr.Group!=RepSpec.f10) then begin testf = false; end;
+        end;
+        if (nonblank(RepSpec.f11)) then begin
+          if (SetInSet2(RepSpec.f11,Locr.Classification)==false) then begin testf = false; end;
+        end;
+        if (testf) then begin
+          if (vlocationtotals[Locr.Code]!=0) then begin
+            StartFormat(15);
+            OutString(0,0,Locr.Code,false);
+            OutVal(5,0,vlocationtotals[Locr.Code],M4UVal,true);
+            sum1 = sum1 + vlocationtotals[Locr.Code];
+            EndFormat;
+          end;
         end;
       end;
     end;
@@ -1836,7 +1896,7 @@ begin
     OutVal(5,0,sum1,M4UVal,true);
     EndFormat;
   end else begin
-    if (RepSpec.ArtMode==0 or RepSpec.ArtMode == 4) then begin
+    if (RepSpec.ArtMode==0) then begin
       Gray_Divider(0,1);
     end;  
     StartFormat(15);
@@ -1855,9 +1915,7 @@ begin
     if (RepSpec.Media==mtFile or RepSpec.Media==mtExcel) then begin
       OutString(2,0,"",false);
     end;
-    if (RepSpec.ArtMode != 4) then begin
-      OutVal(6,0,sum1,M45Val,true);
-    end;
+    OutVal(6,0,sum1,M45Val,true);
     EndFormat;
   end;
 LInvValRn:; 
