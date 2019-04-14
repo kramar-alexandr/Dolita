@@ -8,6 +8,7 @@ remote function string 255 CurDrawerCode(string);
 external procedure POSEventVc_PrintToFiscalPrinter(var record POSEventVc,Boolean);
 external procedure POSAudit_WindowOpen(Integer);
 external outer procedure OpenSession_UpdateIVCash(integer);
+remote function time CurrentTimeFromServer();
 
 global
 function Boolean POSEventDClassUpdateTest(Integer wn)
@@ -86,7 +87,9 @@ begin
     POSEventr.TransDate = CurrentDate;//date and time must be from server which is assigned in RecordDefaults
   end;
   if (blanktime(POSEventr.TransTime)) then begin
-    POSEventr.TransTime = CurrentTime;
+    POSEventr.TransTime = CurrentTimeFromServer;
+    
+    logtext(0,"POSEventVcCheck settime");
   end;
   locPOSEventr.Drawer = POSEventr.Drawer;
 //  if (ReadLastKey("Drawer",locPOSEventr,1,true)) then begin

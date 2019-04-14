@@ -3057,3 +3057,12 @@ begin
   end;
   return;
 end;
+
+
+global function time CurrentTimeFromServer()// Edit ************************** BPI Ukraine - KramarAlexandr - 07, 14 04 2019 y. at 11:41:44 AM
+begin
+	
+	CurrentTimeFromServer = currenttime;
+
+return;
+end;

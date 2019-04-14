@@ -16,6 +16,7 @@ BEGIN
 
   Cashr.TransDate = CurrentDate;
   Cashr.TransTime = CurrentTime;
+  logtext(0,"CashVcRecordDefaults set time");
   Cashr.Total = blankval;
   Cashr.SerNr = -1;
   Cashr.SkipUpdatTime = 0;
@@ -239,6 +240,7 @@ begin
   end;  
   if (RequireOpenSession(Cashr.MachineName)) then begin
     if (Cashr.SkipUpdatTime==0) then begin
+    	logtext(0,"CashVcRecordCheck set time");
       Cashr.TransDate = CurrentDate;
       Cashr.TransTime = CurrentTime;
     end;
