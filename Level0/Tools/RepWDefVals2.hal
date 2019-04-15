@@ -432,6 +432,24 @@ BEGIN
   RepSpec.flags[2] = 1;
   RepSpec.flags[3] = 1;
   RepSpec.flags[4] = 1;
+  RepSpec.flags[5] = 1;// Edit ************************** BPI Ukraine - KramarAlexandr - 01, 15 04 2019 y. at 11:59:23 AM
+  RepSpec.flags[12] = 1;// Edit ************************** BPI Ukraine - KramarAlexandr - 01, 15 04 2019 y. at 11:59:49 AM
+  PutWindowRecord(wn,RepSpec);
+  SelectWindow(wn);
+  RETURN;
+END;
+
+global
+procedure SerialNrRClassReportDefaults(Integer wn)// Edit ************************** BPI Ukraine - KramarAlexandr - 01, 15 04 2019 y. at 12:02:36 PM
+BEGIN
+  record RcVc RepSpec;
+  
+  DeselectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  ReportDefaults(RepSpec,"SerialNrRClass");  
+
+  RepSpec.flags[1] = 1;
+  
   PutWindowRecord(wn,RepSpec);
   SelectWindow(wn);
   RETURN;
