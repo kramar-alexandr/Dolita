@@ -9,6 +9,9 @@ begin
   GetWindowRecord(wn,RepSpec);
   DeselectWindow(wn,false);
   fieldname = GetWindowString(wn,"FIELDNAME");
+  if(blank(fieldname))then begin
+  	fieldname = GetWindowString(wn,"fnam");
+  end;
   if fieldname=="F1" then begin
     if (pos > 0) then begin
       RepSpec.f1 = incode[0];
@@ -33,17 +36,24 @@ begin
   string 100 fieldname;
 
   fieldname = GetWindowString(wn,"PREV_FIELDNAME");
+  if(blank(fieldname))then begin// Edit ************************** BPI Ukraine - KramarAlexandr - 01, 15 04 2019 y. at 11:34:29 AM
+  	fieldname = GetWindowString(wn,"prfnam");
+  end;
   PutWindowString(wn,"FIELDNAME","");
   PutWindowString(wn,"PREV_FIELDNAME","");
+  PutWindowString(wn,"fnam","");// Edit ************************** BPI Ukraine - KramarAlexandr - 01, 15 04 2019 y. at 11:33:48 AM
+  PutWindowString(wn,"prfman","");// Edit ************************** BPI Ukraine - KramarAlexandr - 01, 15 04 2019 y. at 11:33:50 AM
   GetWindowRecord(wn,RepSpec);
   if fieldname=="f1" and nonblank(RepSpec.f1) then begin
     SetWindowNameArg(wn,RepSpec.f1 & ":" & RepSpec.f3);
     PutWindowString(wn,"FIELDNAME","F1");
+    PutWindowString(wn,"fnam","F1");// Edit ************************** BPI Ukraine - KramarAlexandr - 01, 15 04 2019 y. at 11:33:52 AM
     TestForMATVARINS(wn);
   end;
   if fieldname=="f2" and nonblank(RepSpec.f2) then begin
     SetWindowNameArg(wn,RepSpec.f2 & ":" & RepSpec.f3);
     PutWindowString(wn,"FIELDNAME","F2");
+    PutWindowString(wn,"fnam","F2");// Edit ************************** BPI Ukraine - KramarAlexandr - 01, 15 04 2019 y. at 11:33:55 AM
     TestForMATVARINS(wn);
   end;
 
@@ -56,8 +66,10 @@ begin
 
   if changed==0 then begin
     PutWindowString(wn,"PREV_FIELDNAME","");
+    PutWindowString(wn,"prfnam","");
   end else begin
     PutWindowString(wn,"PREV_FIELDNAME",fieldname);
+    PutWindowString(wn,"prfnam",fieldname);
   end;
 
 return;
