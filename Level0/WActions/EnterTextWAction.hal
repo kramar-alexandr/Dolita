@@ -312,6 +312,42 @@ begin
 				
 				otherwise
 				SoftKey(wn,anumberstr);
+		case "NPTSSearchItemRClass":
+			activefield = WindowActiveField(wn);
+			switch (activefield) begin
+				case "f1": 
+				DeselectWindow(wn,true);
+				GetWindowRecord(wn,RepSpec); 
+				RepSpec.f1 = RepSpec.f1 & anumberstr;
+				PutWindowRecord(wn,RepSpec);
+				WindowFieldGoto(wn,RepSpec,-1,activefield,false);
+				case "f2": 
+				DeselectWindow(wn,true);
+				GetWindowRecord(wn,RepSpec); 
+				RepSpec.f2 = RepSpec.f2 & anumberstr;
+				PutWindowRecord(wn,RepSpec);
+				WindowFieldGoto(wn,RepSpec,-1,activefield,false);
+		case "NPTSVarEnqWClass":
+			activefield = WindowActiveField(wn);
+			switch (activefield) begin
+				case "f4": 
+				DeselectWindow(wn,true);
+				GetWindowRecord(wn,RepSpec); 
+				RepSpec.f4 = RepSpec.f4 & anumberstr;
+				PutWindowRecord(wn,RepSpec);
+				WindowFieldGoto(wn,RepSpec,-1,activefield,false);
+		case "NPTSInvValWClass":
+			activefield = WindowActiveField(wn);
+			switch (activefield) begin
+				case "f4": 
+				DeselectWindow(wn,true);
+				GetWindowRecord(wn,RepSpec); 
+				RepSpec.f4 = RepSpec.f4 & anumberstr;
+				PutWindowRecord(wn,RepSpec);
+				WindowFieldGoto(wn,RepSpec,-1,activefield,false);
+				
+				otherwise
+				SoftKey(wn,anumberstr);
 			end;
 		otherwise
 		SoftKey(wn,anumberstr);
