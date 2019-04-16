@@ -133,8 +133,8 @@ begin
   h = h+l; ColourPushButton(h,v,h+h2,v+v3,"PriceChToolKeyPad0","0_",2);
   h = h+l; ColourPushButton(h,v,h+h2,v+v3,"PriceChToolKeyPadPoint",".",2);
   v = v+vs+10;
-  h = hm-2; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyC","C",2);
-  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyV","V",2);
+  h = hm-2; ColourPushButton(h,v,h+h2,v+v3,"PriceChToolKeyPadC","C",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"PriceChToolKeyPadV","V",2);
 //  ColourPushButton(h=h-2*l,v,h=h+2*h2+30,v+v3,"PriceChToolKeyOK","Pridėti",2);
 
 //  v = v - 30; v3 = 50; h2 = 85;
@@ -290,8 +290,8 @@ begin
   h = h+l; ColourPushButton(h,v,h+h2,v+v3,"PriceChToolKeyPad0","0_",2);
   h = h+l; ColourPushButton(h,v,h+h2,v+v3,"PriceChToolKeyPadPoint",".",2);
   v = v+vs+10;
-  h = hm-2; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyC","C",2);
-  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyV","V",2);
+  h = hm-2; ColourPushButton(h,v,h+h2,v+v3,"PriceChToolKeyPadC","C",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"PriceChToolKeyPadV","V",2);
 //  ColourPushButton(h=h-2*l,v,h=h+2*h2+30,v+v3,"PriceChToolKeyOK","Pridėti",2);
 
 //  v = v - 30; v3 = 50; h2 = 85;

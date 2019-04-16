@@ -35,6 +35,20 @@ begin
 end;
 
 global
+procedure PriceChToolKeyPadV()
+begin
+  PriceChToolKeyPad_Numbers("V");
+  return;
+end;
+
+global
+procedure PriceChToolKeyPadC()
+begin
+  PriceChToolKeyPad_Numbers("C");
+  return;
+end;
+
+global
 procedure PriceChToolKeyPad1()
 begin
   PriceChToolKeyPad_Numbers("1");
