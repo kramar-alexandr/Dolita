@@ -44,6 +44,9 @@ remote inner function Boolean IVCashVc_PasteCustCode(var record IVCashVc,string,
 remote inner procedure IVCashVc_PasteLoyaltyCardNr(var record IVCashVc);
 external inner function string 255 ReplaceCharByString(string,string,string);
 external inner procedure NextM4Number(string,var string); //EBS
+external inner function Boolean BPICUNPTDSClassOnClose(Integer);// Edit ************************** BPI Ukraine - KramarAlexandr - 03, 17 04 2019 y. at 10:46:25 AM
+remote inner updating function boolean bpirecordinsertcu(var record CUVc,boolean);// Edit ************************** BPI Ukraine - KramarAlexandr - 03, 17 04 2019 y. at 11:44:29 AM
+remote updating function LongInt CUVcRecordCheck(var record CUVc,record CUVc,LongInt,LongInt);
 
 SetLangMode(LangLithuanian,"LIT",2);
 
@@ -339,12 +342,13 @@ END;
 global updating
 procedure SaveCUNPTDSClass()
 begin
-  record CUVc CUr,lCUr;
+  record CUVc CUr,lCUr,fCUr;
   record IVCashVc IVCashr;
   record LocalMachineBlock LMb;
   integer wn,mwn,err;
   string 255 tstr,warning,email_str,cucode;
-
+	longint error;
+	
   wn = CurWindow;
   mwn = MotherWindow(wn);
   DeselectWindow(wn,true);
@@ -393,9 +397,25 @@ begin
   // LogText(0,"359 CUr.Code = " & CUr.Code & " cucode=" & cucode);
   // Save customer
   Putwindowrecord(wn,CUr);
-  if (!WindowDoOk(wn,0)) then begin
-  	//messagebox(0,"Save Error");
-    GoTo LSaveCUNPTDSClass;
+  //if (!WindowDoOk(wn,0)) then begin// Edit ************************** BPI Ukraine - KramarAlexandr - 03, 17 04 2019 y. at 10:43:46 AM
+  recordcopy(fCUr,CUr);
+  if(nonblank(CUr.Code))then begin
+		if(!readfirstmain(fCUr,1,true))then begin
+			error = CUVcRecordCheck(CUr,lCUr,Rs_insert,0);
+			if(error==0)then begin
+				if (!bpirecordinsertcu(CUr,true)) then begin
+					GoTo LSaveCUNPTDSClass;
+				end else begin
+					if(blank(cucode))then begin
+						cucode = CUr.Code;
+					end;
+					BPICUNPTDSClassOnClose(wn);
+					closewindow(wn);
+				end;
+			end else begin
+				GoTo LSaveCUNPTDSClass;
+			end;
+		end;
   end;
 
   LogText(0,"366 CUr.Code = " & CUr.Code & " cucode=" & cucode);

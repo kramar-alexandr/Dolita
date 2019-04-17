@@ -236,8 +236,16 @@ begin
   return;
 end;
 
+global updating function boolean bpirecordinsertcu(var record CUVc CUr,boolean flag)// Edit ************************** BPI Ukraine - KramarAlexandr - 03, 17 04 2019 y. at 11:44:29 AM
+begin
+
+	bpirecordinsertcu = recordinsert(CUr,flag);
+
+return;
+end;
+
 global
-function Boolean CUNPTDSClassOnClose(Integer wn,Integer wn2)
+function Boolean BPICUNPTDSClassOnClose(Integer wn)
 begin
   Integer mwn;
   record CUVc CUr;
@@ -308,7 +316,7 @@ begin
       RepSpec.f12 = CUr.VATNr;
       PutWindowRecord(mwn,RepSpec);
   end;
-  CUNPTDSClassOnClose = res;
+  BPICUNPTDSClassOnClose = res;
   return;
 end;
 
