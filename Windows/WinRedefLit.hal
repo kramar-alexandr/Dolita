@@ -1422,13 +1422,6 @@ begin
   WindowBegin("Įvairovių lentelės įvedimas",MATVARINSClass,CGother,VarMatrxEntryView);
   DynamicWindow;
   xpos = CntVarietyCode(1,axlabels);
-  ypos = CntVarietyCode(2,aylabels);
-  for (pos=1;pos<=ypos;pos=pos+1) begin
-    label = aylabels[pos];
-    if (ylabellen<len(label)) then begin
-      ylabellen = len(label);
-    end;
-  end;
 
   // EVS: DOL-1
   wn = CurWindow;
@@ -1437,6 +1430,17 @@ begin
     if (mwn > 0) then begin
       if (GetWindowClass(mwn) == "PODClass") then begin
         powinf = true;
+      end;
+      if (GetWindowClass(mwn)!="EBS_ChangeINVarVClass") then begin
+        
+      ypos = CntVarietyCode(2,aylabels);
+			for (pos=1;pos<=ypos;pos=pos+1) begin
+				label = aylabels[pos];
+				if (ylabellen<len(label)) then begin
+					ylabellen = len(label);
+				end;
+			end;  
+        
       end;
     end;
   end;
