@@ -1836,11 +1836,14 @@ we need another totals per session
                   OutString(70,0,USetStr(24607),false);
                 end else begin
                   OutString(0,0,aitcode[i],false);
+                  if (ReadFirstItem(aitcode[i],INr,false,false)) then begin// Edit ************************** BPI Ukraine - KramarAlexandr - 03, 17 04 2019 y. at 3:45:34 PM
+										aitname[i] = INr.Name;
+									end;
                   if (RepSpec.flags[7]==0) then begin  
                     OutString(70,0,aitname[i],false);      
                   end else begin
-                    INr.Code = aitcode[i];
-                    ReadFirstMain(INr,1,true);
+                    //INr.Code = aitcode[i];// Edit ************************** BPI Ukraine - KramarAlexandr - 03, 17 04 2019 y. at 3:45:41 PM
+                    //ReadFirstMain(INr,1,true);// Edit ************************** BPI Ukraine - KramarAlexandr - 03, 17 04 2019 y. at 3:45:39 PM
                     OutString(70,0,INr.Name,false);      
                   end;
                 end;
