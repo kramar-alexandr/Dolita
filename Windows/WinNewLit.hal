@@ -235,7 +235,7 @@ begin
   h = hm;
   EditFieldTLX(h+l+30,20,120,"Grąža",M4Val,ViewOnly,100,25,patM4black,vals0,true,0);
   EditFieldTL(h+l+30,v,120,"Pardavėjąs",M4UStr,Normal,10,f1,false,0);
-  EditFieldTL(h+l+30,v+=20,120,"Slaptažodis",M4UStr,Normal,20,f2,false,0);
+  EditFieldTL(h+l+30,v+=20,120,"Slaptažodis",M4Star,Normal,20,f2,false,0);
   v=v+29;
   h = hm; ColourPushButton(h,v,h+h2*3,v+v3,"SalesAssistantVClassUserListBtn","Pard. sąrašas",2);
   v = v+vs;
