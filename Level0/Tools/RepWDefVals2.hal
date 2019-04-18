@@ -418,7 +418,7 @@ BEGIN
   RETURN;
 END;
 
-global
+/*global
 procedure IVGPRClassReportDefaults(Integer wn)
 BEGIN
   record RcVc RepSpec;
@@ -437,7 +437,7 @@ BEGIN
   PutWindowRecord(wn,RepSpec);
   SelectWindow(wn);
   RETURN;
-END;
+END;*/
 
 global
 procedure SerialNrRClassReportDefaults(Integer wn)// Edit ************************** BPI Ukraine - KramarAlexandr - 01, 15 04 2019 y. at 12:02:36 PM
