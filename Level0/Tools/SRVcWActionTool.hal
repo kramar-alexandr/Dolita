@@ -90,13 +90,13 @@ begin
   SRrw.SerialNr = serial;
   SRrw.Qty = q;
   SRrw.VEInvoiceNr = FindPurchaseInvoiceNrForSerialNr(SRrw.ArtCode,SRrw.SerialNr,vinr,virownr);
-/*
-done when creating  NL Transaction
+
+//done when creating  NL Transaction????
   Locr.Code = SRrw.Location;
   if (ReadFirstMain(Locr,1,true)) then begin
     SRrw.Objects = AddObjectToObjectList(SRrw.Objects,Locr.Objects);        
   end;
-*/
+
   MatRowPut(SRp,rownr,SRrw);
   return;
 end;
@@ -104,6 +104,7 @@ end;
 global  
 procedure PasteArtCodeToSR(var record SRVc SRp,Integer rownr,record ItemStatusVc ISr,string serial,val q)
 begin
+
   PasteArtCodeToSR2(SRp,rownr,ISr,"",serial,q);
   return;
 end;
@@ -156,7 +157,7 @@ begin
   record SerNrTrackBlock SNrb;
   record LocationVc Locr;
 	longint pos;//EBS
-	
+		
   if (changedf) then begin
     BlockLoad(SNrb);
     rownr = arownr;
@@ -190,6 +191,8 @@ begin
         goto LSRVc_PasteArtCode;
       end;
     end;
+    	
+
     if (UserCanAction("DisallownonSerNrItemsOnSR",false)) then begin
       if (INr.SerNrf==0) then begin
         inwarn = USetStr(20106);
@@ -205,23 +208,36 @@ begin
     end else begin
       keys = 1;
     end;
+    Locr.Code = SRrw.Location;// Edit ************************** BPI Ukraine - KramarAlexandr - 04, 18 04 2019 y. at 12:15:18 PM
+    if(blank(SRrw.Location))then begin// Edit ************************** BPI Ukraine - KramarAlexandr - 04, 18 04 2019 y. at 12:15:19 PM
+    	Locr.Code = SRp.Location;
+    end;
+		if (ReadFirstMain(Locr,1,true)) then begin// Edit ************************** BPI Ukraine - KramarAlexandr - 04, 18 04 2019 y. at 1:56:27 PM
+			matrowget(SRp,rownr,SRrw); 
+			SRrw.Objects = AddObjectToObjectList(SRrw.Objects,Locr.Objects); 
+			matrowput(SRp,rownr,SRrw);    
+		end;
+
     while (LoopMain(ISr,keys,found)) begin
       if (ISr.Code!=INr.Code) then begin found = false; end;
       if (nonblank(SRrw.Location)) then begin     
         if (ISr.Location!=SRrw.Location) then begin
           found = false;
         end;
-      end;      
+      end;   
+         
       if (found) then begin
         testf = true;
         if (ISr.Location==";;;") then begin testf = false; end;
         if (ISr.Instock<=0) then begin testf = false; end;
         if (nonblank(varcode) and ISr.Variety != varcode) then begin testf = false; end; // EVS: DOL-110
         if (testf) then begin
+        
           switch (INr.SerNrf) begin
             case 0:
               Locr.Code = ISr.Location;
               ReadFirstMain(Locr,1,true);
+              
               if (Locr.RequirePos!=0) then begin
                 PasteArtCodePerPostionToSR(SRp,Locr.Code,rownr,ISr);
               end else begin
