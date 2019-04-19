@@ -78,7 +78,26 @@ BEGIN
     VEr.Code = PIr.VECode;
     if ReadFirstMain(VEr,1,true) then begin
       OUTFORMFIELD("FF_VEADDR1",VEr.InvAddr0);
-      OUTFORMFIELD("FF_VEADDR2",VEr.InvAddr1);
+      //OUTFORMFIELD("FF_VEADDR2",VEr.InvAddr1); //OLD
+      tstr = "";
+      if(nonblank(VEr.InvAddr3))then begin
+      	tstr = VEr.InvAddr3;
+      end;
+      if(nonblank(VEr.InvAddr4))then begin
+      	if(nonblank(tstr))then begin
+      		tstr = tstr & ", " & VEr.InvAddr4;
+      	end else begin
+					tstr = VEr.InvAddr4;
+      	end;
+      end;
+      if(nonblank(VEr.InvAddr2))then begin
+      	if(nonblank(tstr))then begin
+      		tstr = tstr & ", " & VEr.InvAddr2;
+      	end else begin
+					tstr = VEr.InvAddr2;
+      	end;
+      end;
+      OUTFORMFIELD("FF_VEADDR2",tstr);
       OUTFORMFIELD("FF_VEADDR3",VEr.InvAddr2);
       OUTFORMFIELD("FF_VEADDR4",VEr.InvAddr3);
       OUTFORMFIELD("FF_VEADDR5",VEr.InvAddr4);
