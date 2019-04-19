@@ -43,6 +43,7 @@ external outer procedure DOLPasteRowsToNPTSVarEnqWClass(Integer,array string,arr
 external outer procedure DOLPasteRowsToNPTSInvValWClass(Integer,array string,array val,Integer);
 external outer procedure DOLSetPageValuesOnRecordForNewPage(var record VarMatrxEntryVc, string);
 external outer procedure PasteVarInEBS_ChangeINVarVClass(Integer,array string,array val,Integer);
+external procedure DisplayIVCashItem(record IVCashVc,Integer);// Edit ************************** BPI Ukraine - KramarAlexandr - 05, 19 04 2019 y. at 11:47:27 AM
 
 global
 procedure PasteFromWn(Integer wn,string paststr)
@@ -1451,6 +1452,7 @@ begin
           end;
           GetWindowRecord(mwn,IVCashr);          
           IVCashDClass_RefreshStringList(mwn,IVCashr);
+          DisplayIVCashItem(IVCashr,MatRowCnt(IVCashr)-1);// Edit ************************** BPI Ukraine - KramarAlexandr - 05, 19 04 2019 y. at 11:47:04 AM
           SetWindowNameArg(mwn,"");
           // EVS: DOL-2
           GetWindowRecord(mwn,IVCashr);
