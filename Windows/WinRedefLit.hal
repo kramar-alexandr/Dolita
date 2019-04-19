@@ -10179,3 +10179,19 @@ begin
 //  CheckBox(8,v+=30,0,"Uždaryta",TerminateFlag);
   EndWindow;
 end;
+
+global
+procedure SerialNrRClassReportDefaults(Integer wn)// Edit ************************** BPI Ukraine - KramarAlexandr - 01, 15 04 2019 y. at 12:02:36 PM
+BEGIN
+  record RcVc RepSpec;
+  
+  DeselectWindow(wn,false);
+  GetWindowRecord(wn,RepSpec);
+  ReportDefaults(RepSpec,"SerialNrRClass");  
+
+  RepSpec.flags[1] = 1;
+  
+  PutWindowRecord(wn,RepSpec);
+  SelectWindow(wn);
+  RETURN;
+END;
