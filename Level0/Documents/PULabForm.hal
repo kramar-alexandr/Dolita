@@ -109,7 +109,6 @@ BEGIN
 //  PrintValue("F_HALINITPRICE",INr.InitPrice,M4Val,LangNrr,SysFormatRec,false);
   OUTFORMFIELD("F_TRANSDATE",INr.LastBasePriceChange);
   OUTFORMFIELD("F_ITEMCODE",INr.AlternativeCode);
-  OUTFORMFIELD("F_BARCODE",INr.BarCode);
 //EBS-->
   IN2r.Code = INr.Code; //IN2r - without variety
   if (!ReadFirstMain(IN2r,1,true)) then begin

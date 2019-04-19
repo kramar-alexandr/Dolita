@@ -58,7 +58,6 @@ BEGIN
   PrintValue("F_HALINITPRICE",INr.InitPrice,M4Val,LangNrr,SysFormatRec,false);
   OUTFORMFIELD("F_TRANSDATE",INr.LastBasePriceChange);
   OUTFORMFIELD("F_ITEMCODE",INr.AlternativeCode);
-//  OUTFORMFIELD("F_BARCODE",INr.BarCode);
   //EBS-->
   OUTFORMFIELD("F_AVDELNING",INr.Code);
   if nonblank(RepSpec.f12) then begin
