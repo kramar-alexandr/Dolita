@@ -10159,3 +10159,23 @@ LMasterWClass7_SpecMenu:;
 
   EndWindow;
 end;
+
+window VARDClass:1
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real v;
+  WindowBegin("Prekių įvairovė",VARDClass,CGview,VARView);
+  SetWRect(64,80,510,300);
+  UseView(VARVc);
+  EditField(100,v=6,50,"Kodas",St_i,Code,false,0);
+  EditField(120+150,v,50,"Grupė",Normal,VARGCode,false,VARGSClass);
+  EditField(100,v+=20,310,"Pavadinimas",Normal,Comment,false,0);
+  EditField(100,v+=20,70,"CM for Shopify",Normal,ShopCM,false,0);// Edit ************************** BPI Ukraine - KramarAlexandr - 05, 19 04 2019 y. at 10:27:20 AM
+  v = v+40;
+  MatrixBegin(4,v,-32,-10,-,99);
+  MatCol(1,24,"Kalba",0,LangCode,false,LangSClass);
+  MatCol(1,84,"Tekstas",0,Text,false,0);
+  EndMatrix;
+//  CheckBox(8,v+=30,0,"Uždaryta",TerminateFlag);
+  EndWindow;
+end;

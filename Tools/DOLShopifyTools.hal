@@ -151,6 +151,7 @@ begin
   if (nonblank(Shopb.InchVARGCode)) then begin
     VArr.Code = right(serp_var,len(serp_var) - 1);
     if (ReadFirstMain(VARr,1,true)) then begin
+    	
       if (VARr.VARGCode == Shopb.InchVARGCode) then begin
         BlockLoad(convb);
         rwc = MatRowCnt(convb);
@@ -163,6 +164,10 @@ begin
           end;
         end;
       end;
+      if(VARr.ShopCM!=blankval)then begin
+    		aval = VARr.ShopCM;// Edit ************************** BPI Ukraine - KramarAlexandr - 05, 19 04 2019 y. at 10:29:30 AM
+    		convf = true;
+    	end;
     end;
   end;
 

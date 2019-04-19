@@ -269,6 +269,11 @@ begin
   ArrayField(FromRow,M4Long,0,0); // EVS: DOL-129
   ArrayField(ToRow,M4Long,0,0); // EVS: DOL-129
   EndRecordAdd;
+  
+  RecordAddBegin(VARVc,"bpi_VARVc");
+  RecordField(ShopCM,M4UVal,0,0); // Edit ************************** BPI Ukraine - KramarAlexandr - 05, 19 04 2019 y. at 10:13:42 AM
+
+  EndRecordAdd;
 
   return;
 end;
