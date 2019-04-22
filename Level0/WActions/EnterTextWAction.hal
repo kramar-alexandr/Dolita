@@ -553,10 +553,25 @@ procedure NPTSPaymentToolKeyDel()
 begin
   Integer wn;
   string 255 tstr,activefield;
+  record RcVc RepSpec;
+  
   
   wn = CurWindow;
   activefield = WindowActiveField(wn);
   tstr = GetWindowString(wn,activefield);
+  
+  switch (GetWindowClass(wn)) begin
+		case "EBS_ChooseSalesManVClass":
+			switch (activefield) begin
+				case "f2": 
+				DeselectWindow(wn,true);
+				GetWindowRecord(wn,RepSpec); 
+				RepSpec.f2 = "";
+				PutWindowRecord(wn,RepSpec);
+				WindowFieldGoto(wn,RepSpec,-1,activefield,false);
+			end;
+	end;
+  
   tstr = ""; //EBS org: tstr = Left(tstr,len(tstr)-1);
   PutWindowString(wn,activefield,tstr);
   PasteStringNoSeparator(wn,tstr);
