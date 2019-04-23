@@ -1,5 +1,5 @@
 external function Boolean HasMultiCurrency();
-external function Boolean IsSessionOpen(string,string,Date,Time);
+remote function Boolean IsSessionOpen(string,string,Date,Time);
 external function Boolean EInvoiceForCustomer(Integer,string,record CUVc);
 external function Boolean HasEInvoicing();
 external outer function string 60 OuterReadSetTrObjectLabel2(string,var string);
@@ -7,7 +7,7 @@ external function Boolean HasModIN();
 external function Boolean HasModPO();
 external function Boolean HasModSO();
 remote procedure CntNPTSPaymentCurrenciesRemote(string,var Array string,var Array string,var Array Integer,var Array string,var Integer);
-external function Boolean FindItemVAR(string,var string,var string,var string,var string);
+remote function Boolean FindItemVAR(string,var string,var string,var string,var string);
 external function Boolean ReadFirstItem(string,var record INVc,Boolean,Boolean);
 external function Boolean GetCOSAcc(string,string,string,record AccBlock,record INVc,Integer,Boolean,Integer,var string,var string);
 remote function Boolean FillAndPrepareVarCodes(var Array string,Integer,string);
