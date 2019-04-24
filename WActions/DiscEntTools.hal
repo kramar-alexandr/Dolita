@@ -143,7 +143,7 @@ begin
     end;
     // :EVS
     
-    if stringtoval(IVCashrw.vRebate,m41val)!=0 then begin
+    if stringtoval(IVCashrw.vRebate,m423val)!=0 then begin
       price = IVCashrw.Sum / IVCashrw.Quant;
       IVCashrw.Price = Round(price,SetRoundModeD(3));
       MatRowPut(IVCashr,rownr,IVCashrw);

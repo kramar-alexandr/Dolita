@@ -257,7 +257,7 @@ BEGIN
     MatRowGet(IVCashp,i,IVCashrw);
     if (nonblank(IVCashrw.ArtCode)) then begin
       orgprice = IVCashrw.Price; //EBS
-      orgrebate = stringtoval(IVCashrw.vRebate,m41val); //EBS
+      orgrebate = stringtoval(IVCashrw.vRebate,m423val); //EBS
       orgsum = IVCashrw.Sum; //EBS
       price = IVCashrw.Price;
       vreb = blankval;
@@ -272,14 +272,14 @@ BEGIN
 
       // EVS: DOL-84
       revertdiscf = false;
-      if (pricingmatchf and stringtoval(IVCashrw.vRebate,m41val) > vreb and INr.InitDisc == stringtoval(IVCashrw.vRebate,m41val)) then begin
+      if (pricingmatchf and stringtoval(IVCashrw.vRebate,m423val) > vreb and INr.InitDisc == stringtoval(IVCashrw.vRebate,m423val)) then begin
         revertdiscf = true;
       end;
       // :EVS
 
       //EBS could integrate with DOL-84 however do not know what it was, better seperate so not to break smth there
-      if (pricingmatchf and !revertdiscf and stringtoval(IVCashrw.vRebate,m41val) > vreb) then begin
-        vreb = stringtoval(IVCashrw.vRebate,m41val);
+      if (pricingmatchf and !revertdiscf and stringtoval(IVCashrw.vRebate,m423val) > vreb) then begin
+        vreb = stringtoval(IVCashrw.vRebate,m423val);
       end;
 
       if (revertdiscf) then begin // EVS: DOL-84
@@ -299,7 +299,7 @@ BEGIN
         IVCashrw.VATCode = IVCashp.CustVATCode;
       end;
       MatRowPut(IVCashp,i,IVCashrw);
-      if orgprice!=IVCashrw.Price or orgrebate!=stringtoval(IVCashrw.vRebate,m41val) or orgsum!=IVCashrw.Sum then begin //EBS if nothing is changed do not call IVCashDchrsum, as it messes with sums sometimes
+      if orgprice!=IVCashrw.Price or orgrebate!=stringtoval(IVCashrw.vRebate,m423val) or orgsum!=IVCashrw.Sum then begin //EBS if nothing is changed do not call IVCashDchrsum, as it messes with sums sometimes
         if (IVCashDchrsum(IVCashp,i,GenOptRec.UseDiscount)) then begin
           IVCashDchsum(IVCashp,i);
         end;
@@ -916,7 +916,7 @@ BEGIN
 
   MatRowGet(IVCashr,rownr,IVCashrw);
   BlockLoad(GenOptRec);
-  vreb = stringtoval(IVCashrw.vRebate,m41val);
+  vreb = stringtoval(IVCashrw.vRebate,m423val);
   price = IVCashrw.Price;
 
   if (GetFirstItem(IVCashrw.ArtCode,INr)) then begin
@@ -945,7 +945,7 @@ BEGIN
     end;
 
     // EVS: DOL-84
-    if (HALMatchPricingWithLoyaltyCard(IVCashr) and fdisc > vreb and fdisc == stringtoval(IVCashrw.vRebate,m41val) and fprice == IVCashrw.Price) then begin
+    if (HALMatchPricingWithLoyaltyCard(IVCashr) and fdisc > vreb and fdisc == stringtoval(IVCashrw.vRebate,m423val) and fprice == IVCashrw.Price) then begin
       revertdiscf = true;
     end;
     // :EVS

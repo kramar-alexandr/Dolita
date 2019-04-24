@@ -180,7 +180,7 @@ procedure PrintNormalLine(row IVCashVc IVCashrw,boolean retinvf) begin
   printRegisterItem(IVCashrw.Spec,"A",p,IVCashrw.Quant,d,retinvf);
   
   //Print comment line with discount sum
-  if (stringtoval(IVCashrw.vRebate,m41val)!=0 and !retinvf) then begin
+  if (stringtoval(IVCashrw.vRebate,m423val)!=0 and !retinvf) then begin
     p = IVCashrw.Price;
     t = IVCashrw.Quant * p;
     d = t - IVCashrw.Sum;

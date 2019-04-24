@@ -199,7 +199,7 @@ begin
     if IVCashrw.stp==1 then begin
 
       price = IVCash2rw.Price;
-      if stringtoval(IVCash2rw.vRebate,m41val)!=0 then begin
+      if stringtoval(IVCash2rw.vRebate,m423val)!=0 then begin
         price = IVCash2rw.Sum / IVCash2rw.Quant;
       end;
 
@@ -1063,7 +1063,7 @@ begin
     rwc = MatRowCnt(IVCashr);
     for (i = 0; i < rwc; i = i + 1) begin
       MatRowGet(IVCashr,i,IVCashrw);
-      if (IVCashrw.stp == kInvoiceRowTypeNormal and IVCashrw.Price > max_price and nonblank(IVCashrw.ArtCode) and stringtoval(IVCashrw.vRebate,m41val) < 100) then begin
+      if (IVCashrw.stp == kInvoiceRowTypeNormal and IVCashrw.Price > max_price and nonblank(IVCashrw.ArtCode) and stringtoval(IVCashrw.vRebate,m423val) < 100) then begin
         max_price = IVCashrw.Price;
         max_index = i;
       end;

@@ -757,6 +757,7 @@ L44GetItemPriceDiscount3:;
         end;
       end;
     end;
+    
     // EVS: DOL-84
     if (freb != blankval and tdisc == blankval) then begin
       discount = freb;

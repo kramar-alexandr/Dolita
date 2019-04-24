@@ -1004,7 +1004,7 @@ begin
           // :EVS
 
           v_artcost[index] = IVCashrw.BasePrice;
-          v_artrebate[index] = stringtoval(IVCashrw.vRebate,m41val);
+          v_artrebate[index] = stringtoval(IVCashrw.vRebate,m423val);
 
         end else begin
           v_artinvqty[index] = v_artinvqty[index] + IVCashrw.Quant;
@@ -1196,7 +1196,7 @@ begin
           // :EVS
 
           v_artcost[index] = IVrw.BasePrice*coef;
-          v_artrebate[index] = stringtoval(IVrw.vRebate,m41val);
+          v_artrebate[index] = stringtoval(IVrw.vRebate,m423val);
 
         end else begin
           v_artinvqty[index] = v_artinvqty[index] + (IVrw.Quant*coef);
@@ -1471,7 +1471,7 @@ begin
                 end;
               end;
               if (rowtestf and RepSpec.ArtMode == 1 and RepSpec.vals0 != blankval) then begin
-                if (stringtoval(IVCashrw.vRebate,m41val) < RepSpec.vals0-1 or stringtoval(IVCashrw.vRebate,m41val) > RepSpec.vals0+1) then begin
+                if (stringtoval(IVCashrw.vRebate,m423val) < RepSpec.vals0-1 or stringtoval(IVCashrw.vRebate,m423val) > RepSpec.vals0+1) then begin
                   rowtestf = false;
                 end;
               end;

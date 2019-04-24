@@ -304,10 +304,10 @@ LkInvoiceRowTypeNormal3:;
         case kInvoiceRowTypeNormal:
 LkInvoiceRowTypeNormal4:;
           if (IVCashrw.ArtCode==CDb.DiscountItem) then begin
-            EBS_AddStringListRow(wn,width,LMb.POSFontSize,IVCashrw.ArtCode,IVCashrw.Spec,ValToString(blankval,M4Qty,ThousandSeparator,DecimalSeparator,0),ValToString(IVCashrw.Price,M4Val,ThousandSeparator,DecimalSeparator,0),ValToString(IVCashrw.Sum,M4Val,ThousandSeparator,DecimalSeparator,0),ValToString(stringtoval(IVCashrw.vRebate,M41Val),M41Val,ThousandSeparator,DecimalSeparator,0),i,IVCashrw.VATCode,IVCashrw.Location,IVCashrw.Salesmen); //EBS chagned proc
+            EBS_AddStringListRow(wn,width,LMb.POSFontSize,IVCashrw.ArtCode,IVCashrw.Spec,ValToString(blankval,M4Qty,ThousandSeparator,DecimalSeparator,0),ValToString(IVCashrw.Price,M4Val,ThousandSeparator,DecimalSeparator,0),ValToString(IVCashrw.Sum,M4Val,ThousandSeparator,DecimalSeparator,0),ValToString(stringtoval(IVCashrw.vRebate,m423val),M41Val,ThousandSeparator,DecimalSeparator,0),i,IVCashrw.VATCode,IVCashrw.Location,IVCashrw.Salesmen); //EBS chagned proc
             line = line + 1;
           end else begin
-            EBS_AddStringListRow(wn,width,LMb.POSFontSize,IVCashrw.ArtCode,IVCashrw.Spec,ValToString(IVCashrw.Quant,M4Qty,ThousandSeparator,DecimalSeparator,0),ValToString(IVCashrw.Price,M4Val,ThousandSeparator,DecimalSeparator,0),ValToString(IVCashrw.Sum,M4Val,ThousandSeparator,DecimalSeparator,0),ValToString(stringtoval(IVCashrw.vRebate,M41Val),M41Val,ThousandSeparator,DecimalSeparator,0),i,IVCashrw.VATCode,IVCashrw.Location,IVCashrw.Salesmen);
+            EBS_AddStringListRow(wn,width,LMb.POSFontSize,IVCashrw.ArtCode,IVCashrw.Spec,ValToString(IVCashrw.Quant,M4Qty,ThousandSeparator,DecimalSeparator,0),ValToString(IVCashrw.Price,M4Val,ThousandSeparator,DecimalSeparator,0),ValToString(IVCashrw.Sum,M4Val,ThousandSeparator,DecimalSeparator,0),ValToString(stringtoval(IVCashrw.vRebate,m423val),M41Val,ThousandSeparator,DecimalSeparator,0),i,IVCashrw.VATCode,IVCashrw.Location,IVCashrw.Salesmen);
             line = line + 1;
             if (nonblank(IVCashrw.SerialNr)) then begin
               AddStringListRow2(wn,USetStr(24178) & ":  " & IVCashrw.SerialNr,"");
@@ -344,9 +344,9 @@ LkInvoiceRowTypeNormal4:;
           if (blank(tstr)) then begin
             tstr = USetStr(24194);
           end;
-          EBS_AddStringListRow(wn,width,LMb.POSFontSize,IVCashrw.PayMode,tstr & ": " & IVCashrw.GCNr,"","",ValToString(IVCashrw.Sum,M4Val,ThousandSeparator,DecimalSeparator,0),ValToString(stringtoval(IVCashrw.vRebate,M41Val),M41Val,ThousandSeparator,DecimalSeparator,0),i,"","",IVCashrw.Salesmen); //EBS changed proc
+          EBS_AddStringListRow(wn,width,LMb.POSFontSize,IVCashrw.PayMode,tstr & ": " & IVCashrw.GCNr,"","",ValToString(IVCashrw.Sum,M4Val,ThousandSeparator,DecimalSeparator,0),ValToString(stringtoval(IVCashrw.vRebate,m423val),M41Val,ThousandSeparator,DecimalSeparator,0),i,"","",IVCashrw.Salesmen); //EBS changed proc
         case kInvoiceRowTypeVoid:
-          EBS_AddStringListRow(wn,width,LMb.POSFontSize,IVCashrw.ArtCode,IVCashrw.Spec,ValToString(IVCashrw.Quant,M4Qty,ThousandSeparator,DecimalSeparator,0),ValToString(IVCashrw.Price,M4Val,ThousandSeparator,DecimalSeparator,0),ValToString(IVCashrw.Sum,M4Val,ThousandSeparator,DecimalSeparator,0),ValToString(stringtoval(IVCashrw.vRebate,M41Val),M41Val,ThousandSeparator,DecimalSeparator,0),i,IVCashrw.VATCode,IVCashrw.Location,IVCashrw.Salesmen); //EBS changed proc
+          EBS_AddStringListRow(wn,width,LMb.POSFontSize,IVCashrw.ArtCode,IVCashrw.Spec,ValToString(IVCashrw.Quant,M4Qty,ThousandSeparator,DecimalSeparator,0),ValToString(IVCashrw.Price,M4Val,ThousandSeparator,DecimalSeparator,0),ValToString(IVCashrw.Sum,M4Val,ThousandSeparator,DecimalSeparator,0),ValToString(stringtoval(IVCashrw.vRebate,m423val),M41Val,ThousandSeparator,DecimalSeparator,0),i,IVCashrw.VATCode,IVCashrw.Location,IVCashrw.Salesmen); //EBS changed proc
           line = line + 1;
       case kInvoiceRowTypeSalesAssistant:
         AddStringListRow2(wn,USetStr(24192) & "  " & IVCashrw.SalesAssistant,"");
@@ -564,10 +564,10 @@ LkIVRowTypeNormal3:;
       switch (IVrw.stp) begin
         case kInvoiceRowTypeCorrection:
           if (IVrw.ArtCode==CDb.DiscountItem) then begin
-            AddStringListRow(wn,width,LMb.POSFontSize,"K | " & IVrw.ArtCode,IVrw.Spec,ValToString(blankval,M4Qty,ThousandSeparator,DecimalSeparator,0),ValToString(IVrw.Price,M4Val,ThousandSeparator,DecimalSeparator,0),ValToString(IVrw.Sum,M4Val,ThousandSeparator,DecimalSeparator,0),ValToString(IVrw.vRebate,M41Val,ThousandSeparator,DecimalSeparator,0),i,IVrw.VATCode,IVrw.Location);
+            AddStringListRow(wn,width,LMb.POSFontSize,"K | " & IVrw.ArtCode,IVrw.Spec,ValToString(blankval,M4Qty,ThousandSeparator,DecimalSeparator,0),ValToString(IVrw.Price,M4Val,ThousandSeparator,DecimalSeparator,0),ValToString(IVrw.Sum,M4Val,ThousandSeparator,DecimalSeparator,0),ValToString(IVrw.vRebate,m423val,ThousandSeparator,DecimalSeparator,0),i,IVrw.VATCode,IVrw.Location);
             line = line + 1;
           end else begin
-            AddStringListRow(wn,width,LMb.POSFontSize,"K | " & IVrw.ArtCode,IVrw.Spec,ValToString(IVrw.Quant,M4Qty,ThousandSeparator,DecimalSeparator,0),ValToString(IVrw.Price,M4Val,ThousandSeparator,DecimalSeparator,0),ValToString(IVrw.Sum,M4Val,ThousandSeparator,DecimalSeparator,0),ValToString(IVrw.vRebate,M41Val,ThousandSeparator,DecimalSeparator,0),i,IVrw.VATCode,IVrw.Location);
+            AddStringListRow(wn,width,LMb.POSFontSize,"K | " & IVrw.ArtCode,IVrw.Spec,ValToString(IVrw.Quant,M4Qty,ThousandSeparator,DecimalSeparator,0),ValToString(IVrw.Price,M4Val,ThousandSeparator,DecimalSeparator,0),ValToString(IVrw.Sum,M4Val,ThousandSeparator,DecimalSeparator,0),ValToString(IVrw.vRebate,m423val,ThousandSeparator,DecimalSeparator,0),i,IVrw.VATCode,IVrw.Location);
             line = line + 1;
             if (nonblank(IVrw.SerialNr)) then begin
               AddStringListRow2(wn,USetStr(24178) & ":  " & IVrw.SerialNr,"");
@@ -601,10 +601,10 @@ LkIVRowTypeNormal3:;
         case kInvoiceRowTypeNormal:
 LkIVRowTypeNormal4:;
           if (IVrw.ArtCode==CDb.DiscountItem) then begin
-            AddStringListRow(wn,width,LMb.POSFontSize,IVrw.ArtCode,IVrw.Spec,ValToString(blankval,M4Qty,ThousandSeparator,DecimalSeparator,0),ValToString(IVrw.Price,M4Val,ThousandSeparator,DecimalSeparator,0),ValToString(IVrw.Sum,M4Val,ThousandSeparator,DecimalSeparator,0),ValToString(IVrw.vRebate,M41Val,ThousandSeparator,DecimalSeparator,0),i,IVrw.VATCode,IVrw.Location);
+            AddStringListRow(wn,width,LMb.POSFontSize,IVrw.ArtCode,IVrw.Spec,ValToString(blankval,M4Qty,ThousandSeparator,DecimalSeparator,0),ValToString(IVrw.Price,M4Val,ThousandSeparator,DecimalSeparator,0),ValToString(IVrw.Sum,M4Val,ThousandSeparator,DecimalSeparator,0),ValToString(IVrw.vRebate,m423val,ThousandSeparator,DecimalSeparator,0),i,IVrw.VATCode,IVrw.Location);
             line = line + 1;
           end else begin
-            AddStringListRow(wn,width,LMb.POSFontSize,IVrw.ArtCode,IVrw.Spec,ValToString(IVrw.Quant,M4Qty,ThousandSeparator,DecimalSeparator,0),ValToString(IVrw.Price,M4Val,ThousandSeparator,DecimalSeparator,0),ValToString(IVrw.Sum,M4Val,ThousandSeparator,DecimalSeparator,0),ValToString(IVrw.vRebate,M41Val,ThousandSeparator,DecimalSeparator,0),i,IVrw.VATCode,IVrw.Location);
+            AddStringListRow(wn,width,LMb.POSFontSize,IVrw.ArtCode,IVrw.Spec,ValToString(IVrw.Quant,M4Qty,ThousandSeparator,DecimalSeparator,0),ValToString(IVrw.Price,M4Val,ThousandSeparator,DecimalSeparator,0),ValToString(IVrw.Sum,M4Val,ThousandSeparator,DecimalSeparator,0),ValToString(IVrw.vRebate,m423val,ThousandSeparator,DecimalSeparator,0),i,IVrw.VATCode,IVrw.Location);
             line = line + 1;
             if (nonblank(IVrw.SerialNr)) then begin
               AddStringListRow2(wn,USetStr(24178) & ":  " & IVrw.SerialNr,"");
@@ -638,9 +638,9 @@ LkIVRowTypeNormal4:;
           if (blank(tstr)) then begin
             tstr = USetStr(24194);
           end;
-          AddStringListRow(wn,width,LMb.POSFontSize,IVrw.PayMode,tstr,"",IVrw.GCNr,ValToString(IVrw.Sum,M4Val,ThousandSeparator,DecimalSeparator,0),ValToString(IVrw.vRebate,M41Val,ThousandSeparator,DecimalSeparator,0),i,"","");
+          AddStringListRow(wn,width,LMb.POSFontSize,IVrw.PayMode,tstr,"",IVrw.GCNr,ValToString(IVrw.Sum,M4Val,ThousandSeparator,DecimalSeparator,0),ValToString(IVrw.vRebate,m423val,ThousandSeparator,DecimalSeparator,0),i,"","");
         case kInvoiceRowTypeVoid:
-          AddStringListRow(wn,width,LMb.POSFontSize,IVrw.ArtCode,IVrw.Spec,ValToString(IVrw.Quant,M4Qty,ThousandSeparator,DecimalSeparator,0),ValToString(IVrw.Price,M4Val,ThousandSeparator,DecimalSeparator,0),ValToString(IVrw.Sum,M4Val,ThousandSeparator,DecimalSeparator,0),ValToString(IVrw.vRebate,M41Val,ThousandSeparator,DecimalSeparator,0),i,IVrw.VATCode,IVrw.Location);
+          AddStringListRow(wn,width,LMb.POSFontSize,IVrw.ArtCode,IVrw.Spec,ValToString(IVrw.Quant,M4Qty,ThousandSeparator,DecimalSeparator,0),ValToString(IVrw.Price,M4Val,ThousandSeparator,DecimalSeparator,0),ValToString(IVrw.Sum,M4Val,ThousandSeparator,DecimalSeparator,0),ValToString(IVrw.vRebate,m423val,ThousandSeparator,DecimalSeparator,0),i,IVrw.VATCode,IVrw.Location);
           line = line + 1;
         case kInvoiceRowTypeUpdateMark:
           AddStringListRow(wn,width,LMb.POSFontSize,IVrw.VoidedSign,IVrw.Spec,"","","","",i,"","");
@@ -786,7 +786,7 @@ begin
     if (testf) then begin
       switch (RestAccrw.stp) begin
         case kInvoiceRowTypeNormal:               
-          AddStringListRow(wn,width,LMb.POSFontSize,RestAccrw.ArtCode,RestAccrw.Spec,ValToString(RestAccrw.Quant,M4Qty,ThousandSeparator,DecimalSeparator,0),ValToString(RestAccrw.Price,M4Val,ThousandSeparator,DecimalSeparator,0),ValToString(RestAccrw.Sum,M4Val,ThousandSeparator,DecimalSeparator,0),ValToString(RestAccrw.vRebate,M41Val,ThousandSeparator,DecimalSeparator,0),i,"","");
+          AddStringListRow(wn,width,LMb.POSFontSize,RestAccrw.ArtCode,RestAccrw.Spec,ValToString(RestAccrw.Quant,M4Qty,ThousandSeparator,DecimalSeparator,0),ValToString(RestAccrw.Price,M4Val,ThousandSeparator,DecimalSeparator,0),ValToString(RestAccrw.Sum,M4Val,ThousandSeparator,DecimalSeparator,0),ValToString(RestAccrw.vRebate,m423val,ThousandSeparator,DecimalSeparator,0),i,"","");
           line = line + 1;
       case kInvoiceRowTypeSalesAssistant:
         AddStringListRow2(wn,USetStr(24192) & "  " & RestAccrw.SalesAssistant,"");
@@ -796,7 +796,7 @@ begin
           line = line + 1;
 */          
         case kInvoiceRowTypeVoid:
-          AddStringListRow5(wn,width,LMb.POSFontSize,RestAccrw.ArtCode,RestAccrw.Spec,ValToString(RestAccrw.Quant,M4Qty,ThousandSeparator,DecimalSeparator,0),ValToString(RestAccrw.Price,M4Val,ThousandSeparator,DecimalSeparator,0),ValToString(RestAccrw.Sum,M4Val,ThousandSeparator,DecimalSeparator,0),ValToString(RestAccrw.vRebate,M41Val,ThousandSeparator,DecimalSeparator,0),i,"","",1);
+          AddStringListRow5(wn,width,LMb.POSFontSize,RestAccrw.ArtCode,RestAccrw.Spec,ValToString(RestAccrw.Quant,M4Qty,ThousandSeparator,DecimalSeparator,0),ValToString(RestAccrw.Price,M4Val,ThousandSeparator,DecimalSeparator,0),ValToString(RestAccrw.Sum,M4Val,ThousandSeparator,DecimalSeparator,0),ValToString(RestAccrw.vRebate,m423val,ThousandSeparator,DecimalSeparator,0),i,"","",1);
           line = line + 1;
       end;
     end;
