@@ -2789,6 +2789,7 @@ begin
   SpecMenuGroup("",kSpecMenuGroupTypeExtendedPlusMenu,0);
   SpecialMenu("Sukurti perkamą prekė",' ',1,"PIFromINDsm");
   SpecialMenu("Sukurti ruošinį",' ',2,"RecFromINDsm");
+  //SpecialMenu("Show",' ',2,"RecFromINDsm");
   EndWindow;
 end;
 
@@ -9865,7 +9866,7 @@ not possible to store in DB , but anyway, i am sure Karl would have never approv
 end;
 
 
-window MasterWClass:7
+/*window MasterWClass:7
   wtag("language","ENG"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
 begin
   real es,h,h2,hfirst,hs,v,v1,v2,voff,vs,ggn,hcount;
@@ -10108,14 +10109,7 @@ begin
     AddBic(637,638,h+=h2,v,ToolModule,0,  "Switch Module");
   end;
   AddBic(632,730,h+=h2,v,ToolOpen,0,  "Companies");
-/*  
-add when working
-//  if (TestModule("modIntProjMan")) then begin
-    h = hfirst; v=v+78+2*es;  
-    AddBic(701+0,700,h,v,ToolPipeline,0,"Projects");
-    AddBic(623,624,h+=h2,v+voff,ToolTodo,0,"Issues");
-//  end;
-*/
+
 
 LMasterWClass7_SpecMenu:;
   if (HasMetroTestFeatures) then begin
@@ -10158,7 +10152,7 @@ LMasterWClass7_SpecMenu:;
   SpecialMenu("Open Background",' ',9,"OpenBackgroundMasterWsm");
 
   EndWindow;
-end;
+end;*/
 
 window VARDClass:1
   wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
