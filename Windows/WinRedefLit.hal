@@ -1473,13 +1473,12 @@ begin
     end;
   end;
   // :EVS
-
   starth = 7*ylabellen;
   if (starth<70) then begin starth = 70; end;
   if (powinf) then begin // EVS: DOL-1
-    SetWRect(80,80,200+(xpos*50)+(starth-70),165+(ypos*17)+70); //EBS edit
+    SetWRect(80,80,200+((xpos-spos)*50)+(starth-70),165+(ypos*17)+70); //EBS edit
   end else begin
-    SetWRect(80,80,200+(xpos*50)+(starth-70),165+(ypos*17)+70); //EBS edit
+    SetWRect(80,80,200+((xpos-spos)*50)+(starth-70),165+(ypos*17)+70); //EBS edit
   end;
   UseView(VarMatrxEntryVc);
   h = 10; v = -40;
