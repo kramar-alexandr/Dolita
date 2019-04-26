@@ -1752,11 +1752,11 @@ LSkipOffNoValidation:;
     end;
   end;
   
-  if (infound==false) then begin
+  /*if (infound==false) then begin// Edit ************************** BPI Ukraine - KramarAlexandr - 05, 26 04 2019 y. at 3:04:00 PM
     RecordCheckError(1030,"",0,"ArtCode");      
     res = -1; 
     goto LIVCashVcRecordCheck;   
-  end;
+  end;*/
   cash = cash + IVCashr.RecValue;
   cash = cash + IVCashr.RecValue2;
   cash = cash + IVCashr.CashValue;
