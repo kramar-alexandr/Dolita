@@ -1417,7 +1417,7 @@ begin
   integer wn,mwn;
   boolean powinf;
   boolean nextbutf,prevbutf;
-  integer spos,pgnum;
+  integer spos,pgnum,length;
 
   WindowBegin("Įvairovių lentelės įvedimas",MATVARINSClass,CGother,VarMatrxEntryView);
   DynamicWindow;
@@ -1476,9 +1476,17 @@ begin
   starth = 7*ylabellen;
   if (starth<70) then begin starth = 70; end;
   if (powinf) then begin // EVS: DOL-1
-    SetWRect(80,80,200+((xpos-spos)*50)+(starth-70),165+(ypos*17)+70); //EBS edit
+  	length = 200+((xpos-spos)*50)+(starth-70);
+  	if(length<570)then begin
+  		length = 600;
+  	end;
+    SetWRect(80,80,length,165+(ypos*17)+70); //EBS edit
   end else begin
-    SetWRect(80,80,200+((xpos-spos)*50)+(starth-70),165+(ypos*17)+70); //EBS edit
+    length = 200+((xpos-spos)*50)+(starth-70);
+    if(length<570)then begin
+  		length = 600;
+  	end;
+    SetWRect(80,80,length,165+(ypos*17)+70); //EBS edit
   end;
   UseView(VarMatrxEntryVc);
   h = 10; v = -40;
