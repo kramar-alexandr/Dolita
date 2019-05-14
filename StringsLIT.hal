@@ -12,9 +12,9 @@ enum begin
   kPOSButtonTypeCopyLastReceipt = 212,
   kPOSButtonTypeReturnItem = 213,
   kPOSButtonTypePeriodicReport = 214,
-  kPOSButtonTypePrintReceipt = 215
-  kPOSButtonTypeCreateCustomer = 216
-
+  kPOSButtonTypePrintReceipt = 215,
+  kPOSButtonTypeCreateCustomer = 216,
+	kPOSButtonTypeDiscountCoupon = 217// Edit ************************** BPI Ukraine - KramarAlexandr - 01, 13 05 2019 y. at 9:36:35 PM
 end;
 
 event startup
@@ -180,6 +180,7 @@ begin
   SetText(kPOSButtonTypeCancelNew,"Nutraukti"); // EVS: DOL-78
   SetText(kPOSButtonTypeCreateCreditSalesInvoice,"Perkelti į Kredito pažymą");//VITO: DOL-89
   SetText(kPOSButtonTypeCreateCustomer,"Įvesti pirkėją"); //EBS
+  SetText(kPOSButtonTypeDiscountCoupon,"Coupon for discount");// Edit ************************** BPI Ukraine - KramarAlexandr - 01, 13 05 2019 y. at 9:33:20 PM
   EndSet;
 
   SetBegin(1495); // pos invoice, subset of 431
@@ -306,6 +307,7 @@ begin
   SetText(kPOSButtonTypeCancelNew,"Nutraukti"); // EVS: DOL-78
   SetText(kPOSButtonTypeCreateCreditSalesInvoice,"Perkelti į Kredito pažymą");//VITO: DOL-89
   SetText(kPOSButtonTypeCreateCustomer,"Įvesti pirkėją"); //EBS
+  SetText(kPOSButtonTypeDiscountCoupon,"Coupon for discount");// Edit ************************** BPI Ukraine - KramarAlexandr - 01, 13 05 2019 y. at 9:33:20 PM
   EndSet;
 
   SetBegin(11001);

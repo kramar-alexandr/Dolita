@@ -122,9 +122,9 @@ enum begin
   kPOSButtonTypeCopyLastReceipt = 212,
   kPOSButtonTypeReturnItem = 213,
   kPOSButtonTypePeriodicReport = 214,
-  kPOSButtonTypePrintReceipt = 215
-  kPOSButtonTypeCreateCustomer = 216
-
+  kPOSButtonTypePrintReceipt = 215,
+  kPOSButtonTypeCreateCustomer = 216,
+  kPOSButtonTypeDiscountCoupon = 217// Edit ************************** BPI Ukraine - KramarAlexandr - 01, 13 05 2019 y. at 9:34:46 PM
 end;
 
 event DefineWindows
@@ -1086,6 +1086,8 @@ begin
         procstr = procstr & "EBS_FiscalPrintReceipt";
       case kPOSButtonTypeCreateCustomer:
         procstr = procstr & "EBS_TSCreateNewCustomer";
+      case kPOSButtonTypeDiscountCoupon:// Edit ************************** BPI Ukraine - KramarAlexandr - 01, 13 05 2019 y. at 9:35:08 PM
+        procstr = procstr & "BPI_ScanDiscountCoupon";
 //EBS<--
       case 200:// RRA: DOL-4
         procstr = procstr & "TouchScreenCollectionsAnalysisReport";

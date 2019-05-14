@@ -47,6 +47,8 @@ external inner procedure NextM4Number(string,var string); //EBS
 external inner function Boolean BPICUNPTDSClassOnClose(Integer);// Edit ************************** BPI Ukraine - KramarAlexandr - 03, 17 04 2019 y. at 10:46:25 AM
 remote inner updating function boolean bpirecordinsertcu(var record CUVc,boolean);// Edit ************************** BPI Ukraine - KramarAlexandr - 03, 17 04 2019 y. at 11:44:29 AM
 remote updating function LongInt CUVcRecordCheck(var record CUVc,record CUVc,LongInt,LongInt);
+remote inner procedure BPI_RA_ChangeDiscountForAll(var record IVCashVc,val);// Edit ************************** BPI Ukraine - KramarAlexandr - 01, 13 05 2019 y. at 11:05:25 PM
+
 
 SetLangMode(LangLithuanian,"LIT",2);
 
@@ -564,6 +566,90 @@ begin
 
   return;
 end;
+
+
+global
+procedure IVCashDClassBPI_ScanDiscountCoupon()
+begin
+  Integer wn,mwn,nwn;
+  record IVCashVc IVCashr;
+  record RcVc RepSpec;
+
+  wn = curwindow;
+  if(getwindowclass(wn)=="NPTSIVCashDClass")then begin
+  	getwindowrecord(wn,IVCashr);
+  	if(IVCashr.OKFlag==0)then begin
+  		nwn = OpenWindow("RebateCouponScanWClass",1,wn,"","",RepSpec);
+  	end;
+  end;
+
+  return;
+end;
+
+global
+function Boolean RebateCouponScanWClassOnOKWindow(integer wn)
+begin
+  Boolean res,testf;
+  string 255 WinSearchField;  
+	record IVCashVc IVCashr;
+	integer mwn;
+	record RcVc RepSpec;
+	record BPI_BarForRebBlock BFRb;
+	row BPI_BarForRebBlock BFRrw;
+	integer i,mtrw;
+	boolean foundf;
+	
+	blockload(BFRb);
+ 	mtrw = matrowcnt(BFRb);
+	deselectwindow(wn,true);
+ 	mwn = motherwindow(wn);
+ 	getwindowrecord(wn,RepSpec);
+ 	getwindowrecord(mwn,IVCashr);
+	
+	closewindow(wn);
+	selectwindow(mwn);
+	
+	if(nonblank(RepSpec.f1))then begin
+		for(i=0;i<mtrw;i=i+1)begin
+			matrowget(BFRb,i,BFRrw);
+			if(BFRrw.BarCode==RepSpec.f1)then begin
+				i = mtrw;
+				foundf = true;
+			end;
+		end;
+		if(foundf==false)then begin
+			messagebox(8602,"");
+		end else begin
+			BPI_RA_ChangeDiscountForAll(IVCashr,BFRrw.Discount);
+			PutWindowRecord(mwn,IVCashr);
+			IVCashDClass_RefreshStringList(mwn,IVCashr);
+			IVCashSumupSoftEditFields(mwn,IVCashr);
+      PutWindowString(mwn,"touchscreenwindowpagestack","");
+      IVCashDClassGotoPage("1","");
+      WindowFieldGotoForTouchScreen(mwn,-1,"ivcashcommand",false);
+		end;
+	end;
+	
+  
+  
+  
+  res = true;
+  RebateCouponScanWClassOnOKWindow = res;
+  return;
+end;
+
+global
+procedure RebateCouponScanWClassProceed()
+begin
+	integer wn;
+	
+	
+	wn = curwindow;
+	RebateCouponScanWClassOnOKWindow(wn);
+	
+  return;
+end;
+
 
 global
 function boolean EBS_TempWClassOnOpenWindow(Integer wn)

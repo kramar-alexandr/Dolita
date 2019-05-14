@@ -21,6 +21,7 @@ begin
   Setting("Lojalumo kortelės",LoyaltyCardLClass,modPOS); // EVS: added to POS for ease of use
   Setting("DOL - Laukai naujo kliento sukūrimui",EBS_NewCUFieldsTClass,modPOS);
   Setting("DOL - Create customer touchscreen",EBS_TempWClass,modPOS);
+  Setting("DOL - Coupon discounts",BPI_BarForRebBlockTClass,modPOS);// Edit ************************** BPI Ukraine - KramarAlexandr - 01, 13 05 2019 y. at 9:29:57 PM
 
   //modIN
   Report("DOL - Parduotų prekių likučiai",DOLSoldINBalRClass,DOLSoldINBalRn,0,modIN); // EVS: DOL-79

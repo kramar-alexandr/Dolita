@@ -9,6 +9,9 @@ external procedure SetupCustPS2Rn(string,var record RcVc);
 external function Integer GetInternetEnablerCountry();
 external function Boolean OpenContactRecord(string,string);
 external outer procedure EBS_LoadDefaultValuesFromSet(var record CUVc); //EBS
+external function Boolean IVCashDchrsum(record IVCashVc,Integer,Integer);// Edit ************************** BPI Ukraine - KramarAlexandr - 01, 13 05 2019 y. at 10:28:02 PM
+external procedure IVCashDchsum(record IVCashVc,Integer);// Edit ************************** BPI Ukraine - KramarAlexandr - 01, 13 05 2019 y. at 10:30:29 PM
+external procedure IVCashSumup(var record IVCashVc,Boolean);// Edit ************************** BPI Ukraine - KramarAlexandr - 01, 13 05 2019 y. at 10:30:31 PM
 
 global
 procedure OpenAddressLookupHelper(Integer wn)
@@ -240,6 +243,36 @@ global updating function boolean bpirecordinsertcu(var record CUVc CUr,boolean f
 begin
 
 	bpirecordinsertcu = recordinsert(CUr,flag);
+
+return;
+end;
+
+global procedure BPI_RA_ChangeDiscountForAll(var record IVCashVc IVCashr,val rebate)
+begin
+	integer i,mtrw;
+	row IVCashVc IVCashrw;
+	record GeneralOptionBlock GenOptRec;
+	
+	BlockLoad(GenOptRec);
+	
+	mtrw = matrowcnt(IVCashr);
+	for(i=0;i<mtrw;i=i+1)begin
+		matrowget(IVCashr,i,IVCashrw);
+		if(IVCashrw.stp==kInvoiceRowTypeNormal)then begin
+			if(nonblank(IVCashrw.ArtCode))then begin
+				IVCashrw.vRebate = rebate;
+				MatRowPut(IVCashr,i,IVCashrw);
+				if (IVCashDchrsum(IVCashr,i,GenOptRec.UseDiscount)) then begin
+					IVCashDchsum(IVCashr,i);
+					IVCashSumup(IVCashr,true);
+				end;
+			end;
+		end;
+	end;
+	
+	
+	
+        
 
 return;
 end;

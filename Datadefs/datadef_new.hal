@@ -66,5 +66,14 @@ begin
     MainKeyBegin(SerNr,0);
     KeySegment(SerNr);
   EndRecord;
+  
+  BlockBegin(BPI_BarForRebBlock,-,"");
+    RecordField(Math,M4Matrix,0,0);
+    ArrayBegin(Math,-,1);
+    ArrayField(BarCode,M4Str,100,0);
+    ArrayField(Discount,M423Val,0,0);
+    EndArray;
+  EndBlock;
+  
 return;
 end;

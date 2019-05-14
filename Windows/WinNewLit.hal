@@ -1211,3 +1211,35 @@ begin
 
   return;
 end;
+
+
+window BPI_BarForRebBlockTClass:1
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v;
+  WindowBegin("DOL - Coupon discounts",BPI_BarForRebBlockTClass,CGHbl,HBlRecType);
+  SetBlid(BPI_BarForRebBlock);
+  SetWRect(20,80,240,300);
+  h = 8; v = 20;
+  MatrixBegin(h,v,-25,-1,-,100);
+  MatCol(1,24,"Barcode",0,BarCode,false,0);
+  MatCol(1,144,"Discount",0,Discount,false,0);
+  EndMatrix;
+  EndWindow;
+end;
+
+window RebateCouponScanWClass:2
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real f,h,v,vs;
+  WindowBegin("DOL - Coupon discounts",RebateCouponScanWClass,CGother,RcType);
+	Modality(1);
+  UseView(RcVc);
+  CloseOnCancel;
+  SetWRect(20,80,500,200);
+  h = 120; v = 20; vs = 30; f = 100;
+  EditFieldTL(h,v,-40,"Coupon discounts",M4Str,Normal,100,f1,false,0);
+  ColourPushButton(40,v+=40,240,v+40,"EBS_ScanLoyCardCancelBtn","Nutraukti",20);
+  ColourPushButton(270,v,470,v+40,"RebateCouponScanWClassProceed","Gerai",20);
+  EndWindow;
+end;
