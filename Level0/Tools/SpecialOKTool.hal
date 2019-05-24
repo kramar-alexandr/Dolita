@@ -755,6 +755,10 @@ done in POVc_PasteArtCode
       MatRowPut(POr,currow,POrw);
       POVc_PastePlanShipRow(POr,currow);
     end;
+    MatRowGet(POr,currow,POrw);
+    if(POrw.stp!=1)then begin
+    	POrw.stp = 1;
+    end;
     // :EVS
     currow = currow + 1;
   end;
