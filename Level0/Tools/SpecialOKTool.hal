@@ -704,6 +704,7 @@ begin
     end;
   end;
   for (i=0;i<pos;i=i+1) begin
+  	clearrow(POr,POrw,1);// Edit ************************** BPI Ukraine - KramarAlexandr - 05, 24 05 2019 y. at 11:05:05 AM
     POrw.ArtCode = incode[i];
     POrw.Quant = qty[i];
     if (i>0 and currow<MatRowCnt(POr)) then begin
