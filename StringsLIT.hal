@@ -539,6 +539,7 @@ begin
   SString(1000141,"Brokas");
   SString(1000142,"Brokas %");
   SString(1000143,"Prekės nuolaida");// Edit ************************** BPI Ukraine - KramarAlexandr - Tuesday, 20 November 2018 17:04:02
-
+	SString(1000144,"€");
+	
   return;
 end;
