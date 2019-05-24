@@ -202,6 +202,9 @@ BEGIN
   if (times<1) then begin
     times = 1;
   end;
+  if(RepSpec.flags[10]>0)then begin// Edit ************************** BPI Ukraine - KramarAlexandr - 05, 24 05 2019 y. at 10:03:06 AM
+  	times = RepSpec.flags[10];
+  end;
   if (RepSpec.flags[1]==1) then begin
     INr.Name = fromitem;
     INr.Code = "";
@@ -316,9 +319,10 @@ BEGIN
   Integer i,rwcnt;  
   Boolean printf;
   Integer intdocnr;
-  string 30 formcode;
+  string 30 formcode,langcode;
   record FormDefVc FDr;
   row FormDefVc FDrw;
+  record INVc INr;
 
   FDr.repname = RepSpec.repname;
   FDr.shortname = RepSpec.shortname;
@@ -329,12 +333,31 @@ BEGIN
   rwcnt = MatRowCnt(FDr);
   intdocnr = 1;
   printf = true;
+  
+  if(RepSpec.flags[10]>0)then begin// Edit ************************** BPI Ukraine - KramarAlexandr - 05, 24 05 2019 y. at 10:23:28 AM
+  	if(nonblank(RepSpec.f10) or nonblank(RepSpec.f11))then begin
+  		INr.Code = RepSpec.f1;
+  		if(readfirstmain(INr,1,true))then begin
+  			if(nonblank(RepSpec.f10))then begin
+  				if(INr.InitPrice==INr.UPrice1)then begin
+  					langcode = RepSpec.f10;
+  				end;
+  			end;
+  			if(nonblank(RepSpec.f11))then begin
+  				if(INr.InitPrice!=INr.UPrice1)then begin
+  					langcode = RepSpec.f11;
+  				end;
+  			end;
+  		end;
+  	end;
+  end;
+  
   while (printf) begin  
     formcode = "";
     for (i=rwcnt-1;i>=0;i=i-1) begin
       MatRowGet(FDr,i,FDrw);
       if (Getformcode(i,FDrw.intdocnr,FDrw.FPCode,FDrw.UserGroup,FDrw.LangCode,FDrw.SerNr,-1,"",
-                      "",intdocnr,"",formcode)) then
+                      langcode,intdocnr,"",formcode)) then
       begin
         goto LBREAKItemLabel;
       end;

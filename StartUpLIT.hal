@@ -29,7 +29,7 @@ begin
   Maintenance("Dydžio keitimas",EBS_ChangeINVarVClass,EBS_ChangeINVarMn,modIN);
   Export("DOL - Barkodai skeneriui",DOLItemBCEClass,DOLItemBCEn,modIN); // EVS: DOL-120
   Import("DOL - Inventorizacijos rezultatas",DOLStockTakeIn,DOLStockTakeIn,modIN); // EVS: DOL-121
-
+	Setting("DOL - Label printing rules",LabelPrintRulesTClass,modIN);
   //modSL
   Report("Išrašomų PVM s/f registras",SLVATLitRClass,SLVATLitRn,0,modSL); //Standart report from 7.2, seems to be missing in 8.0
   Maintenance("Pridėti klasę pirkėjams",NoSalesVClass,NoSalesMn,modSL); // EVS: DOL-131

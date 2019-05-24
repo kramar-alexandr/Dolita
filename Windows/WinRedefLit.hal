@@ -2503,6 +2503,9 @@ begin
   if (StandardHansa==false) then begin
   CheckBox(h1,v+=32,0,"Prekė - projekto medžiaga",ItemMaterial);
   end;
+  
+  HalPushButton(h1,v+=32,h1+150,v+32,"BPI_PrintItemLabel","Print label");
+  
   if (HasJewelleryInterface) then begin
     Tile(tilenr,110,false,tilenr,Metal); tilenr = tilenr + 1;
     EditField(h,v=6, 140,"Metal",Normal,Metal,false,0);

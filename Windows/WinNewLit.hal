@@ -1228,6 +1228,20 @@ begin
   EndWindow;
 end;
 
+window LabelPrintRulesTClass:1
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v;
+  WindowBegin("DOL - Label printing rules",LabelPrintRulesTClass,CGSbl,ItemSettingType);
+  SetBlid(LabelPrintRulesBlock);
+  SetWRect(20,80,340,400);
+  h = 208; v = 20;
+  EditField(h,v+=20,50,"Language for items without discount",Normal,LangCodeWD,false,LangSClass);
+  EditField(h,v+=20,50,"Language for items with discount",Normal,LangCodeND,false,LangSClass);
+  EditField(h,v+=20,50,"Amount of labels printed",Normal,Amount,false,0);
+  EndWindow;
+end;
+
 window RebateCouponScanWClass:2
   wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
 begin

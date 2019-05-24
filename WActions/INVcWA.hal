@@ -117,3 +117,28 @@ begin
   return;
 end;
 // :EVS
+
+
+global procedure BPI_PrintItemLabel()
+begin
+	record INVc INr;
+	integer wn;
+	record RcVc RepSpec;
+	boolean tmpf;
+	record LabelPrintRulesBlock LPRb;
+	
+	blockload(LPRb);
+	wn = curwindow;
+	getwindowrecord(wn,INr);
+	
+	reportdefaults(RepSpec,"ItemLabelRClass");
+	RepSpec.f1 = INr.Code;
+	RepSpec.flags[10] = LPRb.Amount;
+	RepSpec.f10 = LPRb.LangCodeWD;
+	RepSpec.f11 = LPRb.LangCodeND;
+	RepSpec.Media = mtPrinter;
+  RepSpec.repname = "ItemLabelForm";
+  tmpf = PrintDocument(RepSpec,"ItemLabelForm",false);
+
+return;
+end;

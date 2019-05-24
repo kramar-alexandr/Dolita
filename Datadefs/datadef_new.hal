@@ -75,5 +75,13 @@ begin
     EndArray;
   EndBlock;
   
+   
+  BlockBegin(LabelPrintRulesBlock,-,"");// Edit ************************** BPI Ukraine - KramarAlexandr - 05, 24 05 2019 y. at 9:30:13 AM
+		RecordField(LangCodeWD,M4Code,20,0);
+		RecordField(LangCodeND,M4Code,20,0);
+		RecordField(Amount,M4Int,0,0);
+  EndBlock;
+
+  
 return;
 end;
