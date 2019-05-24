@@ -317,7 +317,9 @@ begin
   VarMatrxEntryr.ItemCode = itemcode;
   // EVS: DOL-1
   if (GetWindowClass(mwn) == "PODClass") then begin
-    VarMatrxEntryr.Price = GetItemLastCostPriceNoExtras(itemcode);
+  	if(blank(VarMatrxEntryr.Price))then begin// Edit ************************** BPI Ukraine - KramarAlexandr - 05, 24 05 2019 y. at 10:43:16 AM
+			VarMatrxEntryr.Price = GetItemLastCostPriceNoExtras(itemcode);
+    end;
   end;
   // :EVS
   PutWindowRecord(nwn,VarMatrxEntryr);
@@ -355,7 +357,9 @@ begin
   VarMatrxEntryr.ItemCode = itemcode;
   // EVS: DOL-1
   if (GetWindowClass(mwn) == "PODClass") then begin
-    VarMatrxEntryr.Price = GetItemLastCostPriceNoExtras(itemcode);
+  	if(blank(VarMatrxEntryr.Price))then begin// Edit ************************** BPI Ukraine - KramarAlexandr - 05, 24 05 2019 y. at 10:43:16 AM
+			VarMatrxEntryr.Price = GetItemLastCostPriceNoExtras(itemcode);
+    end;
   end;
   // :EVS
   PutWindowRecord(nwn,VarMatrxEntryr);
