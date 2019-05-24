@@ -60,9 +60,9 @@ BEGIN
   OUTFORMFIELD("F_ITEMCODE",INr.AlternativeCode);
   //EBS-->
   upr = INr.InitPrice;
-  OUTFORMFIELD("F_HALINITPRICE",tstr);// Edit ************************** BPI Ukraine - KramarAlexandr - 05, 24 05 2019 y. at 1:02:22 PM
+  OUTFORMFIELD("F_HALINITPRICE","ÿ" & upr);// Edit ************************** BPI Ukraine - KramarAlexandr - 05, 24 05 2019 y. at 1:02:22 PM
   upr = INr.UPrice1;
-  OUTFORMFIELD("F_HALUPRICE1",tstr);// Edit ************************** BPI Ukraine - KramarAlexandr - 05, 24 05 2019 y. at 1:02:22 PM
+  OUTFORMFIELD("F_HALUPRICE1","ÿ" & upr);// Edit ************************** BPI Ukraine - KramarAlexandr - 05, 24 05 2019 y. at 1:02:22 PM
   OUTFORMFIELD("F_AVDELNING",INr.Code);
   if nonblank(RepSpec.f12) then begin
     OUTFORMFIELD("F_BARCODE",GetVarietyBarCode(INr.Code,RepSpec.f12));
