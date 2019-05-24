@@ -550,6 +550,7 @@ begin
 
   // EVS: DOL-89
   IVr.POSRetFlag = 1;
+  IVr.ExcludeFromExports = 1;// Edit ************************** BPI Ukraine - KramarAlexandr - 05, 24 05 2019 y. at 3:06:37 PM
   if (RecordStore(IVr,false)) then begin
     RecordCopy(IV2r,IVr);
     IVr.OfficialSerNr = "";

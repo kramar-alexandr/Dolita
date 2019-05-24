@@ -8094,6 +8094,7 @@ if (HasTouchScreenLook==false) then begin
   CheckBox(h3,v+=16,0,"Fiskalinė fakt.",FiscalFlag);
   CheckBox(h3,v+=16,0,"Sav. atsisk.",SelfBilling);
   CheckBox(h3,v+=25,0,"POS Return",POSRetFlag); // EVS: DOL-89
+  CheckBox(h3,v+=16,0,"Neįtraukti į eksportus",ExcludeFromExports); // Edit ************************** BPI Ukraine - KramarAlexandr - 05, 24 05 2019 y. at 3:06:20 PM
 //    CheckBox(h3,v+=16,0,"Including VAT",InclVAT);
   end;
 //  CheckBox(h3,v+=16,0,"E-Invoice Exported",EInvExpFlag);
