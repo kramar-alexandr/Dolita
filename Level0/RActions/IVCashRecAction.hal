@@ -1364,8 +1364,10 @@ LSkipOffNoValidation:;
           goto LIVCashVcRecordCheck;
         end;
       case kInvoiceRowTypeGiftVoucherPayment:
-        cash = cash + IVCashrw.Sum;      
-        res = IVCashVc_CheckRowTypeGiftVoucherPayment(IVCashr,IVCashrw,i);
+        cash = cash + IVCashrw.Sum;     
+        if(transf)then begin // Edit ************************** BPI Ukraine - KramarAlexandr - 03, 05 06 2019 y. at 4:55:06 PM
+					res = IVCashVc_CheckRowTypeGiftVoucherPayment(IVCashr,IVCashrw,i);
+        end;
         if (res!=0) then begin
           goto LIVCashVcRecordCheck;
         end;
