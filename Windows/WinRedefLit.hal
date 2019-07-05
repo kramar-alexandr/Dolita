@@ -10185,6 +10185,19 @@ begin
   EndWindow;
 end;
 
+/*this window should be removed on next version update*/
+window GPAISUsedResEClass:1
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer") 
+begin
+  real h,v;
+  WindowBegin("Nurodyti Panaudoti naturalūs ištekliai (GPAIS)",GPAISUsedResEClass,CGEcW,RcType); 
+  SetWRect(20,80,400,150);
+  PeriodField(h=120,v=6,"Periodas");
+  CheckBox(h,v+=20,0,"Įtraukti POS faktūras",flags[0]); 
+//  HalPushButton(h,v+=30,h+150,v+25,"SendToGPAIS","SendToGPAIS");
+  EndWindow;
+end;
+
 global
 procedure SerialNrRClassReportDefaults(Integer wn)// Edit ************************** BPI Ukraine - KramarAlexandr - 01, 15 04 2019 y. at 12:02:36 PM
 BEGIN
@@ -10200,3 +10213,4 @@ BEGIN
   SelectWindow(wn);
   RETURN;
 END;
+
