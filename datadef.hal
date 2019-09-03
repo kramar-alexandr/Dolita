@@ -2,6 +2,13 @@ Exec_File("halcust\\Datadefs\\datadef_redef.hal");
 Exec_File("halcust\\Datadefs\\datadef_redef_blocks.hal");
 Exec_File("halcust\\Datadefs\\datadef_new.hal");
 
+Exec_File("halcust\\Integrations\\Shopify\\datadef.hal");
+SOURCEFILE("halcust\\Integrations\\Shopify",3);
+Exec_File("halcust\\Integrations\\Shopify\\Custom\\datadef.hal");
+SOURCEFILE("halcust\\Integrations\\Shopify\\Custom",3);
+Exec_File("halcust\\Integrations\\TouchlessPayments\\datadef.hal");
+SOURCEFILE("halcust\\Integrations\\TouchlessPayments",3);
+
 SOURCEFILE("halcust\\temp",0);
 
 SOURCEFILE("halcust\\iSAF",0);
@@ -36,12 +43,6 @@ SOURCEFILE("halcust\\WActions",3);
 SOURCEFILE("halcust\\Windows",3);
 SOURCEFILE("halcust\\",3);
 
-Exec_File("halcust\\Integrations\\Shopify\\datadef.hal");
-SOURCEFILE("halcust\\Integrations\\Shopify",3);
-Exec_File("halcust\\Integrations\\Shopify\\Custom\\datadef.hal");
-SOURCEFILE("halcust\\Integrations\\Shopify\\Custom",3);
-Exec_File("halcust\\Integrations\\TouchlessPayments\\datadef.hal");
-SOURCEFILE("halcust\\Integrations\\TouchlessPayments",3);
 
 begin
 

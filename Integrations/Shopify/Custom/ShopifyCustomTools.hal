@@ -23,7 +23,8 @@ begin
   StockMovr.OrderNr = ORr.SerNr;
   StockMovr.TransDate = CurrentDate;
   StockMovGetRate(StockMovr);
-  StockMovr.SentOKFlag = 1;
+  StockMovr.ThrouLocation = "";
+  //StockMovr.SentOKFlag = 1;
   ClearRow(StockMovr,StockMovrw,1);
   StockMovrw.ArtCode = item;
   StockMovrw.SentQuant = qty;

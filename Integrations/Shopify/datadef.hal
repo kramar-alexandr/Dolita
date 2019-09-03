@@ -27,6 +27,9 @@ begin
   RecordField(FullPriceItemTag,M4Str,255,0);
   RecordField(DiscItemTag,M4Str,255,0);  
   RecordField(GetOrdersFrom,M4Date,0,0);
+  RecordField(GetOrdersFlag,M4Int,0,0);
+  RecordField(DelItemFlag,M4Int,0,0);
+  RecordField(DefWebSalesMan,M4Code,20,UserVc);
   EndBlock;
 
 	RecordBegin(ShopifyLocVc,-,"");

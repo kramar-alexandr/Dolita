@@ -26,7 +26,7 @@ begin
   EditField(h+100,v+=vs,60,"Every",Normal,UpdStockInertval,false,0);
   StaticText(h+155,v+10,"minutes",false);
   EditField(h+100,v+=vs,60,"Location class",Normal,StockClass,false,LocClSClass);
-  //EditField(h+100,v+=vs,60,"Inch variety group",Normal,InchVARGCode,false,VARGSClass);
+  EditField(h+100,v+=vs,60,"Inch variety group",Normal,InchVARGCode,false,VARGSClass);
   CheckBox(h,v+=vs,0,"Update Stock Levels when Stock level Changes",UpdStockAlways);
   CheckBox(h,v+=20,0,"Update Price When Item is Updated",UpdPriceAlways); 
   EndFrame;
@@ -34,6 +34,8 @@ begin
   EditField(h,v += vs,200,"Discounted Item Tag",Normal,DiscItemTag,false,0);
   Tile(3,120,true,"",SaveReqResp);
   EditField(h,v = 10,80,"Def. customer",Normal,DefWebUserCode,false,CUSClass);
+  CheckBox(h+150,v,0,"Import Orders",GetOrdersFlag); 
+  EditField(h,v += vs,80,"Def. SalesMan",Normal,DefWebSalesMan,false,UserSClass);
   EditField(h,v += vs,80,"Def. Location",Normal,DefWebLocation,false,LocationSClass);
   EditField(h,v += vs,80,"Def. Order Class",Normal,DefWebOrdClass,false,OrderClassSClass);
   EditField(h,v += vs,80,"Shopify Location Id",Normal,ShpifyLocId,false,ShopifyLocSClass);
@@ -42,6 +44,9 @@ begin
   EditField(h,v += vs,80,"Deliver after",Normal,DeliveryAfter,false,0);
   EditField(h,v += vs,80,"Default item",Normal,DefArtCode,false,INSClass);
   EditField(h,v += vs,80,"Delivery item",Normal,DelArtCode,false,INSClass);
+  CheckBox(h+150,v,0,"Add Delivery item",DelItemFlag); 
+
+
   EditField(h,v += vs,80,"Store delivery type",Normal,StoreShipMode,false,DMSClass);
   Tile(4,120,true,"",SaveReqResp);
   StaticText(h,v=20,"NOTE: Do not change anything unless insctructed",false);
