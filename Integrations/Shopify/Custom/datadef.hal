@@ -1,0 +1,13 @@
+begin
+
+  BlockBegin(ShopifyLocLinkBlock,-,"");
+  RecordField(Math,M4Matrix,0,0);
+  ArrayBegin(Math,-,1);
+  ArrayField(MainLocation,M4Code,20,LocationVc);
+  ArrayField(ShopifyLocation,M4Code,20,LocationVc);
+  ArrayField(LocalMachine,M4Code,10,0);
+  EndArray;
+  EndBlock;
+
+  return;
+end;

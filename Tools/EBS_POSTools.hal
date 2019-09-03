@@ -653,3 +653,15 @@ LkInvoiceRowTypeNormal1:;
 
   return;
 end;
+
+global
+procedure IVCashDClassDOLOpenShopifyOrders()
+begin
+  Integer wn,nwn;
+  record RcVc RepSpec;
+
+  wn = CurWindow;
+  nwn = OpenWindow("ShopifyOrdersWClass",0,wn,"","",RepSpec);
+
+  return;
+end;

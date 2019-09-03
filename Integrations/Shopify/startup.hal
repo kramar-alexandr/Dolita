@@ -1,0 +1,15 @@
+event startup
+begin
+  SetLangMode(LangEnglish,"ENG",0);
+
+	Setting("Shopify",DOLShopifyTClass,modSY);
+	Setting("Shopify Locations",ShopifyLocLClass,modSY);
+	Setting("Shopify Products",ShopifyProductsLClass,modSY);
+	Setting("Shopify: New customer creation",ShopifyNewCustTClass,modSY);
+	
+	Maintenance("Load Shopify Product IDs",DOLGetShopifyProdIDVClass,DOLGetShopifyProdIDMn,modSY);
+	Maintenance("Load Shopify Orders",DOLGetShopifyOrdersVClass,DOLGetShopifyOrdersMn,modSY);
+	Maintenance("Load Shopify Locations",DOLGetShopifyLocationsVClass,DOLGetShopifyLocationsIDMn,modSY);
+
+  return;
+end;

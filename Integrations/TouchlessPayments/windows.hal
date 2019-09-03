@@ -1,0 +1,147 @@
+event startup
+begin
+  SetLangMode(LangLithuanian, "LIT", 0);
+
+
+  Setting("Touchless Payments",TouchlessPaymentTClass,modPOS);
+
+  SString(1000107,"There is no last Transaction to return");
+
+  SetBegin(14446);
+  SetText(kLocalCCTerminalNone,"None");
+  SetText(kLocalCCTerminalBambora,"Bambora");
+  SetText(kLocalCCTerminalPCEFTPOS,"PC-EFTPOS (IP)");
+  SetText(kLocalCCTerminalRahaxi,"Rahaxi");
+  SetText(kLocalCCTerminalSteriaCOM,"SteriaPay (Serial/COM)");
+  SetText(kLocalCCTerminalSteriaIP,"SteriaPay (IP)");
+  SetText(kLocalCCTerminalVerifoneBanksys,"Verifone (Serial/COM)");
+  SetText(kLocalCCTerminalYomaniBanksys,"Yomani banksys (Serial/COM)");
+  SetText(201,"Touchless Payments");
+//  SetText(kLocalCCTerminalIngenico6550,"Ingenico 6550 (Serial/COM)");//not finished
+  EndSet;
+
+  SetBegin(14447);
+  SetText(kSerialPortDeviceModelNone,"None");
+//  if (HasLocalization("LTU")) then begin
+    SetText(kSerialPortDeviceModelPrinterAxiohmA777,"Axiohm A777"); 
+//  end;
+//  if (HasLocalization("POL")==false) then begin
+    SetText(kSerialPortDeviceModelPrinterEPSONTMU210,"Epson TMU210"); 
+    SetText(kSerialPortDeviceModelPrinterSTARTSP210,"Star TSP100"); 
+    SetText(kSerialPortDeviceModelPrinterEPSONTMT88II,"Epson TM-T88II"); 
+    SetText(kSerialPortDeviceModelPrinterBixolonSPPR200II,"Bixolon SPP-R200II"); 
+//  end;
+//    if (HasLocalization("LVA")) then begin
+    SetText(kSerialPortDeviceModelPrinterAxiohmA777,"Axiohm A777"); 
+    SetText(kSerialPortDeviceModelPrinterCHD6800,"CHD 6800 (Latvia)"); 
+    SetText(kSerialPortDeviceModelVirtualFiscPrinterCHDFMPOS,"CHD Virtual Fiscal Printer (Latvia)"); 
+    SetText(kSerialPortDeviceModelFiscPrinterFM32DLL,"Fiscal Printer Brio FM32 with Middle Ware (Latvia)");
+    SetText(kSerialPortDeviceModelFiscPrinterFisUSBMDLL,"Fiscal Printer Brio FisUSBM with Middle Ware (Latvia)");
+//    end;
+  
+//  if (HasLocalization("POL")) then begin
+    SetText(kSerialPortDeviceModelFiscPrinterPOSNET1,"Fiscal Printer POSNET 1 (Poland, DF301 Protocol)"); 
+    SetText(kSerialPortDeviceModelFiscPrinterPOSNET2,"Fiscal Printer POSNET 2 (Poland, DF301 Protocol)"); 
+    SetText(kSerialPortDeviceModelFiscPrinterOPTIMUS,"Fiscal Printer OPTIMUS (Poland, DF301 Protocol)"); 
+    SetText(kSerialPortDeviceModelFiscPrinterPOSNETThermal5V,"Fiscal Printer POSNET Thermal 5V (Poland), DF301 Protocol"); 
+    SetText(kSerialPortDeviceModelFiscPrinterPOSNET,"Fiscal Printer POSNET (Poland, POSNET Protocol)"); 
+    SetText(kSerialPortDeviceModelFiscPrinterPOSNETwVATNr,"Fiscal Printer POSNET (Poland, POSNET Protocol w VAT, from 01/10/2013)"); 
+    SetText(kSerialPortDeviceModelFiscPrinterPOSNETTCPIP,"Fiscal Printer POSNET HD FV EJ (Poland, POSNET Protocol over TCPIP)"); 
+//  end;
+//  SetText(kSerialPortDeviceModelFiscPrinterFP2000,"Fiscal Printer FP2000 (Zimbabwe)"); // no code
+//  if (HasLocalization("SVK")) then begin
+    SetText(kSerialPortDeviceModelFiscPrinterFP3000,"Fiscal Printer FP3000 (Slovakia)"); 
+//  end;
+//  if (HasLocalization("ARG")) then begin
+    SetText(kSerialPortDeviceModelFiscPrinterHASAR,"Fiscal Printer Hasar (Argentina)"); 
+//  end;
+//  if (HasLocalization("PAN")) then begin
+    SetText(kSerialPortDeviceModelFiscPrinterHASARPL23F,"Fiscal Printer Hasar PL23F (Panama)"); 
+//  end;
+//  if (HasLocalization("ARG")) then begin
+    SetText(kSerialPortDeviceModelFiscPrinterEPSON,"Fiscal Printer Epson (Argentina)"); 
+//  end;
+//  if (HasLocalization("SRB")) then begin
+    SetText(kSerialPortDeviceModelFiscPrinterFI550,"Fiscal Printer Fi-550 (Serbia)"); 
+//  end;
+//  if (HasLocalization("ARG")) then begin
+    SetText(kSerialPortDeviceModelFiscPrinterEPSONTMU220,"Fiscal Printer Epson TM-U220 (Argentina)");
+//  end;
+//  if (HasLocalization("ZWE")) then begin
+    SetText(kSerialPortDeviceModelFiscPrinterEPSONTMT81F,"Fiscal Printer Epson TM-T81F (Zimbabwe)");
+//  end;
+//  if (HasLocalization("KEN")) then begin
+    SetText(kSerialPortDeviceModelFiscPrinterTSLFP05,"Fiscal Printer TSL FP05 (Kenya)");
+//  end;
+//  if (HasLocalization("LTU")) then begin
+    SetText(kSerialPortDeviceModelFiscPrinterFB05,"Fiscal Printer Empirija FB05 (Lithuania)");
+    SetText(kSerialPortDeviceModelFiscPrinterFB15,"Fiscal Printer Empirija FB15 (Lithuania)");
+    SetText(kSerialPortDeviceModelFiscPrinterFB15DLL,"Fiscal Printer Empirija FB15 with Middle Ware (Lithuania)");
+    SetText(kSerialPortDeviceModelFiscPrinterST05,"Fiscal Printer Citizen ST-05 (Lithuania)");
+//  end;
+//  if (HasLocalization("EST")) then begin
+    SetText(kSerialPortDeviceModelFiscPrinterFPRINT02K,"Fiscal Printer FPrint 02K");
+//  end;
+  SetText(kSerialPortDeviceModelFiscPrinterRCHFlea,"Fiscal Printer RCH Flea");
+//  SetText(kSerialPortDeviceModelDIGITAG,"Digitag"); 
+//  if (HasLocalization("SWE")) then begin
+    SetText(kSerialPortDeviceModelFiscPrinterCLEANCASHTypeA,"Clean Cash Type A (Sweden)");
+    SetText(kSerialPortDeviceModelFiscPrinterCLEANCASHTypeC,"Clean Cash Type C (Sweden)");
+//  end;
+  SetText(kSerialPortDeviceModelDisplayGeneric,"Generic Pole Display");
+  SetText(kSerialPortDeviceModelDisplayPosiFlex,"Posiflex Pole Display");
+//  if (HasLocalization("FIN")) then begin
+    SetText(kSerialPortDeviceModelCreditCardTerminalYomaniBanksys,"Credit Card Terminal Yomani Banksys");
+    SetText(kSerialPortDeviceModelCreditCardTerminalVerifoneBanksys,"Credit Card Terminal Verifone");
+//  end;
+//  SetText(kSerialPortDeviceModelCreditCardTerminalIngenico6550,"Credit Card Terminal Ingenico 6550");
+  SetText(kSerialPortDeviceModelFiscPrinterBematechMP2100,"Fiscal Printer Bematech MP-2100 TH FI");
+  SetText(kSerialPortDeviceModelFiscPrinterEltrade,"Fiscal Printer Eltrade");
+  SetText(201,"Touchless Payments");
+  EndSet;
+
+  return;
+end;
+
+window TouchlessPaymentTClass:1
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vs;
+  
+  windowBegin("Touchless Payments",TouchlessPaymentTClass,CGSbl,-);
+  SetBlid(TouchlessPayBlock);
+  SetWRect(20,80,450,300);
+  Sizeable(-1,-1,0,0);
+  h = 150;
+  EditField(h,v=6,-40,"IP Address",Normal,IPAddress,false,0);
+  EditField(h,v=v+20,-40,"Port",Normal,Port,false,0);
+  EditField(h,v=v+20,-40,"User Name",Normal,UserName,false,0);
+  EditField(h,v=v+20,-40,"Password",Normal,Password,false,0);
+  EditField(h,v=v+20,-40,"Project ID",Normal,ProjectID,false,0);
+  EditField(h,v=v+20,-40,"Last Trans. Number",Normal,LastRrn,false,0);
+  EditField(h,v=v+20,-40,"Last Trans. Amount",Normal,LastSum,false,0);
+  EditField(h,v=v+20,-40,"Last Trans. Time",Normal,LastTimeStamp,false,0);
+  EndWindow;
+	
+	return;
+end;
+
+window VoidBankPaymentWClass:1
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real v,vs;
+  record RcVc RepSPec;
+
+  WindowBegin("Void Bank Payment",VoidBankPaymentWClass,CGother,-);
+  SetWRect(20,80,450,190);
+  DynamicWindow;
+  Sizeable(-1,-1,0,0);
+  UseView(RcVc);
+  v = 6; vs = 20;
+  GetWindowRecord(CurWindow,RepSpec);
+  StaticText(20,v+=vs,"Void Bank payment for " & RepSpec.vals0 & " EUR?",false);
+  ColourPushButton(20,v+=vs,120,v+45,"VoidBankPaymentWClassProceed","Proceed",20);
+  ColourPushButton(140,v,240,v+45,"VoidBankPaymentWClassCancel","Cancel",20);
+
+  EndWindow;
+end;

@@ -1,0 +1,185 @@
+window DOLShopifyTClass:1
+  wtag("language","ENG"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+	real h,v,vm,vs;
+	v = 6; vs = 20; h = 90;
+
+	WindowBegin("Shopify Settings",DOLShopifyTClass,CGSbl,ItemSettingType);
+  SetWRect(20,80,700,480);
+  SetBlid(DOLShopifyBlock);
+  Sizeable(-1,-1,0,0);
+  Tile(0,20,false,"",APIUser);
+  TileButton(1,"API Access");
+  TileButton(2,"Automatic Sync (SERP -> Shopify)");
+  TileButton(3,"Automatic Sync (Shopify -> SERP)");
+  TileButton(4,"Special options");
+  Tile(1,120,true,"",APIUser);
+  EditField(h,v = 10,-20,"API Key",Normal,APIUser,false,0);
+  EditField(h,v += vs,-20,"API Password",Normal,APIPass,false,0);
+  EditField(h,v += vs,200,"Shopify URL",Normal,ShopifyURL,false,0);
+  EditField(h,v += vs,80,"Shopify Port",Normal,ShopifyPort,true,0);
+  Tile(2,120,true,"",UpdStockInertval);
+  h=h+50;
+  CheckBox(h,v=20,0,"Update Items (!for testing only!) (restart required)",UpdItems);
+  ButtonFrame(h,v+=30,270,5,"");
+  CheckBox(h,v+=1,0,"Update Stock Levels",UpdStock);
+  EditField(h+100,v+=vs,60,"Every",Normal,UpdStockInertval,false,0);
+  StaticText(h+155,v+10,"minutes",false);
+  EditField(h+100,v+=vs,60,"Location class",Normal,StockClass,false,LocClSClass);
+  //EditField(h+100,v+=vs,60,"Inch variety group",Normal,InchVARGCode,false,VARGSClass);
+  CheckBox(h,v+=vs,0,"Update Stock Levels when Stock level Changes",UpdStockAlways);
+  CheckBox(h,v+=20,0,"Update Price When Item is Updated",UpdPriceAlways); 
+  EndFrame;
+  EditField(h,v += 40,200,"Full Price Item Tag",Normal,FullPriceItemTag,false,0);
+  EditField(h,v += vs,200,"Discounted Item Tag",Normal,DiscItemTag,false,0);
+  Tile(3,120,true,"",SaveReqResp);
+  EditField(h,v = 10,80,"Def. customer",Normal,DefWebUserCode,false,CUSClass);
+  EditField(h,v += vs,80,"Def. Location",Normal,DefWebLocation,false,LocationSClass);
+  EditField(h,v += vs,80,"Def. Order Class",Normal,DefWebOrdClass,false,OrderClassSClass);
+  EditField(h,v += vs,80,"Shopify Location Id",Normal,ShpifyLocId,false,ShopifyLocSClass);
+  EditField(h,v += vs,80,"Get Orders every minutes",Normal,GetOrdFrq,false,0);
+  EditField(h,v += vs,80,"Get Orders since",Normal,GetOrdersFrom,false,PasteCurDate);
+  EditField(h,v += vs,80,"Deliver after",Normal,DeliveryAfter,false,0);
+  EditField(h,v += vs,80,"Default item",Normal,DefArtCode,false,INSClass);
+  EditField(h,v += vs,80,"Delivery item",Normal,DelArtCode,false,INSClass);
+  EditField(h,v += vs,80,"Store delivery type",Normal,StoreShipMode,false,DMSClass);
+  Tile(4,120,true,"",SaveReqResp);
+  StaticText(h,v=20,"NOTE: Do not change anything unless insctructed",false);
+  CheckBox(h,v+=20,0,"Save request and response data",SaveReqResp);
+  SpecialMenu("Send Stock Levels Once",' ',0,"DOLShopifySendStockSm");
+  EndWindow;
+
+end;
+
+window ShopifyLocLClass:1
+  wtag("language","ENG"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Shopify Locations",ShopifyLocLClass,CGmlist,-);
+  SetWRect(20,80,600,355);
+  Sizeable(-1,-1,0,0);
+  SpawnClass(ShopifyLocDClass);
+  UseView(ShopifyLocVc);
+  RecordList(4,17,-21,-39);
+  RlColKey(4,1,"Id",Id,false,Id);
+  RlCol(80,80,"Name",Name,false);
+  RlCol(210,210,"address1",address1,false);
+  RlCol(350,350,"address2",address2,false);
+  RlCol(-120,-120,"city",city,false);
+  
+  SearchField("Search");
+  EndWindow;
+end;
+
+window ShopifyLocSClass:1
+  wtag("language","ENG"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Shopify Locations",ShopifyLocSClass,CGslist,-);
+  SetWRect(20,80,600,355);
+  Sizeable(-1,-1,0,0);
+  SpawnClass(ShopifyLocDClass);
+  UseView(ShopifyLocVc);
+  RecordList(4,17,-21,-39);
+  RlColKey(4,1,"Id",Id,false,Id);
+  RlCol(80,80,"Name",Name,false);
+  RlCol(210,210,"address1",address1,false);
+  RlCol(350,350,"address2",address2,false);
+  RlCol(-120,-120,"city",city,false);
+  
+  SearchField("Search");
+  EndWindow;
+end;
+
+
+window ShopifyLocDClass:1
+  wtag("language","ENG"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+	real f,h,v,vm,vs;
+	
+  WindowBegin("Shopify Location",ShopifyLocDClass,CGview,-);
+  SetWRect(20,80,250,250);
+  Sizeable(-1,-1,0,0);
+  UseView(ShopifyLocVc);
+  
+  vs = 20;
+  EditField(h=100,v=30,150,"Id",ViewOnly,Id,false,0);
+  EditField(h=100,v+=vs,150,"Name",ViewOnly,Name,false,0);
+  EditField(h=100,v+=vs,150,"address1",ViewOnly,address1,false,0);
+  EditField(h=100,v+=vs,150,"address2",ViewOnly,address2,false,0);
+  EditField(h=100,v+=vs,150,"city",ViewOnly,city,false,0);
+ 
+  
+  SearchField("Search");
+  EndWindow;
+end;
+
+
+window ShopifyProductsLClass:1
+  wtag("language","ENG"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Shopify Products",ShopifyProductsLClass,CGmlist,-);
+  SetWRect(20,80,700,355);
+  Sizeable(-1,-1,0,0);
+  SpawnClass(ShopifyProductsDClass);
+  UseView(ShopifyProductsVc);
+  RecordList(4,17,-21,-39);
+  RlColKey(4,1,"Id",Id,false,Id);
+  RlCol(80,80,"VariantId",VariantId,false);
+  RlCol(160,160,"Vproduct_id",Vproduct_id,false);
+  RlCol(340,340,"Vinvent_id",Vinvent_id,false);
+  RlCol(420,420,"Name",Name,false);
+  RlCol(500,500,"VarName",VarName,false);
+  RlCol(-100,-100,"SKU",SKU,false);
+  
+  SearchField("Search");
+  EndWindow;
+end;
+
+window ShopifyProductsDClass:1
+  wtag("language","ENG"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+	real f,h,v,vm,vs;
+	
+  WindowBegin("Shopify Location",ShopifyProductsDClass,CGview,-);
+  SetWRect(20,80,250,250);
+  Sizeable(-1,-1,0,0);
+  UseView(ShopifyProductsVc);
+  
+  vs = 20;
+  EditField(h=100,v=30,150,"Id",ViewOnly,Id,false,0);
+  EditField(h=100,v+=vs,150,"VariantId",ViewOnly,VariantId,false,0);
+  EditField(h=100,v+=vs,150,"Vproduct_id",ViewOnly,Vproduct_id,false,0);
+  EditField(h=100,v+=vs,150,"Vinvent_id",ViewOnly,Vinvent_id,false,0);
+  EditField(h=100,v+=vs,150,"Name",ViewOnly,Name,false,0);
+  EditField(h=100,v+=vs,150,"VarName",ViewOnly,VarName,false,0);
+  EditField(h=100,v+=vs,150,"SKU",ViewOnly,SKU,false,0);
+  
+  SearchField("Search");
+  EndWindow;
+end;
+
+window ShopifyNewCustTClass:1// Edit ************************** BPI Ukraine - KramarAlexandr - Wednesday, 13 June 2018 10:15:51
+  wtag("language","ENG"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vm,vs;
+  v = 6; vs = 20; h = 90;
+
+  WindowBegin("Shopify: New customer creation",ShopifyNewCustTClass,CGSbl,-);
+  SetWRect(20,80,400,600);
+  SetBlid(ShopifyNewCustBlock);
+  Sizeable(-1,-1,0,0);
+  	h = 50;
+  	EditField(h=100,v=30,150,"CustCatDOM",Normal,CustCatDOM,false,CCatSClass);
+  	EditField(h=100,v+=vs,150,"CustCatEU",Normal,CustCatEU,false,CCatSClass);
+  	EditField(h=100,v+=vs,150,"CustCatEXP",Normal,CustCatEXP,false,CCatSClass);
+    EditField(h=100,v+=vs,150,"CustLangDOM",Normal,CustLangDOM,false,LangSClass); // ARA: HAL-1145
+  	EditField(h=100,v+=vs,150,"CustLangEU",Normal,CustLangEU,false,LangSClass); // ARA: HAL-1145
+    EditField(h=100,v+=vs,150,"CustLangEXP",Normal,CustLangEXP,false,LangSClass); // ARA: HAL-1145
+		EditField(h=100,v+=vs,150,"Classification",Normal,Classification,false,CClassSClass);
+		EditField(h=100,v+=vs,150,"VATNr",Normal,VATNr,false,0);
+		EditField(h=100,v+=vs,150,"RegNr1",Normal,RegNr1,false,0);
+		EditField(h=100,v+=vs,150,"PayDeal",Normal,PayDeal,false,PDSClass);
+
+  EndWindow;
+
+end;
+

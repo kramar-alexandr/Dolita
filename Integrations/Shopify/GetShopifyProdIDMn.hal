@@ -1,0 +1,1509 @@
+//<halrule>server-only</halrule>
+external inner function Boolean PasteCustInOrder(var record ORVc,string,string,var string,var string);
+//external procedure DOLMakeWebRequest(string , string , area , var area );
+external inner function string 50 TimeToString(time,string,boolean);
+external inner procedure ExtractObj(string,var Integer,var string);
+external inner function Boolean ORVc_PasteArtCode(var record ORVc,Integer,var string,var string,Boolean);
+external inner procedure ExtractObj(string,var Integer,var string);
+external inner procedure ORVc_PasteQuant(var record ORVc,Integer,Boolean,var Boolean);
+external inner procedure ORVc_PastePrice(var record ORVc,Integer,var Boolean);
+external inner procedure ORVc_PasteSum(var record ORVc,Integer,var Boolean);
+external inner procedure ORDchsum(var record ORVc,Integer);
+external inner procedure ORSumup(var record ORVc);
+
+external inner procedure CUVc_PasteInvAddr(var record CUVc,Integer);//-
+external inner function Boolean CUVc_PasteName(var record CUVc);//-
+external inner procedure CUVc_PasteCountryCode(var record CUVc,string);//-
+external inner function Boolean GetNextCustNr(var string);
+external inner function Boolean ReadFirstItem(string,var record INVc,Boolean,Boolean); // ARA: HAL-1145
+external inner function Boolean FindStringInString(string,string); // ARA: HAL-1145
+external inner function string 255 StrReplace(string,string,string); // ARA: HAL-1145
+external outer updating procedure OuterCustomShopifyOrderAction(record ORVc);
+external inner function Boolean IVVc_PasteArtCode(var record IVVc,Integer,var string,var string,Boolean,var Integer);
+
+enum begin
+  kStockBatchSize = 5
+end;
+
+procedure OpenRootJSON(var area a_req)
+begin
+  string 1 CR;
+
+  CR = chr(10);
+
+  AddTextToArea("{" & CR,a_req);
+
+  return;
+end;
+
+procedure CloseRootJSON(var area a_req)
+begin
+  string 1 CR;
+
+  CR = chr(10);
+
+  AddTextToArea("}" & CR,a_req);
+
+  return;
+end;
+
+procedure SimpleObjectJSON(var area a_req, string id, array string a_keys, array string a_values, array boolean a_isstrf)
+begin
+  integer i;
+  string 1 CR,maybe_comma;
+
+  CR = chr(10);
+
+  AddTextToArea("""" & id & """: {" & CR,a_req);
+  for (i = 0; i < a_keys.length; i = i + 1) begin
+    maybe_comma = ",";
+    if (i == a_keys.length - 1) then begin
+      maybe_comma = "";
+    end;
+    if (a_isstrf[i]) then begin
+      AddTextToArea("""" & a_keys[i] & """: " & """" & a_values[i] & """" & maybe_comma,a_req);
+    end else begin
+      AddTextToArea("""" & a_keys[i] & """: " & a_values[i] & maybe_comma,a_req);
+    end;
+    AddTextToArea(CR,a_req);
+  end;
+  AddTextToArea("}" & CR,a_req);
+
+  return;
+end;
+
+procedure SetSingleKeyValue(string key, string value, boolean strf,var array string a_keys,var array string a_values,var array boolean a_isstrf)
+begin
+  
+  a_keys[a_keys.length] = key;
+  a_values[a_values.length] = value;
+  if (!strf) then begin
+    if (blank(value)) then begin
+      a_values[a_values.length - 1] = "0";
+    end;
+  end;
+  a_isstrf[a_isstrf.length] = strf;
+
+  return;
+end;
+
+global procedure DOLMakeWebRequest(string method,string apipath,var area areq,var area areply)
+begin
+  record DOLShopifyBlock DOLShopifyBl;
+	area request;
+	
+	blockload(DOLShopifyBl);	
+	
+	addtexttoarea(method & " " & apipath & " HTTP/1.1" & chr(13) & chr(10),request);
+ 	addtexttoarea("host: " & DOLShopifyBl.ShopifyURL & chr(13) & chr(10),request);
+	addtexttoarea("Authorization: Basic " & Base64Encode(DOLShopifyBl.APIUser & ":" & DOLShopifyBl.APIPass) & chr(13) & chr(10),request);
+	addtexttoarea(chr(13) & chr(10),request);
+	
+	insertareabeforearea(request,areq);
+		
+	SendRawWebRequest(DOLShopifyBl.ShopifyURL,DOLShopifyBl.ShopifyPort,true,method,apipath,"application/json","",false,areq,areply,20);
+	logtext(0,"************************DOLShopifyBl.SaveReqResp" & DOLShopifyBl.SaveReqResp);
+	if(DOLShopifyBl.SaveReqResp>0)then begin
+		if (!DirExists("ShopifyRQS")) then begin
+			CreateFolder("ShopifyRQS");
+		end;
+		logtext(0,"Write***");
+		WriteAreaToFile(areq,"ShopifyRQS/ShopifyRequest_" & DateToString(currentdate,"YYYY-MM-DD") & TimeToString(currenttime,"HHMMSS",false) & ".txt",0);
+		WriteAreaToFile(areply,"ShopifyRQS/ShopifyReply_" & DateToString(currentdate,"YYYY-MM-DD") & TimeToString(currenttime,"HHMMSS",false) & ".txt",0);
+	end;
+
+return;
+end;
+
+global procedure DOLMakeWebRequestAsync(string method,string apipath,var area areq)
+begin
+  record DOLShopifyBlock DOLShopifyBl;
+	area request,areply;
+	
+	blockload(DOLShopifyBl);
+		
+	
+	//DOLShopifyBl.ShopifyURL = "z8farsqgafir.runscope.net";
+	
+ 	addtexttoarea("Host: " & DOLShopifyBl.ShopifyURL & chr(13) & chr(10),request);
+	addtexttoarea("Authorization: Basic " & Base64Encode(DOLShopifyBl.APIUser & ":" & DOLShopifyBl.APIPass) & chr(13) & chr(10),request);
+	
+	addtexttoarea(chr(13) & chr(10),request);
+	
+	insertareabeforearea(request,areq);
+	
+	SendAsyncRawWebRequest(DOLShopifyBl.ShopifyURL,DOLShopifyBl.ShopifyPort,true,method,apipath,"application/json","",areq,"DOLMakeWebRequestReply",20);
+	if(DOLShopifyBl.SaveReqResp>0)then begin
+		if (!DirExists("ShopifyRQS")) then begin
+			CreateFolder("ShopifyRQS");
+		end;
+		WriteAreaToFile(areq,"ShopifyRQS/ShopifyRequest_" & DateToString(currentdate,"YYYY-MM-DD") & TimeToString(currenttime,"HHMMSS",false) & ".txt",0);
+	end;
+
+return;
+end;
+
+global updating procedure DOLMakeWebRequestReply(Area a_reply,Area a_replyheader,boolean timeout)
+begin
+	record DOLShopifyBlock DOLShopifyBl;
+	
+	blockload(DOLShopifyBl);
+	if (!DirExists("ShopifyRQS")) then begin
+		CreateFolder("ShopifyRQS");
+	end;
+	if(DOLShopifyBl.SaveReqResp>0)then begin
+		if (!DirExists("ShopifyRQS")) then begin
+			CreateFolder("ShopifyRQS");
+		end;
+		WriteAreaToFile(a_reply,"ShopifyRQS/ShopifyReply_" & DateToString(currentdate,"YYYY-MM-DD") & TimeToString(currenttime,"HHMMSS",false) & ".txt",0);
+	end;	
+return;
+end;
+
+function string 255 ConvertSERPVarCodeToShopifyVarCode(string serp_var, var boolean convf)
+begin
+  record DOLShopifyBlock Shopb;
+  record DOLSzConvBlock convb;
+  row DOLSzConvBlock convbrw;
+  record VARVc VArr;
+  string 255 res;
+  val aval;
+  integer aint,i,rwc;
+  
+  BlockLoad(Shopb);
+
+  convf = false;
+
+  aval = StringToVal(StripNonDigits(serp_var),M4UVal) / 10;
+  
+  if (nonblank(Shopb.InchVARGCode)) then begin
+    VArr.Code = right(serp_var,len(serp_var) - 1);
+    if (ReadFirstMain(VARr,1,true)) then begin
+    	
+      if (VARr.VARGCode == Shopb.InchVARGCode) then begin
+        BlockLoad(convb);
+        rwc = MatRowCnt(convb);
+        for (i = 0; i < rwc; i = i + 1) begin
+          MatRowGet(convb,i,convbrw);
+          if (convbrw.Inch == aval) then begin
+            aval = convbrw.CM;
+            convf = true;
+            i = rwc;
+          end;
+        end;
+      end;
+      if(VARr.ShopCM!=blankval)then begin
+    		aval = VARr.ShopCM;// Edit ************************** BPI Ukraine - KramarAlexandr - 05, 19 04 2019 y. at 10:29:30 AM
+    		convf = true;
+    	end;
+    end;
+  end;
+
+  aint = aval;
+
+  res = aint;
+  if (aval > aint) then begin
+    res = ValToString(aval,M4UVal,"",".",0);
+  end;
+  
+  ConvertSERPVarCodeToShopifyVarCode = res;
+  return;
+end;
+
+procedure AddToItemstat(var array val a_itemstat, var array string a_itemstat_index,string index,val instock)
+begin
+  integer i;
+  boolean newf;
+
+  newf = true;
+  for (i = 0; i < a_itemstat_index.length; i = i + 1) begin
+    if (a_itemstat_index[i] == index) then begin
+      a_itemstat[i] = a_itemstat[i] + instock;
+      newf = false;
+      i = a_itemstat_index.length;
+    end;
+  end;
+
+  if (newf) then begin
+    a_itemstat_index[a_itemstat_index.length] = index;
+    a_itemstat[a_itemstat.length] = instock;
+  end;
+
+  return;
+end;
+
+procedure GetItemStatusForItem(string item_code,string shopify_id,var array val a_itemstat,var array string a_itemstat_index, vector boolean v_locf,
+                               var array string a_serpvar, var array string a_shopvar, var boolean convf, var boolean novarf)
+begin
+  record ItemStatusVc ISr;
+  boolean trhs;
+  string 255 index,shopvar;
+
+  novarf = false;
+
+  ISr.Code = item_code;
+  trhs = true;
+  while (LoopMain(ISr,1,trhs)) begin
+    if (ISr.Code != item_code) then begin
+      trhs = false;
+    end else begin
+      if (v_locf[ISr.Location]) then begin
+        a_serpvar[a_serpvar.length] = ISr.Variety;
+        if (nonblank(ISr.Variety)) then begin
+          shopvar = ConvertSERPVarCodeToShopifyVarCode(ISr.Variety,convf);
+        end else begin
+          shopvar = "EMPTY";
+          novarf = true;
+        end;
+        a_shopvar[a_shopvar.length] = shopvar;
+        AddToItemstat(a_itemstat,a_itemstat_index,shopify_id & ":" & shopvar,ISr.Instock);
+      end;
+    end;
+  end;
+
+  return;
+end;
+
+procedure LoadAllowedLocations(var vector boolean v_locf,string check_class, var boolean at_least_onef)
+begin
+  record LocationVc Locr;
+  
+  ClearVector(v_locf);
+
+  at_least_onef = false;
+
+  while (LoopMain(Locr,1,true)) begin
+    v_locf[Locr.Code] = SetInSet(check_class,Locr.Classification) or blank(check_class);
+    if (v_locf[Locr.Code]) then begin
+      at_least_onef = true;
+    end;
+  end;
+
+  return;  
+end;
+
+function val GetItemstat(string index, array val a_itemstat, array string a_itemstat_index)
+begin
+  val res;
+  integer i;
+
+  for (i = 0; i < a_itemstat_index.length; i = i + 1) begin
+    if (a_itemstat_index[i] == index) then begin
+      res = a_itemstat[i];
+      i = a_itemstat_index.length;
+    end;
+  end;
+  
+  GetItemstat = res;
+  return;
+end;
+
+function val GetItemPrice(string item, string option1, array string a_serpvar, array string a_shopvar,boolean inchf)
+begin
+  record DOLShopifyBlock Shopb;
+  record VARVc VARr;
+  record IVVc IVr;
+  row IVVc IVrw;
+  val res;
+  boolean testf;
+  integer i,sernrf;
+  string 255 tstr;
+
+  res = 0;
+
+  for (i = 0; i < a_shopvar.length; i = i + 1) begin
+    testf = true;
+    if (inchf) then begin
+      BlockLoad(Shopb);
+      VARr.Code = right(a_serpvar[i],len(a_serpvar[i]) - 1);
+      testf = (ReadFirstMain(VARr,1,true) and VARr.VARGCode == Shopb.InchVARGCode) or blank(Shopb.InchVARGCode);
+    end;
+    if (a_shopvar[i] == option1 and testf) then begin
+      RecordNew(IVr);
+      ClearRow(IVr,IVrw,kInvoiceRowTypeNormal);
+      IVrw.ArtCode = item & a_serpvar[i];
+      MatRowPut(IVr,0,IVrw);
+      if (IVVc_PasteArtCode(IVr,0,tstr,tstr,false,sernrf)) then begin
+      end;
+      MatRowGet(IVr,0,IVrw);
+      res = IVrw.Price;
+
+      i = a_shopvar.length;
+    end;
+  end;
+  
+  GetItemPrice = res;
+  return;
+end;
+
+procedure BubbleSortArrayByReference_VAL_ASC(array val tosort,var array integer ref, integer cnt)
+begin
+  integer i;
+  integer tmp;
+  boolean swapped;
+  
+  for (i=0;i<cnt;i=i+1) begin // fill up reference array
+    ref[i] = i;
+  end;
+
+  swapped = true;
+  while (swapped) begin
+    swapped = false;
+    for (i=0;i<cnt-1;i=i+1) begin
+      if (tosort[ref[i]] > tosort[ref[i+1]]) then begin
+        tmp = ref[i];
+        ref[i] = ref[i+1];
+        ref[i+1] = tmp;
+        swapped = true;
+      end;
+    end;
+  end;
+
+  return;
+end;
+
+procedure AddToSortVariants(var array record SMVc a_smr,var vector integer v_sort_variants,var vector boolean v_sort_variantsf,string index,val aval)
+begin
+  record SMVc SMr;
+  row SMVc SMrw;
+
+  if (v_sort_variantsf[index]) then begin
+    RecordCopy(SMr,a_smr[v_sort_variants[index]]);
+  end else begin
+    RecordClear(SMr);
+  end;
+  ClearRow(SMr,SMrw,1);
+  SMrw.DebVal = aval;
+  MatRowPut(SMr,MatRowCnt(SMr),SMRw);
+  if (v_sort_variantsf[index]) then begin
+    a_smr[v_sort_variants[index]] = SMr;
+  end else begin
+    a_smr[a_smr.length] = SMr;
+    v_sort_variants[index] = a_smr.length - 1;
+    v_sort_variantsf[index] = true;
+  end;
+
+  return;
+end;
+
+function integer GetVarPosition(string shopifyid, string option1,var array record SMVc a_smr,var vector integer v_sort_variants, var vector boolean v_sort_variantsf, boolean addf)
+begin
+  record SMVc SMr;
+  row SMVc SMrw;
+  integer res,cnt,i,rwc;
+  array integer a_ref;
+  val option1_val;
+  array val a_sort_variants;
+
+  option1_val = StringToVal(option1,M4Val);
+  
+  if (addf) then begin
+    AddToSortVariants(a_smr,v_sort_variants,v_sort_variantsf,shopifyid,option1_val);
+  end;
+
+  if (v_sort_variantsf[shopifyid]) then begin
+    RecordCopy(SMr,a_smr[v_sort_variants[shopifyid]]);
+    rwc = MatRowCnt(SMr);
+    for (i = 0; i < rwc; i = i + 1) begin
+      MatRowGet(SMr,i,SMrw);
+      a_sort_variants[a_sort_variants.length] = SMrw.DebVal;
+    end;
+    
+    cnt = a_sort_variants.length;
+    BubbleSortArrayByReference_VAL_ASC(a_sort_variants,a_ref,cnt);
+
+    for (i = 0; i < cnt; i = i + 1) begin
+      if (a_sort_variants[a_ref[i]] == option1_val) then begin
+        res = i + 1;
+        i = cnt;
+      end;
+    end;
+  end;
+
+  GetVarPosition = res;
+  return;
+end;
+
+function boolean CheckIfEmptyVar(string shopid,array string a_shopifyid,array boolean a_no_varf)
+begin
+  integer i;
+  boolean res;
+  
+  for (i = 0; i < a_shopifyid.length; i = i + 1) begin
+    if (a_shopifyid[i] == shopid) then begin
+      res = a_no_varf[i];
+      i = a_shopifyid.length;
+    end;
+  end;
+
+  CheckIfEmptyVar = res;
+  return;
+end;
+
+// **** MAIN ****
+// **** MAIN: UPDATE STOCK ****
+global
+procedure DOLDoUpdShopifyStock(array string a_items,array string a_shopifyid, array val a_itemstat,array string a_itemstat_index,
+                                        array string a_serpvar, array string a_shopvar, array boolean a_inch_itemf, integer setcomp, var array boolean a_no_varf)
+begin
+  integer i,j,curcomp;
+  longint tick;
+  string 255 prodlist,data,product_id,option1;
+  array boolean a_isstrf;
+  boolean upd_posf,odd;
+  array val a_var_stock,a_var_old_stock;
+  array string 255 a_var_id,a_keys,a_values,a_var_prodid,a_var_opt1;
+  vector string 255 v_prod_price,v_prod_compprice;
+  vector boolean v_prod_price_setf;
+  vector boolean v_skip_varf,v_upd_var_pos_for_prodf;
+  vector integer v_sort_variants;
+  array record SMVc a_smr;
+  json jdata;
+  area a_req,a_reply;
+  vector boolean v_variant_existsf,v_sort_variantsf;
+
+  tick = GetCurTick;
+
+  logtext(0,"INFO: Queued task DOLUpdShopifyStock in company No. " & setcomp & " id " & tick);
+
+  curcomp = CurrentCompany;
+
+  if (curcomp != setcomp) then begin
+    SetCompany(setcomp,false);
+  end;
+
+  for (i = 0; i < a_items.length; i = i + 1) begin
+    if (nonblank(prodlist)) then begin
+      prodlist = prodlist & ",";
+    end;
+    prodlist = prodlist & a_shopifyid[i];
+  end;
+  
+  // 1. Get products and their varieties
+  DOLMakeWebRequest("GET","/admin/products.json?fields=id,variants&ids=" & prodlist,a_req,a_reply);
+
+  // 2. Get existing varieties and prime the instock to be set
+  jdata = ParseJSONArea(a_reply);
+  i = 0;
+  while (JSONNodeExists(jdata,"products/[" & i & "]/id")) begin
+    product_id = JSONGet(jdata,"products/[" & i & "]/id");
+    j = 0;
+    v_prod_price_setf[product_id] = false;
+    while (JSONNodeExists(jdata,"products/[" & i & "]/variants/[" & j & "]/id") and
+           JSONNodeExists(jdata,"products/[" & i & "]/variants/[" & j & "]/option1")) begin
+      
+      option1 = JSONGet(jdata,"products/[" & i & "]/variants/[" & j & "]/option1");
+
+      if (!v_prod_price_setf[product_id]) then begin
+        v_prod_price[product_id] = JSONGet(jdata,"products/[" & i & "]/variants/[" & j & "]/price");
+        v_prod_compprice[product_id] = JSONGet(jdata,"products/[" & i & "]/variants/[" & j & "]/compare_at_price");
+        v_prod_price_setf[product_id] = true;
+      end;
+
+      a_var_id[a_var_id.length] = JSONGet(jdata,"products/[" & i & "]/variants/[" & j & "]/id");
+      a_var_prodid[a_var_prodid.length] = product_id;
+      if (CheckIfEmptyVar(product_id,a_shopifyid,a_no_varf)) then begin
+        a_var_stock[a_var_stock.length] = GetItemstat(product_id & ":EMPTY",a_itemstat,a_itemstat_index);
+      end else begin
+        a_var_stock[a_var_stock.length] = GetItemstat(product_id & ":" & option1,a_itemstat,a_itemstat_index);
+      end;
+      a_var_old_stock[a_var_old_stock.length] = StringToVal(JSONGet(jdata,"products/[" & i & "]/variants/[" & j & "]/inventory_quantity"),M40Val);
+      a_var_opt1[a_var_opt1.length] = option1;
+
+      v_variant_existsf[product_id & ":" & option1] = true;
+      v_skip_varf[a_var_id[a_var_id.length - 1]] = a_var_stock[a_var_stock.length - 1] == a_var_old_stock[a_var_old_stock.length - 1];
+
+      AddToSortVariants(a_smr,v_sort_variants,v_sort_variantsf,product_id,StringToVal(option1,M4Val));
+      j = j + 1;
+    end;
+    i = i + 1;
+  end;
+
+  // 3. create all missing variants
+  for (i = 0; i < a_shopifyid.length; i = i + 1) begin // each item
+    for (j = 0; j < a_itemstat_index.length and !a_no_varf[i]; j = j + 1) begin // check all SERP variants; dont check if has no variants
+      if (a_itemstat[j] > 0) then begin // which have something in stock
+        if (a_shopifyid[i] & ":" == left(a_itemstat_index[j],len(a_shopifyid[i]) + 1)) then begin // and are for this item
+          if (!v_variant_existsf[a_itemstat_index[j]]) then begin // does variant exist in Shopify?
+            option1 = right(a_itemstat_index[j],len(a_itemstat_index[j]) - len(a_shopifyid[i]) - 1);
+            if (nonblank(option1)) then begin
+              SetAreaZeroSize(a_req);
+              ClearArray(a_keys);
+              ClearArray(a_values);
+              ClearArray(a_isstrf);
+
+              SetSingleKeyValue("title",option1,true,a_keys,a_values,a_isstrf);
+              if (v_prod_price_setf[a_shopifyid[i]]) then begin
+                SetSingleKeyValue("price",v_prod_price[a_shopifyid[i]],false,a_keys,a_values,a_isstrf);
+                SetSingleKeyValue("compare_at_price",v_prod_compprice[a_shopifyid[i]],false,a_keys,a_values,a_isstrf);
+              end else begin
+                SetSingleKeyValue("price",ValToString(GetItemPrice(a_items[i],option1,a_serpvar,a_shopvar,a_inch_itemf[i]),M4Val,"",".",0),false,a_keys,a_values,a_isstrf);
+              end;
+              SetSingleKeyValue("sku",a_items[i],true,a_keys,a_values,a_isstrf);
+              SetSingleKeyValue("position",GetVarPosition(a_shopifyid[i],option1,a_smr,v_sort_variants,v_sort_variantsf,true),false,a_keys,a_values,a_isstrf);
+
+              SetSingleKeyValue("inventory_policy","deny",true,a_keys,a_values,a_isstrf);
+
+              SetSingleKeyValue("fulfillment_service","manual",true,a_keys,a_values,a_isstrf);
+              SetSingleKeyValue("inventory_management","shopify",true,a_keys,a_values,a_isstrf);
+              SetSingleKeyValue("option1",option1,true,a_keys,a_values,a_isstrf);
+
+              SetSingleKeyValue("inventory_quantity",ValToString(a_itemstat[j],M40Val,"",".",1),false,a_keys,a_values,a_isstrf);
+              // debug:
+              if (a_itemstat[j] < 0) then begin
+                logtext(0,"WARNING: DOLDoUpdShopifyStock negative quantity. Missing variant. Info Dump: " & a_items[i] & ";" & a_shopifyid[i] & ";" & option1 & ";" & ValToString(a_itemstat[j],M40Val,"",".",1));
+              end;
+              // :debug
+              
+              OpenRootJSON(a_req);
+              SimpleObjectJSON(a_req,"variant",a_keys,a_values,a_isstrf);
+              CloseRootJSON(a_req);
+              
+              odd = !odd;
+              if (odd) then begin
+                MilliSleep(250);
+              end;
+              DOLMakeWebRequestAsync("POST","/admin/products/" & a_shopifyid[i] & "/variants.json",a_req);
+
+              SetAreaZeroSize(a_reply);
+
+              v_upd_var_pos_for_prodf[a_shopifyid[i]] = true;
+            end;
+          end;
+        end;
+      end;
+    end;
+  end;
+
+  // 6. update stock AND _position_ if required
+  for (i = 0; i < a_var_id.length; i = i + 1) begin
+    if (!v_skip_varf[a_var_id[i]] or v_upd_var_pos_for_prodf[a_var_prodid[i]]) then begin
+      
+      SetAreaZeroSize(a_req);
+      ClearArray(a_keys);
+      ClearArray(a_values);
+      ClearArray(a_isstrf);
+
+      SetSingleKeyValue("id",a_var_id[i],true,a_keys,a_values,a_isstrf);
+      SetSingleKeyValue("product_id",a_var_prodid[i],true,a_keys,a_values,a_isstrf);
+      if (v_upd_var_pos_for_prodf[a_var_prodid[i]]) then begin
+        SetSingleKeyValue("position",GetVarPosition(a_var_prodid[i],a_var_opt1[i],a_smr,v_sort_variants,v_sort_variantsf,false),false,a_keys,a_values,a_isstrf);
+      end;
+      SetSingleKeyValue("inventory_quantity",ValToString(a_var_stock[i],M40Val,"",".",1),false,a_keys,a_values,a_isstrf);
+      SetSingleKeyValue("old_inventory_quantity",ValToString(a_var_old_stock[i],M40Val,"",".",1),false,a_keys,a_values,a_isstrf);
+      
+      // debug:
+      if (a_var_stock[i] < 0) then begin
+        logtext(0,"WARNING: DOLDoUpdShopifyStock negative quantity. Existing variant. Info Dump: " & a_var_prodid[i] & ";" & a_var_id[i] & ";" & option1 & ";" & ValToString(a_var_stock[i],M40Val,"",".",1));
+      end;
+      // :debug
+
+      OpenRootJSON(a_req);
+      SimpleObjectJSON(a_req,"variant",a_keys,a_values,a_isstrf);
+      CloseRootJSON(a_req);
+      
+      odd = !odd;
+      if (odd) then begin
+        MilliSleep(250);
+      end;
+      DOLMakeWebRequestAsync("PUT","/admin/variants/" & a_var_id[i] & ".json",a_req);
+
+      SetAreaZeroSize(a_reply);
+    end;
+  end;
+
+  logtext(0,"INFO: Queued task DOLUpdShopifyStock in company No. " & setcomp & " id " & tick & " done.");
+
+  if (curcomp != setcomp) then begin
+    ResetCompany(curcomp);
+  end;
+
+  return;  
+end;
+
+global
+procedure DOLUpdShopifyStock(string args)
+begin
+  record INVc INr;
+  record DOLShopifyBlock DOLShopifyBl;
+  integer setcomp,curcomp;
+  longint pos;
+  boolean resetf,okf,found,testf,at_least_onef,convf,novarf;
+  string 20 item,setcompstr;
+  array record ItemStatusVc a_ISr;
+  array val a_itemstat;
+  vector boolean v_locf;
+  array boolean a_inch_itemf,a_no_varf;
+  array string 60 a_items,a_itemstat_index;
+  array string 255 a_shopifyid,a_serpvar,a_shopvar;
+
+  pos = 0;
+  GetNextSubString(args,pos,";",setcompstr);
+  GetNextSubString(args,pos,";",item);
+
+  curcomp = CurrentCompany;
+  setcomp = StringToInt(setcompstr);
+
+  okf = true;
+  if (curcomp != setcomp) then begin
+    resetf = SetCompany(setcomp,false);
+    okf = resetf;
+  end;
+
+  if (okf) then begin
+    logtext(0,"INFO: Will queue DOLUpdShopifyStock in company No. " & setcomp & " for item " & item);
+
+    BlockLoad(DOLShopifyBl);
+
+    LoadAllowedLocations(v_locf,DOLShopifyBl.StockClass,at_least_onef);
+
+    found = at_least_onef;
+    if (item != "*") then begin
+      INr.Code = item;
+    end;
+    while (LoopKey("ActCode",INr,1,found)) begin   
+      if (item != "*" and INr.Code != item) then begin
+        found = false;
+      end;
+      if (found) then begin
+        testf = true;
+        if (INr.NotForSales!=0) then begin testf = false; end;
+        if (blank(INr.ShopifyID)) then begin testf = false; end;
+        if (testf) then begin
+          if (a_items.length == kStockBatchSize and kStockBatchSize > 0) then begin
+            // queued.DOLDoUpdShopifyStock(a_items,a_shopifyid,a_itemstat,a_itemstat_index,a_serpvar,a_shopvar,a_inch_itemf,setcomp,a_no_varf);
+            threadasync.DOLDoUpdShopifyStock(a_items,a_shopifyid,a_itemstat,a_itemstat_index,a_serpvar,a_shopvar,a_inch_itemf,setcomp,a_no_varf);
+            ClearArray(a_items);
+            ClearArray(a_itemstat);
+            ClearArray(a_itemstat_index);
+            ClearArray(a_shopifyid);
+            ClearArray(a_serpvar);
+            ClearArray(a_shopvar);
+            ClearArray(a_no_varf);
+            ClearArray(a_inch_itemf);
+          end;
+          a_items[a_items.length] = INr.Code;
+          a_shopifyid[a_shopifyid.length] = INr.ShopifyID;
+          GetItemStatusForItem(INr.Code,INr.ShopifyID,a_itemstat,a_itemstat_index,v_locf,a_serpvar,a_shopvar,convf,novarf);
+          a_no_varf[a_no_varf.length] = novarf;
+          a_inch_itemf[a_inch_itemf.length] = convf;
+        end;
+      end;
+    end;
+    if (a_items.length > 0) then begin
+      // queued.DOLDoUpdShopifyStock(a_items,a_shopifyid,a_itemstat,a_itemstat_index,a_serpvar,a_shopvar,a_inch_itemf,setcomp,a_no_varf);
+      threadasync.DOLDoUpdShopifyStock(a_items,a_shopifyid,a_itemstat,a_itemstat_index,a_serpvar,a_shopvar,a_inch_itemf,setcomp,a_no_varf);
+    end;
+
+    logtext(0,"INFO: DOLUpdShopifyStock in company No. " & setcomp & " queued");
+
+  end;
+
+  if (resetf) then begin
+    ResetCompany(curcomp);
+  end;
+
+  return;
+end;
+
+procedure PreparePostArea(var area atarget) //Cut HTTP Header From raw reply
+begin
+	longint i,lenth;
+	string 10 ch,unix,win,mac;
+	area temparea;
+	
+	unix = chr(10) & chr(10);
+	win = chr(13) & chr(10) & chr(13) & chr(10);
+	mac = chr(13) & chr(13);
+	
+	lenth = GetAreaLength(atarget);
+	For(i=0;i<lenth;i=i+1) begin
+	  ch = GetStringfromarea(atarget,i,2);
+	  if(ch==unix or ch==mac)then begin
+	  	getareafromarea(atarget,i+2,lenth-i-2,temparea);
+	  	i = lenth;
+	  end else begin
+			ch = GetStringfromarea(atarget,i,4);
+			if(ch==win)then begin
+				getareafromarea(atarget,i+4,lenth-i-4,temparea);
+				i = lenth;
+			end;
+	  end;
+	end; 
+	
+	setareazerosize(atarget);
+	getareafromarea(temparea,0,getarealength(temparea),atarget);
+	WriteAreaToFile(atarget,"ShopifyNrm.txt",0);
+	
+return;
+end;
+
+global
+updating procedure DOLGetShopifyLocationsIDMn(record RcVc RepSpec)
+begin
+  record DOLShopifyBlock DOLShopifyBl;
+  json jdata;
+  boolean breakf;
+  integer i,loopc,pg;
+  string 255 data,since_id,pub_stat;
+  val price;
+  area a_req,a_reply;
+  integer pos;
+  record ShopifyLocVc SHLocr;
+
+  BlockLoad(DOLShopifyBl);
+
+
+	if (nonblank(DOLShopifyBl.APIUser) and nonblank(DOLShopifyBl.APIPass)) then begin
+		DOLMakeWebRequest("GET","/admin/locations.json",a_req,a_reply);
+		PreparePostArea(a_reply);
+		jdata = ParseJSONArea(a_reply);
+		
+		i = 0;
+		while (JSONNodeExists(jdata,"locations/[" & i & "]/id")) begin
+			if (JSONNodeExists(jdata,"locations/[" & i & "]/id")) then begin
+				data = JSONGet(jdata,"locations/[" & i & "]/id");
+				SHLocr.Id = data;
+				if(readfirstmain(SHLocr,1,true))then begin
+					SHLocr.Name = JSONGet(jdata,"locations/[" & i & "]/name");
+					SHLocr.address1 = JSONGet(jdata,"locations/[" & i & "]/address1");
+					SHLocr.address2 = JSONGet(jdata,"locations/[" & i & "]/address2");
+					SHLocr.city = JSONGet(jdata,"locations/[" & i & "]/city");
+					recordstore(SHLocr,true);
+				end else begin
+					recordnew(SHLocr);
+					SHLocr.Id = JSONGet(jdata,"locations/[" & i & "]/id");
+					SHLocr.Name = JSONGet(jdata,"locations/[" & i & "]/name");
+					SHLocr.address1 = JSONGet(jdata,"locations/[" & i & "]/address1");
+					SHLocr.address2 = JSONGet(jdata,"locations/[" & i & "]/address2");
+					SHLocr.city = JSONGet(jdata,"locations/[" & i & "]/city");
+					recordstore(SHLocr,true);
+				end;
+				
+			end;
+			i = i + 1;
+		end;
+
+	end else begin
+		MessageBox(0,"ERROR: API Access data must be provided. Check the Shopify settings.");
+	end;
+
+
+return;
+end;
+
+
+global
+updating procedure DOLGetShopifyProdIDMn(record RcVc RepSpec)
+begin
+  record INVc INr,IN2r;
+  record DOLShopifyBlock DOLShopifyBl;
+  json jdata;
+  boolean breakf;
+  integer i,loopc,pg,j;
+  string 255 data,since_id,pub_stat;
+  val price;
+  area a_req,a_reply;
+  integer pos;
+	record ShopifyProductsVc SPr;
+	
+  BlockLoad(DOLShopifyBl);
+
+  pub_stat = "published";
+  if (RepSpec.flags[0] == 1) then begin
+    pub_stat = "any";
+  end;
+	SPr.Id = "";
+		
+  if (RepSpec.ArtMode == 0 or RepSpec.ArtMode == 2) then begin // EVS: DOL-167 artmode == 2
+    if (nonblank(DOLShopifyBl.APIUser) and nonblank(DOLShopifyBl.APIPass)) then begin
+      
+      pg = 1;
+      DOLMakeWebRequest("GET","/admin/products.json?fields=title,id,variants&limit=250&page=" & pg,a_req,a_reply);
+     	PreparePostArea(a_reply);
+      WriteAreaToFile(a_reply,"Shopify.txt",0);
+			
+      jdata = ParseJSONArea(a_reply);
+			
+      while (GetAreaLength(a_reply) > 0 and JSONNodeExists(jdata,"products/[0]/id") and loopc < 100) begin // 25000 items max; to avoid infinite loop
+				logtext(0,"Begin to parse " & JSONNodeExists(jdata,"products/[" & i & "]/id"));
+        i = 0;
+        while (JSONNodeExists(jdata,"products/[" & i & "]/id")) begin
+          if (JSONNodeExists(jdata,"products/[" & i & "]/variants/[0]/sku")) then begin
+            data = JSONGet(jdata,"products/[" & i & "]/variants/[0]/sku");
+            pos = 0;
+            ExtractObj(data,pos,data);
+            since_id = JSONGet(jdata,"products/[" & i & "]/id");
+            /*INr.Code = data;
+            if (ReadFirstMain(INr,1,true)) then begin
+              if (RepSpec.ArtMode == 0) then begin
+                data = JSONGet(jdata,"products/[" & i & "]/id");
+                if (INr.ShopifyID != data and nonblank(data)) then begin
+                  RecordCopy(IN2r,INr);
+                  INr.ShopifyID = data;
+                  logtext(0,"IN Update " & INr.Code);
+                  RecordUpdate(IN2r,INr,false);
+                end;
+              end;
+              if (RepSpec.ArtMode == 2) then begin
+                data = JSONGet(jdata,"products/[" & i & "]/variants/[0]/price");
+                price = StringToVal(data,M4Val);
+                if (INr.ShopifyPrice != price and nonblank(data)) then begin
+                  RecordCopy(IN2r,INr);
+                  INr.ShopifyPrice = price;
+                  logtext(0,"IN Update " & INr.Code);
+                  RecordUpdate(IN2r,INr,false);
+                end;
+              end;
+            end;*/
+          
+						j=0;
+						while (JSONNodeExists(jdata,"products/[" & i & "]/variants/[" & j & "]/id")) begin
+							recordnew(SPr);
+							SPr.Id = JSONGet(jdata,"products/[" & i & "]/id");
+							SPr.VariantId = JSONGet(jdata,"products/[" & i & "]/variants/[" & j & "]/id");
+							SPr.Vproduct_id = JSONGet(jdata,"products/[" & i & "]/variants/[" & j & "]/product_id");
+							SPr.Vinvent_id = JSONGet(jdata,"products/[" & i & "]/variants/[" & j & "]/inventory_item_id");
+							SPr.Name = JSONGet(jdata,"products/[" & i & "]/title");
+							SPr.VarName = JSONGet(jdata,"products/[" & i & "]/variants/[" & j & "]/option1");
+							SPr.SKU = JSONGet(jdata,"products/[" & i & "]/variants/[" & j & "]/sku");
+							if(nonblank(SPr.Id))then begin
+								recordstore(SPr,true);
+							end;
+							j = j + 1;
+						end;
+          end;
+          logtext(0,"i = " & i & " pg = " & pg);
+          i = i + 1;
+        end;
+
+        SetAreaZeroSize(a_reply);
+
+        pg = pg + 1;
+        setareazerosize(a_reply);
+        setareazerosize(a_req);
+        DOLMakeWebRequest("GET","/admin/products.json?fields=title,id,variants&limit=250&page=" & pg,a_req,a_reply);
+				PreparePostArea(a_reply);
+        jdata = ParseJSONArea(a_reply);
+        logtext(0,pg & " AreaSize " & getarealength(a_reply));
+				logtext(0,pg & " AreaSizeNDExs " & JSONNodeExists(jdata,"products/[0]/id"));
+        loopc = loopc + 1;
+      end;
+
+    end else begin
+      MessageBox(0,"ERROR: API Access data must be provided. Check the Shopify settings.");
+    end;
+  end;
+  if (RepSpec.ArtMode == 1) then begin
+    while (LoopMain(INr,1,true)) begin
+      RecordCopy(IN2r,INr);
+      INr.ShopifyID = "";
+      RecordUpdate(IN2r,INr,false);
+    end;
+  end;
+
+return;
+end;
+
+global updating procedure CreateShopifyCustomer(json jdata,var record CUVc CUr,integer order)
+begin
+	record ShopifyNewCustBlock SNCb;
+	string 255 acclang,tstr;
+	record LetVc Letr;
+	record CUVc lCUr;
+	
+	blockload(SNCb);
+	
+	if(nonblank(SNCb.CustCatDOM))then begin
+		recordnew(CUr);	
+		CUr.Name = JSONGet(jdata,"orders/[" & order & "]/customer/default_address/first_name");
+		CUr.Name  = CUr.Name & " " & JSONGet(jdata,"orders/[" & order & "]/customer/default_address/last_name");
+		CUVc_PasteName(CUr);
+		CUr.InvAddr0 = JSONGet(jdata,"orders/[" & order & "]/customer/default_address/address1");//Street
+		if(nonblank(CUr.InvAddr0))then begin
+			CUVc_PasteInvAddr(CUr,0);
+		end;
+		CUr.InvAddr1 = JSONGet(jdata,"orders/[" & order & "]/customer/default_address/address2");//Street 2
+		if(nonblank(CUr.InvAddr1))then begin
+			CUVc_PasteInvAddr(CUr,1);
+		end;
+		CUr.InvAddr2 = JSONGet(jdata,"orders/[" & order & "]/customer/default_address/city");//City
+		if(nonblank(CUr.InvAddr2))then begin
+			CUVc_PasteInvAddr(CUr,2);
+		end;
+		CUr.InvAddr3 = JSONGet(jdata,"orders/[" & order & "]/customer/default_address/country");//Counrty
+		if(nonblank(CUr.InvAddr3))then begin
+			CUVc_PasteInvAddr(CUr,3);
+		end;
+		CUr.InvAddr4 = JSONGet(jdata,"orders/[" & order & "]/customer/default_address/zip");//ZIP
+		if(nonblank(CUr.InvAddr4))then begin
+			CUVc_PasteInvAddr(CUr,4);
+		end;
+		CUr.eMail = JSONGet(jdata,"orders/[" & order & "]/customer/email");
+		CUr.Phone = JSONGet(jdata,"orders/[" & order & "]/customer/default_address/phone");
+		CUr.CountryCode = JSONGet(jdata,"orders/[" & order & "]/customer/default_address/country_code");
+		CUVc_PasteCountryCode(CUr,"");
+		CUr.Comment = JSONGet(jdata,"orders/[" & order & "]/customer/default_address/company");
+	
+    CUr.CustType = 1;
+    /*if(nonblank(CUr.Comment))then begin
+			CUr.CustType = 0;
+		end;*/
+
+    // ARA: HAL-1145
+		switch(CUr.ExportFlag)begin
+			case 0:CUr.CustCat = SNCb.CustCatDOM; CUr.LangCode = SNCb.CustLangDOM;
+			case 1:CUr.CustCat = SNCb.CustCatEU; CUr.LangCode = SNCb.CustLangEU;
+			case 2:CUr.CustCat = SNCb.CustCatEXP; CUr.LangCode = SNCb.CustLangEXP;
+			case 3:CUr.CustCat = SNCb.CustCatEU; CUr.LangCode = SNCb.CustLangEU;
+			case 4:CUr.CustCat = SNCb.CustCatEXP; CUr.LangCode = SNCb.CustLangEXP;
+		end;
+    // :ARA
+
+	
+		acclang = JSONGet(jdata,"orders/[" & order & "]/client_details/accept_language");
+		acclang = acclang & "," & JSONGet(jdata,"orders/[" & order & "]/customer_locale");
+		AddToText(acclang,Letr);
+	
+    // ARA: HAL-1145 removed
+		// if(StringInText("en-us",Letr))then begin
+		// 	CUr.LangCode = "ENG";
+		// end;
+		// if(StringInText("en",Letr))then begin
+		// 	CUr.LangCode = "ENG";
+		// end;
+		// if(StringInText("lv",Letr))then begin
+		// 	CUr.LangCode = "LAT";
+		// end;
+		// if(StringInText("ru",Letr))then begin
+		// 	CUr.LangCode = "RUS";
+		// end;
+    // :ARA
+
+
+
+
+		CUr.Classification = SNCb.Classification;
+		CUR.VATNr = SNCb.VATNr;
+		CUr.RegNr1 = SNCb.RegNr1;
+		CUr.PayDeal = SNCb.PayDeal;
+		
+		if (blank(CUr.Code)) then begin
+			if (GetNextCustNr(tstr)) then begin end;
+			CUr.Code = tstr;
+			lCUr.Code = CUr.Code;
+			if (ReadFirstMain(lCUr,1,true)) then begin
+				goto LCreateCU;
+			end;
+		end;
+		
+		recordstore(CUr,true);
+	LCreateCU:;
+		logtext(0,"CreateShopifyCustomer " & CUr.Code);
+	end;
+return;
+end;
+
+global
+updating procedure DOLGetShopifyOrdersMn(record RcVc RepSpec)
+begin
+  record INVc INr,IN2r,IN3r;
+  record DOLShopifyBlock DOLShopifyBl;
+  record ShopifyNewCustBlock SNCb; // ARA: HAL-1145
+  record CountryVc Countryr; // ARA: HAL-1145
+  record DMVc DMr; // ARA: HAL-1145
+  json jdata;
+  boolean breakf;
+  integer i,loopc,pg,linit,k;
+  string 255 data,since_id,pub_stat;
+  val price;
+  area a_req,a_reply;
+  record ORVc ORr;
+	row ORVc ORrw;
+	date crat,bdat;
+	string 50 created_at;
+	record CUVc CUr, CU2r;
+	string 255 warning,errstr,itemid,varid,sku;
+	boolean chsum,custfound;
+	integer page,orders;
+	string 20 status;
+  boolean addshipartcodef; // ARA: HAL-1145
+  string 255 shippingline; // ARA: HAL-1145
+  val discamount; // ARA: HAL-1145
+	
+  BlockLoad(DOLShopifyBl);
+  BlockLoad(SNCb); // ARA: HAL-1145
+  
+  page = 0;
+  orders = 0;
+  status = "open";
+  switch(RepSpec.flags[2])begin
+  	case 1:status = "closed";
+  	case 2:status = "cancelled";
+  	case 3:status = "any";
+  end;
+
+  DOLShopifyBl.GetOrdersFrom = AddDay(RepSpec.sEndDate,-1);
+  BlockStore(DOLShopifyBl);
+
+  if (nonblank(DOLShopifyBl.APIUser) and nonblank(DOLShopifyBl.APIPass)) then begin
+LHetNextOrders:;
+		setareazerosize(a_reply);
+		setareazerosize(a_req);
+  	orders = 0;
+  	page = page + 1;
+  	DOLMakeWebRequest("GET","/admin/orders.json?status=" & status & "&fields=name,email,created_at,line_items,shipping_lines,customer,client_details,customer_locale&status=any&created_at_min=" & DateToString(RepSpec.sStartDate,"YYYY-MM-DD") & "T00:00:00-00:00" & "&created_at_max=" & DateToString(addday(RepSpec.sEndDate,1),"YYYY-MM-DD") & "T00:00:00-00:00&limit=250&page=" & page,a_req,a_reply);
+		PreparePostArea(a_reply);
+		
+		//addfiletoarea("Shopify.txt",a_reply,0);
+		if(GetAreaLength(a_reply) > 0)then begin
+			jdata = ParseJSONArea(a_reply);
+
+			i = 0;
+			while (JSONNodeExists(jdata,"orders/[" & i & "]/name")) begin
+					orders = orders + 1;
+					data = JSONGet(jdata,"orders/[" & i & "]/name");
+					
+					if(nonblank(data))then begin
+						ORr.CustOrdNr = data;
+						if(readfirstkey("CustOrdNr",ORr,1,true)==false)then begin
+							recordnew(ORr);
+							crat = bdat;//blanked crat
+							created_at = JSONGet(jdata,"orders/[" & i & "]/created_at");
+							crat.year = stringtoint(left(created_at,4));
+							crat.month = stringtoint(mid(created_at,5,2));
+							crat.day = stringtoint(mid(created_at,8,2));
+							ORr.OrdDate = crat;
+							ORr.CustOrdNr = data;
+							ORr.OrderClass = DOLShopifyBl.DefWebOrdClass;
+							ORr.Location = DOLShopifyBl.DefWebLocation;
+							ORr.CustCode = DOLShopifyBl.DefWebUserCode;
+							ORr.PlanShip = addday(ORr.OrdDate,DOLShopifyBl.DeliveryAfter);
+							
+							custfound = false;
+							CUr.eMail = JSONGet(jdata,"orders/[" & i & "]/customer/email");
+							if(readfirstkey("eMail",CUr,1,true))then begin
+								ORr.CustCode = CUr.Code;
+								custfound = true;
+							end else begin
+								CUr.Name = JSONGet(jdata,"orders/[" & i & "]/customer/first_name") & " " & JSONGet(jdata,"orders/[" & i & "]/customer/last_name");;
+								if(readfirstkey("Name",CUr,1,true))then begin
+									ORr.CustCode = CUr.Code;
+									custfound = true;
+								end;
+							end;
+							
+							if(custfound==false)then begin
+								CreateShopifyCustomer(jdata,CUr,i);
+								ORr.CustCode = CUr.Code;
+							end;
+							
+							PasteCustInOrder(ORr,ORr.CustCode,"",warning,errstr);
+							ORr.Addr0 = JSONGet(jdata,"orders/[" & i & "]/customer/first_name") & " " & JSONGet(jdata,"orders/[" & i & "]/customer/last_name");
+							
+							
+							linit = 0;
+							k = 0;
+							while (JSONNodeExists(jdata,"orders/[" & i & "]/line_items/[" & linit & "]/id")) begin
+								Clearrow(ORr,ORrw,1);
+								itemid = JSONGet(jdata,"orders/[" & i & "]/line_items/[" & linit & "]/id");
+								varid = JSONGet(jdata,"orders/[" & i & "]/line_items/[" & linit & "]/variant_id");
+								sku = JSONGet(jdata,"orders/[" & i & "]/line_items/[" & linit & "]/sku");
+                // ARA: HAL-1145
+                if (nonblank(sku)) then begin
+                  sku = StrReplace(sku,"\\","");
+                  if (ReadFirstItem(sku,IN3r,false,false)) then begin
+                    ORrw.ArtCode = sku;
+                  end else begin
+                    ORrw.ArtCode = DOLShopifyBl.DefArtCode;
+                  end;
+                end else begin
+                  ORrw.ArtCode = DOLShopifyBl.DefArtCode;
+                end;
+                // :ARA
+								matrowput(ORr,k,ORrw);
+								ORVc_PasteArtCode(ORr,k,warning,warning,false)
+								matrowget(ORr,k,ORrw);
+                if (ORrw.ArtCode == DOLShopifyBl.DefArtCode) then begin
+								  ORrw.Spec = JSONGet(jdata,"orders/[" & i & "]/line_items/[" & linit & "]/title"); // ARA: HAL-1145
+                end;
+                // ARA: HAL-1145
+								ORrw.Price = evaltoval(JSONGet(jdata,"orders/[" & i & "]/line_items/[" & linit & "]/price"));
+                if (JSONNodeExists(jdata,"orders/[" & i & "]/line_items/[" & linit & "]/discount_allocations/[0]/amount")) then begin
+                  discamount = evaltoval(JSONGet(jdata,"orders/[" & i & "]/line_items/[" & linit & "]/discount_allocations/[0]/amount"));
+                  if (discamount > 0) then begin
+                    ORrw.Price = ORrw.Price - discamount;
+                  end;
+                end;
+                // :ARA
+								ORrw.Quant = evaltoval(JSONGet(jdata,"orders/[" & i & "]/line_items/[" & linit & "]/quantity"));
+								ORrw.Sum = ORrw.Price * ORrw.Quant;
+								if(nonblank(ORrw.Spec))then begin
+									matrowput(ORr,k,ORrw);
+								end;
+								ORVc_PasteQuant(ORr,k,true,chsum);
+								ORDchsum(ORr,k);
+								ORSumup(ORr);
+								k = k + 1;
+								linit = linit + 1;
+							end;
+
+              // ARA: HAL-1145
+              addshipartcodef = false;
+              Countryr.Code = ORr.InvCountry;
+              if (ReadFirstMain(Countryr,1,true)) then begin
+                ORr.ShipMode = Countryr.ShipMode;
+                addshipartcodef = true;
+              end;
+
+              if (JSONNodeExists(jdata,"orders/[" & i & "]/shipping_lines/[" & 0 & "]/title")) then begin
+                shippingline = JSONGet(jdata,"orders/[" & i & "]/shipping_lines/[" & 0 & "]/title");
+                DMr.Code = DOLShopifyBl.StoreShipMode;
+                if (ReadFirstMain(DMr,1,true)) then begin
+                  if (FindStringInString(shippingline,DMr.Comment)) then begin // shipping lines title contains DOLShopifyBl.StoreShipMode
+                    addshipartcodef = false;
+                    ORr.ShipMode = DOLShopifyBl.StoreShipMode;
+                  end;
+                end;
+              end;
+
+
+              if (addshipartcodef and nonblank(DOLShopifyBl.DelArtCode)) then begin
+                Clearrow(ORr,ORrw,1);
+                ORrw.ArtCode = DOLShopifyBl.DelArtCode;
+                matrowput(ORr,k,ORrw);
+                ORVc_PasteArtCode(ORr,k,warning,warning,false)
+                matrowget(ORr,k,ORrw);
+                if (JSONNodeExists(jdata,"orders/[" & i & "]/shipping_lines/[" & 0 & "]/discounted_price")) then begin
+                  ORrw.Price = evaltoval(JSONGet(jdata,"orders/[" & i & "]/shipping_lines/[" & 0 & "]/discounted_price"));
+                end;
+                ORrw.Quant = 1;
+                matrowput(ORr,k,ORrw);
+                ORVc_PasteQuant(ORr,k,true,chsum);
+                ORDchsum(ORr,k);
+                ORSumup(ORr);
+                k = k + 1;
+              end;
+
+              // ARA: HAL-1145
+              if (CUr.CustType == 1 and ORr.ExportFlag == 1) then begin
+                ORr.ExportFlag = 3;
+              end;
+              if (CUr.CustType == 1 and ORr.ExportFlag == 2) then begin
+                ORr.ExportFlag = 4;
+              end;
+              // :ARA
+
+              switch(ORr.ExportFlag)begin
+                case 0:ORr.LangCode = SNCb.CustLangDOM & ORr.ShipMode;
+                case 1:ORr.LangCode = SNCb.CustLangEU & ORr.ShipMode;
+                case 2:ORr.LangCode = SNCb.CustLangEXP & ORr.ShipMode;
+                case 3:ORr.LangCode = SNCb.CustLangEU & ORr.ShipMode;
+                case 4:ORr.LangCode = SNCb.CustLangEXP & ORr.ShipMode;
+              end;
+              // :ARA
+							
+							
+							ORr.SerNr = NextSerNr("ORVc",ORr.OrdDate,-1,false,"");   
+							if (recordstore(ORr,true)) then begin
+							  OuterCustomShopifyOrderAction(ORr);
+							end;
+						end;
+					end;
+					
+				i = i + 1;
+			end;
+			if(orders>=250)then begin
+				setareazerosize(a_reply);
+				logtext(0,"Nextpage " & page);
+				goto LHetNextOrders;
+			end;
+		end;
+		
+		WriteAreaToFile(a_reply,"Shopify.json",0);
+  
+  end;
+  
+  return;
+end;
+
+
+// **** MAIN: UPSERT ITEM ****
+procedure NewProductJSON(record INVc INr,var area a_req)
+begin
+  array string 60 a_keys;
+  array string 255 a_values;
+  array boolean a_isstrf;
+  
+  SetAreaZeroSize(a_req);
+
+  SetSingleKeyValue("title",INr.Name,true,a_keys,a_values,a_isstrf);
+  
+  OpenRootJSON(a_req);
+  SimpleObjectJSON(a_req,"product",a_keys,a_values,a_isstrf);
+  CloseRootJSON(a_req);
+
+  return;
+end;
+
+procedure UpdateProductJSON(record INVc INr,var area a_req)
+begin
+  array string 60 a_keys;
+  array string 255 a_values;
+  array boolean a_isstrf;
+  
+  SetAreaZeroSize(a_req);
+
+  SetSingleKeyValue("id",INr.ShopifyID,true,a_keys,a_values,a_isstrf);
+  SetSingleKeyValue("title",INr.Name,true,a_keys,a_values,a_isstrf);
+  
+  OpenRootJSON(a_req);
+  SimpleObjectJSON(a_req,"product",a_keys,a_values,a_isstrf);
+  CloseRootJSON(a_req);
+
+  return;
+end;
+
+function boolean DigestProductReply(area a_reply, var string rstr)
+begin
+  json jdata;
+  boolean res;
+
+  res = false;
+  rstr = "";
+  jdata = ParseJSONArea(a_reply);
+  if (JSONNodeExists(jdata,"product/id")) then begin
+    res = true;
+    rstr = JSONGet(jdata,"product/id");
+  end else begin
+    rstr = "ERROR: An error was encountered while executing Sending Item data to Shopify (DOLUpsertItemShopify). A file was genereated in the tmp/ folder. Item: ";
+    WriteAreaToFile(a_reply,"tmp/REPLY-" & DateToString(CurrentDate,"YYMMDD") & "-" & GetHour(CurrentTime) & GetMinute(CurrentTime) & GetSecond(CurrentTime)  & ".json",0);
+  end;
+  
+  DigestProductReply = res;
+  return;
+end;
+
+global
+updating procedure DOLUpsertItemShopify(var record INVc INr)
+begin
+  record INVc IN2r;
+  record DOLShopifyBlock DOLShopifyBl;
+  string 255 rstr;
+  area a_req,a_reply;
+
+  BlockLoad(DOLShopifyBl);
+
+  if (DOLShopifyBl.UpdItems == 1) then begin
+    logtext(0,"INFO: Sending Item data to Shopify (DOLUpsertItemShopify), Item code " & INr.Code);
+    if (blank(INr.ShopifyID)) then begin
+      NewProductJSON(INr,a_req);
+      DOLMakeWebRequest("POST","/admin/products.json",a_req,a_reply);
+    end else begin
+      UpdateProductJSON(INr,a_req);
+      DOLMakeWebRequest("PUT","/admin/" & INr.ShopifyID & ".json",a_req,a_reply);
+    end;
+    if (DigestProductReply(a_reply,rstr)) then begin
+      INr.ShopifyID = rstr;
+    end else begin
+      LogText(0,rstr & INr.Code);
+    end;
+  end;
+
+  return;
+end;
+// :EVS
+
+// EVS: DOL-167
+
+// ****** MAIN: UPDATE PRICE ******
+global
+procedure DOLDoUpdateItemPriceShopify(string shopify_id, val init_price, val shopify_price, integer setcomp)
+begin
+  boolean odd,send_updf;
+  integer j;
+  longint tick;
+  string 255 varid;
+  vector val v_varprice,v_varcompprice;
+  array boolean a_isstrf;
+  array string 255 a_var_id,a_keys,a_values;
+  area a_req,a_reply;
+  json jdata;
+  record DOLShopifyBlock DOLShopifyBl;
+
+  BlockLoad(DOLShopifyBl);
+
+  tick = GetCurTick;
+
+  logtext(0,"INFO: Queued task DOLDoUpdateItemPriceShopify in company No. " & setcomp & " id " & tick);
+
+  // 1. Get single product
+  DOLMakeWebRequest("GET","/admin/products/" & shopify_id & ".json?fields=id,variants",a_req,a_reply);
+
+  // 2. Get varieties for product
+  jdata = ParseJSONArea(a_reply);
+  if (JSONNodeExists(jdata,"product")) then begin
+    j = 0;
+    while (JSONNodeExists(jdata,"product/variants/[" & j & "]/id") and
+           JSONNodeExists(jdata,"product/variants/[" & j & "]/option1")) begin
+      
+      varid = JSONGet(jdata,"product/variants/[" & j & "]/id");
+
+      v_varprice[varid] = StringToVal(JSONGet(jdata,"product/variants/[" & j & "]/price"),M4Val);
+      v_varcompprice[varid] = StringToVal(JSONGet(jdata,"product/variants/[" & j & "]/compare_at_price"),M4Val);
+      a_var_id[a_var_id.length] = varid;
+
+      j = j + 1;
+    end;
+  end;
+
+  // 2. Set price (also maybe compare at price) for all variants
+  // all of them should be the same
+  for (j = 0; j < a_var_id.length; j = j + 1) begin
+    send_updf = false;
+    SetAreaZeroSize(a_req);
+    ClearArray(a_keys);
+    ClearArray(a_values);
+    ClearArray(a_isstrf);
+
+    SetSingleKeyValue("id",a_var_id[j],true,a_keys,a_values,a_isstrf);
+    SetSingleKeyValue("product_id",shopify_id,true,a_keys,a_values,a_isstrf);
+
+    if (shopify_price != v_varprice[a_var_id[j]]) then begin
+      SetSingleKeyValue("price",ValToString(shopify_price,M4Val,"",".",0),false,a_keys,a_values,a_isstrf);
+      send_updf = true;
+    end;
+    if (init_price != shopify_price) then begin
+      SetSingleKeyValue(DOLShopifyBl.DiscItemTag,"",false,a_keys,a_values,a_isstrf);
+      if (init_price != v_varcompprice[a_var_id[j]]) then begin
+        SetSingleKeyValue("compare_at_price",ValToString(init_price,M4Val,"",".",0),false,a_keys,a_values,a_isstrf);
+        send_updf = true;
+      end;
+    end else begin
+      SetSingleKeyValue(DOLShopifyBl.FullPriceItemTag,"",false,a_keys,a_values,a_isstrf);
+    end;
+    
+    OpenRootJSON(a_req);
+    SimpleObjectJSON(a_req,"variant",a_keys,a_values,a_isstrf);
+    CloseRootJSON(a_req);
+    
+    odd = !odd;
+    if (send_updf) then begin
+      if (odd) then begin
+        MilliSleep(250);
+      end;
+      DOLMakeWebRequestAsync("PUT","/admin/variants/" & a_var_id[j] & ".json",a_req);
+    end;
+
+    SetAreaZeroSize(a_reply);
+  end;
+
+  logtext(0,"INFO: Queued task DOLDoUpdateItemPriceShopify in company No. " & setcomp & " id " & tick & " done.");
+  
+  return;
+end;
+
+global
+procedure DOLUpdateItemPriceShopify(record INVc INr)
+begin
+  record DOLShopifyBlock DOLShopifyBl;
+  boolean testf;
+
+  BlockLoad(DOLShopifyBl);
+
+  if (DOLShopifyBl.UpdPriceAlways == 1) then begin
+    logtext(0,"INFO: Will queue DOLUpdateItemPriceShopify in company No. " & CurrentCompany & " for item " & INr.Code);
+    testf = true;
+    if (INr.NotForSales!=0) then begin testf = false; end;
+    if (blank(INr.ShopifyID)) then begin testf = false; end;
+    if (testf) then begin
+      threadasync.DOLDoUpdateItemPriceShopify(INr.ShopifyID,INr.InitPrice,INr.ShopifyPrice,CurrentCompany);
+    end else begin
+      logtext(0,"INFO: DOLUpdateItemPriceShopify failed - Item is not for sale or missing Shopify ID; in company No. " & CurrentCompany & " for item " & INr.Code);
+    end;
+
+    logtext(0,"INFO: DOLUpdateItemPriceShopify queued in company No. " & CurrentCompany & " for item " & INr.Code);
+  end;
+
+  return;  
+end;
+// :EVS
+
+global
+updating procedure UpdateShopifyLastCheck(Longint t)
+begin
+	record DOLShopifyBlock DOLShopifyBl;
+	
+	BlockLoad(DOLShopifyBl);
+  DOLShopifyBl.LastTickOR = t;
+  BlockStore(DOLShopifyBl);
+
+  return;
+end;
+
+global 
+procedure PeriodicShopifyTasks(string args)
+begin
+	record RcVc RepSpec;
+	time t;
+	record DOLShopifyBlock DOLShopifyBl;
+	longint ordiff,indiff;
+	
+	BlockLoad(DOLShopifyBl);
+	
+	logtext(0,"PeriodicWebTasks");
+	
+	ordiff = GetCurTick - DOLShopifyBl.LastTickOR;
+	indiff = GetCurTick - DOLShopifyBl.LastTickIN;
+	logtext(0,"***************PeriodicWebTasks GetCurTick " & GetCurTick);
+	t = currenttime;
+	if(DOLShopifyBl.GetOrdFrq>0)then begin
+		if(ordiff<0 or (ordiff/1000)>DOLShopifyBl.GetOrdFrq*60)then begin
+      qupdating.UpdateShopifyLastCheck(GetCurTick);//should have only one qupdating function here...for performance
+			RepSpec.sStartDate = DOLShopifyBl.GetOrdersFrom;
+      if (blank(RepSpec.sStartDate)) then begin
+        RepSpec.sStartDate = addday(currentdate,-7);
+      end;
+			RepSpec.sEndDate = currentdate;
+			qupdating.DOLGetShopifyOrdersMn(RepSpec);
+			Logtext(0,"***************Periodic task DOLGetShopifyOrdersMn");
+		end;
+	end;
+
+	if(t.hour==23 and t.minute==0)then begin
+		qupdating.DOLGetShopifyLocationsIDMn(RepSpec);
+	end;
+
+  return;
+end;
+
+global
+procedure SetTimedEventScheduler()
+begin
+  record DOLShopifyBlock DOLShopifyBl;
+  record CompaniesBlock CompaniesRec;
+  row CompaniesBlock comprw;
+  Integer i,rwcnt;
+  Integer curcomp;
+
+  curcomp = CurrentCompany;  
+  BlockLoad(CompaniesRec);
+  rwcnt = MatRowCnt(CompaniesRec);
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowGet(CompaniesRec,i,comprw);
+    if (SetCompanyCode(comprw.CompCode,false)) then begin
+      BlockLoad(DOLShopifyBl);
+      if (DOLShopifyBl.UpdStock == 1 and DOLShopifyBl.UpdStockInertval > 0) then begin
+        logtext(0,"INFO: Scheduling DOLUpdShopifyStock to run every " & DOLShopifyBl.UpdStockInertval & " minutes in company No. " & CurrentCompany);
+        NewPeriodicTask("Update Shopify Stock","DOLUpdShopifyStock","DOLUpdShopifyStock",CurrentCompany & ";*",DOLShopifyBl.UpdStockInertval * 60,"");
+      end;
+    end;
+    NewPeriodicTask2("PeriodicShopifyTasks" & CurrentCompany,"PeriodicShopifyTasks" & CurrentCompany,"PeriodicShopifyTasks","",50,"");
+    logtext(0,"INFO: Setting up Periodic tasks for requesting orders and locations");
+    ResetCompany(curcomp);
+  end;
+  ResetCompany(curcomp);
+  
+return;
+end;
+

@@ -1,0 +1,91 @@
+begin
+
+	BlockBegin(DOLShopifyBlock,-,"");
+  RecordField(APIUser,M4Str,255,0);
+  RecordField(APIPass,M4Str,255,0);
+  RecordField(UpdItems,M4Int,0,0);
+  RecordField(UpdStock,M4Int,0,0);
+  RecordField(UpdStockInertval,M4Int,0,0);
+  RecordField(ShopifyURL,M4Str,255,0);
+  RecordField(ShopifyPort,M4Int,0,0);
+  RecordField(StockClass,M4Code,20,0);
+  RecordField(SaveReqResp,M4Int,0,0);
+  RecordField(InchVARGCode,M4Code,10,0);
+  RecordField(UpdStockAlways,M4Int,0,0);
+  RecordField(UpdPriceAlways,M4Int,0,0);
+  RecordField(DefWebUserCode,M4Code,60,0);
+  RecordField(DefWebLocation,M4Code,60,0);
+  RecordField(DefWebOrdClass,M4Code,60,0);
+  RecordField(ShpifyLocId,M4Code,60,0);
+	RecordField(GetOrdFrq,M4Long,0,0);
+	RecordField(LastTickOR,M4Long,0,0);
+	RecordField(LastTickIN,M4Long,0,0);
+  RecordField(DeliveryAfter,M4Int,0,0);
+  RecordField(DefArtCode,M4Code,20,INVc);
+  RecordField(StoreShipMode,M4Code,5,0);
+  RecordField(DelArtCode,M4Code,20,INVc);
+  RecordField(FullPriceItemTag,M4Str,255,0);
+  RecordField(DiscItemTag,M4Str,255,0);  
+  RecordField(GetOrdersFrom,M4Date,0,0);
+  EndBlock;
+
+	RecordBegin(ShopifyLocVc,-,"");
+  RecordField(Id,M4Code,50,0);
+  RecordField(Name,M4Str,200,0);
+  RecordField(address1,M4Str,200,0);
+  RecordField(address2,M4Str,200,0);
+  RecordField(city,M4Str,200,0);
+  MainKeyBegin(Id,0);
+  KeySegment(Id);  	
+	EndRecord;
+	
+	RecordBegin(ShopifyProductsVc,-,"");
+  RecordField(Id,M4Code,50,0);
+  RecordField(VariantId,M4Code,50,0);
+  RecordField(Vproduct_id,M4Code,50,0);
+  RecordField(Vinvent_id,M4Code,50,0);
+  RecordField(Name,M4Str,200,0);
+  RecordField(VarName,M4Str,200,0);
+  RecordField(SKU,M4Str,200,0);
+  RecordField(HansaArtCode,M4Str,200,0);
+  RecordField(HansaVarCodes,M4Str,200,0);
+  MainKeyBegin(Id,0);
+  KeySegment(Id);  
+  KeySegment(VariantId); 
+  KeyBegin(HansaArtCode);
+  KeySegment(HansaArtCode);
+  KeySegment(Id);
+  KeySegment(VariantId);
+  KeyBegin(SKU);
+  KeySegment(SKU);
+  KeySegment(Id);
+  KeySegment(VariantId);
+	EndRecord;
+
+	BlockBegin(ShopifyNewCustBlock,-,"");
+  RecordField(CustCatDOM,M4Code,20,0);
+  RecordField(CustCatEU,M4Code,20,0);
+  RecordField(CustCatEXP,M4Code,20,0);
+  RecordField(Classification,M4UStr,200,0);
+  RecordField(VATNr,M4UStr,50,0);
+  RecordField(RegNr1,M4UStr,50,0);
+  RecordField(PayDeal,M4Code,50,0);
+  RecordField(CustLangDOM,M4Code,20,0);
+  RecordField(CustLangEU,M4Code,20,0);
+  RecordField(CustLangEXP,M4Code,20,0);
+	EndBlock;
+	
+/*needs to add also
+  RecordAddBegin(CountryVc,"Shopify_CountryVc");
+  RecordField(ShipMode,M4Code,5,0);
+  EndRecordAdd;
+
+  RecordAddBegin(INVc,"Shopify_INVc");
+  RecordField(ShopifyID,M4Str,60,0);
+  RecordField(ShopifyPrice,M4Val,0,0);
+  EndRecordAdd;
+
+*/
+
+  return;
+end;

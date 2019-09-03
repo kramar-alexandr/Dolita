@@ -139,6 +139,11 @@ external outer procedure OpenSalesManSelectionWindow(integer,val,integer); //EBS
 external outer function val DOLGetIVCashGCPaymentSum(record IVCashVc);
 external outer function val DOLGetUnitPriceFromSum(val);
 remote outer updating procedure DOLUpdateSourceOrder(longint);
+//CUST-BEGIN::TOUCHLESS PAYMENTS
+external outer function Boolean InitTouchlessPayment(val,string,string,var string,Longint,string,Integer,string,string);
+external outer function Boolean ConfirmLastTouchlessPayment();
+//CUST-END::TOUCHLESS PAYMENTS
+
 
 function Integer HashTouchScreenPageCode(string tstr)
 begin
@@ -1599,6 +1604,10 @@ retval is calculted in sumup
             CredCardPOSPIVCashsmExecute(POSBrw.Code,POSBrw.Label);
           case kLocalCCTerminalIngenico6550:
             CredCardPOSPIVCashsmExecute(POSBrw.Code,POSBrw.Label);
+//CUST-BEGIN
+          case 201:
+            InitTouchlessPayment(IVCashr.Sum4-IVCashr.TendValue,POSBrw.Code,POSBrw.Label,tstr,IVCashr.SerNr,IVCashr.CurncyCode,wn,"","");
+//CUST-END
           otherwise
             CredCardPOSPIVCashsm;
         end;
@@ -1939,6 +1948,9 @@ begin
   // :EVS
   if (new_recordf) then begin
 //    sleep(5);
+//CUST-BEGIN::TOUCHLESS PAYMENTS
+    new_recordf = qupdating.ConfirmLastTouchlessPayment;//shouldn't be on the main thread, but we need a way to get the transactionid from db
+//CUST-END::TOUCHLESS PAYMENTS
 
     WindowDoNew(wn,0);
     GetWindowRecord(wn,IVCashr);

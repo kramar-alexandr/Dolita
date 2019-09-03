@@ -1083,69 +1083,6 @@ begin
   return;
 end;
 
-// EVS: DOL-166
-window DOLShopifyTClass:1
-  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
-begin
-  real h,v,vm,vs;
-  v = 6; vs = 20; h = 90;
-
-  WindowBegin("Dolita - Shopify Settings",DOLShopifyTClass,CGSbl,ItemSettingType);
-  SetWRect(20,80,480,420);
-  SetBlid(DOLShopifyBlock);
-  Sizeable(-1,-1,0,0);
-  Tile(0,20,false,"",APIUser);
-  TileButton(1,"API Access");
-  TileButton(2,"Automatic Sync (SERP -> Shopify)");
-  TileButton(3,"Special options");
-  Tile(1,120,true,"",APIUser);
-  EditField(h,v = 10,-20,"API Key",Normal,APIUser,false,0);
-  EditField(h,v += vs,-20,"API Password",Normal,APIPass,false,0);
-  EditField(h,v += vs,200,"Shopify URL",Normal,ShopifyURL,false,0);
-  EditField(h,v += vs,80,"Shopify Port",Normal,ShopifyPort,true,0);
-  Tile(2,120,true,"",UpdStockInertval);
-  CheckBox(h,v=20,0,"Update Items (!for testing only!) (restart required)",UpdItems);
-  ButtonFrame(h,v+=30,270,5,"");
-  CheckBox(h,v+=1,0,"Update Stock Levels (restart required)",UpdStock);
-  EditField(h+100,v+=vs,60,"Every",Normal,UpdStockInertval,false,0);
-  StaticText(h+155,v+10,"minutes",false);
-  EditField(h+100,v+=vs,60,"Location class",Normal,StockClass,false,LocClSClass);
-  EditField(h+100,v+=vs,60,"Inch variety group",Normal,InchVARGCode,false,VARGSClass);
-  ButtonFrame(h,v+=50,270,2,"Effective immediately");
-  CheckBox(h,v+=1,0,"Update Stock Levels when Stock level Changes",UpdStockAlways);
-  CheckBox(h,v+=20,0,"Update Price When Item is Updated",UpdPriceAlways); // EVS: DOL-167
-  EndFrame;
-  Tile(3,120,true,"",SaveReqResp);
-  StaticText(h,v=20,"NOTE: Do not change anything unless insctructed",false);
-  CheckBox(h,v+=20,0,"Save request and response data",SaveReqResp);
-  SpecialMenu("Send Stock Levels Once",' ',0,"DOLShopifySendStockSm");
-  EndWindow;
-
-end;
-
-window DOLGetShopifyProdIDVClass:1
-  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
-begin
-  real v,vs,h,vm;
-
-  WindowBegin("Dolita - Load Shopify Product IDs",DOLGetShopifyProdIDVClass,CGMnt,RcType);
-  SetWRect(20,80,350,240);
-  ButtonFrame(h=80,v=20,200,3,"Action");
-  RadioButton(h,v,0,0,"Download Shopify IDs",ArtMode);
-  RadioButton(h,v+=16,2,0,"Download Shopify Prices",ArtMode); // EVS: DOL-167
-  RadioButton(h,v+=16,1,0,"Clear All Shopify IDs",ArtMode);
-  EndFrame;
-  // EVS: DOL-167
-  ButtonFrame(h=80,v+=60,200,2,"Include Products");
-  RadioButton(h,v,0,0,"Published only",flags[0]);
-  RadioButton(h,v+=16,1,0,"All",flags[0]);
-  EndFrame;
-  // :EVS
-  EndWindow;
-
-  return;
-end;
-
 window DOLSzConvTClass:1
   wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
 begin

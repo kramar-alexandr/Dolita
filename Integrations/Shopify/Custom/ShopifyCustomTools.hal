@@ -1,0 +1,248 @@
+external inner procedure StockMovVc_PasteFromLocation(var record StockMovVc);
+external inner procedure StockMovVc_PasteToLocation(var record StockMovVc);
+external inner procedure StockMovGetRate(var record StockMovVc);
+external inner function Boolean StockMovVc_PasteArtCode(var record StockMovVc,Integer,Integer,var array string);
+external inner function string 255 StringFromSysList(Integer,Integer);
+external inner function val GetStockQty(string,string,Date,Boolean);
+remote procedure GetShopifyOrderList(string,var array record ORVc,var array record StockMovVc);
+
+
+updating procedure CreateStockMove(record ORVc ORr,string item,val qty,string frloc,string toloc)
+begin
+  array string 255 aWarning;
+  record StockMovVc StockMovr;
+  row StockMovVc StockMovrw;
+
+
+  RecordNew(StockMovr);
+  StockMovr.SerNr = NextSerNr("StockMovVc",CurrentDate,-1,false,"");
+  StockMovr.FrLocation = frloc;
+  StockMovr.ToLocation = toloc;
+  StockMovVc_PasteFromLocation(StockMovr); 
+  StockMovVc_PasteToLocation(StockMovr);
+  StockMovr.OrderNr = ORr.SerNr;
+  StockMovr.TransDate = CurrentDate;
+  StockMovGetRate(StockMovr);
+  StockMovr.SentOKFlag = 1;
+  ClearRow(StockMovr,StockMovrw,1);
+  StockMovrw.ArtCode = item;
+  StockMovrw.SentQuant = qty;
+  StockMovrw.OrdQuant = qty;
+  StockMovrw.Quant = qty;
+  MatRowPut(StockMovr,0,StockMovrw);
+  StockMovVc_PasteArtCode(StockMovr,0,1,aWarning)
+  
+  RecordInsert(StockMovr,true);
+
+  return;
+end;
+
+function Boolean FindLocations(record ShopifyLocLinkBlock SLb,string item,val qty,var string frloc,var string toloc)
+begin
+  Boolean res;
+  row ShopifyLocLinkBlock SLbrw;
+  Integer i,rwcnt;
+
+  frloc = "";
+  toloc = "";
+  rwcnt = MatRowCnt(SLb);
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowGet(SLb,i,SLbrw);
+    if (GetStockQty(item,SLbrw.MainLocation,CurrentDate,false)>=qty) then begin
+      frloc = SLbrw.MainLocation;
+      toloc = SLbrw.ShopifyLocation;
+      res = true;
+      i = rwcnt;
+    end;
+  end;
+  
+  FindLocations = res;
+return;
+end;
+
+global
+updating procedure OuterCustomShopifyOrderAction(record ORVc ORr)
+begin
+  Integer i,rwcnt;
+  row ORVc ORrw;
+  string 255 frloc,toloc;
+  record ShopifyLocLinkBlock SLb;
+  
+  BlockLoad(SLb);
+  rwcnt = MatRowCnt(ORr);
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowGet(ORr,i,ORrw);
+    if (nonblank(ORrw.ArtCode)) then begin
+      if (FindLocations(SLb,ORrw.ArtCode,ORrw.Quant,frloc,toloc)) then begin
+        CreateStockMove(ORr,ORrw.ArtCode,ORrw.Quant,frloc,toloc);
+      end;
+    end;
+  end;
+
+  return;
+end;
+
+global
+procedure ShowShopifyOrderButton(Integer cnt,Integer showf)
+begin
+  Integer wn,curstat;
+  
+  wn = FindWindow("NPTSIVCashDClass");
+  if (wn>0) then begin//can we get 0 window?
+    curstat = StringToInt(GetWindowString(wn,"POSShopifyOrders"));
+    if (curstat!=showf) then begin
+      PutWindowString(wn,"POSShopifyOrders",showf);
+      RerunWindowDef(wn);
+    end;
+  end;
+
+  return;
+end;
+
+global
+procedure CheckShopifyOrdersTask(string args)
+begin
+  array record ORVc aORr;
+  array record StockMovVc aStockMovr;
+  record LocalMachineBlock LMb;
+
+  BlockLoad(LMb);
+
+  threadremote.GetShopifyOrderList(LMb.LocalMachineCode,aORr,aStockMovr);
+
+  if (aStockMovr.length>0) then begin
+    queued.ShowShopifyOrderButton(aStockMovr.length,1);//enable
+  end else begin
+    queued.ShowShopifyOrderButton(aStockMovr.length,0);//disable
+  end;
+
+  return;
+end;
+
+global
+function Boolean NPTSIVCashDClassOnOpenWindow(Integer wn)
+begin
+  Boolean res;
+
+  res = inner.NPTSIVCashDClassOnOpenWindow(wn);
+  CheckShopifyOrdersTask("");
+  
+  NPTSIVCashDClassOnOpenWindow = res;
+  return;
+end;
+
+
+global
+procedure InitCheckShopifyOrders()
+begin
+  record ORVc ORr;
+  Boolean testf;
+  
+  testf = false;
+
+  if (ClientMode or LiveSyncMode) then begin
+    NewPeriodicTask2("CheckShopifyOrders","CheckShopifyOrders","CheckShopifyOrdersTask","",60,"");
+  end else begin
+    //code for testing
+    if (testf) then begin
+      ORr.SerNr = 21100007;
+      if (ReadFirstMain(ORr,1,true)) then begin
+        qupdating.OuterCustomShopifyOrderAction(ORr);
+      end;
+    end;
+  end;
+
+  return;
+end;
+
+global
+function Boolean ShopifyOrdersWClassOnOpenWindow(Integer wn)
+begin
+  array record ORVc aORr;
+  array record StockMovVc aStockMovr;
+  record StockMovVc StockMovr;
+  row StockMovVc StockMovrw;
+  record LocalMachineBlock LMb;
+  Integer i;
+
+
+  BlockLoad(LMb);
+  threadremote.GetShopifyOrderList(LMb.LocalMachineCode,aORr,aStockMovr);
+
+  for (i=0;i<aStockMovr.length;i=i+1) begin
+    StockMovr = aStockMovr[i];
+    MatRowGet(StockMovr,i,StockMovrw);
+    AddListRow(wn,"shopifyorders",1,StockMovr.SerNr,0);
+    AddListData(wn,"shopifyorders","sernr",StockMovr.SerNr);
+    AddListData(wn,"shopifyorders","item",StockMovrw.ArtCode);
+    AddListData(wn,"shopifyorders","itemname",StockMovrw.Spec);
+    AddListData(wn,"shopifyorders","qty",StockMovrw.Quant);
+  end;
+
+  ShopifyOrdersWClassOnOpenWindow = false;
+  return;
+end;
+
+global
+function Boolean ShopifyOrdersWClassListDblClick(Integer wn)
+begin
+  LongInt line;
+  record StockMovVc StockMovr;
+
+  line = SelectedListLine(wn);
+  if (line>=0) then begin
+    StockMovr.SerNr = StringToLongint(GetListTag(wn,line));
+    if (ReadFirstMain(StockMovr,1,true)) then begin
+      OpenWindow("StockMovDClass",1,0,"","",StockMovr);
+    end;
+  end;
+
+  return;
+end;
+
+global
+procedure GetShopifyOrderList(string lm,var array record ORVc aORr,var array record StockMovVc aStockMovr)
+begin
+  record ShopifyLocLinkBlock SLb;
+  row ShopifyLocLinkBlock SLbrw;
+  string 255 frloc;
+  vector Boolean vOrders;
+  record StockMovVc StockMovr;
+  Boolean TrHs;
+  Integer i,rwcnt;
+  record ORVc ORr;
+
+  
+  BlockLoad(SLb);
+  rwcnt = MatRowCnt(SLb);
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowGet(SLb,i,SLbrw);
+    if (SetInSet(lm,SLbrw.LocalMachine)) then begin
+      frloc = SLbrw.MainLocation;
+    end;
+  end;
+
+  if (nonblank(frloc)) then begin
+    TrHs = true;
+    StockMovr.OKFlag = 0;
+    StockMovr.FrLocation = frloc;
+    while (LoopKey("FrLocOK",StockMovr,2,TrHs)) begin
+      if (StockMovr.OKFlag!=0 or StockMovr.FrLocation!=frloc) then begin
+        TrHs = false;
+      end else begin
+        if (StockMovr.OrderNr>0) then begin
+          if (vOrders[StockMovr.OrderNr]==false) then begin
+            ORr.SerNr = StockMovr.OrderNr;
+            if (ReadFirstMain(ORr,1,true)) then begin
+              aORr[aORr.length] = ORr;
+              aStockMovr[aStockMovr.length] = StockMovr;
+              vOrders[StockMovr.OrderNr] = true;
+            end;
+          end;
+        end;
+      end;
+    end;
+  end;
+
+  return;
+end;

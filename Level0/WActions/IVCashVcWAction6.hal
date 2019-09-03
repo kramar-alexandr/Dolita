@@ -100,6 +100,10 @@ external outer function val DOLGetIVCashGCPaymentSum(record IVCashVc);
 external outer function val DOLGetUnitPriceFromSum(val);
 external outer procedure SetPOSWindowDisplay_EBS(integer);
 external outer function boolean DOL_FindLoyaltyCardByPhone(var record RcVc); //EBS
+//CUST-BEGIN::TOUCHLESS PAYMENTS
+external outer function Boolean InitTouchlessPayment(val,string,string,var string,Longint,string,Integer,string,string);
+//CUST-END::TOUCHLESS PAYMENTS
+
 
 // EVS: DOL-95
 procedure RemoveGCRows(integer wn)
@@ -4979,6 +4983,11 @@ begin
                 SmartPayCreditCard_Purchase(Rb.RahaxiServerIP,Rb.RahaxiServerPort,IVCr.SerNr,IVCr.InvType,received,cashwithdrawal,vRepSpec.AccStr,vRepSpec.f5,action,"",vwn);
               end;
               goto LProceedNPTSPaymentOneModeTClass;
+//CUST-BEGIN::TOUCHLESS PAYMENTS
+            case 201:
+              InitTouchlessPayment(received,paymode,alabel[selpmrow],transactionid,IVCr.SerNr,crncy,wn,"","");
+              goto LProceedNPTSPaymentOneModeTClass;
+//CUST-END::TOUCHLESS PAYMENTS
           end;
 
 

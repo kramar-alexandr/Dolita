@@ -14,7 +14,12 @@ enum begin
   kPOSButtonTypePeriodicReport = 214,
   kPOSButtonTypePrintReceipt = 215,
   kPOSButtonTypeCreateCustomer = 216,
-	kPOSButtonTypeDiscountCoupon = 217// Edit ************************** BPI Ukraine - KramarAlexandr - 01, 13 05 2019 y. at 9:36:35 PM
+	kPOSButtonTypeDiscountCoupon = 217,// Edit ************************** BPI Ukraine - KramarAlexandr - 01, 13 05 2019 y. at 9:36:35 PM
+  kPOSButtonTypeShopifyOrders = 218,
+//CHN::TOUCHLESS PAYMENTS
+  kPOSButtonTypeVoidBankPayment = 219
+//CHN::TOUCHLESS PAYMENTS
+
 end;
 
 event startup
@@ -181,6 +186,8 @@ begin
   SetText(kPOSButtonTypeCreateCreditSalesInvoice,"Perkelti į Kredito pažymą");//VITO: DOL-89
   SetText(kPOSButtonTypeCreateCustomer,"Įvesti pirkėją"); //EBS
   SetText(kPOSButtonTypeDiscountCoupon,"Coupon for discount");// Edit ************************** BPI Ukraine - KramarAlexandr - 01, 13 05 2019 y. at 9:33:20 PM
+  SetText(kPOSButtonTypeShopifyOrders,"Shopify Orders");//CHN
+  SetText(kPOSButtonTypeVoidBankPayment,"Void Bank Payment");//CHN::TOUCHLESS PAYMENTS
   EndSet;
 
   SetBegin(1495); // pos invoice, subset of 431
@@ -308,6 +315,10 @@ begin
   SetText(kPOSButtonTypeCreateCreditSalesInvoice,"Perkelti į Kredito pažymą");//VITO: DOL-89
   SetText(kPOSButtonTypeCreateCustomer,"Įvesti pirkėją"); //EBS
   SetText(kPOSButtonTypeDiscountCoupon,"Coupon for discount");// Edit ************************** BPI Ukraine - KramarAlexandr - 01, 13 05 2019 y. at 9:33:20 PM
+  SetText(kPOSButtonTypeShopifyOrders,"Shopify Orders");//CHN
+  SetText(kPOSButtonTypeVoidBankPayment,"Void Bank Payment");//TOUCHLESS PAYMENTS
+
+
   EndSet;
 
   SetBegin(11001);

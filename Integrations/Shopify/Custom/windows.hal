@@ -1,0 +1,34 @@
+
+window ShopifyLocLinkTClass:1
+  wtag("language","ENG"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vs,v2,vs2,hm;
+  WindowBegin("Shopify: Location Link",ShopifyLocLinkTClass,CGHbl,-);
+  SetWRect(20,80,600,339);
+  Sizeable(-1,-1,0,0);
+  UseView(ShopifyLocLinkBlock);
+  vs=20; h=120; vs2=16; hm=-100;
+  MatrixBegin(h=8,v=20,-31,-20,-,99);
+  MatCol(1,24,"Main Location",0,MainLocation,false,LocationSClass);
+  MatCol(1,120,"Shopify Location",0,ShopifyLocation,false,LocationSClass);
+  MatCol(1,-80,"Local Machine",0,LocalMachine,false,LocalMachineSClass);
+  EndMatrix;
+  EndWindow;
+end;
+
+window ShopifyOrdersWClass:1
+  wtag("language","ENG"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vs,vs2,h2;
+  WindowBegin("Shopify Orders",ShopifyOrdersWClass,CGother,RcType);
+  UseView(RcVc);
+  SetWRect(40,80,550,150);
+  Sizeable(-1,-1,0,0);
+  v = 6; vs=20; vs2 = 16; h = 15; h2 = 280;
+  DataList(0,0,-1,-1,"shopifyorders");
+  DataListColumn(1,6,110,AdjLeft,"sernr","Nr",M4Str);
+  DataListColumn(1,116,220,AdjLeft,"item","Item",M4Str);
+  DataListColumn(1,226,-100,AdjLeft,"itemname","",M4Str);
+  DataListColumn(1,-96,-10,AdjLeft,"qty","Qty",M4Str);
+  EndWindow;
+end;

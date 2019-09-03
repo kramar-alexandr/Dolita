@@ -274,6 +274,11 @@ begin
   RecordField(ShopCM,M4UVal,0,0); // Edit ************************** BPI Ukraine - KramarAlexandr - 05, 19 04 2019 y. at 10:13:42 AM
 
   EndRecordAdd;
+  
+  RecordAddBegin(CountryVc,"DOLCountryVc");
+  RecordField(ShipMode,M4Code,5,0); // ARA: HAL-1145
+  EndRecordAdd;
+  
 
   return;
 end;

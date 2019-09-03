@@ -124,7 +124,12 @@ enum begin
   kPOSButtonTypePeriodicReport = 214,
   kPOSButtonTypePrintReceipt = 215,
   kPOSButtonTypeCreateCustomer = 216,
-  kPOSButtonTypeDiscountCoupon = 217// Edit ************************** BPI Ukraine - KramarAlexandr - 01, 13 05 2019 y. at 9:34:46 PM
+  kPOSButtonTypeDiscountCoupon = 217,// Edit ************************** BPI Ukraine - KramarAlexandr - 01, 13 05 2019 y. at 9:34:46 PM
+  kPOSButtonTypeShopifyOrders = 218,
+//CHN::TOUCHELSS PAYMENTS
+  kPOSButtonTypeVoidBankPayment = 219
+//CHN::TOUCHELSS PAYMENTS
+
 end;
 
 event DefineWindows
@@ -1109,6 +1114,16 @@ begin
         procstr = procstr & "DOLCancelNew";
       case kPOSButtonTypeCreateCreditSalesInvoice://VITO: DOL-89
         procstr = procstr & "DOLCreateCreditSalesInvoice";
+      case kPOSButtonTypeShopifyOrders://CHN
+        if (GetWindowString(CurWindow,"POSShopifyOrders")=="1") then begin
+          procstr = procstr & "DOLOpenShopifyOrders";
+        end else begin
+          procstr = "";
+        end;
+//CHN::TOUCHLESS PAYMENTS
+      case kPOSButtonTypeVoidBankPayment:
+        procstr = procstr & "TouchScreenVoidBankPayment";
+//CHN::TOUCHLESS PAYMENTS
     end;
 LDrawPOSButtons_LITButton:;
 
