@@ -772,7 +772,7 @@ begin
 
 	if (nonblank(DOLShopifyBl.APIUser) and nonblank(DOLShopifyBl.APIPass)) then begin
 		DOLMakeWebRequest("GET","/admin/locations.json",a_req,a_reply);
-		PreparePostArea(a_reply);
+		//PreparePostArea(a_reply);
 		jdata = ParseJSONArea(a_reply);
 		
 		i = 0;
@@ -836,7 +836,7 @@ begin
       
       pg = 1;
       DOLMakeWebRequest("GET","/admin/products.json?fields=title,id,variants&limit=250&page=" & pg,a_req,a_reply);
-     	PreparePostArea(a_reply);
+     	//PreparePostArea(a_reply);
       WriteAreaToFile(a_reply,"Shopify.txt",0);
 			
       jdata = ParseJSONArea(a_reply);
@@ -899,7 +899,7 @@ begin
         setareazerosize(a_reply);
         setareazerosize(a_req);
         DOLMakeWebRequest("GET","/admin/products.json?fields=title,id,variants&limit=250&page=" & pg,a_req,a_reply);
-				PreparePostArea(a_reply);
+				//PreparePostArea(a_reply);
         jdata = ParseJSONArea(a_reply);
         logtext(0,pg & " AreaSize " & getarealength(a_reply));
 				logtext(0,pg & " AreaSizeNDExs " & JSONNodeExists(jdata,"products/[0]/id"));
@@ -1080,7 +1080,7 @@ LHetNextOrders:;
   	orders = 0;
   	page = page + 1;
   	DOLMakeWebRequest("GET","/admin/orders.json?status=" & status & "&fields=name,email,created_at,line_items,shipping_lines,customer,client_details,customer_locale&status=any&created_at_min=" & DateToString(RepSpec.sStartDate,"YYYY-MM-DD") & "T00:00:00-00:00" & "&created_at_max=" & DateToString(addday(RepSpec.sEndDate,1),"YYYY-MM-DD") & "T00:00:00-00:00&limit=250&page=" & page,a_req,a_reply);
-		PreparePostArea(a_reply);
+		//PreparePostArea(a_reply);
 		
 		//addfiletoarea("Shopify.txt",a_reply,0);
 		if(GetAreaLength(a_reply) > 0)then begin
