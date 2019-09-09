@@ -296,7 +296,6 @@ logtext(0,"request " & GetStringFromArea(request,0,255));
 
   FileName = GetWindowFileName(mwn);
   if (mwn>0) then begin
-    CloseWindow(ProcessingWn);
     SelectWindow(mwn);
     DeselectWindow(mwn,true);
     if (paymentstat=="Approved" or paymentstat=="Patvirtinta" or paymentstat=="Autorizuota") then begin
@@ -329,6 +328,10 @@ logtext(0,"request " & GetStringFromArea(request,0,255));
 
 
 LInitTouchlessPayment:;
+  if (ProcessingWn>0) then begin
+    CloseWindow(ProcessingWn);
+  end;
+
   InitTouchlessPayment = fres;
   return;
 end;
@@ -446,7 +449,6 @@ logtext(0,"request " & GetStringFromArea(request,0,255));
 
   FileName = GetWindowFileName(mwn);
   if (mwn>0) then begin
-    CloseWindow(ProcessingWn);
     SelectWindow(mwn);
     DeselectWindow(mwn,true);
     if (paymentstat=="Transactions is cancelled" or paymentstat=="Patvirtinta" or paymentstat==UsetStr(300001)) then begin
@@ -466,6 +468,9 @@ logtext(0,"request " & GetStringFromArea(request,0,255));
 
 
 LInitTouchlessPaymentReturn:;
+  if (ProcessingWn>0) then begin
+    CloseWindow(ProcessingWn);
+  end;
   InitTouchlessPaymentReturn = fres;
   return;
 end;
