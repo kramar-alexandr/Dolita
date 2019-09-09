@@ -20,6 +20,8 @@ external inner function Boolean FindStringInString(string,string); // ARA: HAL-1
 external inner function string 255 StrReplace(string,string,string); // ARA: HAL-1145
 external outer updating procedure OuterCustomShopifyOrderAction(record ORVc);
 external inner function Boolean IVVc_PasteArtCode(var record IVVc,Integer,var string,var string,Boolean,var Integer);
+external inner function LongInt ORVc_PasteLocation2(var record ORVc,Integer,var string);
+external inner function string 60 AddObjectToObjectList(string,string);
 
 enum begin
   kStockBatchSize = 5
@@ -936,27 +938,31 @@ begin
 		CUr.Name  = CUr.Name & " " & JSONGet(jdata,"orders/[" & order & "]/customer/default_address/last_name");
 		CUVc_PasteName(CUr);
 		CUr.InvAddr0 = JSONGet(jdata,"orders/[" & order & "]/customer/default_address/address1");//Street
+    tstr = JSONGet(jdata,"orders/[" & order & "]/customer/default_address/address2");//Street 2
+    if (nonblank(tstr)) then begin
+      if (nonblank(CUr.InvAddr0)) then begin
+        CUr.InvAddr0 = CUr.InvAddr0 & ", ";
+      end;
+      CUr.InvAddr0 = CUr.InvAddr0 & tstr;
+    end;
 		if(nonblank(CUr.InvAddr0))then begin
 			CUVc_PasteInvAddr(CUr,0);
 		end;
-		CUr.InvAddr1 = JSONGet(jdata,"orders/[" & order & "]/customer/default_address/address2");//Street 2
-		if(nonblank(CUr.InvAddr1))then begin
-			CUVc_PasteInvAddr(CUr,1);
-		end;
-		CUr.InvAddr2 = JSONGet(jdata,"orders/[" & order & "]/customer/default_address/city");//City
+		CUr.InvAddr2 = JSONGet(jdata,"orders/[" & order & "]/customer/default_address/zip");//ZIP
 		if(nonblank(CUr.InvAddr2))then begin
 			CUVc_PasteInvAddr(CUr,2);
 		end;
-		CUr.InvAddr3 = JSONGet(jdata,"orders/[" & order & "]/customer/default_address/country");//Counrty
+		CUr.InvAddr3 = JSONGet(jdata,"orders/[" & order & "]/customer/default_address/city");//City
 		if(nonblank(CUr.InvAddr3))then begin
 			CUVc_PasteInvAddr(CUr,3);
 		end;
-		CUr.InvAddr4 = JSONGet(jdata,"orders/[" & order & "]/customer/default_address/zip");//ZIP
+		CUr.InvAddr4 = JSONGet(jdata,"orders/[" & order & "]/customer/default_address/country");//Counrty
 		if(nonblank(CUr.InvAddr4))then begin
 			CUVc_PasteInvAddr(CUr,4);
 		end;
 		CUr.eMail = JSONGet(jdata,"orders/[" & order & "]/customer/email");
 		CUr.Phone = JSONGet(jdata,"orders/[" & order & "]/customer/default_address/phone");
+    CUr.Phone = StrReplace(CUr.Phone,"+","");
 		CUr.CountryCode = JSONGet(jdata,"orders/[" & order & "]/customer/default_address/country_code");
 		CUVc_PasteCountryCode(CUr,"");
 		CUr.Comment = JSONGet(jdata,"orders/[" & order & "]/customer/default_address/company");
@@ -1000,6 +1006,14 @@ begin
 
 
 		CUr.Classification = SNCb.Classification;
+    tstr = JSONGet(jdata,"orders/[" & order & "]/customer/tags");
+    tstr = StrReplace(tstr," ","");
+    if (SetInSet(tstr,"WOMEN")) then begin
+      CUr.Classification = AddObjectToObjectList(CUr.Classification,SNCb.FemaleClassification);
+    end;
+    if (SetInSet(tstr,"MEN")) then begin
+      CUr.Classification = AddObjectToObjectList(CUr.Classification,SNCb.MaleClassification);
+    end;
 		CUR.VATNr = SNCb.VATNr;
 		CUr.RegNr1 = SNCb.RegNr1;
 		CUr.PayDeal = SNCb.PayDeal;
@@ -1013,7 +1027,9 @@ begin
 			end;
 		end;
 		
-		recordstore(CUr,true);
+		if (RecordInsert(CUr,true)==false) then begin
+		  logtext(0,"CreateShopifyCustomer failed - " & UsetStr(RecordCheckLastErrorNo));
+    end;
 	LCreateCU:;
 		logtext(0,"CreateShopifyCustomer " & CUr.Code);
 	end;
@@ -1050,7 +1066,7 @@ begin
 	date crat,bdat;
 	string 50 created_at;
 	record CUVc CUr, CU2r;
-	string 255 warning,errstr,itemid,varid,sku,vartitle;
+	string 255 warning,errstr,itemid,varid,sku,vartitle,tstr;
 	boolean chsum,custfound;
 	integer page,orders;
 	string 20 status;
@@ -1104,6 +1120,7 @@ LHetNextOrders:;
 							ORr.CustOrdNr = data;
 							ORr.OrderClass = DOLShopifyBl.DefWebOrdClass;
 							ORr.Location = DOLShopifyBl.DefWebLocation;
+              ORVc_PasteLocation2(ORr,-1,tstr);
 							ORr.CustCode = DOLShopifyBl.DefWebUserCode;
 							ORr.SalesMan = DOLShopifyBl.DefWebSalesMan;
 							ORr.PlanShip = addday(ORr.OrdDate,DOLShopifyBl.DeliveryAfter);

@@ -180,9 +180,11 @@ begin
   	EditField(h=100,v+=vs,150,"CustLangEU",Normal,CustLangEU,false,LangSClass); // ARA: HAL-1145
     EditField(h=100,v+=vs,150,"CustLangEXP",Normal,CustLangEXP,false,LangSClass); // ARA: HAL-1145
 		EditField(h=100,v+=vs,150,"Classification",Normal,Classification,false,CClassSClass);
-		EditField(h=100,v+=vs,150,"VATNr",Normal,VATNr,false,0);
-		EditField(h=100,v+=vs,150,"RegNr1",Normal,RegNr1,false,0);
-		EditField(h=100,v+=vs,150,"PayDeal",Normal,PayDeal,false,PDSClass);
+		EditField(h=100,v+=vs,150,"Female Classiciation",Normal,FemaleClassification,false,CClassSClass);
+		EditField(h=100,v+=vs,150,"Male Classification",Normal,MaleClassification,false,CClassSClass);
+		EditField(h=100,v+=vs,150,"VAT No.",Normal,VATNr,false,0);
+		EditField(h=100,v+=vs,150,"Registration No.",Normal,RegNr1,false,0);
+		EditField(h=100,v+=vs,150,"Payment Terms",Normal,PayDeal,false,PDSClass);
 
   EndWindow;
 

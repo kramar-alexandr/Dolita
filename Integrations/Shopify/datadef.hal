@@ -76,6 +76,8 @@ begin
   RecordField(CustLangDOM,M4Code,20,0);
   RecordField(CustLangEU,M4Code,20,0);
   RecordField(CustLangEXP,M4Code,20,0);
+  RecordField(MaleClassification,M4UStr,200,0);
+  RecordField(FemaleClassification,M4UStr,200,0);
 	EndBlock;
 	
 /*needs to add also
