@@ -38,6 +38,7 @@ begin
   EditField(h,v += vs,80,"Def. SalesMan",Normal,DefWebSalesMan,false,UserSClass);
   EditField(h,v += vs,80,"Def. Location",Normal,DefWebLocation,false,LocationSClass);
   EditField(h,v += vs,80,"Def. Order Class",Normal,DefWebOrdClass,false,OrderClassSClass);
+  EditField(h,v += vs,80,"Header Object",Normal,HeaderObject,false,ObjSClass);
   EditField(h,v += vs,80,"Shopify Location Id",Normal,ShpifyLocId,false,ShopifyLocSClass);
   EditField(h,v += vs,80,"Get Orders every minutes",Normal,GetOrdFrq,false,0);
   EditField(h,v += vs,80,"Get Orders since",Normal,GetOrdersFrom,false,PasteCurDate);

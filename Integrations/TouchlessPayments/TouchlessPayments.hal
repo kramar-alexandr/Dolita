@@ -221,21 +221,12 @@ begin
   vRepSpec.AccStr = paymode;
   vRepSpec.f5 = label;
   vRepSpec.CurncyCode = crncy;
-  ProcessingWn = OpenWindow("CCPayVerifoneProcessingWClass",0,wn,"","",vRepSpec);
+  ProcessingWn = OpenWindow("TouchlessPaymentProcessingWClass",0,wn,"","",vRepSpec);
   DeselectWindow(ProcessingWn,false);
 
   BlockLoad(LMb);
   if (FindLocalSerialPortDevice(kSerialPortDeviceClassCreditCardTerminal,201,LMb.LocalMachineCode,LSPDr)==false) then begin  
-    GetWindowRecord(ProcessingWn,RepSpec);
-    PutWindowString(ProcessingWn,"Status",USetStr(22123));        
-    PutWindowString(ProcessingWn,"Result",USetStr(27429));        
-    PutWindowRecord(ProcessingWn,RepSpec);
     goto LInitTouchlessPayment;
-  end else begin
-    GetWindowRecord(ProcessingWn,RepSpec);
-    PutWindowString(ProcessingWn,"Status",USetStr(27370));        
-    PutWindowString(ProcessingWn,"Result","");        
-    PutWindowRecord(ProcessingWn,RepSpec);
   end;
 
   BlockLoad(TPb);
@@ -392,21 +383,12 @@ begin
   vRepSpec.UsedOnly = kLocalCCTerminalVerifoneBanksys;
   vRepSpec.ArtMode = 1;
   vRepSpec.long1 = sernr;
-  ProcessingWn = OpenWindow("CCPayVerifoneProcessingWClass",0,wn,"","",vRepSpec);
+  ProcessingWn = OpenWindow("TouchlessPaymentProcessingWClass",0,wn,"","",vRepSpec);
   DeselectWindow(ProcessingWn,false);
 
   BlockLoad(LMb);
   if (FindLocalSerialPortDevice(kSerialPortDeviceClassCreditCardTerminal,201,LMb.LocalMachineCode,LSPDr)==false) then begin  
-    GetWindowRecord(ProcessingWn,RepSpec);
-    PutWindowString(ProcessingWn,"Status",USetStr(22123));        
-    PutWindowString(ProcessingWn,"Result",USetStr(27429));        
-    PutWindowRecord(ProcessingWn,RepSpec);
     goto LInitTouchlessPaymentReturn;
-  end else begin
-    GetWindowRecord(ProcessingWn,RepSpec);
-    PutWindowString(ProcessingWn,"Status",USetStr(27370));        
-    PutWindowString(ProcessingWn,"Result","");        
-    PutWindowRecord(ProcessingWn,RepSpec);
   end;
 
   GetTouchlessPaymentURL(TPb,url,port);
@@ -628,9 +610,14 @@ end;
 global
 procedure VoidBankPaymentWClassCancel()
 begin
-  
   CloseWindow(CurWindow);
+  return;
+end;
 
+global
+procedure CloseTouchlessPaymentProcessingWClass()
+begin
+  CloseWindow(CurWindow);
   return;
 end;
 

@@ -145,3 +145,22 @@ begin
 
   EndWindow;
 end;
+
+window TouchlessPaymentProcessingWClass:1
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,h2,v,vs,height;
+  string 255 tstr;
+  Integer wn;
+  record RcVc RepSpec;
+  
+  WindowBegin("Processing Credit Card Payment",TouchlessPaymentProcessingWClass,CGother,RcType);
+  Modality(kModalityGlobal);
+  AutoSizeWindow(false);
+  UseView(RcVc);
+  SetWRect(80,700,450,755);
+  h = 10; h2 = 170; v=40; vs = 40;
+  StaticTextWithColor(h+30,v,"Laukiamas atsakas iä kreditini÷ korteli÷ terminalo",false,12,patM4red);
+
+  EndWindow;
+end;

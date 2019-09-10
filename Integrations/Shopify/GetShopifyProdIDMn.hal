@@ -20,8 +20,9 @@ external inner function Boolean FindStringInString(string,string); // ARA: HAL-1
 external inner function string 255 StrReplace(string,string,string); // ARA: HAL-1145
 external outer updating procedure OuterCustomShopifyOrderAction(record ORVc);
 external inner function Boolean IVVc_PasteArtCode(var record IVVc,Integer,var string,var string,Boolean,var Integer);
-external inner function LongInt ORVc_PasteLocation2(var record ORVc,Integer,var string);
+external inner procedure ORVc_PasteLocation(var record ORVc,Integer);
 external inner function string 60 AddObjectToObjectList(string,string);
+external inner procedure ORVc_PasteSalesMan(var record ORVc,string);
 
 enum begin
   kStockBatchSize = 5
@@ -1120,10 +1121,12 @@ LHetNextOrders:;
 							ORr.CustOrdNr = data;
 							ORr.OrderClass = DOLShopifyBl.DefWebOrdClass;
 							ORr.Location = DOLShopifyBl.DefWebLocation;
-              ORVc_PasteLocation2(ORr,-1,tstr);
+              ORVc_PasteLocation(ORr,-1);
 							ORr.CustCode = DOLShopifyBl.DefWebUserCode;
 							ORr.SalesMan = DOLShopifyBl.DefWebSalesMan;
+              ORVc_PasteSalesMan(ORr,tstr);
 							ORr.PlanShip = addday(ORr.OrdDate,DOLShopifyBl.DeliveryAfter);
+              ORr.Objects = AddObjectToObjectList(ORr.Objects,DOLShopifyBl.HeaderObject);
 							
 							custfound = false;
 							CUr.eMail = JSONGet(jdata,"orders/[" & i & "]/customer/email");

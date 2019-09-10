@@ -30,6 +30,7 @@ begin
   RecordField(GetOrdersFlag,M4Int,0,0);
   RecordField(DelItemFlag,M4Int,0,0);
   RecordField(DefWebSalesMan,M4Code,20,UserVc);
+  RecordField(HeaderObject,M4UStr,200,0);
   EndBlock;
 
 	RecordBegin(ShopifyLocVc,-,"");

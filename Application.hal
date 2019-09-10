@@ -2,7 +2,7 @@ external procedure InitCheckShopifyOrders();
 external procedure SetTimedEventScheduler();
 
 global
-procedure OnApplicationStartupComplete()
+updating procedure OnApplicationStartupComplete()
 begin
   time t;
 
@@ -12,6 +12,19 @@ begin
   end;
   //Shopify Customization
   InitCheckShopifyOrders;
+
+
+  begin
+    record RcVc RepSpec;
+    record IVCashVc IVCashr;
+    Integer wn;
+
+    if (ClientMode) then begin
+
+      wn = OpenWindow("NPTSIVCashDClass",1,0,"","",IVCashr);
+      OpenWindow("TouchlessPaymentProcessingWClass",1,wn,"","",RepSpec);
+    end;
+  end;
 
   return;
 end;
