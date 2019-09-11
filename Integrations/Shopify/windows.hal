@@ -191,3 +191,57 @@ begin
 
 end;
 
+window DOLGetShopifyProdIDVClass:1
+  wtag("language","ENG"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real v,vs,h,vm;
+
+  WindowBegin("Dolita - Load Shopify Product IDs",DOLGetShopifyProdIDVClass,CGMnt,RcType);
+  SetWRect(20,80,350,240);
+  /*ButtonFrame(h=80,v=20,200,3,"Action");
+  RadioButton(h,v,0,0,"Download Shopify IDs",ArtMode);
+  RadioButton(h,v+=16,2,0,"Download Shopify Prices",ArtMode); // EVS: DOL-167
+  RadioButton(h,v+=16,1,0,"Clear All Shopify IDs",ArtMode);
+  EndFrame;
+  // EVS: DOL-167
+  ButtonFrame(h=80,v+=60,200,2,"Include Products");
+  RadioButton(h,v,0,0,"Published only",flags[0]);
+  RadioButton(h,v+=16,1,0,"All",flags[0]);
+  EndFrame;
+  // :EVS*/
+  EndWindow;
+
+  return;
+end;
+
+
+window DOLGetShopifyOrdersVClass:1
+  wtag("language","ENG"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real v,vs,h,vm;
+
+  WindowBegin("Dolita - Load Shopify Product IDs",DOLGetShopifyOrdersVClass,CGMnt,RcType);
+  SetWRect(20,80,350,240);
+  PeriodField(h=50,v=6,"Status");
+  ButtonFrame(h,vm=(v+=41),123,4,"Filter");
+  RadioButton(h,v,0,0,"Open",flags[2]);
+  RadioButton(h,v+=16,1,0,"Closed",flags[2]);
+  RadioButton(h,v+=16,2,0,"Canceled",flags[2]);
+  RadioButton(h,v+=16,3,0,"Any",flags[2]);
+  EndWindow;
+
+  return;
+end;
+
+window DOLGetShopifyLocationsVClass:1
+  wtag("language","ENG"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real v,vs,h,vm;
+
+  WindowBegin("Dolita - Load Shopify Locations IDs",DOLGetShopifyLocationsVClass,CGMnt,RcType);
+  SetWRect(20,80,350,240);
+  
+  EndWindow;
+
+  return;
+end;

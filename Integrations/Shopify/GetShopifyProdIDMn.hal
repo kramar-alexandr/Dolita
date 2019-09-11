@@ -23,6 +23,8 @@ external inner function Boolean IVVc_PasteArtCode(var record IVVc,Integer,var st
 external inner procedure ORVc_PasteLocation(var record ORVc,Integer);
 external inner function string 60 AddObjectToObjectList(string,string);
 external inner procedure ORVc_PasteSalesMan(var record ORVc,string);
+external inner function val ValFromString(string,string,string);
+external inner function Boolean FillAndPrepareVarTheCodes(var Array string,Integer,string);
 
 enum begin
   kStockBatchSize = 5
@@ -226,6 +228,42 @@ begin
   ConvertSERPVarCodeToShopifyVarCode = res;
   return;
 end;
+
+function string 255 ConvertShopifyVarCodeToSERPVarCode(string item,string shopifyvar)
+begin
+  record DOLShopifyBlock Shopb;
+  record VARVc VArr;
+  string 255 res;
+  array string 255 aVAR;
+  Integer aCnt,i;
+  string 255 code;
+  val shval;
+  
+  BlockLoad(Shopb);
+
+  shval = ValFromString(shopifyvar,".","");
+  code = StrReplace(shopifyvar,".","");
+  code = code & left("000",3-len(code));
+  
+
+  if (nonblank(Shopb.InchVARGCode)) then begin
+    FillAndPrepareVarTheCodes(aVAR,1,item);
+    for (i=0;i<aVAR.length;i=i+1) begin
+      VARr.Code = aVAR[i];
+      ReadFirstMain(VARr,1,true);
+      if (VARr.ShopCM!=blankval) then begin
+        if (shval==VARr.ShopCM) then begin
+          code = VARr.Code;
+          i = aVAR.length;
+        end;
+      end;
+    end;
+  end;
+  
+  ConvertShopifyVarCodeToSERPVarCode = code;
+  return;
+end;
+
 
 procedure AddToItemstat(var array val a_itemstat, var array string a_itemstat_index,string index,val instock)
 begin
@@ -1157,9 +1195,7 @@ LHetNextOrders:;
 								itemid = JSONGet(jdata,"orders/[" & i & "]/line_items/[" & linit & "]/id");
 								varid = JSONGet(jdata,"orders/[" & i & "]/line_items/[" & linit & "]/variant_id");
                 vartitle = JSONGet(jdata,"orders/[" & i & "]/line_items/[" & linit & "]/variant_title");
-                vartitle = FormatVariantTitle(vartitle);
 								sku = JSONGet(jdata,"orders/[" & i & "]/line_items/[" & linit & "]/sku");
-                sku = sku & "." & vartitle;
                 // ARA: HAL-1145
                 if (nonblank(sku)) then begin
                   sku = StrReplace(sku,"\\","");
@@ -1171,6 +1207,8 @@ LHetNextOrders:;
                 end else begin
                   ORrw.ArtCode = DOLShopifyBl.DefArtCode;
                 end;
+                vartitle = ConvertShopifyVarCodeToSERPVarCode(ORrw.ArtCode,vartitle);
+                ORrw.ArtCode = ORrw.ArtCode & "." & vartitle;
                 // :ARA
 								matrowput(ORr,k,ORrw);
 								ORVc_PasteArtCode(ORr,k,warning,warning,false)
