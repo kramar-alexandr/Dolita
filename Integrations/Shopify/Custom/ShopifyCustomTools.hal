@@ -190,7 +190,7 @@ begin
     PutWindowString(wn,"order" & i & "item",itemcode);
     PutWindowString(wn,"order" & i & "var",itemvar);
     PutWindowString(wn,"order" & i & "name",StockMovrw.Spec);
-    PutWindowString(wn,"order" & i & "qty",StockMovrw.Quant);
+    PutWindowString(wn,"order" & i & "qty",ValToString(StockMovrw.Quant,M40Val,"",".",1));
   end;
   PutWindowString(wn,"ordercnt",aStockMovr.length);
   RerunWindowDef(wn);

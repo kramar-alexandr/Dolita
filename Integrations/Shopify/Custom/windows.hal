@@ -23,12 +23,13 @@ window ShopifyOrdersWClass:1
   wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
 begin
   real h,v,vs,vs2,h2;
-  Integer i,cnt;
+  Integer i,cnt,step;
+  step = 90;
   WindowBegin("Shopify Orders",ShopifyOrdersWClass,CGother,RcType);
   UseView(RcVc);
   DynamicWindow;
   cnt = StringToINt(GetWindowString(CurWindow,"ordercnt"));
-  SetWRect(40,80,1100,100+(60*cnt));
+  SetWRect(40,80,1100,100+(step*cnt));
   Sizeable(-1,-1,0,0);
 
 /*
@@ -41,11 +42,11 @@ begin
 */
   v = 6;
   for (i=0;i<cnt;i=i+1) begin
-    SoftEditFieldTLX(5,v+(i*60),200,"",M4Str,ViewOnly,100,50,patM4black,"order" & i & "item",false,0);
-    SoftEditFieldTLX(210,v+(i*60),150,"",M4Str,ViewOnly,100,50,patM4black,"order" & i & "var",false,0);
-    SoftEditFieldTLX(370,v+(i*60),350,"",M4Str,ViewOnly,100,50,patM4black,"order" & i & "name",false,0);
-    SoftEditFieldTLX(730,v+(i*60),150,"",M4Str,ViewOnly,100,50,patM4black,"order" & i & "qty",true,0);
-    ColourPushButton(h=890,v+(i*60),h+98,v+(i*60)+55,"ApproveShopifyStockMov" & i,"Patvirtinta",2);
+    SoftEditFieldTLX(5,v+(i*step),200,"",M4Str,ViewOnly,100,50,patM4black,"order" & i & "item",false,0);
+    SoftEditFieldTLX(210,v+(i*step),150,"",M4Str,ViewOnly,100,50,patM4black,"order" & i & "var",false,0);
+    SoftEditFieldTLX(370,v+(i*step),430,"",M4Str,ViewOnly,100,50,patM4black,"order" & i & "name",false,0);
+    SoftEditFieldTLX(810,v+(i*step),70,"",M4Str,ViewOnly,100,50,patM4black,"order" & i & "qty",true,0);
+    ColourPushButton(h=890,v+(i*step),h+98,v+(i*step)+55,"ApproveShopifyStockMov" & i,"Patvirtinta",2);
   end;
   EndWindow;
 end;
