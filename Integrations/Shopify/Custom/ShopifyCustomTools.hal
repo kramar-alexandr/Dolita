@@ -5,6 +5,7 @@ external inner function Boolean StockMovVc_PasteArtCode(var record StockMovVc,In
 external inner function string 255 StringFromSysList(Integer,Integer);
 external inner function val GetStockQty(string,string,Date,Boolean);
 remote procedure GetShopifyOrderList(string,var array record ORVc,var array record StockMovVc);
+remote updating procedure RemoteApproveStockMov(Longint,var Boolean);
 
 
 updating procedure CreateStockMove(record ORVc ORr,string item,val qty,string frloc,string toloc)
@@ -165,22 +166,95 @@ begin
   row StockMovVc StockMovrw;
   record LocalMachineBlock LMb;
   Integer i;
-
+  string 255 itemvar,itemcode;
+  Longint pos;
 
   BlockLoad(LMb);
   threadremote.GetShopifyOrderList(LMb.LocalMachineCode,aORr,aStockMovr);
 
   for (i=0;i<aStockMovr.length;i=i+1) begin
     StockMovr = aStockMovr[i];
-    MatRowGet(StockMovr,i,StockMovrw);
+    MatRowGet(StockMovr,0,StockMovrw);
+    pos = -1;
+    GetNextSubstring(StockMovrw.ArtCode,pos,".",itemcode);
+    GetNextSubstring(StockMovrw.ArtCode,pos,".",itemvar);
+    /*
     AddListRow(wn,"shopifyorders",1,StockMovr.SerNr,0);
-    AddListData(wn,"shopifyorders","sernr",StockMovr.SerNr);
-    AddListData(wn,"shopifyorders","item",StockMovrw.ArtCode);
+    AddListData(wn,"shopifyorders","item",itemcode);
+    AddListData(wn,"shopifyorders","itemvar",itemvar);
     AddListData(wn,"shopifyorders","itemname",StockMovrw.Spec);
     AddListData(wn,"shopifyorders","qty",StockMovrw.Quant);
+    */
+    
+    PutWindowString(wn,"order" & i & "sernr",StockMovr.SerNr);
+    PutWindowString(wn,"order" & i & "item",itemcode);
+    PutWindowString(wn,"order" & i & "var",itemvar);
+    PutWindowString(wn,"order" & i & "name",StockMovrw.Spec);
+    PutWindowString(wn,"order" & i & "qty",StockMovrw.Quant);
   end;
+  PutWindowString(wn,"ordercnt",aStockMovr.length);
+  RerunWindowDef(wn);
 
   ShopifyOrdersWClassOnOpenWindow = false;
+  return;
+end;
+
+updating procedure ApproveStockMov(Integer num)
+begin
+  string 255 sernr;
+  Boolean errf;
+
+  sernr = GetWindowString(CurWindow,"order" & num & "sernr");
+  RemoteApproveStockMov(StringToLongint(sernr),errf);
+  if (errf) then begin
+    MessageBox(22071,"");
+  end else begin
+    ShopifyOrdersWClassOnOpenWindow(CurWindow);
+  end;
+
+  return;
+end;
+
+global
+updating procedure ApproveShopifyStockMov0()
+begin
+  ApproveStockMov(0);
+  return;
+end;
+global
+updating procedure ApproveShopifyStockMov1()
+begin
+  ApproveStockMov(1);
+  return;
+end;
+global
+updating procedure ApproveShopifyStockMov2()
+begin
+  ApproveStockMov(2);
+  return;
+end;
+global
+updating procedure ApproveShopifyStockMov3()
+begin
+  ApproveStockMov(3);
+  return;
+end;
+global
+updating procedure ApproveShopifyStockMov4()
+begin
+  ApproveStockMov(4);
+  return;
+end;
+global
+updating procedure ApproveShopifyStockMov5()
+begin
+  ApproveStockMov(5);
+  return;
+end;
+global
+updating procedure ApproveShopifyStockMov6()
+begin
+  ApproveStockMov(6);
   return;
 end;
 
@@ -220,6 +294,7 @@ begin
     MatRowGet(SLb,i,SLbrw);
     if (SetInSet(lm,SLbrw.LocalMachine)) then begin
       frloc = SLbrw.MainLocation;
+      i = rwcnt;
     end;
   end;
 
@@ -242,6 +317,24 @@ begin
           end;
         end;
       end;
+    end;
+  end;
+
+  return;
+end;
+
+
+global
+updating procedure RemoteApproveStockMov(Longint sernr,var Boolean errf)
+begin
+  record StockMovVc StockMovr,oldStockMovr;
+  
+  StockMovr.SerNr = sernr;
+  if (ReadFirstMain(StockMovr,1,true)) then begin
+    RecordCopy(oldStockMovr,StockMovr);
+    StockMovr.OKFlag = 1;
+    if (RecordUpdate(oldStockMovr,StockMovr,true)!=0) then begin
+      errf = true;
     end;
   end;
 
