@@ -28,8 +28,8 @@ begin
   //StockMovr.SentOKFlag = 1;
   ClearRow(StockMovr,StockMovrw,1);
   StockMovrw.ArtCode = item;
-  StockMovrw.SentQuant = qty;
-  StockMovrw.OrdQuant = qty;
+  //StockMovrw.SentQuant = qty;
+  //StockMovrw.OrdQuant = qty;
   StockMovrw.Quant = qty;
   MatRowPut(StockMovr,0,StockMovrw);
   StockMovVc_PasteArtCode(StockMovr,0,1,aWarning)

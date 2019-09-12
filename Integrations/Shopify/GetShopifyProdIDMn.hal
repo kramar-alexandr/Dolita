@@ -1011,16 +1011,16 @@ begin
 			CUr.CustType = 0;
 		end;*/
 
+//We might want to add language as a setting;
     // ARA: HAL-1145
 		switch(CUr.ExportFlag)begin
-			case 0:CUr.CustCat = SNCb.CustCatDOM; CUr.LangCode = SNCb.CustLangDOM;
-			case 1:CUr.CustCat = SNCb.CustCatEU; CUr.LangCode = SNCb.CustLangEU;
-			case 2:CUr.CustCat = SNCb.CustCatEXP; CUr.LangCode = SNCb.CustLangEXP;
-			case 3:CUr.CustCat = SNCb.CustCatEU; CUr.LangCode = SNCb.CustLangEU;
-			case 4:CUr.CustCat = SNCb.CustCatEXP; CUr.LangCode = SNCb.CustLangEXP;
+			case 0:CUr.CustCat = SNCb.CustCatDOM;// CUr.LangCode = SNCb.CustLangDOM;
+			case 1:CUr.CustCat = SNCb.CustCatEU;// CUr.LangCode = SNCb.CustLangEU;
+			case 2:CUr.CustCat = SNCb.CustCatEXP;// CUr.LangCode = SNCb.CustLangEXP;
+			case 3:CUr.CustCat = SNCb.CustCatEU;// CUr.LangCode = SNCb.CustLangEU;
+			case 4:CUr.CustCat = SNCb.CustCatEXP;// CUr.LangCode = SNCb.CustLangEXP;
 		end;
     // :ARA
-
 	
 		acclang = JSONGet(jdata,"orders/[" & order & "]/client_details/accept_language");
 		acclang = acclang & "," & JSONGet(jdata,"orders/[" & order & "]/customer_locale");
