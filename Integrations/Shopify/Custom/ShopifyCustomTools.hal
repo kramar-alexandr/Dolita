@@ -165,7 +165,7 @@ begin
   record StockMovVc StockMovr;
   row StockMovVc StockMovrw;
   record LocalMachineBlock LMb;
-  Integer i;
+  Integer i,mwn;
   string 255 itemvar,itemcode;
   Longint pos;
 
@@ -195,6 +195,15 @@ begin
   PutWindowString(wn,"ordercnt",aStockMovr.length);
   RerunWindowDef(wn);
 
+  if (aStockMovr.length==0) then begin
+    CloseWindow(wn);
+    mwn = FindWindow("NPTSIVCashDClass");
+    if (mwn>0) then begin
+      PutWindowString(mwn,"POSShopifyOrders",0);
+      RerunWindowDef(mwn);    
+    end;
+  end;
+  
   ShopifyOrdersWClassOnOpenWindow = false;
   return;
 end;
@@ -306,16 +315,16 @@ begin
       if (StockMovr.OKFlag!=0 or StockMovr.FrLocation!=frloc) then begin
         TrHs = false;
       end else begin
-        if (StockMovr.OrderNr>0) then begin
-          if (vOrders[StockMovr.OrderNr]==false) then begin
+        //if (StockMovr.OrderNr>0) then begin
+        //  if (vOrders[StockMovr.OrderNr]==false) then begin
             ORr.SerNr = StockMovr.OrderNr;
-            if (ReadFirstMain(ORr,1,true)) then begin
+        //    if (ReadFirstMain(ORr,1,true)) then begin
               aORr[aORr.length] = ORr;
               aStockMovr[aStockMovr.length] = StockMovr;
               vOrders[StockMovr.OrderNr] = true;
-            end;
-          end;
-        end;
+        //    end;
+        //  end;
+        //end;
       end;
     end;
   end;

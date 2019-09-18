@@ -1049,9 +1049,10 @@ begin
     tstr = StrReplace(tstr," ","");
     if (SetInSet(tstr,"WOMEN")) then begin
       CUr.Classification = AddObjectToObjectList(CUr.Classification,SNCb.FemaleClassification);
-    end;
-    if (SetInSet(tstr,"MEN")) then begin
-      CUr.Classification = AddObjectToObjectList(CUr.Classification,SNCb.MaleClassification);
+    end else begin
+      if (SetInSet(tstr,"MEN")) then begin
+        CUr.Classification = AddObjectToObjectList(CUr.Classification,SNCb.MaleClassification);
+      end;
     end;
 		CUR.VATNr = SNCb.VATNr;
 		CUr.RegNr1 = SNCb.RegNr1;
@@ -1137,7 +1138,7 @@ LHetNextOrders:;
   	DOLMakeWebRequest("GET","/admin/orders.json?status=" & status & "&fields=name,email,created_at,line_items,shipping_lines,customer,client_details,customer_locale&status=any&created_at_min=" & DateToString(RepSpec.sStartDate,"YYYY-MM-DD") & "T00:00:00-00:00" & "&created_at_max=" & DateToString(addday(RepSpec.sEndDate,1),"YYYY-MM-DD") & "T00:00:00-00:00&limit=250&page=" & page,a_req,a_reply);
 		//PreparePostArea(a_reply);
 		
-		//addfiletoarea("Shopify.txt",a_reply,0);
+		addfiletoarea("Shopify.txt",a_reply,0);
 		if(GetAreaLength(a_reply) > 0)then begin
 			jdata = ParseJSONArea(a_reply);
 
@@ -1161,8 +1162,6 @@ LHetNextOrders:;
 							ORr.Location = DOLShopifyBl.DefWebLocation;
               ORVc_PasteLocation(ORr,-1);
 							ORr.CustCode = DOLShopifyBl.DefWebUserCode;
-							ORr.SalesMan = DOLShopifyBl.DefWebSalesMan;
-              ORVc_PasteSalesMan(ORr,tstr);
 							ORr.PlanShip = addday(ORr.OrdDate,DOLShopifyBl.DeliveryAfter);
               ORr.Objects = AddObjectToObjectList(ORr.Objects,DOLShopifyBl.HeaderObject);
 							
@@ -1185,6 +1184,8 @@ LHetNextOrders:;
 							end;
 							
 							PasteCustInOrder(ORr,ORr.CustCode,"",warning,errstr);
+							ORr.SalesMan = DOLShopifyBl.DefWebSalesMan;
+              ORVc_PasteSalesMan(ORr,tstr);
 							ORr.Addr0 = JSONGet(jdata,"orders/[" & i & "]/customer/first_name") & " " & JSONGet(jdata,"orders/[" & i & "]/customer/last_name");
 							
 							
