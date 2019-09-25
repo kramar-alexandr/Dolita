@@ -1,0 +1,45 @@
+
+function Boolean HasPointsSince(record LoyaltyCardVc LCr,Date td)
+begin
+  record PointsHistVc PHr;
+  Boolean res,TrHs;
+  
+  PHr.TransDate = td;
+  PHr.LMCardNr = LCr.SerNr;
+  TrHs = true;
+  while (LoopKey("CardDate",PHr,2,TrHs)) begin
+    if (PHr.LMCardNr!=LCr.SerNr) then begin
+      TrHs = false;
+    end else begin
+      if (PHr.FileName=="LoyaltyCardVc") then begin
+        res = true;
+        TrHs = false;
+      end;      
+    end;
+  end;
+
+  HasPointsSince = res;
+  return;
+end;
+
+global
+updating procedure EBS_ClosedLoyaltyCardsMn(record RcVc RepSpec)
+begin
+  record LoyaltyCardVc LCr,oldLCr;
+  
+  if (blank(RepSpec.d1)) then begin
+    MessageBox(UsetStr(1000145),"");
+    goto LEBS_ClosedLoyaltyCardsMn;
+  end;
+
+  while (LoopMain(LCr,1,true)) begin
+    if (LCr.Closed==0 and HasPointsSince(LCr,RepSpec.d1)==false) then begin
+      RecordCopy(oldLCr,LCr);
+      LCr.Closed = 1;
+      RecordUpdate(oldLCr,LCr,true);
+    end;
+  end;
+
+LEBS_ClosedLoyaltyCardsMn:;
+  return;
+end;

@@ -1194,3 +1194,17 @@ begin
   ColourPushButton(270,v,470,v+40,"RebateCouponScanWClassProceed","Gerai",20);
   EndWindow;
 end;
+
+
+window EBS_ClosedLoyaltyCardsVClass:1
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vm,vs;
+
+  WindowBegin("Close Loyalty Cards",EBS_ClosedLoyaltyCardsVClass,CGMnt,RcType);
+  SetWRect(20,80,370,240);
+  v = 30; h = 137; vs=22;
+  EditFieldTL(h,v,120,"Close till",M4Date,Normal,0,d1,false,PasteCurDate);
+  EndWindow;
+
+end;

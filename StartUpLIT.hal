@@ -23,6 +23,8 @@ begin
   Setting("DOL - Create customer touchscreen",EBS_TempWClass,modPOS);
   Setting("DOL - Coupon discounts",BPI_BarForRebBlockTClass,modPOS);// Edit ************************** BPI Ukraine - KramarAlexandr - 01, 13 05 2019 y. at 9:29:57 PM
 
+  Maintenance("Close Loyalty Cards (EBS)",EBS_ClosedLoyaltyCardsVClass,EBS_ClosedLoyaltyCardsMn,modPOS);//CHN
+
   //modIN
   Report("DOL - Parduotų prekių likučiai",DOLSoldINBalRClass,DOLSoldINBalRn,0,modIN); // EVS: DOL-79
   Maintenance("Kurti bar kodus",EBS_GenBarCodesVClass,EBS_GenBarCodesMn,modIN);
