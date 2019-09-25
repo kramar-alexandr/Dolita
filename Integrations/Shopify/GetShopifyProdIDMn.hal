@@ -25,6 +25,7 @@ external inner function string 60 AddObjectToObjectList(string,string);
 external inner procedure ORVc_PasteSalesMan(var record ORVc,string);
 external inner function val ValFromString(string,string,string);
 external inner function Boolean FillAndPrepareVarTheCodes(var Array string,Integer,string);
+external updating function LongInt CUVcRecordCheck(var record CUVc,record CUVc,LongInt,LongInt);
 
 enum begin
   kStockBatchSize = 5
@@ -1057,7 +1058,7 @@ begin
 		CUR.VATNr = SNCb.VATNr;
 		CUr.RegNr1 = SNCb.RegNr1;
 		CUr.PayDeal = SNCb.PayDeal;
-		
+
 		if (blank(CUr.Code)) then begin
 			if (GetNextCustNr(tstr)) then begin end;
 			CUr.Code = tstr;
@@ -1066,7 +1067,7 @@ begin
 				goto LCreateCU;
 			end;
 		end;
-		
+		CUVcRecordCheck(CUr,lCUr,Rs_insert,0);
 		if (RecordInsert(CUr,true)==false) then begin
 		  logtext(0,"CreateShopifyCustomer failed - " & UsetStr(RecordCheckLastErrorNo));
     end;
@@ -1138,7 +1139,7 @@ LHetNextOrders:;
   	DOLMakeWebRequest("GET","/admin/orders.json?status=" & status & "&fields=name,email,created_at,line_items,shipping_lines,customer,client_details,customer_locale&status=any&created_at_min=" & DateToString(RepSpec.sStartDate,"YYYY-MM-DD") & "T00:00:00-00:00" & "&created_at_max=" & DateToString(addday(RepSpec.sEndDate,1),"YYYY-MM-DD") & "T00:00:00-00:00&limit=250&page=" & page,a_req,a_reply);
 		//PreparePostArea(a_reply);
 		
-		addfiletoarea("Shopify.txt",a_reply,0);
+		//addfiletoarea("Shopify.txt",a_reply,0);
 		if(GetAreaLength(a_reply) > 0)then begin
 			jdata = ParseJSONArea(a_reply);
 
@@ -1177,7 +1178,7 @@ LHetNextOrders:;
 									custfound = true;
 								end;
 							end;
-							
+
 							if(custfound==false)then begin
 								CreateShopifyCustomer(jdata,CUr,i);
 								ORr.CustCode = CUr.Code;
