@@ -40,6 +40,15 @@ begin
   return;
 end;
 
+global
+updating procedure MessageBoxOnMain(Longint id,string tstr)
+begin
+  
+  MessageBox(id,tstr);
+
+  return;
+end;
+
 function Boolean ConfirmTouchlessPayment(record TouchlessPayBlock TPb,record LSerialPortDeviceVc LSPDr,string refid,var string paymentstat)
 begin
   Boolean res;
@@ -307,7 +316,7 @@ logtext(0,"request " & GetStringFromArea(request,0,255));
       end;
 
     end else begin
-      MessageBox(27386,"");
+      qupdating.MessageBoxOnMain(27386,"");
 //This should be a setting
 /*
       if (nonblank(clientreceipt)) then begin
@@ -376,7 +385,7 @@ begin
 
   BlockLoad(TPb);
   if (blank(TPb.LastRrn)) then begin
-    MessageBox(1000107,"");
+    qupdating.MessageBoxOnMain(1000107,"");
     goto LInitTouchlessPaymentReturn;
   end;
 
@@ -438,7 +447,7 @@ logtext(0,"request " & GetStringFromArea(request,0,255));
 
       qupdating.StoreLastTouchlessPayment("",-1,"");
     end else begin
-      MessageBox(27386,"");
+      qupdating.MessageBoxOnMain(27386,"");
 //This should be a setting
 /*
       if (nonblank(clientreceipt)) then begin
