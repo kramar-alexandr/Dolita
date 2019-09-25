@@ -203,7 +203,7 @@ LUpdateInstock:;
   end;
 
   // EVS: DOL-166
-  if (location == ";;;" and DOLShopifyBl.UpdStockAlways == 1 and filename != "StockMovVc" and !ImportingTextBackup and !IsMaintenance) then begin
+  if (location == ";;;" and DOLShopifyBl.UpdStockAlways == 1 and filename != "StockMovVc" and filename != "ORVc" and !ImportingTextBackup and !IsMaintenance) then begin
     DOLUpdShopifyStock(CurrentCompany & ";" & INr.Code);
     // tick = GetCurTick;
     // logtext(0,"INFO: Stock Update schedule timed task DOLUpdShopifyStock for item " & ac & " @ " & CurrentDate & " " & AddSeconds(CurrentTime,1) & " from " & filename & ":" & transnr);
