@@ -11,10 +11,10 @@ begin
     if (PHr.LMCardNr!=LCr.SerNr) then begin
       TrHs = false;
     end else begin
-      if (PHr.FileName=="LoyaltyCardVc") then begin
+      //if (PHr.FileName=="LoyaltyCardVc") then begin
         res = true;
         TrHs = false;
-      end;      
+      //end;      
     end;
   end;
 
