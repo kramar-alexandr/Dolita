@@ -963,6 +963,19 @@ begin
 return;
 end;
 
+function Integer GetVATZone(string cc)
+begin
+  Integer res;
+  
+  res = 2;
+  if (SetInSet(cc,"AT,BE,BG,HR,CY,CZ,DK,EE,FI,FR,DE,GR,HU,IE,IT,LV,LT,LU,MT,NL,PL,PT,RO,SM,SK,SI,ES,SE,GB,VA")) then begin
+    res = 3;
+  end;
+  
+  GetVATZone = res;
+  return;
+end;
+
 global updating procedure CreateShopifyCustomer(json jdata,var record CUVc CUr,integer order)
 begin
 	record ShopifyNewCustBlock SNCb;
@@ -1004,6 +1017,7 @@ begin
 		CUr.Phone = JSONGet(jdata,"orders/[" & order & "]/customer/default_address/phone");
     CUr.Phone = StrReplace(CUr.Phone,"+","");
 		CUr.CountryCode = JSONGet(jdata,"orders/[" & order & "]/customer/default_address/country_code");
+    CUr.ExportFlag = GetVATZone(CUr.CountryCode);
 		CUVc_PasteCountryCode(CUr,"");
 		CUr.Comment = JSONGet(jdata,"orders/[" & order & "]/customer/default_address/company");
 	
@@ -1209,8 +1223,12 @@ LHetNextOrders:;
                 end else begin
                   ORrw.ArtCode = DOLShopifyBl.DefArtCode;
                 end;
-                vartitle = ConvertShopifyVarCodeToSERPVarCode(ORrw.ArtCode,vartitle);
-                ORrw.ArtCode = ORrw.ArtCode & "." & vartitle;
+                if (nonblank(vartitle)) then begin
+                  vartitle = ConvertShopifyVarCodeToSERPVarCode(ORrw.ArtCode,vartitle);
+                  ORrw.ArtCode = ORrw.ArtCode & "." & vartitle;
+                end else begin
+                  ORrw.ArtCode = ORrw.ArtCode;                  
+                end;
                 // :ARA
 								matrowput(ORr,k,ORrw);
 								ORVc_PasteArtCode(ORr,k,warning,warning,false)

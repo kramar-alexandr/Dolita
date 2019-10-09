@@ -29,6 +29,9 @@ begin
   UseView(RcVc);
   DynamicWindow;
   cnt = StringToINt(GetWindowString(CurWindow,"ordercnt"));
+  if (cnt>10) then begin
+    cnt = 10;
+  end;
   SetWRect(40,80,900,100+(step*cnt));
   Sizeable(-1,-1,0,0);
 
@@ -44,7 +47,7 @@ begin
   for (i=0;i<cnt;i=i+1) begin
     SoftEditFieldTLX(5,v+(i*step),180,"",M4Str,ViewOnly,100,40,patM4black,"order" & i & "item",false,0);
     SoftEditFieldTLX(190,v+(i*step),130,"",M4Str,ViewOnly,100,40,patM4black,"order" & i & "var",false,0);
-    SoftEditFieldTLX(330,v+(i*step+15),345,"",M4Str,ViewOnly,100,25,patM4black,"order" & i & "name",false,0);
+    SoftEditFieldTLX(330,v+(i*step+20),345,"",M4Str,ViewOnly,100,20,patM4black,"order" & i & "name",false,0);
     SoftEditFieldTLX(685,v+(i*step),60,"",M4Str,ViewOnly,100,40,patM4black,"order" & i & "qty",true,0);
     ColourPushButton(h=755,v+(i*step),h+98,v+(i*step)+45,"ApproveShopifyStockMov" & i,"Patvirtinta",2);
   end;
