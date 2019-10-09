@@ -1335,6 +1335,9 @@ begin
     RecordNew(IVCashr);
     wn = OpenWindow("NPTSIVCashDClass",1,0,"","",IVCashr);
   end else begin
+    GetWindowRecord(wn,IVCashr);
+    IVCashr.TransTime = CurrentTime;
+    PutWindowRecord(wn,IVCashr);
     WindowDoNew(wn,0);
   end;
   GetWindowRecord(wn,IVCashr);
