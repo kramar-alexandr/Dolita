@@ -1201,7 +1201,7 @@ LHetNextOrders:;
 							PasteCustInOrder(ORr,ORr.CustCode,"",warning,errstr);
 							ORr.SalesMan = DOLShopifyBl.DefWebSalesMan;
               ORVc_PasteSalesMan(ORr,tstr);
-							ORr.Addr0 = JSONGet(jdata,"orders/[" & i & "]/customer/first_name") & " " & JSONGet(jdata,"orders/[" & i & "]/customer/last_name");
+							//ORr.Addr0 = JSONGet(jdata,"orders/[" & i & "]/customer/first_name") & " " & JSONGet(jdata,"orders/[" & i & "]/customer/last_name");
 							
 							
 							linit = 0;
