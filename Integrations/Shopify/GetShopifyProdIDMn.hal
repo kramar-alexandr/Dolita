@@ -982,10 +982,12 @@ begin
 	string 255 acclang,tstr;
 	record LetVc Letr;
 	record CUVc lCUr;
-	
+  record CustomerSettingBlock CSb;
+
 	blockload(SNCb);
 	
 	if(nonblank(SNCb.CustCatDOM))then begin
+    BlockLoad(CSb);
 		recordnew(CUr);	
 		CUr.Name = JSONGet(jdata,"orders/[" & order & "]/customer/default_address/first_name");
 		CUr.Name  = CUr.Name & " " & JSONGet(jdata,"orders/[" & order & "]/customer/default_address/last_name");
@@ -1020,6 +1022,9 @@ begin
     CUr.ExportFlag = GetVATZone(CUr.CountryCode);
 		CUVc_PasteCountryCode(CUr,"");
 		CUr.Comment = JSONGet(jdata,"orders/[" & order & "]/customer/default_address/company");
+
+    CUr.CreditLimit = CSb.CreditLimit;
+    CUr.CreditLimitDays = CSb.CreditLimitDays;
 	
     CUr.CustType = 1;
     /*if(nonblank(CUr.Comment))then begin
@@ -1153,7 +1158,7 @@ LHetNextOrders:;
   	DOLMakeWebRequest("GET","/admin/orders.json?status=" & status & "&fields=name,email,created_at,line_items,shipping_lines,customer,client_details,customer_locale&status=any&created_at_min=" & DateToString(RepSpec.sStartDate,"YYYY-MM-DD") & "T00:00:00-00:00" & "&created_at_max=" & DateToString(addday(RepSpec.sEndDate,1),"YYYY-MM-DD") & "T00:00:00-00:00&limit=250&page=" & page,a_req,a_reply);
 		//PreparePostArea(a_reply);
 		
-		//addfiletoarea("Shopify.txt",a_reply,0);
+		addfiletoarea("Shopify.txt",a_reply,0);
 		if(GetAreaLength(a_reply) > 0)then begin
 			jdata = ParseJSONArea(a_reply);
 
@@ -1311,8 +1316,22 @@ LHetNextOrders:;
                 case 4:ORr.LangCode = SNCb.CustLangEXP & ORr.ShipMode;
               end;
               // :ARA
-							
-							
+
+              //add delivery address
+              ORr.ShipAddr0 = ORr.Addr0;
+              ORr.ShipAddr1 = JSONGet(jdata,"orders/[" & i & "]/customer/default_address/address1");;
+              tstr = JSONGet(jdata,"orders/[" & i & "]/customer/default_address/address2");//Street 2
+              if (nonblank(tstr)) then begin
+                if (nonblank(ORr.ShipAddr1)) then begin
+                  ORr.ShipAddr1 = ORr.ShipAddr1 & ", ";
+                end;
+                ORr.ShipAddr1 = ORr.ShipAddr1 & tstr;
+              end;
+              ORr.ShipAddr2 = "";
+              ORr.ShipAddr3 = JSONGet(jdata,"orders/[" & i & "]/customer/default_address/zip");;
+              ORr.DelAddr3 = JSONGet(jdata,"orders/[" & i & "]/customer/default_address/city");
+              ORr.DelAddr4 = JSONGet(jdata,"orders/[" & i & "]/customer/default_address/country");;
+														
 							ORr.SerNr = NextSerNr("ORVc",ORr.OrdDate,-1,false,"");   
 							if (recordstore(ORr,true)) then begin
 							  OuterCustomShopifyOrderAction(ORr);
