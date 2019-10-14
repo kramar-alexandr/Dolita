@@ -1318,19 +1318,18 @@ LHetNextOrders:;
               // :ARA
 
               //add delivery address
-              ORr.ShipAddr0 = ORr.Addr0;
-              ORr.ShipAddr1 = JSONGet(jdata,"orders/[" & i & "]/customer/default_address/address1");;
+              ORr.Addr1 = JSONGet(jdata,"orders/[" & i & "]/customer/default_address/address1");;
               tstr = JSONGet(jdata,"orders/[" & i & "]/customer/default_address/address2");//Street 2
               if (nonblank(tstr)) then begin
                 if (nonblank(ORr.ShipAddr1)) then begin
-                  ORr.ShipAddr1 = ORr.ShipAddr1 & ", ";
+                  ORr.Addr1 = ORr.ShipAddr1 & ", ";
                 end;
-                ORr.ShipAddr1 = ORr.ShipAddr1 & tstr;
+                ORr.Addr1 = ORr.ShipAddr1 & tstr;
               end;
-              ORr.ShipAddr2 = "";
-              ORr.ShipAddr3 = JSONGet(jdata,"orders/[" & i & "]/customer/default_address/zip");;
-              ORr.DelAddr3 = JSONGet(jdata,"orders/[" & i & "]/customer/default_address/city");
-              ORr.DelAddr4 = JSONGet(jdata,"orders/[" & i & "]/customer/default_address/country");;
+              ORr.Addr2 = "";
+              ORr.Addr3 = JSONGet(jdata,"orders/[" & i & "]/customer/default_address/zip");;
+              ORr.InvAddr3 = JSONGet(jdata,"orders/[" & i & "]/customer/default_address/city");
+              ORr.InvAddr4 = JSONGet(jdata,"orders/[" & i & "]/customer/default_address/country");;
 														
 							ORr.SerNr = NextSerNr("ORVc",ORr.OrdDate,-1,false,"");   
 							if (recordstore(ORr,true)) then begin
