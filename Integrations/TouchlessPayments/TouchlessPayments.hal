@@ -317,7 +317,7 @@ logtext(0,"request " & GetStringFromArea(request,0,255));
       end;
 
     end else begin
-      qupdating.MessageBoxOnMain(27386,"");
+      queued.MessageBoxOnMain(27386,"");
 //This should be a setting
 /*
       if (nonblank(clientreceipt)) then begin
@@ -417,6 +417,7 @@ begin
       AuthorisationCode = JSONGet(js,"AuthorizationCode");
       receiptnr = JSONGet(js,"Stan");//this is return number
       timestamp = JSONGet(js,"time");//this is return number
+      paymentstat = JSONGet(js,"text");
       clientreceipt = JSONGet(js,"clientReceipt");
       res = true;
     end else begin
@@ -447,8 +448,17 @@ logtext(0,"request " & GetStringFromArea(request,0,255));
       fres = true;
 
       qupdating.StoreLastTouchlessPayment("",-1,"");
+      switch (FileName) begin
+        case "IVCashVc":
+          qupdating.UpdateIVCashWithTouchlessPayReturn(mwn,AuthorisationCode);
+      end;
+
+      queued.MessageBoxOnMain(18156,"");
+      if (nonblank(clientreceipt)) then begin
+        //PrintTouchlessCardReceipt(clientreceipt,1);//should we print it??
+      end;
     end else begin
-      qupdating.MessageBoxOnMain(27386,"");
+      queued.MessageBoxOnMain(27386,"");
 //This should be a setting
 /*
       if (nonblank(clientreceipt)) then begin

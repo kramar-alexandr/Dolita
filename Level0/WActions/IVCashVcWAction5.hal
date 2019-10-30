@@ -142,6 +142,7 @@ remote outer updating procedure DOLUpdateSourceOrder(longint);
 //CUST-BEGIN::TOUCHLESS PAYMENTS
 external outer function Boolean InitTouchlessPayment(val,string,string,var string,Longint,string,Integer,string,string);
 external outer function Boolean ConfirmLastTouchlessPayment();
+external outer function Boolean InitTouchlessPaymentReturn(Integer);
 //CUST-END::TOUCHLESS PAYMENTS
 
 
@@ -1937,6 +1938,7 @@ begin
     end;
   end else begin
     errf = true; // EVS: DOL-68
+    InitTouchlessPaymentReturn(wn);//CUST-ADDED
   end;
   IVCashDClass_RefreshStringList(wn,IVCashr);
   prevRetValue = IVCashr.RetValue;
