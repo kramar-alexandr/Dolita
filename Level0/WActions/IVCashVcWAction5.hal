@@ -1932,6 +1932,7 @@ begin
         PutWindowRecord(wn,IVCashr);
         new_recordf = false;
         errf = true; // EVS: DOL-68
+        InitTouchlessPaymentReturn(wn);//CUST-ADDED
       end else begin
         PrintReceipt_SendToFiscal(IVCashr,GetWindowString(wn,"touchscreenwindowprintingstat"),true); //EBS, create file fro POSFile.exe
       end;
