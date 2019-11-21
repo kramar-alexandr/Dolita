@@ -67,7 +67,7 @@ begin
 
   SetWebHeaders("X-EPSLT-ProjectId:" & TPb.ProjectID);
 
-  if (SendWebRequest(url,port,-1,true,"POST",path,GetAuthatizationHeader(TPb),"",false,request,reply,30)) then begin
+  if (SendWebRequest(url,port,-1,true,"POST",path,GetAuthatizationHeader(TPb),"",false,request,reply,200)) then begin
     js = ParseJSONArea(reply);
     if (JSONGet(js,"result")=="Ok") then begin
       //if (JSONGet(js,"text")=="Approved") then begin      
@@ -263,7 +263,7 @@ begin
 
   SetWebHeaders("X-EPSLT-ProjectId:" & TPb.ProjectID);
 
-  if (SendWebRequest(url,port,-1,true,"POST",path,GetAuthatizationHeader(TPb),"",false,request,reply,80)) then begin
+  if (SendWebRequest(url,port,-1,true,"POST",path,GetAuthatizationHeader(TPb),"",false,request,reply,200)) then begin
     js = ParseJSONArea(reply);
     if (JSONGet(js,"result")=="Ok") then begin
       transactionid = JSONGet(js,"TransactionId");
@@ -411,7 +411,7 @@ begin
 
   SetWebHeaders("X-EPSLT-ProjectId:" & TPb.ProjectID);
 
-  if (SendWebRequest(url,port,-1,true,"POST",path,GetAuthatizationHeader(TPb),"",false,request,reply,80)) then begin
+  if (SendWebRequest(url,port,-1,true,"POST",path,GetAuthatizationHeader(TPb),"",false,request,reply,240)) then begin
     js = ParseJSONArea(reply);
     if (JSONGet(js,"result")=="Ok") then begin
       AuthorisationCode = JSONGet(js,"AuthorizationCode");
@@ -423,6 +423,8 @@ begin
     end else begin
       clientreceipt = JSONGet(js,"clientReceipt");
     end;
+  end else begin
+    LogText(0,"InitTouchlessPayment timedout after 240 seconds");
   end;
 //  paymentstat = "Approved";//for debug process
 
