@@ -239,6 +239,11 @@ begin
     goto LInitTouchlessPayment;
   end;
 
+  if (GetGlobalBoolean("TouchlessPaymentInProcess")) then begin
+    goto LInitTouchlessPayment;
+  end;
+  SetGlobalBoolean("TouchlessPaymentInProcess",true);
+
   BlockLoad(TPb);
   GetTouchlessPaymentURL(TPb,url,port);
   path = "/Authorize";
@@ -326,6 +331,8 @@ logtext(0,"request " & GetStringFromArea(request,0,255));
 */
     end;
   end;
+
+  SetGlobalBoolean("TouchlessPaymentInProcess",false);
 
 
 LInitTouchlessPayment:;
