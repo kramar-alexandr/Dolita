@@ -31,6 +31,12 @@ begin
   RecordField(DelItemFlag,M4Int,0,0);
   RecordField(DefWebSalesMan,M4Code,20,UserVc);
   RecordField(HeaderObject,M4UStr,200,0);
+//For second accounts
+  RecordField(APIUser2,M4Str,255,0);
+  RecordField(APIPass2,M4Str,255,0);
+  RecordField(ShopifyURL2,M4Str,255,0);
+  RecordField(ShopifyPort2,M4Int,0,0);
+  RecordField(DefWebOrdClass2,M4Code,60,0);
   EndBlock;
 
 	RecordBegin(ShopifyLocVc,-,"");

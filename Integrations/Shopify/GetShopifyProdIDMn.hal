@@ -93,13 +93,14 @@ begin
   return;
 end;
 
-global procedure DOLMakeWebRequest(string method,string apipath,var area areq,var area areply)
+global procedure DOLMakeWebRequest(string method,string apipath,var area areq,var area areply,Integer apinum)
 begin
   record DOLShopifyBlock DOLShopifyBl;
 	area request;
-  string 255 auth;
+  string 255 auth,apiuser,apipass,apiurl;
+  Longint apiport;
 	
-	blockload(DOLShopifyBl);	
+	BlockLoad(DOLShopifyBl);	
 /*
 	addtexttoarea(method & " " & apipath & " HTTP/1.1" & chr(13) & chr(10),request);
  	addtexttoarea("host: " & DOLShopifyBl.ShopifyURL & chr(13) & chr(10),request);
@@ -111,8 +112,20 @@ begin
 	SendRawWebRequest(DOLShopifyBl.ShopifyURL,DOLShopifyBl.ShopifyPort,true,method,apipath,"application/json","",false,areq,areply,20);
 */
 
-  auth = "Authorization:Basic " & Base64Encode(DOLShopifyBl.APIUser & ":" & DOLShopifyBl.APIPass);
-  SendWebRequest(DOLShopifyBl.ShopifyURL,DOLShopifyBl.ShopifyPort,-1,true,method,apipath,"application/json; charset=""utf-8""" & chr(10) & auth,"",false,areq,areply,15);
+  apiuser = DOLShopifyBl.APIUser;
+  apipass = DOLShopifyBl.APIPass;
+  apiurl = DOLShopifyBl.ShopifyURL;
+  apiport = DOLShopifyBl.ShopifyPort;
+  if (apinum==2) then begin
+    apiuser = DOLShopifyBl.APIUser2;
+    apipass = DOLShopifyBl.APIPass2;
+    apiurl = DOLShopifyBl.ShopifyURL2;
+    apiport = DOLShopifyBl.ShopifyPort2;
+  end;
+
+
+  auth = "Authorization:Basic " & Base64Encode(apiuser & ":" & apipass);
+  SendWebRequest(apiurl,apiport,-1,true,method,apipath,"application/json; charset=""utf-8""" & chr(10) & auth,"",false,areq,areply,15);
 
 	logtext(0,"************************DOLShopifyBl.SaveReqResp=" & DOLShopifyBl.SaveReqResp);
 	if(DOLShopifyBl.SaveReqResp>0)then begin
@@ -127,11 +140,12 @@ begin
 return;
 end;
 
-global procedure DOLMakeWebRequestAsync(string method,string apipath,var area areq)
+global procedure DOLMakeWebRequestAsync(string method,string apipath,var area areq,Integer apinum)
 begin
   record DOLShopifyBlock DOLShopifyBl;
 	area request,areply;
-  string 255 auth;
+  string 255 auth,apiuser,apipass,apiurl;
+  Longint apiport;
 	
 	blockload(DOLShopifyBl);
 		
@@ -149,8 +163,19 @@ begin
 	SendAsyncRawWebRequest(DOLShopifyBl.ShopifyURL,DOLShopifyBl.ShopifyPort,true,method,apipath,"application/json","",areq,"DOLMakeWebRequestReply",20);
 */
 
-  auth = "Authorization:Basic " & Base64Encode(DOLShopifyBl.APIUser & ":" & DOLShopifyBl.APIPass);
-  SendAsyncWebRequest(DOLShopifyBl.ShopifyURL,DOLShopifyBl.ShopifyPort,-1,true,method,apipath,"application/json; charset=""utf-8""" & chr(10) & auth,"",areq,"DOLMakeWebRequestReply",20);
+  apiuser = DOLShopifyBl.APIUser;
+  apipass = DOLShopifyBl.APIPass;
+  apiurl = DOLShopifyBl.ShopifyURL;
+  apiport = DOLShopifyBl.ShopifyPort;
+  if (apinum==2) then begin
+    apiuser = DOLShopifyBl.APIUser2;
+    apipass = DOLShopifyBl.APIPass2;
+    apiurl = DOLShopifyBl.ShopifyURL2;
+    apiport = DOLShopifyBl.ShopifyPort2;
+  end;
+
+  auth = "Authorization:Basic " & Base64Encode(apiuser & ":" & apipass);
+  SendAsyncWebRequest(apiurl,apiport,-1,true,method,apipath,"application/json; charset=""utf-8""" & chr(10) & auth,"",areq,"DOLMakeWebRequestReply",20);
 
 	logtext(0,"************************DOLShopifyBl.SaveReqResp=" & DOLShopifyBl.SaveReqResp);
 	if(DOLShopifyBl.SaveReqResp>0)then begin
@@ -500,7 +525,7 @@ end;
 // **** MAIN: UPDATE STOCK ****
 global
 procedure DOLDoUpdShopifyStock(array string a_items,array string a_shopifyid, array val a_itemstat,array string a_itemstat_index,
-                                        array string a_serpvar, array string a_shopvar, array boolean a_inch_itemf, integer setcomp, var array boolean a_no_varf)
+                                        array string a_serpvar, array string a_shopvar, array boolean a_inch_itemf, integer setcomp, var array boolean a_no_varf,Integer apinum)
 begin
   integer i,j,curcomp;
   longint tick;
@@ -519,15 +544,13 @@ begin
   vector boolean v_variant_existsf,v_sort_variantsf;
 
   tick = GetCurTick;
-
-  logtext(0,"INFO: Queued task DOLUpdShopifyStock in company No. " & setcomp & " id " & tick);
-
   curcomp = CurrentCompany;
 
   if (curcomp != setcomp) then begin
     SetCompany(setcomp,false);
   end;
-
+  
+  logtext(0,"INFO: Queued task DOLUpdShopifyStock in company No. " & setcomp & " id " & tick & " api " & apinum);
   for (i = 0; i < a_items.length; i = i + 1) begin
     if (nonblank(prodlist)) then begin
       prodlist = prodlist & ",";
@@ -536,7 +559,7 @@ begin
   end;
   
   // 1. Get products and their varieties
-  DOLMakeWebRequest("GET","/admin/products.json?fields=id,variants&ids=" & prodlist,a_req,a_reply);
+  DOLMakeWebRequest("GET","/admin/products.json?fields=id,variants&ids=" & prodlist,a_req,a_reply,apinum);
 
   // 2. Get existing varieties and prime the instock to be set
   jdata = ParseJSONArea(a_reply);
@@ -619,7 +642,7 @@ begin
               if (odd) then begin
                 MilliSleep(250);
               end;
-              DOLMakeWebRequestAsync("POST","/admin/products/" & a_shopifyid[i] & "/variants.json",a_req);
+              DOLMakeWebRequestAsync("POST","/admin/products/" & a_shopifyid[i] & "/variants.json",a_req,apinum);
 
               SetAreaZeroSize(a_reply);
 
@@ -664,7 +687,7 @@ begin
       end;
       logtext(0,"INFO: DOLUpdShopifyStock updating " & a_var_id[i] & ":" & a_var_stock[i] & ":" & a_var_prodid[i]);
 
-      DOLMakeWebRequestAsync("PUT","/admin/variants/" & a_var_id[i] & ".json",a_req);
+      DOLMakeWebRequestAsync("PUT","/admin/variants/" & a_var_id[i] & ".json",a_req,apinum);
 
       SetAreaZeroSize(a_reply);
     end;
@@ -694,6 +717,8 @@ begin
   array boolean a_inch_itemf,a_no_varf;
   array string 60 a_items,a_itemstat_index;
   array string 255 a_shopifyid,a_serpvar,a_shopvar;
+  Integer apinum;
+  string 255 shopifyid;
 
   pos = 0;
   GetNextSubString(args,pos,";",setcompstr);
@@ -712,6 +737,17 @@ begin
     logtext(0,"INFO: Will queue DOLUpdShopifyStock in company No. " & setcomp & " for item " & item);
 
     BlockLoad(DOLShopifyBl);
+    apinum = 1;
+
+LDOLUpdShopifyStock:;
+    ClearArray(a_items);
+    ClearArray(a_itemstat);
+    ClearArray(a_itemstat_index);
+    ClearArray(a_shopifyid);
+    ClearArray(a_serpvar);
+    ClearArray(a_shopvar);
+    ClearArray(a_no_varf);
+    ClearArray(a_inch_itemf);
 
     LoadAllowedLocations(v_locf,DOLShopifyBl.StockClass,at_least_onef);
 
@@ -725,12 +761,16 @@ begin
       end;
       if (found) then begin
         testf = true;
+        shopifyid = INr.ShopifyID;
+        if (apinum==2) then begin
+          shopifyid = INr.ShopifyID2;
+        end;
         if (INr.NotForSales!=0) then begin testf = false; end;
-        if (blank(INr.ShopifyID)) then begin testf = false; end;
+        if (blank(shopifyid)) then begin testf = false; end;
         if (testf) then begin
           if (a_items.length == kStockBatchSize and kStockBatchSize > 0) then begin
             // queued.DOLDoUpdShopifyStock(a_items,a_shopifyid,a_itemstat,a_itemstat_index,a_serpvar,a_shopvar,a_inch_itemf,setcomp,a_no_varf);
-            threadasync.DOLDoUpdShopifyStock(a_items,a_shopifyid,a_itemstat,a_itemstat_index,a_serpvar,a_shopvar,a_inch_itemf,setcomp,a_no_varf);
+            threadasync.DOLDoUpdShopifyStock(a_items,a_shopifyid,a_itemstat,a_itemstat_index,a_serpvar,a_shopvar,a_inch_itemf,setcomp,a_no_varf,apinum);
             ClearArray(a_items);
             ClearArray(a_itemstat);
             ClearArray(a_itemstat_index);
@@ -741,8 +781,8 @@ begin
             ClearArray(a_inch_itemf);
           end;
           a_items[a_items.length] = INr.Code;
-          a_shopifyid[a_shopifyid.length] = INr.ShopifyID;
-          GetItemStatusForItem(INr.Code,INr.ShopifyID,a_itemstat,a_itemstat_index,v_locf,a_serpvar,a_shopvar,convf,novarf);
+          a_shopifyid[a_shopifyid.length] = shopifyid;
+          GetItemStatusForItem(INr.Code,shopifyid,a_itemstat,a_itemstat_index,v_locf,a_serpvar,a_shopvar,convf,novarf);
           a_no_varf[a_no_varf.length] = novarf;
           a_inch_itemf[a_inch_itemf.length] = convf;
         end;
@@ -750,7 +790,12 @@ begin
     end;
     if (a_items.length > 0) then begin
       // queued.DOLDoUpdShopifyStock(a_items,a_shopifyid,a_itemstat,a_itemstat_index,a_serpvar,a_shopvar,a_inch_itemf,setcomp,a_no_varf);
-      threadasync.DOLDoUpdShopifyStock(a_items,a_shopifyid,a_itemstat,a_itemstat_index,a_serpvar,a_shopvar,a_inch_itemf,setcomp,a_no_varf);
+      threadasync.DOLDoUpdShopifyStock(a_items,a_shopifyid,a_itemstat,a_itemstat_index,a_serpvar,a_shopvar,a_inch_itemf,setcomp,a_no_varf,apinum);
+    end;
+
+    if (nonblank(DOLShopifyBl.APIUser2) and apinum==1) then begin
+      apinum = 2;
+      goto LDOLUpdShopifyStock;
     end;
 
     logtext(0,"INFO: DOLUpdShopifyStock in company No. " & setcomp & " queued");
@@ -796,6 +841,7 @@ begin
 return;
 end;
 
+//Is this even used at all?
 global
 updating procedure DOLGetShopifyLocationsIDMn(record RcVc RepSpec)
 begin
@@ -811,9 +857,8 @@ begin
 
   BlockLoad(DOLShopifyBl);
 
-
 	if (nonblank(DOLShopifyBl.APIUser) and nonblank(DOLShopifyBl.APIPass)) then begin
-		DOLMakeWebRequest("GET","/admin/locations.json",a_req,a_reply);
+		DOLMakeWebRequest("GET","/admin/locations.json",a_req,a_reply,1);
 		//PreparePostArea(a_reply);
 		jdata = ParseJSONArea(a_reply);
 		
@@ -877,7 +922,7 @@ begin
     if (nonblank(DOLShopifyBl.APIUser) and nonblank(DOLShopifyBl.APIPass)) then begin
       
       pg = 1;
-      DOLMakeWebRequest("GET","/admin/products.json?fields=title,id,variants&limit=250&page=" & pg,a_req,a_reply);
+      DOLMakeWebRequest("GET","/admin/products.json?fields=title,id,variants&limit=250&page=" & pg,a_req,a_reply,1);
      	//PreparePostArea(a_reply);
       WriteAreaToFile(a_reply,"Shopify.txt",0);
 			
@@ -940,7 +985,7 @@ begin
         pg = pg + 1;
         setareazerosize(a_reply);
         setareazerosize(a_req);
-        DOLMakeWebRequest("GET","/admin/products.json?fields=title,id,variants&limit=250&page=" & pg,a_req,a_reply);
+        DOLMakeWebRequest("GET","/admin/products.json?fields=title,id,variants&limit=250&page=" & pg,a_req,a_reply,1);
 				//PreparePostArea(a_reply);
         jdata = ParseJSONArea(a_reply);
         logtext(0,pg & " AreaSize " & getarealength(a_reply));
@@ -1133,6 +1178,7 @@ begin
   boolean addshipartcodef; // ARA: HAL-1145
   string 255 shippingline; // ARA: HAL-1145
   val discamount; // ARA: HAL-1145
+  Integer apinum;
 	
   BlockLoad(DOLShopifyBl);
   BlockLoad(SNCb); // ARA: HAL-1145
@@ -1148,6 +1194,7 @@ begin
 
   DOLShopifyBl.GetOrdersFrom = AddDay(RepSpec.sEndDate,-1);
   BlockStore(DOLShopifyBl);
+  apinum = 1;
 
   if (nonblank(DOLShopifyBl.APIUser) and nonblank(DOLShopifyBl.APIPass) and DOLShopifyBl.GetOrdersFlag) then begin
 LHetNextOrders:;
@@ -1155,7 +1202,7 @@ LHetNextOrders:;
 		setareazerosize(a_req);
   	orders = 0;
   	page = page + 1;
-  	DOLMakeWebRequest("GET","/admin/orders.json?status=" & status & "&fields=name,email,created_at,line_items,shipping_lines,customer,client_details,customer_locale&status=any&created_at_min=" & DateToString(RepSpec.sStartDate,"YYYY-MM-DD") & "T00:00:00-00:00" & "&created_at_max=" & DateToString(addday(RepSpec.sEndDate,1),"YYYY-MM-DD") & "T00:00:00-00:00&limit=250&page=" & page,a_req,a_reply);
+  	DOLMakeWebRequest("GET","/admin/orders.json?status=" & status & "&fields=name,email,created_at,line_items,shipping_lines,customer,client_details,customer_locale&status=any&created_at_min=" & DateToString(RepSpec.sStartDate,"YYYY-MM-DD") & "T00:00:00-00:00" & "&created_at_max=" & DateToString(addday(RepSpec.sEndDate,1),"YYYY-MM-DD") & "T00:00:00-00:00&limit=250&page=" & page,a_req,a_reply,apinum);
 		//PreparePostArea(a_reply);
 		
 		//addfiletoarea("Shopify.txt",a_reply,0);
@@ -1179,6 +1226,9 @@ LHetNextOrders:;
 							ORr.OrdDate = crat;
 							ORr.CustOrdNr = data;
 							ORr.OrderClass = DOLShopifyBl.DefWebOrdClass;
+              if (apinum==2) then begin
+                ORr.OrderClass = DOLShopifyBl.DefWebOrdClass2;
+              end;
 							ORr.Location = DOLShopifyBl.DefWebLocation;
               ORVc_PasteLocation(ORr,-1);
 							ORr.CustCode = DOLShopifyBl.DefWebUserCode;
@@ -1349,6 +1399,11 @@ LHetNextOrders:;
 		
 		WriteAreaToFile(a_reply,"Shopify.json",0);
   
+    if (nonblank(DOLShopifyBl.APIUser2) and apinum==1) then begin
+      page = 0;
+      apinum = 2;
+      goto LHetNextOrders;
+    end;
   end;
   
   return;
@@ -1373,7 +1428,7 @@ begin
   return;
 end;
 
-procedure UpdateProductJSON(record INVc INr,var area a_req)
+procedure UpdateProductJSON(record INVc INr,var area a_req,string shopifyid)
 begin
   array string 60 a_keys;
   array string 255 a_values;
@@ -1381,7 +1436,7 @@ begin
   
   SetAreaZeroSize(a_req);
 
-  SetSingleKeyValue("id",INr.ShopifyID,true,a_keys,a_values,a_isstrf);
+  SetSingleKeyValue("id",shopifyid,true,a_keys,a_values,a_isstrf);
   SetSingleKeyValue("title",INr.Name,true,a_keys,a_values,a_isstrf);
   
   OpenRootJSON(a_req);
@@ -1416,24 +1471,35 @@ updating procedure DOLUpsertItemShopify(var record INVc INr)
 begin
   record INVc IN2r;
   record DOLShopifyBlock DOLShopifyBl;
-  string 255 rstr;
+  string 255 rstr,shopifyid;
   area a_req,a_reply;
+  Integer apinum;
 
   BlockLoad(DOLShopifyBl);
+  apinum = 1;
 
   if (DOLShopifyBl.UpdItems == 1) then begin
+LDOLUpsertItemShopify:;
     logtext(0,"INFO: Sending Item data to Shopify (DOLUpsertItemShopify), Item code " & INr.Code);
-    if (blank(INr.ShopifyID)) then begin
+    shopifyid = INr.ShopifyID;
+    if (apinum==2) then begin
+      shopifyid = INr.ShopifyID2;
+    end;
+    if (blank(shopifyid)) then begin
       NewProductJSON(INr,a_req);
-      DOLMakeWebRequest("POST","/admin/products.json",a_req,a_reply);
+      DOLMakeWebRequest("POST","/admin/products.json",a_req,a_reply,apinum);
     end else begin
-      UpdateProductJSON(INr,a_req);
-      DOLMakeWebRequest("PUT","/admin/" & INr.ShopifyID & ".json",a_req,a_reply);
+      UpdateProductJSON(INr,a_req,shopifyid);
+      DOLMakeWebRequest("PUT","/admin/" & shopifyid & ".json",a_req,a_reply,apinum);
     end;
     if (DigestProductReply(a_reply,rstr)) then begin
-      INr.ShopifyID = rstr;
+      shopifyid = rstr;
     end else begin
       LogText(0,rstr & INr.Code);
+    end;
+    if (nonblank(DOLShopifyBl.APIUser2) and apinum==1) then begin
+      apinum = 2;
+      goto LDOLUpsertItemShopify;
     end;
   end;
 
@@ -1445,7 +1511,7 @@ end;
 
 // ****** MAIN: UPDATE PRICE ******
 global
-procedure DOLDoUpdateItemPriceShopify(string shopify_id, val init_price, val shopify_price, integer setcomp)
+procedure DOLDoUpdateItemPriceShopify(string shopify_id, val init_price, val shopify_price, integer setcomp,Integer apinum)
 begin
   boolean odd,send_updf;
   integer j;
@@ -1462,10 +1528,10 @@ begin
 
   tick = GetCurTick;
 
-  logtext(0,"INFO: Queued task DOLDoUpdateItemPriceShopify in company No. " & setcomp & " id " & tick);
+  logtext(0,"INFO: Queued task DOLDoUpdateItemPriceShopify in company No. " & setcomp & " id " & tick & " api " & apinum);
 
   // 1. Get single product
-  DOLMakeWebRequest("GET","/admin/products/" & shopify_id & ".json?fields=id,variants",a_req,a_reply);
+  DOLMakeWebRequest("GET","/admin/products/" & shopify_id & ".json?fields=id,variants",a_req,a_reply,apinum);
 
   // 2. Get varieties for product
   jdata = ParseJSONArea(a_reply);
@@ -1521,14 +1587,14 @@ begin
       if (odd) then begin
         MilliSleep(250);
       end;
-      DOLMakeWebRequestAsync("PUT","/admin/variants/" & a_var_id[j] & ".json",a_req);
+      DOLMakeWebRequestAsync("PUT","/admin/variants/" & a_var_id[j] & ".json",a_req,apinum);
     end;
 
     SetAreaZeroSize(a_reply);
   end;
 
-  logtext(0,"INFO: Queued task DOLDoUpdateItemPriceShopify in company No. " & setcomp & " id " & tick & " done.");
-  
+  logtext(0,"INFO: Queued task DOLDoUpdateItemPriceShopify in company No. " & setcomp & " id " & tick & " api " & apinum & " done.");
+
   return;
 end;
 
@@ -1537,18 +1603,31 @@ procedure DOLUpdateItemPriceShopify(record INVc INr)
 begin
   record DOLShopifyBlock DOLShopifyBl;
   boolean testf;
+  Integer apinum;
+  string 255 shopifyid;
 
   BlockLoad(DOLShopifyBl);
 
   if (DOLShopifyBl.UpdPriceAlways == 1) then begin
     logtext(0,"INFO: Will queue DOLUpdateItemPriceShopify in company No. " & CurrentCompany & " for item " & INr.Code);
+    apinum = 1;
+
+LDOLUpdateItemPriceShopify:; 
+    shopifyid = INr.ShopifyID;
+    if (apinum==2) then begin
+      shopifyid = INr.ShopifyID2;
+    end;
     testf = true;
     if (INr.NotForSales!=0) then begin testf = false; end;
-    if (blank(INr.ShopifyID)) then begin testf = false; end;
+    if (blank(shopifyid)) then begin testf = false; end;
     if (testf) then begin
-      threadasync.DOLDoUpdateItemPriceShopify(INr.ShopifyID,INr.InitPrice,INr.ShopifyPrice,CurrentCompany);
+      threadasync.DOLDoUpdateItemPriceShopify(shopifyid,INr.InitPrice,INr.ShopifyPrice,CurrentCompany,apinum);
     end else begin
       logtext(0,"INFO: DOLUpdateItemPriceShopify failed - Item is not for sale or missing Shopify ID; in company No. " & CurrentCompany & " for item " & INr.Code);
+    end;
+    if (nonblank(DOLShopifyBl.APIUser2) and apinum==1) then begin
+      apinum = 2;
+      goto LDOLUpdateItemPriceShopify;
     end;
 
     logtext(0,"INFO: DOLUpdateItemPriceShopify queued in company No. " & CurrentCompany & " for item " & INr.Code);

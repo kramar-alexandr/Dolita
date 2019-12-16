@@ -2782,6 +2782,7 @@ begin
   // EVS: DOL-166
   Tile(tilenr,400,false,tilenr,ShopifyID); tilenr = tilenr + 1;
   EditField(h,v=20,120,"Shopify ID",Normal,ShopifyID,false,0);
+  EditField(h,v+=vs,120,"Shopify ID 2",Normal,ShopifyID2,false,0);
   // :EVS
   if (UserCanReport("INInfoRn","",true)) then begin
   SpecialMenu("Prekės būklės ataskaita",'I',0,"INStatusINDsm");

@@ -28,6 +28,7 @@ begin
   RecordField(DoNotUpdName,M4Int,0,0); //EBS
   RecordField(ShopifyID,M4Str,60,0); // EVS: DOL-166
   RecordField(ShopifyPrice,M4Val,0,0); // EVS: DOL-167
+  RecordField(ShopifyID2,M4Str,60,0); 
   EndRecordAdd;
 
   RecordAddBegin(ItemStatUserVc,"dol_IStatUsVc");

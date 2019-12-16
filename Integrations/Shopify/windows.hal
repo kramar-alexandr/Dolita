@@ -18,6 +18,11 @@ begin
   EditField(h,v += vs,-20,"API Password",Normal,APIPass,false,0);
   EditField(h,v += vs,200,"Shopify URL",Normal,ShopifyURL,false,0);
   EditField(h,v += vs,80,"Shopify Port",Normal,ShopifyPort,true,0);
+
+  EditField(h,v += 40,-20,"API Key",Normal,APIUser2,false,0);
+  EditField(h,v += vs,-20,"API Password",Normal,APIPass2,false,0);
+  EditField(h,v += vs,200,"Shopify URL",Normal,ShopifyURL2,false,0);
+  EditField(h,v += vs,80,"Shopify Port",Normal,ShopifyPort2,true,0);
   Tile(2,120,true,"",UpdStockInertval);
   h=h+50;
   CheckBox(h,v=20,0,"Update Items (!for testing only!) (restart required)",UpdItems);
@@ -37,7 +42,8 @@ begin
   CheckBox(h+150,v,0,"Import Orders",GetOrdersFlag); 
   EditField(h,v += vs,80,"Def. SalesMan",Normal,DefWebSalesMan,false,UserSClass);
   EditField(h,v += vs,80,"Def. Location",Normal,DefWebLocation,false,LocationSClass);
-  EditField(h,v += vs,80,"Def. Order Class",Normal,DefWebOrdClass,false,OrderClassSClass);
+  EditField(h,v += vs,80,"Def. Order Class 1",Normal,DefWebOrdClass,false,OrderClassSClass);
+  EditField(h,v += vs,80,"Def. Order Class 2",Normal,DefWebOrdClass2,false,OrderClassSClass);
   EditField(h,v += vs,80,"Header Object",Normal,HeaderObject,false,ObjSClass);
   EditField(h,v += vs,80,"Shopify Location Id",Normal,ShpifyLocId,false,ShopifyLocSClass);
   EditField(h,v += vs,80,"Get Orders every minutes",Normal,GetOrdFrq,false,0);
@@ -50,7 +56,7 @@ begin
 
   EditField(h,v += vs,80,"Store delivery type",Normal,StoreShipMode,false,DMSClass);
   Tile(4,120,true,"",SaveReqResp);
-  StaticText(h,v=20,"NOTE: Do not change anything unless insctructed",false);
+  StaticText(h,v=20,"NOTE: Do not change anything unless instructed",false);
   CheckBox(h,v+=20,0,"Save request and response data",SaveReqResp);
   SpecialMenu("Send Stock Levels Once",' ',0,"DOLShopifySendStockSm");
   EndWindow;
