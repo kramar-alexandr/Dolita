@@ -127,8 +127,9 @@ enum begin
   kPOSButtonTypeDiscountCoupon = 217,// Edit ************************** BPI Ukraine - KramarAlexandr - 01, 13 05 2019 y. at 9:34:46 PM
   kPOSButtonTypeShopifyOrders = 218,
 //CHN::TOUCHELSS PAYMENTS
-  kPOSButtonTypeVoidBankPayment = 219
+  kPOSButtonTypeVoidBankPayment = 219,
 //CHN::TOUCHELSS PAYMENTS
+  kPOSButtonTypeInternalOrders = 220,
 
 end;
 
@@ -1117,6 +1118,12 @@ begin
       case kPOSButtonTypeShopifyOrders://CHN
         if (GetWindowString(CurWindow,"POSShopifyOrders")=="1") then begin
           procstr = procstr & "DOLOpenShopifyOrders";
+        end else begin
+          procstr = "";
+        end;
+      case kPOSButtonTypeInternalOrders://CHN
+        if (GetWindowString(CurWindow,"POSInternalOrders")=="1") then begin
+          procstr = procstr & "DOLOpenInternalOrders";
         end else begin
           procstr = "";
         end;

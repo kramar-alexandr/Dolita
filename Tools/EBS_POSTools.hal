@@ -665,3 +665,15 @@ begin
 
   return;
 end;
+
+global
+procedure IVCashDClassDOLOpenInternalOrders()
+begin
+  Integer wn,nwn;
+  record RcVc RepSpec;
+
+  wn = CurWindow;
+  nwn = OpenWindow("DOLInternalOrdersWClass",0,wn,"","",RepSpec);
+
+  return;
+end;

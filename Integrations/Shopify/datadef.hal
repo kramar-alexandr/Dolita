@@ -37,6 +37,7 @@ begin
   RecordField(ShopifyURL2,M4Str,255,0);
   RecordField(ShopifyPort2,M4Int,0,0);
   RecordField(DefWebOrdClass2,M4Code,60,0);
+  RecordField(APIEnable2,M4Int,0,0);
   EndBlock;
 
 	RecordBegin(ShopifyLocVc,-,"");

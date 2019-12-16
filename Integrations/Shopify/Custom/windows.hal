@@ -35,14 +35,6 @@ begin
   SetWRect(40,80,900,100+(step*cnt));
   Sizeable(-1,-1,0,0);
 
-/*
-  v = 6; vs=20; vs2 = 16; h = 15; h2 = 280;
-  DataList(0,0,-1,-1,"shopifyorders");
-  DataListColumn(1,6,110,AdjLeft,"item","Prek˜",M4Str);
-  DataListColumn(1,116,220,AdjLeft,"itemvar","¯vairov˜",M4Str);
-  DataListColumn(1,226,-100,AdjLeft,"itemname","Pavadinimas",M4Str);
-  DataListColumn(1,-96,-10,AdjLeft,"qty","Kiekis",M4Str);
-*/
   v = 6;
   for (i=0;i<cnt;i=i+1) begin
     SoftEditFieldTLX(5,v+(i*step),180,"",M4Str,ViewOnly,100,40,patM4black,"order" & i & "item",false,0);
@@ -51,5 +43,44 @@ begin
     SoftEditFieldTLX(685,v+(i*step),60,"",M4Str,ViewOnly,100,40,patM4black,"order" & i & "qty",true,0);
     ColourPushButton(h=755,v+(i*step),h+98,v+(i*step)+45,"ApproveShopifyStockMov" & i,"Patvirtinta",2);
   end;
+  EndWindow;
+end;
+
+window DOLInternalOrdersWClass:1
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vs,vs2,h2;
+  Integer i,cnt,step;
+  step = 80;
+  WindowBegin("Internal Orders",DOLInternalOrdersWClass,CGother,RcType);
+  UseView(RcVc);
+  DynamicWindow;
+  cnt = StringToINt(GetWindowString(CurWindow,"ordercnt"));
+  if (cnt>10) then begin
+    cnt = 10;
+  end;
+  SetWRect(40,80,900,100+(step*cnt));
+  Sizeable(-1,-1,0,0);
+
+  v = 6;
+  for (i=0;i<cnt;i=i+1) begin
+    SoftEditFieldTLX(5,v+(i*step),180,"",M4Str,ViewOnly,100,40,patM4black,"order" & i & "item",false,0);
+    SoftEditFieldTLX(190,v+(i*step),130,"",M4Str,ViewOnly,100,40,patM4black,"order" & i & "var",false,0);
+    SoftEditFieldTLX(330,v+(i*step+20),345,"",M4Str,ViewOnly,100,20,patM4black,"order" & i & "name",false,0);
+    SoftEditFieldTLX(685,v+(i*step),60,"",M4Str,ViewOnly,100,40,patM4black,"order" & i & "qty",true,0);
+    ColourPushButton(h=755,v+(i*step),h+98,v+(i*step)+45,"ApproveShopifyStockMov" & i,"Patvirtinta",2);
+  end;
+  EndWindow;
+end;
+
+window POSIntORTClass:1
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v;
+  WindowBegin("Dolita - POS Internal Orders",POSIntORTClass,CGSbl,-);
+  SetBlid(POSIntORBlock);
+  SetWRect(20,80,340,400);
+  h = 208; v = 20;
+  EditField(h,v+=20,50,"Route",Normal,Route,false,DelRouteSClass);
   EndWindow;
 end;

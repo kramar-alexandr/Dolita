@@ -793,7 +793,7 @@ LDOLUpdShopifyStock:;
       threadasync.DOLDoUpdShopifyStock(a_items,a_shopifyid,a_itemstat,a_itemstat_index,a_serpvar,a_shopvar,a_inch_itemf,setcomp,a_no_varf,apinum);
     end;
 
-    if (nonblank(DOLShopifyBl.APIUser2) and apinum==1) then begin
+    if (DOLShopifyBl.APIEnable2==1 and apinum==1) then begin
       apinum = 2;
       goto LDOLUpdShopifyStock;
     end;
@@ -1399,7 +1399,7 @@ LHetNextOrders:;
 		
 		WriteAreaToFile(a_reply,"Shopify.json",0);
   
-    if (nonblank(DOLShopifyBl.APIUser2) and apinum==1) then begin
+    if (DOLShopifyBl.APIEnable2==1 and apinum==1) then begin
       page = 0;
       apinum = 2;
       goto LHetNextOrders;
@@ -1497,7 +1497,7 @@ LDOLUpsertItemShopify:;
     end else begin
       LogText(0,rstr & INr.Code);
     end;
-    if (nonblank(DOLShopifyBl.APIUser2) and apinum==1) then begin
+    if (DOLShopifyBl.APIEnable2==1 and apinum==1) then begin
       apinum = 2;
       goto LDOLUpsertItemShopify;
     end;
@@ -1625,7 +1625,7 @@ LDOLUpdateItemPriceShopify:;
     end else begin
       logtext(0,"INFO: DOLUpdateItemPriceShopify failed - Item is not for sale or missing Shopify ID; in company No. " & CurrentCompany & " for item " & INr.Code);
     end;
-    if (nonblank(DOLShopifyBl.APIUser2) and apinum==1) then begin
+    if (DOLShopifyBl.APIEnable2==1 and apinum==1) then begin
       apinum = 2;
       goto LDOLUpdateItemPriceShopify;
     end;

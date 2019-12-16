@@ -19,7 +19,8 @@ begin
   EditField(h,v += vs,200,"Shopify URL",Normal,ShopifyURL,false,0);
   EditField(h,v += vs,80,"Shopify Port",Normal,ShopifyPort,true,0);
 
-  EditField(h,v += 40,-20,"API Key",Normal,APIUser2,false,0);
+  CheckBox(h,v+=40,0,"Enable Second Account",APIEnable2);
+  EditField(h,v += vs,-20,"API Key",Normal,APIUser2,false,0);
   EditField(h,v += vs,-20,"API Password",Normal,APIPass2,false,0);
   EditField(h,v += vs,200,"Shopify URL",Normal,ShopifyURL2,false,0);
   EditField(h,v += vs,80,"Shopify Port",Normal,ShopifyPort2,true,0);

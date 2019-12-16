@@ -4,6 +4,7 @@ begin
   SetLangMode(LangEnglish,"ENG",0);
 
   Setting("Shopify: Location Links",ShopifyLocLinkTClass,modSY);
+  Setting("Dolita - POS Internal Orders",POSIntORTClass,modSY);
 
 
   return;

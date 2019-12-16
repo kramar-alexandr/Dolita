@@ -9,5 +9,9 @@ begin
   EndArray;
   EndBlock;
 
+  BlockBegin(POSIntORBlock,-,"");
+	RecordField(Route,M4Code,20,DelRouteVc);
+  EndBlock;
+
   return;
 end;

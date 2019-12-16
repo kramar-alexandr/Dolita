@@ -5,6 +5,7 @@ external inner function Boolean StockMovVc_PasteArtCode(var record StockMovVc,In
 external inner function string 255 StringFromSysList(Integer,Integer);
 external inner function val GetStockQty(string,string,Date,Boolean);
 remote procedure GetShopifyOrderList(string,var array record ORVc,var array record StockMovVc);
+remote procedure GetInternalOrderList(string,var array record StockMovVc);
 remote updating procedure RemoteApproveStockMov(Longint,var Boolean);
 
 
@@ -85,15 +86,15 @@ begin
 end;
 
 global
-procedure ShowShopifyOrderButton(Integer cnt,Integer showf)
+procedure ShowCustomOrderButton(Integer cnt,Integer showf,string ordertype)
 begin
   Integer wn,curstat;
   
   wn = FindWindow("NPTSIVCashDClass");
   if (wn>0) then begin//can we get 0 window?
-    curstat = StringToInt(GetWindowString(wn,"POSShopifyOrders"));
+    curstat = StringToInt(GetWindowString(wn,ordertype));
     if (curstat!=showf) then begin
-      PutWindowString(wn,"POSShopifyOrders",showf);
+      PutWindowString(wn,ordertype,showf);
       RerunWindowDef(wn);
     end;
   end;
@@ -113,9 +114,18 @@ begin
   threadremote.GetShopifyOrderList(LMb.LocalMachineCode,aORr,aStockMovr);
 
   if (aStockMovr.length>0) then begin
-    queued.ShowShopifyOrderButton(aStockMovr.length,1);//enable
+    queued.ShowCustomOrderButton(aStockMovr.length,1,"POSShopifyOrders");//enable
   end else begin
-    queued.ShowShopifyOrderButton(aStockMovr.length,0);//disable
+    queued.ShowCustomOrderButton(aStockMovr.length,0,"POSShopifyOrders");//disable
+  end;
+
+  ClearArray(aORr);
+  ClearArray(aStockMovr);
+  threadremote.GetInternalOrderList(LMb.LocalMachineCode,aStockMovr);
+  if (aStockMovr.length>0) then begin
+    queued.ShowCustomOrderButton(aStockMovr.length,1,"POSInternalOrders");//enable
+  end else begin
+    queued.ShowCustomOrderButton(aStockMovr.length,0,"POSInternalOrders");//disable
   end;
 
   return;
@@ -149,7 +159,7 @@ begin
     if (testf) then begin
       ORr.SerNr = 21100007;
       if (ReadFirstMain(ORr,1,true)) then begin
-        qupdating.OuterCustomShopifyOrderAction(ORr);
+        //qupdating.OuterCustomShopifyOrderAction(ORr);
       end;
     end;
   end;
@@ -157,20 +167,13 @@ begin
   return;
 end;
 
-global
-function Boolean ShopifyOrdersWClassOnOpenWindow(Integer wn)
+procedure SetStockMovWindowData(array record StockMovVc aStockMovr,string ordertype,Integer wn)
 begin
-  array record ORVc aORr;
-  array record StockMovVc aStockMovr;
-  record StockMovVc StockMovr;
-  row StockMovVc StockMovrw;
-  record LocalMachineBlock LMb;
   Integer i,mwn;
   string 255 itemvar,itemcode;
+  record StockMovVc StockMovr;
+  row StockMovVc StockMovrw;
   Longint pos;
-
-  BlockLoad(LMb);
-  threadremote.GetShopifyOrderList(LMb.LocalMachineCode,aORr,aStockMovr);
 
   for (i=0;i<aStockMovr.length;i=i+1) begin
     StockMovr = aStockMovr[i];
@@ -178,14 +181,6 @@ begin
     pos = -1;
     GetNextSubstring(StockMovrw.ArtCode,pos,".",itemcode);
     GetNextSubstring(StockMovrw.ArtCode,pos,".",itemvar);
-    /*
-    AddListRow(wn,"shopifyorders",1,StockMovr.SerNr,0);
-    AddListData(wn,"shopifyorders","item",itemcode);
-    AddListData(wn,"shopifyorders","itemvar",itemvar);
-    AddListData(wn,"shopifyorders","itemname",StockMovrw.Spec);
-    AddListData(wn,"shopifyorders","qty",StockMovrw.Quant);
-    */
-    
     PutWindowString(wn,"order" & i & "sernr",StockMovr.SerNr);
     PutWindowString(wn,"order" & i & "item",itemcode);
     PutWindowString(wn,"order" & i & "var",itemvar);
@@ -199,12 +194,43 @@ begin
     CloseWindow(wn);
     mwn = FindWindow("NPTSIVCashDClass");
     if (mwn>0) then begin
-      PutWindowString(mwn,"POSShopifyOrders",0);
+      PutWindowString(mwn,ordertype,0);
       RerunWindowDef(mwn);    
     end;
   end;
+
+  return;
+end;
+
+global
+function Boolean ShopifyOrdersWClassOnOpenWindow(Integer wn)
+begin
+  array record ORVc aORr;
+  array record StockMovVc aStockMovr;
+  record LocalMachineBlock LMb;
+
+  BlockLoad(LMb);
+  threadremote.GetShopifyOrderList(LMb.LocalMachineCode,aORr,aStockMovr);
+
+  SetStockMovWindowData(aStockMovr,"POSShopifyOrders",wn);
   
   ShopifyOrdersWClassOnOpenWindow = false;
+  return;
+end;
+
+global
+function Boolean DOLInternalOrdersWClassOnOpenWindow(Integer wn)
+begin
+  array record ORVc aORr;
+  array record StockMovVc aStockMovr;
+  record LocalMachineBlock LMb;
+
+  BlockLoad(LMb);
+  threadremote.GetInternalOrderList(LMb.LocalMachineCode,aStockMovr);
+
+  SetStockMovWindowData(aStockMovr,"POSInternalOrders",wn);
+  
+  DOLInternalOrdersWClassOnOpenWindow = false;
   return;
 end;
 
@@ -285,6 +311,24 @@ begin
 end;
 
 global
+function Boolean DOLInternalOrdersWClassListDblClick(Integer wn)
+begin
+  LongInt line;
+  record StockMovVc StockMovr;
+
+  line = SelectedListLine(wn);
+  if (line>=0) then begin
+    StockMovr.SerNr = StringToLongint(GetListTag(wn,line));
+    if (ReadFirstMain(StockMovr,1,true)) then begin
+      OpenWindow("StockMovDClass",1,0,"","",StockMovr);
+    end;
+  end;
+
+  return;
+end;
+
+
+global
 procedure GetShopifyOrderList(string lm,var array record ORVc aORr,var array record StockMovVc aStockMovr)
 begin
   record ShopifyLocLinkBlock SLb;
@@ -332,6 +376,55 @@ begin
   return;
 end;
 
+global
+procedure GetInternalOrderList(string lm,var array record StockMovVc aStockMovr)
+begin
+  record ShopifyLocLinkBlock SLb;
+  row ShopifyLocLinkBlock SLbrw;
+  string 255 toloc;
+  vector Boolean vOrders;
+  record StockMovVc StockMovr;
+  Boolean TrHs;
+  Integer i,rwcnt;
+  record ORVc ORr;
+  record POSIntORBlock IORb;
+  string 255 route;
+
+  BlockLoad(IORb);
+  route = IORb.Route;
+
+  if (blank(route)) then begin
+    goto LGetInternalOrderList;
+  end;
+  
+  BlockLoad(SLb);
+  rwcnt = MatRowCnt(SLb);
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowGet(SLb,i,SLbrw);
+    if (SetInSet(lm,SLbrw.LocalMachine)) then begin
+      toloc = SLbrw.MainLocation;
+      i = rwcnt;
+    end;
+  end;
+
+  if (nonblank(toloc)) then begin
+    TrHs = true;
+    StockMovr.OKFlag = 0;
+    StockMovr.ToLocation = toloc;
+    while (LoopKey("ToLocation",StockMovr,2,TrHs)) begin
+      if (StockMovr.OKFlag!=0 or StockMovr.ToLocation!=toloc) then begin
+        TrHs = false;
+      end else begin
+        if (StockMovr.Sorting==route and StockMovr.SentOKFlag==1) then begin
+          aStockMovr[aStockMovr.length] = StockMovr;
+        end;
+      end;
+    end;
+  end;
+
+LGetInternalOrderList:;
+  return;
+end;
 
 global
 updating procedure RemoteApproveStockMov(Longint sernr,var Boolean errf)
