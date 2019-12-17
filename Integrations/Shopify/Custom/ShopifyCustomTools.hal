@@ -7,6 +7,7 @@ external inner function val GetStockQty(string,string,Date,Boolean);
 remote procedure GetShopifyOrderList(string,var array record ORVc,var array record StockMovVc);
 remote procedure GetInternalOrderList(string,var array record StockMovVc);
 remote updating procedure RemoteApproveStockMov(Longint,var Boolean);
+remote updating procedure RemoteApproveStockMov2(array Longint,var Boolean);
 
 
 updating procedure CreateStockMove(record ORVc ORr,string item,val qty,string frloc,string toloc)
@@ -108,24 +109,26 @@ begin
   array record ORVc aORr;
   array record StockMovVc aStockMovr;
   record LocalMachineBlock LMb;
+  Integer wn;
 
   BlockLoad(LMb);
+  wn = FindWindow("NPTSIVCashDClass");
+  if (wn>0) then begin//can we get 0 window?
+    threadremote.GetShopifyOrderList(LMb.LocalMachineCode,aORr,aStockMovr);
 
-  threadremote.GetShopifyOrderList(LMb.LocalMachineCode,aORr,aStockMovr);
+    if (aStockMovr.length>0) then begin
+      queued.ShowCustomOrderButton(aStockMovr.length,1,"POSShopifyOrders");//enable
+    end else begin
+      queued.ShowCustomOrderButton(aStockMovr.length,0,"POSShopifyOrders");//disable
+    end;
 
-  if (aStockMovr.length>0) then begin
-    queued.ShowCustomOrderButton(aStockMovr.length,1,"POSShopifyOrders");//enable
-  end else begin
-    queued.ShowCustomOrderButton(aStockMovr.length,0,"POSShopifyOrders");//disable
-  end;
-
-  ClearArray(aORr);
-  ClearArray(aStockMovr);
-  threadremote.GetInternalOrderList(LMb.LocalMachineCode,aStockMovr);
-  if (aStockMovr.length>0) then begin
-    queued.ShowCustomOrderButton(aStockMovr.length,1,"POSInternalOrders");//enable
-  end else begin
-    queued.ShowCustomOrderButton(aStockMovr.length,0,"POSInternalOrders");//disable
+    ClearArray(aStockMovr);
+    threadremote.GetInternalOrderList(LMb.LocalMachineCode,aStockMovr);
+    if (aStockMovr.length>0) then begin
+      queued.ShowCustomOrderButton(aStockMovr.length,1,"POSInternalOrders");//enable
+    end else begin
+      queued.ShowCustomOrderButton(aStockMovr.length,0,"POSInternalOrders");//disable
+    end;
   end;
 
   return;
@@ -174,20 +177,26 @@ begin
   record StockMovVc StockMovr;
   row StockMovVc StockMovrw;
   Longint pos;
+  Integer cnt,j,rwcnt;
 
   for (i=0;i<aStockMovr.length;i=i+1) begin
     StockMovr = aStockMovr[i];
-    MatRowGet(StockMovr,0,StockMovrw);
-    pos = -1;
-    GetNextSubstring(StockMovrw.ArtCode,pos,".",itemcode);
-    GetNextSubstring(StockMovrw.ArtCode,pos,".",itemvar);
-    PutWindowString(wn,"order" & i & "sernr",StockMovr.SerNr);
-    PutWindowString(wn,"order" & i & "item",itemcode);
-    PutWindowString(wn,"order" & i & "var",itemvar);
-    PutWindowString(wn,"order" & i & "name",StockMovrw.Spec);
-    PutWindowString(wn,"order" & i & "qty",ValToString(StockMovrw.Quant,M40Val,"",".",1));
+    rwcnt = MatRowCnt(StockMovr);
+    for (j=0;j<rwcnt;j=j+1) begin    
+      MatRowGet(StockMovr,j,StockMovrw);
+      pos = -1;
+      GetNextSubstring(StockMovrw.ArtCode,pos,".",itemcode);
+      GetNextSubstring(StockMovrw.ArtCode,pos,".",itemvar);
+      PutWindowString(wn,"order" & cnt & "order",StockMovr.OrderNr);
+      PutWindowString(wn,"order" & cnt & "sernr",StockMovr.SerNr);
+      PutWindowString(wn,"order" & cnt & "item",itemcode);
+      PutWindowString(wn,"order" & cnt & "var",itemvar);
+      PutWindowString(wn,"order" & cnt & "name",StockMovrw.Spec);
+      PutWindowString(wn,"order" & cnt & "qty",ValToString(StockMovrw.Quant,M40Val,"",".",1));
+      cnt = cnt + 1;
+    end;
   end;
-  PutWindowString(wn,"ordercnt",aStockMovr.length);
+  PutWindowString(wn,"ordercnt",cnt);
   RerunWindowDef(wn);
 
   if (aStockMovr.length==0) then begin
@@ -251,45 +260,44 @@ begin
 end;
 
 global
-updating procedure ApproveShopifyStockMov0()
+updating procedure ApproveShopifyStockMov()
 begin
-  ApproveStockMov(0);
+  Longint pos;
+  array Longint alist;
+  string 255 list,tstr;
+  Boolean errf;
+  
+  list = PushButtonTag;
+  while (GetNextSubstring(list,pos,",",tstr)) begin
+    alist[alist.length] = StringToLongint(tstr);
+  end;
+  RemoteApproveStockMov2(alist,errf);
+  if (errf) then begin
+    MessageBox(22071,"");
+  end else begin
+    ShopifyOrdersWClassOnOpenWindow(CurWindow);
+  end;
   return;
 end;
+
 global
-updating procedure ApproveShopifyStockMov1()
+updating procedure ApproveInternalStockMov()
 begin
-  ApproveStockMov(1);
-  return;
-end;
-global
-updating procedure ApproveShopifyStockMov2()
-begin
-  ApproveStockMov(2);
-  return;
-end;
-global
-updating procedure ApproveShopifyStockMov3()
-begin
-  ApproveStockMov(3);
-  return;
-end;
-global
-updating procedure ApproveShopifyStockMov4()
-begin
-  ApproveStockMov(4);
-  return;
-end;
-global
-updating procedure ApproveShopifyStockMov5()
-begin
-  ApproveStockMov(5);
-  return;
-end;
-global
-updating procedure ApproveShopifyStockMov6()
-begin
-  ApproveStockMov(6);
+  Longint pos;
+  array Longint alist;
+  string 255 list,tstr;
+  Boolean errf;
+  
+  list = PushButtonTag;
+  while (GetNextSubstring(list,pos,",",tstr)) begin
+    alist[alist.length] = StringToLongint(tstr);
+  end;
+  RemoteApproveStockMov2(alist,errf);
+  if (errf) then begin
+    MessageBox(22071,"");
+  end else begin
+    DOLInternalOrdersWClassOnOpenWindow(CurWindow);
+  end;
   return;
 end;
 
@@ -411,7 +419,7 @@ begin
     TrHs = true;
     StockMovr.OKFlag = 0;
     StockMovr.ToLocation = toloc;
-    while (LoopKey("ToLocation",StockMovr,2,TrHs)) begin
+    while (LoopKey("ToToLocOK",StockMovr,2,TrHs)) begin
       if (StockMovr.OKFlag!=0 or StockMovr.ToLocation!=toloc) then begin
         TrHs = false;
       end else begin
@@ -437,6 +445,26 @@ begin
     StockMovr.OKFlag = 1;
     if (RecordUpdate(oldStockMovr,StockMovr,true)!=0) then begin
       errf = true;
+    end;
+  end;
+
+  return;
+end;
+
+global
+updating procedure RemoteApproveStockMov2(array Longint alist,var Boolean errf)
+begin
+  record StockMovVc StockMovr,oldStockMovr;
+  Integer i;
+
+  for (i=0;i<alist.length;i=i+1) begin
+    StockMovr.SerNr = alist[i];
+    if (ReadFirstMain(StockMovr,1,true)) then begin
+      RecordCopy(oldStockMovr,StockMovr);
+      StockMovr.OKFlag = 1;
+      if (RecordUpdate(oldStockMovr,StockMovr,true)!=0) then begin
+        errf = true;
+      end;
     end;
   end;
 

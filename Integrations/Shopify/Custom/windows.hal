@@ -1,3 +1,42 @@
+external inner function string 60 AddObjectToObjectList(string,string);
+
+procedure ShowOrderItemList(Integer wn,Integer cnt,string type,Integer step)
+begin
+  Integer v,i,h;
+  vector string 255 vNum;
+  string 255 key,key2,smnr,tags;
+
+  v = 6;
+
+  for (i=cnt-1;i>=0;i=i-1) begin
+    key = GetWindowString(wn,"order" & i & type);
+    key2 = GetWindowString(wn,"order" & (i-1) & type);
+    smnr = GetWindowString(wn,"order" & i & "sernr");
+    tags = AddObjectToObjectList(tags,smnr);
+    if (key!=key2) then begin
+      vNum[i] = tags;
+      tags = "";
+    end;
+  end;
+
+  v = 6;
+  h = 755;
+  for (i=0;i<cnt;i=i+1) begin
+    SoftEditFieldTLX(5,v+(i*step),180,"",M4Str,ViewOnly,100,40,patM4black,"order" & i & "item",false,0);
+    SoftEditFieldTLX(190,v+(i*step),130,"",M4Str,ViewOnly,100,40,patM4black,"order" & i & "var",false,0);
+    SoftEditFieldTLX(330,v+(i*step+20),345,"",M4Str,ViewOnly,100,20,patM4black,"order" & i & "name",false,0);
+    SoftEditFieldTLX(685,v+(i*step),60,"",M4Str,ViewOnly,100,40,patM4black,"order" & i & "qty",true,0);
+    if (nonblank(vNum[i])) then begin
+      if (type=="sernr") then begin
+        ColourPushButtonTag(h,v+(i*step),h+98,v+(i*step)+45,"ApproveInternalStockMov","Patvirtinta",2,vNum[i]);
+      end else begin
+        ColourPushButtonTag(h,v+(i*step),h+98,v+(i*step)+45,"ApproveShopifyStockMov","Patvirtinta",2,vNum[i]);
+      end;
+    end;
+  end;
+
+  return;
+end;
 
 SetLangMode(LangLithuanian,"LIT",0);
 
@@ -35,14 +74,8 @@ begin
   SetWRect(40,80,900,100+(step*cnt));
   Sizeable(-1,-1,0,0);
 
-  v = 6;
-  for (i=0;i<cnt;i=i+1) begin
-    SoftEditFieldTLX(5,v+(i*step),180,"",M4Str,ViewOnly,100,40,patM4black,"order" & i & "item",false,0);
-    SoftEditFieldTLX(190,v+(i*step),130,"",M4Str,ViewOnly,100,40,patM4black,"order" & i & "var",false,0);
-    SoftEditFieldTLX(330,v+(i*step+20),345,"",M4Str,ViewOnly,100,20,patM4black,"order" & i & "name",false,0);
-    SoftEditFieldTLX(685,v+(i*step),60,"",M4Str,ViewOnly,100,40,patM4black,"order" & i & "qty",true,0);
-    ColourPushButton(h=755,v+(i*step),h+98,v+(i*step)+45,"ApproveShopifyStockMov" & i,"Patvirtinta",2);
-  end;
+  ShowOrderItemList(CurWindow,cnt,"order",step);
+  
   EndWindow;
 end;
 
@@ -62,14 +95,7 @@ begin
   SetWRect(40,80,900,100+(step*cnt));
   Sizeable(-1,-1,0,0);
 
-  v = 6;
-  for (i=0;i<cnt;i=i+1) begin
-    SoftEditFieldTLX(5,v+(i*step),180,"",M4Str,ViewOnly,100,40,patM4black,"order" & i & "item",false,0);
-    SoftEditFieldTLX(190,v+(i*step),130,"",M4Str,ViewOnly,100,40,patM4black,"order" & i & "var",false,0);
-    SoftEditFieldTLX(330,v+(i*step+20),345,"",M4Str,ViewOnly,100,20,patM4black,"order" & i & "name",false,0);
-    SoftEditFieldTLX(685,v+(i*step),60,"",M4Str,ViewOnly,100,40,patM4black,"order" & i & "qty",true,0);
-    ColourPushButton(h=755,v+(i*step),h+98,v+(i*step)+45,"ApproveShopifyStockMov" & i,"Patvirtinta",2);
-  end;
+  ShowOrderItemList(CurWindow,cnt,"sernr",step);
   EndWindow;
 end;
 
@@ -80,7 +106,7 @@ begin
   WindowBegin("Dolita - POS Internal Orders",POSIntORTClass,CGSbl,-);
   SetBlid(POSIntORBlock);
   SetWRect(20,80,340,400);
-  h = 208; v = 20;
-  EditField(h,v+=20,50,"Route",Normal,Route,false,DelRouteSClass);
+  h = 120; v = 20;
+  EditField(h,v=6,150,"Route",Normal,Route,false,DelRouteSClass);
   EndWindow;
 end;
