@@ -209,8 +209,8 @@ end;
 global
 function Boolean InitTouchlessPayment(val received,string paymode,string label,var string transactionid,Longint tsernr,string crncy,Integer wn,string rrn,string origdatetime)
 begin
-  string 255 AuthorisationCode,paymentstat,path,url,timestamp,FileName,receiptnr,clientreceipt;
-  Boolean res,fres;
+  string 255 AuthorisationCode,paymentstat,path,url,timestamp,FileName,receiptnr,clientreceipt,systransid;
+  Boolean res,fres,failf;
   JSON js;
   area request,reply;
   record LocalMachineBlock LMb;  
@@ -255,7 +255,8 @@ begin
   AddTextToArea("""amount"": " & ValToString(received*100,M4Val,"",".",1) & ",",request);
   AddTextToArea("""cash"": 0,",request);
   AddTextToArea("""currency"": ""EUR"",",request);
-  AddTextToArea("""TransactionId"": """ & left(MakeUUID,30) & """,",request);
+  systransid = left(MakeUUID,30);
+  AddTextToArea("""TransactionId"": """ & systransid & """,",request);
   timestamp = CurrentDate & " " & CurrentTime;
   AddTextToArea("""time"": """ & timestamp & """,",request);
   AddTextToArea("""language"": ""LT"",",request);
@@ -268,7 +269,7 @@ begin
 
   SetWebHeaders("X-EPSLT-ProjectId:" & TPb.ProjectID);
 
-  if (SendWebRequest(url,port,-1,true,"POST",path,GetAuthatizationHeader(TPb),"",false,request,reply,200)) then begin
+  if (SendWebRequest(url,port,-1,true,"POST",path,GetAuthatizationHeader(TPb),"",false,request,reply,120)) then begin
     js = ParseJSONArea(reply);
     if (JSONGet(js,"result")=="Ok") then begin
       transactionid = JSONGet(js,"TransactionId");
@@ -281,6 +282,9 @@ begin
     end else begin
       clientreceipt = JSONGet(js,"clientReceipt");
     end;
+  end else begin
+    Logtext(0,"timeout or failed request 120 sec. for touchless payment");
+    failf = true;
   end;
   logrequest(request,reply,"touchless");
 
@@ -337,7 +341,17 @@ logtext(0,"request " & GetStringFromArea(request,0,255));
 
 LInitTouchlessPayment:;
   if (ProcessingWn>0) then begin
-    CloseWindow(ProcessingWn);
+    if (failf) then begin
+      PutWindowString(ProcessingWn,"manualoverride","1");
+      PutWindowString(ProcessingWn,"transactionid",systransid);
+      PutWindowString(ProcessingWn,"timestamp",timestamp);
+      PutWindowString(ProcessingWn,"label",label);
+      PutWindowString(ProcessingWn,"paymode",paymode);
+      
+      RerunWindowDef(ProcessingWn);
+    end else begin
+      CloseWindow(ProcessingWn);
+    end;
   end;
 
   InitTouchlessPayment = fres;
@@ -359,7 +373,7 @@ begin
   BlockLoad(TPb);
   if (nonblank(TPb.LastRrn)) then begin
     if (FindLocalSerialPortDevice(kSerialPortDeviceClassCreditCardTerminal,201,LMb.LocalMachineCode,LSPDr)) then begin  
-      while (ConfirmTouchlessPayment(TPb,LSPDr,TPb.LastRrn,paymentstat)==false and tries<300) begin//5 minutes
+      while (ConfirmTouchlessPayment(TPb,LSPDr,TPb.LastRrn,paymentstat)==false and tries<2) begin//5 minutes
         sleep(1);
         tries = tries + 1;
       end;
@@ -672,3 +686,44 @@ end;
 
 //CUST-END
 
+global
+updating procedure TouchlessPaymentWClassProceed()
+begin
+  Integer ProcessingWn,mwn;
+  string 255 FileName,timestamp,transactionid,paymode,label;
+  record IVCashVc IVCashr;
+  val received;
+  
+  ProcessingWn = CurWindow;
+  mwn = MotherWindow(ProcessingWn);
+  FileName = GetWindowFileName(mwn);
+  if (mwn>0) then begin
+    SelectWindow(mwn);
+    switch (FileName) begin
+      case "IVCashVc":
+        GetWindowRecord(mwn,IVCashr);
+        logtext(0,"TouchlessPaymentWClassProceed " & mwn);
+        received = IVCashr.Sum4-IVCashr.TendValue;
+        if (received>0) then begin
+          transactionid = GetWindowString(ProcessingWn,"transactionid");
+          timestamp = GetWindowString(ProcessingWn,"timestamp");
+          paymode = GetWindowString(ProcessingWn,"paymode");
+          label = GetWindowString(ProcessingWn,"label");
+          CloseWindow(ProcessingWn);
+          StoreLastTouchlessPayment(transactionid,received,timestamp);
+          UpdateIVCashWithTouchlessPay(mwn,received,"",paymode,label,timestamp,transactionid,"");
+        end;
+    end;
+  end;
+
+
+  return;
+end;
+
+global
+procedure TouchlessPaymentWClassCancel()
+begin
+  
+  CloseWindow(CurWindow);
+  return;
+end;

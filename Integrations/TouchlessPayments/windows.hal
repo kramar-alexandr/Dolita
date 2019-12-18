@@ -156,11 +156,20 @@ begin
   
   WindowBegin("Processing Credit Card Payment",TouchlessPaymentProcessingWClass,CGother,RcType);
   Modality(kModalityGlobal);
+  DynamicWindow;
   AutoSizeWindow(false);
   UseView(RcVc);
-  SetWRect(80,700,450,755);
+  if (GetWindowString(CurWindow,"manualoverride")=="1") then begin
+    SetWRect(80,550,450,755);
+  end else begin
+    SetWRect(80,700,450,755);    
+  end;
   h = 10; h2 = 170; v=40; vs = 40;
   StaticTextWithColor(h+30,v,"Laukiamas atsakas iä kreditini÷ korteli÷ terminalo",false,12,patM4red);
-
+  if (GetWindowString(CurWindow,"manualoverride")=="1") then begin
+    StaticTextWithColor(h+30,v+=vs,"Payment Request failed.",false,12,patM4red);  
+    ColourPushButton(20,v+=vs,120,v+45,"TouchlessPaymentWClassProceed","Approve Payment",20);
+    ColourPushButton(140,v,240,v+45,"TouchlessPaymentWClassCancel","Cancel",20);
+  end;
   EndWindow;
 end;
