@@ -18,6 +18,7 @@ begin
       tags = "";
     end;
   end;
+  SoftEditFieldTLX(5,v+(0*step),180,"",M4Str,ViewOnly,100,40,patM4black,"dummy",false,0);
 
   v = 6;
   h = 755;
