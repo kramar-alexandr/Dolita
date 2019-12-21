@@ -15,12 +15,15 @@ begin
   array string 255 aWarning;
   record StockMovVc StockMovr;
   row StockMovVc StockMovrw;
+  record POSIntORBlock IORb;
 
+  BlockLoad(IORb);
 
   RecordNew(StockMovr);
   StockMovr.SerNr = NextSerNr("StockMovVc",CurrentDate,-1,false,"");
   StockMovr.FrLocation = frloc;
   StockMovr.ToLocation = toloc;
+  StockMovr.Sorting = IORb.ShopifyRoute;
   StockMovVc_PasteFromLocation(StockMovr); 
   StockMovVc_PasteToLocation(StockMovr);
   StockMovr.OrderNr = ORr.SerNr;

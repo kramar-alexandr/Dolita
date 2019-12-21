@@ -103,11 +103,13 @@ end;
 window POSIntORTClass:1
   wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
 begin
-  real h,v;
+  real h,v,vs;
   WindowBegin("Dolita - POS Internal Orders",POSIntORTClass,CGSbl,-);
   SetBlid(POSIntORBlock);
   SetWRect(20,80,340,400);
-  h = 120; v = 20;
+  h = 120; vs = 20;
   EditField(h,v=6,150,"Route",Normal,Route,false,DelRouteSClass);
+  EditField(h,v+=vs,150,"Shopify Route",Normal,ShopifyRoute,false,DelRouteSClass);
+
   EndWindow;
 end;
