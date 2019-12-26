@@ -83,5 +83,12 @@ begin
 		RecordField(Amount,M4Int,0,0);
   EndBlock;
 
+  RecordBegin(POSReturnTextVc,-,"");
+  RecordField(SerNr,M4Long,0,0);
+  RecordField(Text,M4TextField,0,0);
+  MainKeyBegin(SerNr,0);
+  KeySegment(SerNr);
+  EndRecord;
+
 return;
 end;

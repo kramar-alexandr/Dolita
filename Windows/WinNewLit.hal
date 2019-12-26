@@ -1208,3 +1208,22 @@ begin
   EndWindow;
 
 end;
+
+window POSReturnTextWClass:1
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vs;
+  
+  WindowBegin("Touchless Payments",POSReturnTextWClass,CGOther,-);
+  UseView(CUVc);
+  SetWRect(20,80,450,300);
+  AutoSizeWindow(false);
+  ToolBar;
+  HalPushButton(-140,5,-80,22,"POSReturnTextWClassSave","Save");
+  EndToolBar;
+  h = 150;
+  TextField(20,v=6,-20,-20,Math2,0);
+  EndWindow;
+	
+	return;
+end;

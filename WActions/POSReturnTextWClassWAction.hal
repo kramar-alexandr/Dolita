@@ -1,0 +1,39 @@
+
+global
+updating procedure POSReturnTextWClassSave()
+begin
+  Integer wn;
+  record POSReturnTextVc RTr;
+  record CUVc CUr;
+  Longint i;
+  
+  wn = CurWindow;
+  GetWindowRecord(wn,CUr);
+  for (i=0;i<SizeTextCnt(CUr);i=i+225) begin
+    AddToText(StringFromText(CUr,i,255),RTr);
+  end;
+  RecordStore(RTr,true);
+  CloseWindow(wn);
+
+  return;
+end;
+
+global
+function Boolean POSReturnTextWClassOnOpenWindow(Integer wn)
+begin
+  record POSReturnTextVc RTr;
+  record CUVc CUr;
+  Longint i;
+
+  ReadFirstMain(RTr,1,true);
+  for (i=0;i<SizeTextCnt(RTr);i=i+225) begin
+    AddToText(StringFromText(RTr,i,255),CUr);
+  end;
+  PutWindowRecord(wn,CUr);
+
+
+  POSReturnTextWClassOnOpenWindow = false;
+  return;
+end;
+
+//This is some text for return done by ?salesman? for amount of ?amount? EUR because of ?reason?
