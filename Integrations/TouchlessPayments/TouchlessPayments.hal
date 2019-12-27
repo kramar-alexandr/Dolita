@@ -250,6 +250,7 @@ begin
  
   sernr = tsernr;
 
+LSendRequest:;
   AddTextToArea("{",request);
   AddTextToArea("""posId"": """ & LSPDr.Port & """,",request);
   AddTextToArea("""amount"": " & ValToString(received*100,M4Val,"",".",1) & ",",request);
@@ -281,6 +282,10 @@ begin
       res = true;
     end else begin
       clientreceipt = JSONGet(js,"clientReceipt");
+      if (JSONGet(js,"result")=="Error" and JSONGet(js,"text")=="Dokumento numerio klaida") then begin
+        SetAreaZeroSize(request);
+        goto LSendRequest;
+      end;
     end;
   end else begin
     Logtext(0,"timeout or failed request 120 sec. for touchless payment");
