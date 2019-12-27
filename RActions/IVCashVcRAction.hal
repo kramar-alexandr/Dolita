@@ -1,3 +1,5 @@
+external inner function val MulRateToBase1(var string,val,val,val,val,val,val,roundmode); //EBS
+
 global
 function LongInt IVCashVcRecordDuplicate(var record IVCashVc IVCashr,record IVCashVc IVCash2r,LongInt long3,LongInt long4)
 begin
@@ -24,5 +26,84 @@ begin
   end;
 
   IVCashVcRecordRemoveAfter = res;
+  RETURN;
+END;
+
+function val MoneyInDrawer(string lm,string drawer,Date td)
+begin
+  val res;
+  record CashupHistVc CaHr;
+  record CashVc Cashr;
+  record IVCashVc IVCashr;
+  row IVCashVc IVCashrw;
+  Integer i,rwcnt;
+  Boolean found,testf;
+
+  found = true;
+  CaHr.LocalMachineCode = lm;
+  CaHr.DrawerCode = drawer;
+  CaHr.TransDate = td;
+  while (LoopKey("Cashup",CaHr,3,found)) begin
+    if (CaHr.LocalMachineCode!=lm) then begin found = false; end;
+    if (CaHr.DrawerCode!=drawer) then begin found = false; end;
+    if (CaHr.TransDate!=td) then begin found = false; end;
+    if (found) then begin
+      testf = true;
+      switch (CaHr.FileName) begin
+        case "CashVc":
+          Cashr.SerNr = CaHr.TransNr;
+          testf = ReadFirstMain(Cashr,1,true);
+          if (Cashr.OKFlag==0) then begin testf = false; end;
+          if (testf) then begin
+            switch (Cashr.Event) begin
+              case 0:
+                res = res - Cashr.Total;
+              case 1:
+                res = res + Cashr.Total;
+              case 2:
+                res = res - Cashr.Total;
+            end;
+          end;
+        case "IVCashVc":
+          IVCashr.SerNr = CaHr.TransNr;
+          testf = ReadFirstMain(IVCashr,1,true);
+          if (IVCashr.OKFlag==0) then begin testf = false; end;
+          if (testf) then begin
+            rwcnt = MatRowCnt(IVCashr);
+            for (i=0;i<rwcnt;i=i+1) begin
+              MatRowGet(IVCashr,i,IVCashrw);
+              switch (IVCashrw.stp) begin
+                case kInvoiceRowTypeCashPayment:
+                  res = res + MulRateToBase1(IVCashrw.CurncyCode,IVCashrw.Sum,IVCashrw.FrRate,IVCashrw.ToRateB1,IVCashrw.ToRateB2,IVCashrw.BaseRate1,IVCashrw.BaseRate2,DefaultCurRoundOff);
+              end;
+            end;
+          end;
+        otherwise
+          testf = false;
+      end;
+    end;
+  end;
+  MoneyInDrawer = res;
+  return;
+end;
+
+global
+updating function LongInt IVCashVcRecordCheck(var record IVCashVc IVCashr,record IVCashVc IVCash2r,LongInt stat,LongInt long4)
+BEGIN
+  Longint res;
+  res = 0;
+
+  if (IVCashr.Sum4<0) then begin
+    if (MoneyInDrawer(IVCashr.LocalMachineCode,IVCashr.DrawerCode,CurrentDate)<(-IVCashr.Sum4)) then begin
+      RecordCheckError(1000146,"",-1,"SerNr");      
+      res = -1;
+      goto LIVCashVcRecordCheck;
+    end;
+  end;
+
+  res = inner.IVCashVcRecordCheck(IVCashr,IVCash2r,stat,long4);
+
+LIVCashVcRecordCheck:;  
+  IVCashVcRecordCheck = res;
   RETURN;
 END;

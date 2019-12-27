@@ -3,6 +3,8 @@ begin
   SetLangMode(LangLithuanian,"LIT",2);
 
   //modDBMain
+  Setting("Cashup Hist",CashupHistLClass,modDBMain);
+
   Maintenance("Atšaukti negaliojančias rezervacijas",RemoveORReservVClass,RemoveORReservMn,modDBMain);
   Maintenance("Add objects to contacts",AddCUObjVClass,AddCUObjMn,modDBMain);
   Maintenance("Item name update",UpdateItemNameVClass,UpdateItemNameMn,modDBMain);
