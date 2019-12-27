@@ -554,7 +554,7 @@ begin
   SString(1000143,"PrekÄ—s nuolaida");// Edit ************************** BPI Ukraine - KramarAlexandr - Tuesday, 20 November 2018 17:04:02
 	SString(1000144,"â‚¬");
 	SString(1000145,"Please specify Date");
-	SString(1000146,"Not enough Money in the Drawer");
+	SString(1000146,"Neuìtenka pinig÷ kasoje");
 	
   return;
 end;
