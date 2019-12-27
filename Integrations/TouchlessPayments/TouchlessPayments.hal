@@ -107,6 +107,7 @@ begin
   PutWindowRecord(mwn,IVCashr);
   IVCashDClass_RefreshStringList(mwn,IVCashr);
   if (WindowDoOK(mwn,0)) then begin
+    SelectWindow(mwn);
     IVCashDClassTouchScreenFinishButton;
   end;
 
