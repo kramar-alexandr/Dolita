@@ -1706,3 +1706,26 @@ begin
 
   return;
 end;
+
+global
+updating procedure IVCashDClassDOLDoClockIn()
+begin
+  record RcVc RepSpec;
+  Integer nwn;
+
+  nwn = OpenWindow("EBS_ClockInWClass",0,0,"","",RepSpec);
+  RerunWindowDef(nwn);
+  return;
+end;
+
+global
+updating procedure IVCashDClassDOLDoClockOut()
+begin
+  record RcVc RepSpec;
+  Integer nwn;
+
+  nwn = OpenWindow("EBS_ClockOutWClass",0,0,"","",RepSpec);
+  RerunWindowDef(nwn);
+
+  return;
+end;

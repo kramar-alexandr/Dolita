@@ -1,0 +1,215 @@
+enum begin
+  kPOSButtonTypeVarEnqRn = 202,
+  kPOSButtonTypeInvValRn = 203,
+  kPOSButtonTypePrintDocument = 204,
+  kPOSButtonTypePIVGPRn = 205,
+  kPOSButtonTypeCancelNew = 206,
+  kPOSButtonTypeCreateCreditSalesInvoice = 207, //VITO: DOL-89
+  kPOSButtonTypeNuolaidaPrc = 208,
+  kPOSButtonTypeChangePrice = 209,
+  kPOSButtonTypeCreateContact = 210,
+  kPOSButtonTypeDoNotPrint = 211,
+  kPOSButtonTypeCopyLastReceipt = 212,
+  kPOSButtonTypeReturnItem = 213,
+  kPOSButtonTypePeriodicReport = 214,
+  kPOSButtonTypePrintReceipt = 215,
+  kPOSButtonTypeCreateCustomer = 216,
+	kPOSButtonTypeDiscountCoupon = 217,
+  kPOSButtonTypeShopifyOrders = 218,
+//CHN::TOUCHLESS PAYMENTS
+  kPOSButtonTypeVoidBankPayment = 219,
+//CHN::TOUCHLESS PAYMENTS
+  kPOSButtonTypeInternalOrders = 220,
+  kPOSButtonTypeClockIn = 221,
+  kPOSButtonTypeClockOut = 222,
+
+end;
+
+event startup
+begin
+  
+  SetLangMode(LangEnglish,"ENG",0);
+
+  Setting("Cashup Hist",CashupHistLClass,modDBMain);
+  Setting("POS Check In-Outs",POSClockInOutLClass,modDBMain);
+
+  Report("DOL - Employee Time",DOL_EmpTimeRClass,DOL_EmpTimeRn,0,modPOS);
+
+	SString(1000147,"Not all salesmen are clocked out");
+	SString(1000148,"Location");
+	SString(1000149,"Employee Time");
+
+  SetBegin(11002);
+  SetText(0,"Clock Out");
+  SetText(1,"Clock In");
+  EndSet;
+
+  SetBegin(1431);
+  SetText(kPOSButtonTypeBlank,"Blank");
+  SetText(kPOSButtonTypeAddCommentLine,"Add Comment Line");  
+  SetText(kPOSButtonTypeAddHeaderLine,"Add Header Line");  
+  SetText(kPOSButtonTypeAddHiddenLine,"Add Hidden Line");  
+  SetText(kPOSButtonTypeServiceCharge,"Add Service Charge");  
+  SetText(kPOSButtonTypeAddSubtotalLine,"Add Subtotal Line");  
+  SetText(kPOSButtonTypeAddOrderDiscount,"Add Discount");  
+  SetText(kPOSButtonTypeAllInvoices,"All Invoices");
+  SetText(kPOSButtonTypeAmendLine,"Amend Line");
+  SetText(kPOSButtonTypeAppleCancelAEOrder,"Apple Cancel AE Order");  
+  SetText(kPOSButtonTypeAppleCreateAEOrder,"Apple Create AE Order");  
+  SetText(kPOSButtonTypeAppleWarrantyStatusCheck,"Apple Warranty Status Check");  
+  SetText(kPOSButtonTypeBaggerSearch,"Bagger Search");
+  SetText(kPOSButtonTypeBookings,"Bookings");  
+  SetText(kPOSButtonTypeCalculateTip,"Calculate Tip");  
+  SetText(kPOSButtonTypeCashPayment,"Cash");
+  SetText(kPOSButtonTypeCashupReport,"Cash Up Report");
+  SetText(kPOSButtonTypeCashupMaint,"Cash Up Maintenance");
+  SetText(kPOSButtonTypeChangeAddress,"Change Address");
+  SetText(kPOSButtonTypeEditDate,"Change Date");
+  SetText(kPOSButtonTypeChangeDiscountMatrix,"Change Discount Matrix");
+  SetText(kPOSButtonTypeChangeTerms,"Change Invoice Details");
+  SetText(kPOSButtonTypeLogin,"Change User");  
+  SetText(kPOSButtonTypeChequePayment,"#Cheque#");
+  SetText(kPOSButtonTypeCloseSession,"Close Session");
+  SetText(kPOSButtonTypePrintCourtesyReceipt,"Courtesy Receipt");  
+//  if (HasLocalization("POL")) then begin
+    SetText(kPOSButtonTypeCorrectionInvoice,"Correction Invoice");
+//  end;
+  SetText(kPOSButtonTypeCreateActivity,"Create Activity");
+  SetText(kPOSButtonTypeCreateCashin,"Create Cash in");
+  SetText(kPOSButtonTypeCreateCashOut,"Create Cash Out");
+  SetText(kPOSButtonTypeCreateCorrectionInvoice,"Create Correction Invoice");
+  SetText(kPOSButtonTypeCreateCreditNote,"Create #Credit Note#");
+  SetText(kPOSButtonTypeCreateCreditEMail,"Create Email");
+  SetText(kPOSButtonTypeCreateInvoice,"Create Invoice");
+  SetText(kPOSButtonTypeCreateGC,"Create Gift Voucher");
+  SetText(kPOSButtonTypeCreditCardPayment,"Credit Card");
+  SetText(kPOSButtonTypeCreditCardPaymentReversal,"Credit Card Payment Reversal");
+  SetText(kPOSButtonTypeCreditCardTerminalReports,"Credit Card Terminal Reports");
+  SetText(kPOSButtonTypeCreditNote,"Credit Note");
+  SetText(kPOSButtonTypeCustomerSearch,"Customer Search");
+  SetText(kPOSButtonTypeCustomerSearchFiltered,"Customer Search BF");
+  SetText(kPOSButtonTypeDebitCardPayment,"Debit Card");
+  SetText(kPOSButtonTypeDeleteItem,"Delete Row");
+  SetText(kPOSButtonTypeGotoPage,"Display Page");
+  SetText(kPOSButtonTypeVolumetricBarCodeScan,"Dynamic Barcode");
+  SetText(kPOSButtonTypeEnterReferenceNumber,"Enter Reference Number");
+  SetText(kPOSButtonTypeFinish,"Finish");  
+  SetText(kPOSButtonTypePrintFiscalInvoice,"Fiscal Invoice");  
+  SetText(kPOSButtonTypeFullPayment,"Full Payment");
+  SetText(kPOSButtonTypeGetCashFloat,"Get Cash Float");
+  SetText(kPOSButtonTypeGiftReceipt,"Gift Receipt");
+  SetText(kPOSButtonTypeGiftVoucherPayment,"Gift Voucher");
+  SetText(kPOSButtonTypeIncludePage,"Include Page");
+  SetText(kPOSButtonTypeInstructions,"Instructions");  
+  SetText(kPOSButtonTypeInvalidateInvoice,"Invalidate Invoice");
+  SetText(kPOSButtonTypeInvoiceStatus,"Invoice Status");
+  SetText(kPOSButtonTypeItem,"Item");
+  SetText(kPOSButtonTypeItemGroup,"Item Group");
+  SetText(kPOSButtonTypeItemSearch,"Item Search");
+  SetText(kPOSButtonTypeItemStatus,"Item Status");
+  SetText(kPOSButtonTypeKitchenOrder,"Kitchen Order");  
+  //SetText(kPOSButtonTypeLevelUp,"Level Up");
+  SetText(kPOSButtonTypeLoyaltyPointsBonus,"Loyalty Bonus Points");
+  SetText(kPOSButtonTypeLoyaltyCard,"Loyalty Card");
+  SetText(kPOSButtonTypeLoyaltyPointsPayment,"Loyalty Points Payment");
+  SetText(kPOSButtonTypeManagerDiscountOverride,"Manager Discount Override");
+  SetText(kPOSButtonTypeMergeBarTabs,"Merge #Bar Tabs#");
+  SetText(kPOSButtonTypeMoveToBarTab,"Move Items to Table");
+  SetText(kPOSButtonTypeMainSerialNr,"Device Serial Number");  
+  SetText(kPOSButtonTypeEnterReferenceNumber,"Enter Reference Number");
+  SetText(kPOSButtonTypeModifier,"Modifier");
+  SetText(kPOSButtonTypeOnAccountPayment,"On Account Payment");
+  SetText(kPOSButtonTypeOnHotelGuestAccount,"On Hotel Guest Account");  
+  SetText(kPOSButtonTypeOpenRecord,"Open Record");
+  SetText(kPOSButtonTypeOpenCashDrawer,"Open Cash Drawer");  
+  SetText(kPOSButtonTypeEditCustomerRecord,"Open Customer Record");
+  SetText(kPOSButtonTypeEditItemRecord,"Open Item Record");
+  SetText(kPOSButtonTypeOpenCalendar,"Open Calendar");  
+  SetText(kPOSButtonTypeOpenNLTransaction,"Open #NL# Transaction");  
+  SetText(kPOSButtonTypeOpenTaxMatrix,"Open Tax Matrix");  
+  SetText(kPOSButtonTypOpenInvoices,"Open unfinished Invoices");  
+  SetText(kPOSButtonTypeSpecialMenu,"Operations Menu Function");
+  SetText(kPOSButtonTypeOpenSession,"Open Session");
+  SetText(kPOSButtonTypeOverrideOfficialSerNr,"Override Official Serial Number");
+  SetText(kPOSButtonTypePauseSales,"Pause Sales");  
+  SetText(kPOSButtonTypePasteQuotation,"Paste Quotation");  
+  SetText(kPOSButtonTypePasteSalesOrder,"Paste Sales Order");  
+  SetText(kPOSButtonTypePayment,"Pay");
+  SetText(kPOSButtonTypePaymentButtonsLayout,"Pay (Buttons layout)");
+  SetText(kPOSButtonTypePaymentOneMode,"Pay (one Mode)");
+  SetText(kPOSButtonTypePOSCommand,"POS Command");
+  SetText(kPOSButtonTypePriceLookup,"Price Lookup");
+  SetText(kPOSButtonTypePreviousSalesPrices,"Previous Sales Prices");
+  SetText(kPOSButtonTypePrintCancellation,"Print Cancellation");  
+  SetText(kPOSButtonTypePrintFireOrder,"Print Fire Order");  
+  SetText(kPOSButtonTypePrintInvoice,"Print Invoice");  
+  SetText(kPOSButtonTypePrintProformaInvoice,"Print Proforma Invoice");  
+  SetText(kPOSButtonTypePrintOrder,"Print Tab");  
+  SetText(kPOSButtonTypePrintTab,"Print Tab to Receipt Printer");  
+  SetText(kPOSButtonTypePrintOrderToKitchen,"Print Tab to Kitchen");  
+  SetText(kPOSButtonTypePutCashFloat,"Put Cash Float");
+  SetText(kPOSButtonTypeConnectToCCTerminal,"Connect to CC Terminal");
+  SetText(kPOSButtonTypeRegisterClerk,"Register Cashier in Fiscal Device");
+  SetText(kPOSButtonTypeReprintLastCCSlip,"Reprint Last CC Slip");
+  SetText(kPOSButtonTypeReprintReceipt,"Reprint Receipt");
+  SetText(kPOSButtonTypeResumeSales,"Resume Sales");  
+  SetText(kPOSButtonTypeReturn,"Return");
+  SetText(kPOSButtonTypeReturnInvoiceNo,"Return Invoice No.");
+  SetText(kPOSButtonTypeReturnReason,"Return Reason");
+  SetText(kPOSButtonTypeRunReportOnServer,"Run Report On Server");
+  SetText(kPOSButtonTypeSalesAssistant,"Sales Assistant");
+  SetText(kPOSButtonTypeSelectSalesman,"Select #Salesman#");
+  SetText(kPOSButtonTypeGiftVoucherSales,"Sell Gift Voucher");
+  SetText(kPOSButtonTypeSendToFiscalDevice,"Send to Fiscal Device");  
+  SetText(kPOSButtonTypeSendEMail,"Send Email");
+  SetText(kPOSButtonTypeSeniorCitizenDiscount,"Senior Citizen Discount");
+  SetText(kPOSButtonTypeLookupSerialNr,"Serial No. Lookup");
+  SetText(kPOSButtonTypeSetBarTabClass,"Set #Bar Tab# Class");
+  SetText(kPOSButtonTypeSetCovers,"Set Covers");  
+  SetText(kPOSButtonTypeSetTable,"Set Table");  
+  SetText(kPOSButtonTypeHotelGuests,"Show Hotel Guests");  
+  SetText(kPOSButtonTypeSplitBarTabs,"Split #Bar Tabs#");
+  SetText(kPOSButtonTypeSplitItem,"Split Item");
+  SetText(kPOSButtonTypeSupervisorSearch,"Supervisor Search");
+  SetText(kPOSButtonTypSaveInvoice,"Suspend Invoice");  
+  SetText(kPOSButtonTypeSwishPayment,"Swish");
+  SetText(kPOSButtonTypeSyncNow,"Sync Now");
+//  SetText(kPOSButtonTypeLevelDown,"Level Down");
+  SetText(kPOSButtonTypeLevelTop,"Top Level");
+  SetText(kPOSButtonTypeTransfertoInvoice,"Transfer to Invoice");
+  SetText(kPOSButtonTypeTransfertoQuotation,"Transfer to Quotation");
+  SetText(kPOSButtonTypeTransfertoSL,"Transfer to #Sales Ledger#");
+  SetText(kPOSButtonTypeTransfertoOrder,"Transfer to Sales Order");
+  SetText(kPOSButtonTypeUnregisterClerk,"Unregister Cashier from Fiscal Device");
+  SetText(kPOSButtonTypeVoidRow,"Void Item");  
+  SetText(kPOSButtonTypeXReading,"X-Reading");
+  SetText(kPOSButtonTypeYReading,"Y-Reading");
+  SetText(kPOSButtonTypeZReading,"Z-Reading");
+  SetText(kPOSButtonTypeHansaLogReport,"Hansa Log Report");
+  SetText(kPOSButtonTypeNuolaidaPrc,"Nuolaida%"); //EBS
+  SetText(kPOSButtonTypeChangePrice,"Change Price"); //EBS
+  SetText(kPOSButtonTypeCreateContact,"Create Contact"); //EBS
+  SetText(kPOSButtonTypeDoNotPrint,"Do not print"); //EBS
+  SetText(kPOSButtonTypeCopyLastReceipt,"Copy last receipt"); //EBS
+  SetText(kPOSButtonTypeReturnItem,"Return Item"); //EBS
+  SetText(kPOSButtonTypePeriodicReport,"Periodic Report"); //EBS
+  SetText(kPOSButtonTypePrintReceipt,"Print receipt"); //EBS
+  SetText(200,"Kolekcijos Analizė"); // EVS: DOL-4
+  SetText(201,"Kasos pajamos"); // DGK: DOL-3
+  SetText(kPOSButtonTypeVarEnqRn,"Įvairovių užklausa"); // EVS: DOL-6
+  SetText(kPOSButtonTypeInvValRn,"Prekių likučiai"); // EVS: DOL-14
+  SetText(kPOSButtonTypePrintDocument,"Print"); // EVS: DOL-39
+  SetText(kPOSButtonTypePIVGPRn,"BP, POS faktūros"); // EVS: DOL-39
+  SetText(kPOSButtonTypeCancelNew,"Nutraukti"); // EVS: DOL-78
+  SetText(kPOSButtonTypeCreateCreditSalesInvoice,"Credit Invoice");//VITO: DOL-89
+  SetText(kPOSButtonTypeCreateCustomer,"Create Customer"); //EBS
+  SetText(kPOSButtonTypeDiscountCoupon,"Coupon for discount");// Edit ************************** BPI Ukraine - KramarAlexandr - 01, 13 05 2019 y. at 9:33:20 PM
+  SetText(kPOSButtonTypeShopifyOrders,"Shopify Orders");//CHN
+  SetText(kPOSButtonTypeVoidBankPayment,"Void Bank Payment");//CHN::TOUCHLESS PAYMENTS
+  SetText(kPOSButtonTypeInternalOrders,"Internal Orders");
+  SetText(kPOSButtonTypeClockIn,"Clock-in");//CHN
+  SetText(kPOSButtonTypeClockOut,"Clock-out");//CHN
+  EndSet;
+
+  return;
+end; 

@@ -405,6 +405,83 @@ procedure EBS_UserSClassOnOpenRemote(record LocalMachineBlock LocalMachineBl,var
 return;
 end;
 
+procedure RemoveUserFromArray(var array string arrUserCodes,var array string arrUserNames,var integer size,Integer pos)
+begin
+  Integer i;
+
+  for (i = pos;i < size-1; i = i + 1) begin
+    arrUserCodes[i] = arrUserCodes[i+1];
+    arrUserNames[i] = arrUserNames[i+1];
+  end;
+  size = size - 1;
+
+  return;
+end;
+
+global
+procedure EBS_UserSClassOnOpenRemoteClockIn(record LocalMachineBlock LocalMachineBl,var array string arrUserCodes,var array string arrUserNames,var integer size) 
+begin
+  record POSClockInOutVc PCr;
+  Boolean TrHs;
+  vector Integer vClock;
+  Integer i;
+
+  EBS_UserSClassOnOpenRemote(LocalMachineBl,arrUserCodes,arrUserNames,size);
+
+  //Get Clock users and remove the ones that are clocked in already
+
+  TrHs = true;
+  PCr.LocalMachine = LocalMachineBl.LocalMachineCode;
+  PCr.TransDate = CurrentDate;
+  while (LoopKey("MachineDate",PCr,2,TrHs)) begin
+    if (PCr.LocalMachine!=LocalMachineBl.LocalMachineCode or PCr.TransDate!=CurrentDate) then begin
+      TrHs = false;
+    end else begin
+      vClock[PCr.UserCode] = PCr.Type;
+    end;
+  end;
+
+  for (i = 0;i < size;i = i + 1) begin
+    if (vClock[arrUserCodes[i]]==1) then begin
+      RemoveUserFromArray(arrUserCodes,arrUserNames,size,i);
+      i = i - 1;
+    end;
+  end; 
+
+return;
+end;
+
+global
+procedure EBS_UserSClassOnOpenRemoteClockOut(record LocalMachineBlock LocalMachineBl,var array string arrUserCodes,var array string arrUserNames,var integer size) 
+begin
+  record POSClockInOutVc PCr;
+  Boolean TrHs;
+  vector Integer vClock;
+  Integer i;
+
+  EBS_UserSClassOnOpenRemote(LocalMachineBl,arrUserCodes,arrUserNames,size);
+
+  TrHs = true;
+  PCr.LocalMachine = LocalMachineBl.LocalMachineCode;
+  PCr.TransDate = CurrentDate;
+  while (LoopKey("MachineDate",PCr,2,TrHs)) begin
+    if (PCr.LocalMachine!=LocalMachineBl.LocalMachineCode or PCr.TransDate!=CurrentDate) then begin
+      TrHs = false;
+    end else begin
+      vClock[PCr.UserCode] = PCr.Type;
+    end;
+  end;
+
+  for (i = 0;i < size;i = i + 1) begin
+    if (vClock[arrUserCodes[i]]==0) then begin
+      RemoveUserFromArray(arrUserCodes,arrUserNames,size,i);
+      i = i - 1;
+    end;
+  end; 
+
+return;
+end;
+
 global
 function string 60 GetCashLocObject(string machine) begin
   record LocalMachineVc LocalMachiner;
@@ -1061,5 +1138,53 @@ begin
   EBS_IVCashSDr.TransTime = CurrentTime;
   RecordStore(EBS_IVCashSDr,true);
 
+  return;
+end;
+
+global
+updating procedure EBSRegisterClock(string user,record LocalMachineBlock LMb,Integer type)
+begin
+  record POSClockInOutVc PCr;
+  
+  RecordNew(PCr);
+  PCr.UUID = MakeUUID;
+  PCr.UserCode = user;
+  PCr.LocalMachine = LMb.LocalMachineCode;
+  PCr.TransDate = CurrentDate;
+  PCr.TransTime = CurrentTime;
+  PCr.Type = type;
+  if (RecordStore(PCr,true)) then begin
+  end;
+  return;
+end;
+
+global
+function Boolean EBS_ClockOutMissing(record LocalMachineBlock LMb)
+begin
+  Boolean TrHs,res;
+  record POSClockInOutVc PCr;
+  vector Integer vClock;
+  Integer i;
+  array string 255 aClock;
+  
+  TrHs = true;
+  PCr.LocalMachine = LMb.LocalMachineCode;
+  PCr.TransDate = CurrentDate;
+  while (LoopKey("MachineDate",PCr,2,TrHs)) begin
+    if (PCr.LocalMachine!=LMb.LocalMachineCode or PCr.TransDate!=CurrentDate) then begin
+      TrHs = false;
+    end else begin
+      vClock[PCr.UserCode] = PCr.Type;
+    end;
+  end;
+
+  GetVectorTags(vClock,aClock);
+  for (i=0;i<aClock.length;i=i+1) begin
+    if (vClock[aClock[i]]==1) then begin
+      res = true;
+    end;
+  end;
+
+  EBS_ClockOutMissing = res;
   return;
 end;

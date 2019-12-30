@@ -1,4 +1,6 @@
 remote procedure EBS_UserSClassOnOpenRemote(record LocalMachineBlock,var array string,var array string,var integer);
+remote procedure EBS_UserSClassOnOpenRemoteClockIn(record LocalMachineBlock,var array string,var array string,var integer); 
+remote procedure EBS_UserSClassOnOpenRemoteClockOut(record LocalMachineBlock,var array string,var array string,var integer); 
 
 global
 procedure DrawUserButtons(real h,real sv,real vs,real v3,integer maxbtn) begin
@@ -20,4 +22,77 @@ procedure DrawUserButtons(real h,real sv,real vs,real v3,integer maxbtn) begin
   end;
   
 return;
+end;
+
+global
+procedure DrawClockInUserButtons(real h,real sv,real vs,real v3,integer maxbtn) begin
+  real v;
+  array string 255 arrUserCodes,arrUserNames;
+  integer size,i,cnt,mwn,currow;
+  record LocalMachineBlock LocalMachineBl;
+  
+  BlockLoad(LocalMachineBl);
+  EBS_UserSClassOnOpenRemoteClockIn(LocalMachineBl,arrUserCodes,arrUserNames,size);
+  if size>maxbtn then begin
+    size = maxbtn;
+  end;
+  
+  v = sv;
+  for(i=0;i<size;i=i+1)begin
+    ColourPushButtonTag(h,v,h+200,v+v3,"ChooseSalesManBtn",arrUserNames[i] & " (" & arrUserCodes[i] & ")",2,arrUserCodes[i]);
+    v = v + vs;
+  end;
+  
+  return;
+end;
+
+global
+procedure DrawClockOutUserButtons(real h,real sv,real vs,real v3,integer maxbtn) begin
+  real v;
+  array string 255 arrUserCodes,arrUserNames;
+  integer size,i,cnt,mwn,currow;
+  record LocalMachineBlock LocalMachineBl;
+  
+  BlockLoad(LocalMachineBl);
+  EBS_UserSClassOnOpenRemoteClockOut(LocalMachineBl,arrUserCodes,arrUserNames,size);
+  if size>maxbtn then begin
+    size = maxbtn;
+  end;
+  
+  v = sv;
+  for(i=0;i<size;i=i+1)begin
+    ColourPushButtonTag(h,v,h+200,v+v3,"ChooseSalesManBtn",arrUserNames[i] & " (" & arrUserCodes[i] & ")",2,arrUserCodes[i]);
+    v = v + vs;
+  end;
+  
+  return;
+end;
+
+global
+procedure DisplayClockInData(string lmc,var Integer offset)
+begin
+  real v;
+  array string 255 arrUserCodes,arrUserNames;
+  integer size,i,cnt,mwn,currow;
+  record LocalMachineBlock LocalMachineBl;
+  Integer col,rows;
+  
+  BlockLoad(LocalMachineBl);
+  EBS_UserSClassOnOpenRemoteClockOut(LocalMachineBl,arrUserCodes,arrUserNames,size);
+  for (i=0;i<size;i=i+1) begin
+    switch (mod(i,3)) begin
+      case 0: col = 10;
+      case 1: col = 150;
+      case 2: col = 300;
+    end;
+    rows = i/3;
+    StaticText(col,65+(20*rows),arrUserNames[i],false);
+  end;
+
+  if (size>0) then begin
+    rows = rows + 1;
+  end;
+  offset = (rows*20);
+
+  return
 end;

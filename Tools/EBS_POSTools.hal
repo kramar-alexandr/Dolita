@@ -19,6 +19,7 @@ external function val DOLGetUnitPriceFromSum(val);
 external inner procedure SetPOSWindowDisplay(string,string);
 external procedure ShowTextClientDisplay_SendToFiscal(string,string);
 external function boolean VerifyUserPassword(string,string);
+remote updating procedure EBSRegisterClock(string,record LocalMachineBlock,Integer);
 
 procedure EBS_POSPOSMoney2Insm(string tag)
 begin
@@ -676,4 +677,63 @@ begin
   nwn = OpenWindow("DOLInternalOrdersWClass",0,wn,"","",RepSpec);
 
   return;
+end;
+
+updating procedure EBS_ClockWClassOKBtn(Integer type)
+begin
+  
+  integer wn,mwn;
+  record UserVc Userr;
+  record RcVc RepSpec;
+  record LocalMachineBlock LMb;
+
+  wn = CurWindow();
+  mwn = MotherWindow(wn);
+  DeselectWindow(wn,false);
+
+  GetWindowRecord(wn,RepSpec);
+  if blank(RepSpec.f1) then begin
+    SelectWindow(wn);
+    WindowFieldGoto(wn,RepSpec,-1,"f1",false);
+    MessageBox(1000021,"");
+    GoTo LEBS_ChooseSalesManVClassOKBtn;
+  end;
+
+  Userr.Code = RepSpec.f1;
+  if !ReadFirstMain(Userr,1,true) then begin
+    SelectWindow(wn);
+    WindowFieldGoto(wn,RepSpec,-1,"f1",false);
+    MessageBox(1000022,"");
+    GoTo LEBS_ChooseSalesManVClassOKBtn;
+  end;
+
+  if !VerifyUserPassword(RepSpec.f1,RepSpec.f2) then begin
+    MessageBox(1000116,"");
+    GoTo LEBS_ChooseSalesManVClassOKBtn;
+  end;
+  BlockLoad(LMb);
+  EBSRegisterClock(RepSpec.f1,LMb,type);
+  
+  CloseWindow(wn);
+
+LEBS_ChooseSalesManVClassOKBtn:;
+  return;
+end;
+
+global
+updating procedure EBS_ClockInWClassOKBtn() 
+begin
+
+  EBS_ClockWClassOKBtn(1);
+
+return;
+end;
+
+global
+updating procedure EBS_ClockOutWClassOKBtn() 
+begin
+
+  EBS_ClockWClassOKBtn(0);
+
+return;
 end;

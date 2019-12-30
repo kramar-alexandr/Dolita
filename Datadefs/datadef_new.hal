@@ -90,5 +90,24 @@ begin
   KeySegment(SerNr);
   EndRecord;
 
+  RecordBegin(POSClockInOutVc,-,"");
+  NewAutosyncRegister(kSyncDirectionToClient,true);
+  RecordField(TransDate,M4Date,0,0);
+  RecordField(TransTime,M4Time,0,0);
+  RecordField(Type,M4Set,11002,0);
+  RecordField(LocalMachine,M4Code,10,0);
+  RecordField(UserCode,M4Code,10,UserVc);
+  MainKeyBegin(MainKey,0);
+  KeySegment(UUID);
+  KeyBegin(MachineDate);
+  KeySegment(LocalMachine);
+  KeySegment(TransDate);
+  KeySegment(TransTime);
+  KeyBegin(TransDate);
+  KeySegment(TransDate);
+  KeySegment(TransTime);
+  KeySegment(UUID);
+  EndRecord;
+
 return;
 end;

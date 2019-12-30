@@ -1,0 +1,52 @@
+global
+procedure DOL_EmpTimeRn(record RcVc RepSpec)
+begin
+  record POSClockInOutVc PCr;
+  Boolean TrHs,testf;
+  
+  StartReportJob(UsetStr(1000149));
+
+  EndHeader;
+
+  SetRepCol(2,70);
+  SetRepCol(3,140);
+  SetRepCol(4,210);
+  
+  StartFormat(15);
+  OutString(0,0,USetStr(14281),false);
+  OutString(2,0,USetStr(14284),false);
+  OutString(3,0,USetStr(16050),false);
+  OutString(4,0,USetStr(1000148),false);
+  EndFormat;
+  StartFormat(1);
+  Gray_Divider(0,1);
+  EndFormat;
+
+  TrHs = true;
+  PCr.TransDate = RepSpec.sStartDate;
+  while (LoopKey("TransDate",PCr,1,TrHs)) begin
+    if (PCr.TransDate>RepSpec.sEndDate) then begin
+      TrHs = false;
+    end else begin
+      testf = true;
+      if (nonblank(RepSpec.f2) and RepSpec.f2!=PCr.LocalMachine) then begin
+        testf = false;
+      end;
+      if (nonblank(RepSpec.f1) and RepSpec.f1!=PCr.UserCode) then begin
+        testf = false;
+      end;
+      if (testf) then begin
+        StartFormat(15);
+        OutString(0,0,PCr.TransDate,false);
+        OutString(2,0,PCr.TransTime,false);
+        OutString(3,0,PCr.LocalMachine,false);
+        OutString(4,0,StringFromSet(11002,PCr.Type),false);
+        EndFormat;
+      end;
+    end;
+  end;
+
+  EndJob;
+
+  return;
+end;

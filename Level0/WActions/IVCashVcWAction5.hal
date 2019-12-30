@@ -139,6 +139,7 @@ external outer procedure OpenSalesManSelectionWindow(integer,val,integer); //EBS
 external outer function val DOLGetIVCashGCPaymentSum(record IVCashVc);
 external outer function val DOLGetUnitPriceFromSum(val);
 remote outer updating procedure DOLUpdateSourceOrder(longint);
+remote outer function Boolean EBS_ClockOutMissing(record LocalMachineBlock);
 //CUST-BEGIN::TOUCHLESS PAYMENTS
 external outer function Boolean InitTouchlessPayment(val,string,string,var string,Longint,string,Integer,string,string);
 external outer function Boolean ConfirmLastTouchlessPayment();
@@ -3725,11 +3726,23 @@ procedure IVCashDClassTouchScreenCashupMaint()
 begin
   record RcVc RepSpec;
 
+//CUST-BEGIN
+  record LocalMachineBlock LMb;
+  BlockLoad(LMb);
+  if (EBS_ClockOutMissing(LMb)) then begin
+    MessageBox(1000147,"");
+    goto LIVCashDClassTouchScreenCashupMaint;
+  end;
+//CUST-END
   CashupMaintDefaults(RepSpec);
   RepSpec.repname = "CashupMn";
   RepSpec.critname = "CashupVClass";
   OpenWindow("CashupVClass",1,0,"","",RepSpec);
 //        RunMaintenance(RepSpec);
+
+//CUST-BEGIN
+LIVCashDClassTouchScreenCashupMaint:;
+//CUST-END
   return;
 end;
 

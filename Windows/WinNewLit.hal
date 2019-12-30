@@ -3,6 +3,8 @@ remote procedure DOLGetSalesmen(string, var array string, var integer);
 remote procedure LoadStdProblemsToArray(var array string,var array string,var integer);
 remote procedure LoadLocationsToArray(record LocalMachineBlock,var array string,var array string,var integer);
 external inner function string 60 UserDefined(string,string);
+external procedure DrawClockInUserButtons(real,real,real,real,integer);
+external procedure DrawClockOutUserButtons(real,real,real,real,integer);
 
 SetLangMode(LangLithuanian,"LIT",2);
 
@@ -1226,4 +1228,198 @@ begin
   EndWindow;
 	
 	return;
+end;
+
+window POSClockInOutLClass:1
+  wtag("language","ENG"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("POS Clock In-Outs",POSClockInOutLClass,CGmlist,-);
+  SetWRect(20,80,660,298);
+  Sizeable(-1,-1,0,0);
+  SpawnClass(POSClockInOutDClass);
+  UseView(POSClockInOutVc);
+  RecordList(4,17,-21,-39);
+  RlColKey(4,4,"UUID",UUID,false,MainKey);
+  RlColKey(90,90,"Type",Type,false,TypeTime);
+  RlCol(200,200,"Date",TransDate,false);
+  SearchField("Search");
+  EndWindow;
+end;
+
+window POSClockInOutDClass:1
+  wtag("language","ENG"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vs,v2,vs2,hm;
+  WindowBegin("POS Clock In-Out",POSClockInOutDClass,CGview,-);
+  SetWRect(20,80,600,339);
+  Sizeable(-1,-1,0,0);
+  UseView(POSClockInOutVc);
+  v = -14; h = 150;
+  EditField(h,v+=20,-40,"UUID",Normal,UUID,false,UUID);
+  EditField(h,v+=20,-40,"Date",Normal,TransDate,false,PasteCurDate);
+  EditField(h,v+=20,-40,"Time",Normal,TransTime,false,PasteCurTime);
+  EditField(h,v+=20,-40,"Type",Normal,Type,false,SetSClass);
+  EditField(h,v+=20,-40,"Local Machine",Normal,LocalMachine,false,0);
+  EditField(h,v+=20,-40,"User",Normal,UserCode,false,UserSClass);
+
+  vs=20; h=120; vs2=16; hm=-100;
+  EndWindow;
+end;
+
+window EBS_ClockInWClass:1
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,h2,hm,v,v2,v3,vs,l;
+  integer wn;
+  longint bm,lt,rt,tp;
+  record RcVc RepSpec;
+
+  WindowBegin("Clock In",EBS_ClockInWClass,CGOther,RcType);
+    Modality(kModalityGlobal);
+    DynamicWindow;
+    wn = CurWindow;
+    GetScreenSize(wn,tp,lt,bm,rt);
+    switch (GuiType) begin
+      case kGuiCocoa:
+        bm = bm - 80;
+      case kGuiWindowsDesktop:
+        tp = tp + 30;
+        bm = bm - 40;
+        rt = rt - 55;
+        lt = lt - 45;
+      case kGuiGDI:
+        tp = tp + 30;
+        bm = bm - 40;
+        rt = rt - 55;
+        lt = lt - 45;
+      case kGuiWPF:
+        tp = tp + 30;
+        bm = bm - 40;
+        rt = rt - 55;
+        lt = lt - 45;
+    end;
+
+  SetWRect(lt,tp,rt,bm); // SetWRect(64,80,409,210);
+  FullscreenWindow;
+  Sizeable(-1,-1,0,0);
+  UseView(RcVc);
+
+  hm = 280; v = 60;
+  vs = 52; h2 = 55; v3 = 48; l = 57;
+  h = hm;
+  EditFieldTLX(h+l+30,20,120,"Grąža",M4Val,ViewOnly,100,25,patM4black,vals0,true,0);
+  EditFieldTL(h+l+30,v,120,"Pardavėjąs",M4UStr,Normal,10,f1,false,0);
+  EditFieldTL(h+l+30,v+=20,120,"Slaptažodis",M4Star,Normal,20,f2,false,0);
+  v=v+29;
+  h = hm; ColourPushButton(h,v,h+h2*3,v+v3,"SalesAssistantVClassUserListBtn","Pard. sąrašas",2);
+  v = v+vs;
+  h = hm-2; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad1","1_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad2","2_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad3","3_",2);
+  h = h + h2 + 10; ColourPushButton(h,v,h+h2,v+v3*3+8,"EBS_ClockInWClassOKBtn","OK",2);
+  v = v+vs;
+  h = hm-2; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad4","4_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad5","5_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad6","6_",2);
+  v = v+vs;
+  h = hm-2; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad7","7_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad8","8_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad9","9_",2);
+  v = v+vs;
+  h = hm-2+l; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad0","0_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyDel","Del",2);
+
+  // ColourPushButton(300,40,400,88,"TEST","TEST",2);
+  DrawClockInUserButtons(50,40,vs,v3,10);
+
+  EndWindow;
+
+  return;
+end;
+
+
+window EBS_ClockOutWClass:1
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,h2,hm,v,v2,v3,vs,l;
+  integer wn;
+  longint bm,lt,rt,tp;
+  record RcVc RepSpec;
+
+  WindowBegin("Clock In",EBS_ClockOutWClass,CGOther,RcType);
+    Modality(kModalityGlobal);
+    DynamicWindow;
+    wn = CurWindow;
+    GetScreenSize(wn,tp,lt,bm,rt);
+    switch (GuiType) begin
+      case kGuiCocoa:
+        bm = bm - 80;
+      case kGuiWindowsDesktop:
+        tp = tp + 30;
+        bm = bm - 40;
+        rt = rt - 55;
+        lt = lt - 45;
+      case kGuiGDI:
+        tp = tp + 30;
+        bm = bm - 40;
+        rt = rt - 55;
+        lt = lt - 45;
+      case kGuiWPF:
+        tp = tp + 30;
+        bm = bm - 40;
+        rt = rt - 55;
+        lt = lt - 45;
+    end;
+
+  SetWRect(lt,tp,rt,bm); // SetWRect(64,80,409,210);
+  FullscreenWindow;
+  Sizeable(-1,-1,0,0);
+  UseView(RcVc);
+
+  hm = 280; v = 60;
+  vs = 52; h2 = 55; v3 = 48; l = 57;
+  h = hm;
+  EditFieldTLX(h+l+30,20,120,"Grąža",M4Val,ViewOnly,100,25,patM4black,vals0,true,0);
+  EditFieldTL(h+l+30,v,120,"Pardavėjąs",M4UStr,Normal,10,f1,false,0);
+  EditFieldTL(h+l+30,v+=20,120,"Slaptažodis",M4Star,Normal,20,f2,false,0);
+  v=v+29;
+  h = hm; ColourPushButton(h,v,h+h2*3,v+v3,"SalesAssistantVClassUserListBtn","Pard. sąrašas",2);
+  v = v+vs;
+  h = hm-2; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad1","1_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad2","2_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad3","3_",2);
+  h = h + h2 + 10; ColourPushButton(h,v,h+h2,v+v3*3+8,"EBS_ClockOutWClassOKBtn","OK",2);//EBS_ChooseSalesManVClassOKBtn
+  v = v+vs;
+  h = hm-2; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad4","4_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad5","5_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad6","6_",2);
+  v = v+vs;
+  h = hm-2; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad7","7_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad8","8_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad9","9_",2);
+  v = v+vs;
+  h = hm-2+l; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad0","0_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyDel","Del",2);
+
+  // ColourPushButton(300,40,400,88,"TEST","TEST",2);
+  DrawClockOutUserButtons(50,40,vs,v3,10);
+
+  EndWindow;
+
+  return;
+end;
+
+window DOL_EmpTimeRClass:1
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vm,vs;
+
+  WindowBegin("DOL - Employee Time",DOL_EmpTimeRClass,CGRcW,RcType);
+  SetWRect(20,80,400,220);
+  v = 6; h = 130; vs = 20; vm = 16;
+  PeriodField(h=155,v=6,"Period");
+  EditFieldTL(h,v+=vs,100,"Salesman",M4Code,Normal,10,f1,false,UserSClass);
+  EditFieldTL(h,v+=vs,100,"Location",M4Code,Normal,10,f2,false,LocalMachineSClass);
+  EndWindow;
+
 end;

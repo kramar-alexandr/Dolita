@@ -130,6 +130,8 @@ enum begin
   kPOSButtonTypeVoidBankPayment = 219,
 //CHN::TOUCHELSS PAYMENTS
   kPOSButtonTypeInternalOrders = 220,
+  kPOSButtonTypeClockIn = 221,
+  kPOSButtonTypeClockOut = 222,
 
 end;
 
@@ -1131,6 +1133,10 @@ begin
       case kPOSButtonTypeVoidBankPayment:
         procstr = procstr & "TouchScreenVoidBankPayment";
 //CHN::TOUCHLESS PAYMENTS
+      case kPOSButtonTypeClockIn:
+        procstr = procstr & "DOLDoClockIn";
+      case kPOSButtonTypeClockOut:
+        procstr = procstr & "DOLDoClockOut";
     end;
 LDrawPOSButtons_LITButton:;
 
@@ -1383,6 +1389,7 @@ begin
         if (LMb.WideScrollBars!=0) then begin
           bx=-450;
         end;
+        ty = stackspaceh-110+ty;
 				//EBS<--
         by = -10;        
         h = -410;

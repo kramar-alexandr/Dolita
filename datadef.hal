@@ -11,6 +11,8 @@ SOURCEFILE("halcust\\Integrations\\TouchlessPayments",3);
 
 SOURCEFILE("halcust\\temp",0);
 
+SOURCEFILE("halcust\\english",0);//level 0 so that adjusted windows will not break other languages
+
 SOURCEFILE("halcust\\iSAF",0);
 
 SOURCEFILE("halcust\\Level0\\alocalizations",0);

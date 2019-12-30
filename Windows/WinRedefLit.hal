@@ -260,6 +260,7 @@ external inner function Boolean ReadNPTSWindowData(string,string,longint,string,
 external inner procedure DrawPOSInterface2_LIT(string,string,record POSButtonsVc,string,Integer,Integer);
 
 remote procedure DOLGetSalesmen(string, var array string, var integer);
+external procedure DisplayClockInData(string,var Integer);
 
 procedure dummy()//##ii
 begin//##ii
@@ -3048,6 +3049,9 @@ begin
   string 255 bc1,bc2,compname,lmc,nr,sessdesc,sm;
   time tt;
   Boolean sessionopenedf;
+//CUST-BEGIN
+  Integer clock;
+//CUST-END
 
   BlockLoad(LMb);
   WindowBegin("POS Faktūra",NPTSIVCashDClass,CGview,-);
@@ -3159,7 +3163,12 @@ begin
 
     // StopAlert("IsSessionOpen(" & IVCashr.LocalMachineCode & "," & IVCashr.DrawerCode & "," & IVCashr.TransDate & "," & IVCashr.TransTime & "); -> " & sessdesc);
 
-    DisplayRecordDetails_LIT(10,26,compname,td,tt,lmc,sm,nr,IVCashr.CustCode,IVCashr.Addr0,
+//CUST-BEGIN
+    DisplayClockInData(lmc,clock);
+//CUST-END
+
+//CUST 26>>66
+    DisplayRecordDetails_LIT(10,26+clock,compname,td,tt,lmc,sm,nr,IVCashr.CustCode,IVCashr.Addr0,
       IVCashr.Addr1,IVCashr.Addr2,IVCashr.Addr3,"",IVCashr.Objects,
       IVCashr.LoyaltyCardNr,LMb.ShowBaggerSupervisor,IVCashr.Bagger,IVCashr.Supervisor,
       IVCashr.DiscountCardNr,IVCashr.DiscountFwdBal,sessdesc,IsStandardProduct==false,IVCashr.OfficialSerNr,
@@ -3196,7 +3205,7 @@ begin
       case kPOSButtonsPositionLeft:
         SoftEditField(110,-22,200,"Prekė/Komanda"  ,Normal ,"ivcashcommand",false,0,M4Str,255);
       case kPOSButtonsPositionRight:
-        StaticText(10,155+13,"Prekės kodas",false);
+        //StaticText(10,155+13,"Prekės kodas",false);//CUST-REMOVE
         SoftEditField(-260,-22,200,"Prekė/Komanda"  ,Normal ,"ivcashcommand",false,0,M4Str,255);
     end;
     SoftEditField(2000,-22,200,""  ,Normal ,"ivcashcommandlastitemsernrf",false,0,M4Str,255);
@@ -3216,7 +3225,7 @@ begin
         StaticText(h3,v,IVCashr.SalesMan,false);
       end;
     */
-  DrawPOSInterface2_LIT(bc1,bc2,POSBr,"",110,bm); // Edit ************************** BPI Ukraine - KramarAlexandr - 02, 02 04 2019 y. at 11:02:46 AM
+  DrawPOSInterface2_LIT(bc1,bc2,POSBr,"",110+clock,bm); // Edit ************************** BPI Ukraine - KramarAlexandr - 02, 02 04 2019 y. at 11:02:46 AM
   //DrawPOSInterface_LIT(bc1,bc2,POSBr,acnt,"",100);
   //BottomBar;
     EndWindow;
