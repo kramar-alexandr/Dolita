@@ -210,7 +210,7 @@ end;
 global
 function Boolean InitTouchlessPayment(val received,string paymode,string label,var string transactionid,Longint tsernr,string crncy,Integer wn,string rrn,string origdatetime)
 begin
-  string 255 AuthorisationCode,paymentstat,path,url,timestamp,FileName,receiptnr,clientreceipt,systransid;
+  string 255 AuthorisationCode,paymentstat,path,url,timestamp,FileName,receiptnr,clientreceipt,systransid,errstr;
   Boolean res,fres,failf;
   JSON js;
   area request,reply;
@@ -286,10 +286,15 @@ LSendRequest:;
       if (JSONGet(js,"result")=="Error" and JSONGet(js,"text")=="Dokumento numerio klaida") then begin
         SetAreaZeroSize(request);
         goto LSendRequest;
+      end else begin
+        failf = true;
+        LogText(0,"failing CC payment with error: " & JSONGet(js,"text"));
+        errstr = JSONGet(js,"text");
       end;
     end;
   end else begin
     Logtext(0,"timeout or failed request 120 sec. for touchless payment");
+    errstr = "No connection";
     failf = true;
   end;
   logrequest(request,reply,"touchless");
@@ -353,6 +358,7 @@ LInitTouchlessPayment:;
       PutWindowString(ProcessingWn,"timestamp",timestamp);
       PutWindowString(ProcessingWn,"label",label);
       PutWindowString(ProcessingWn,"paymode",paymode);
+      PutWindowString(ProcessingWn,"error",errstr);
       
       RerunWindowDef(ProcessingWn);
     end else begin
@@ -703,7 +709,7 @@ begin
   ProcessingWn = CurWindow;
   mwn = MotherWindow(ProcessingWn);
   FileName = GetWindowFileName(mwn);
-  if (mwn>0) then begin
+  if (mwn>0 and GetWindowString(ProcessingWn,"manualoverride")=="1") then begin
     SelectWindow(mwn);
     switch (FileName) begin
       case "IVCashVc":
