@@ -8,6 +8,8 @@ begin
   Longint i;
   
   wn = CurWindow;
+  SetTextField(RTr,"");
+  DeselectWindow(wn,true);
   GetWindowRecord(wn,CUr);
   for (i=0;i<SizeTextCnt(CUr);i=i+225) begin
     AddToText(StringFromText(CUr,i,255),RTr);
@@ -25,6 +27,7 @@ begin
   record CUVc CUr;
   Longint i;
 
+  SetTextField(CUr,"");
   ReadFirstMain(RTr,1,true);
   for (i=0;i<SizeTextCnt(RTr);i=i+225) begin
     AddToText(StringFromText(RTr,i,255),CUr);

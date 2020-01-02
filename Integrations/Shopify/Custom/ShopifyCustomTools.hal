@@ -246,22 +246,6 @@ begin
   return;
 end;
 
-updating procedure ApproveStockMov(Integer num)
-begin
-  string 255 sernr;
-  Boolean errf;
-
-  sernr = GetWindowString(CurWindow,"order" & num & "sernr");
-  RemoteApproveStockMov(StringToLongint(sernr),errf);
-  if (errf) then begin
-    MessageBox(22071,"");
-  end else begin
-    ShopifyOrdersWClassOnOpenWindow(CurWindow);
-  end;
-
-  return;
-end;
-
 global
 updating procedure ApproveShopifyStockMov()
 begin
@@ -465,6 +449,12 @@ begin
     if (ReadFirstMain(StockMovr,1,true)) then begin
       RecordCopy(oldStockMovr,StockMovr);
       StockMovr.OKFlag = 1;
+      if (nonblank(StockMovr.ThrouLocation) and blank(StockMovr.SentTransDate)) then begin
+        StockMovr.SentTransDate = CurrentDate;
+      end;
+      if (blank(StockMovr.TransDate)) then begin
+        StockMovr.TransDate = CurrentDate;
+      end;
       if (RecordUpdate(oldStockMovr,StockMovr,true)!=0) then begin
         errf = true;
       end;

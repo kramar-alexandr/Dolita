@@ -1216,7 +1216,7 @@ window POSReturnTextWClass:1
 begin
   real h,v,vs;
   
-  WindowBegin("Touchless Payments",POSReturnTextWClass,CGOther,-);
+  WindowBegin("POS Return Text",POSReturnTextWClass,CGOther,-);
   UseView(CUVc);
   SetWRect(20,80,450,300);
   AutoSizeWindow(false);
