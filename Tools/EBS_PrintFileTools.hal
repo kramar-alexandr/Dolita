@@ -108,6 +108,22 @@ procedure printTextInFiscalReceipt(string orgStr) begin
 return;
 end;
 
+procedure printTextInFiscalReceipt2(string orgStr) begin
+  string 255 tstr;
+  integer i,l;
+  
+  i=0;
+  l = len(orgStr);
+  while i<l begin
+    tstr = Mid(orgStr,i,42);
+    printCmdLine(42,tstr);
+    i = i+42;
+  end;
+  
+return;
+end;
+
+
 procedure printCloseLine() begin
 
   EBS_ExportPadString("close()");
@@ -190,6 +206,86 @@ procedure PrintNormalLine(row IVCashVc IVCashrw,boolean retinvf) begin
 return;
 end;
 
+procedure printLimitedTextLine(Integer chrcnt,string tstr)
+begin
+  string 255 t,tmp;
+  Longint lastspace,i;
+  
+  tmp = tstr;
+  if (len(tmp)==0) then begin
+    printTextInFiscalReceipt(" ");
+  end else begin
+    while (len(tmp)>0) begin
+      t = "";
+      lastspace = chrcnt;
+      for (i=0;i<len(tmp);i=i+1) begin
+        if (mid(tmp,i,1)==" ") then begin
+          lastspace = i + 1;
+        end;
+        if (chrcnt<=i) then begin
+          i = len(tmp);
+          t = mid(tmp,0,lastspace);
+        end;
+      end;
+      if (blank(t)) then begin
+        t = tmp;
+      end;
+      printTextInFiscalReceipt2(t);
+      tmp = mid(tmp,len(t),len(tmp)-len(t));
+    end;
+  end;
+  return;
+end;
+
+procedure PrintReturnText(record IVCashVc IVCashr)
+begin
+  record POSReturnTextVc RTr;
+  record RcVc RepSpec;
+  record LTxtVc LTxtr;
+  area a;
+  Integer i,chrcnt;
+  Longint pos,l,tpos;
+  string 255 res,tstr,tmp;
+  string 255 pername;
+  record StandProblemVc SPr;
+
+
+  ReadFirstMain(RTr,1,true);
+  if (SizeTextCnt(RTr)>0) then begin
+    for (i=0;i<SizeTextCnt(RTr);i=i+255) begin
+      AddToText(StringFromText(RTr,pos,255),LTxtr); 
+    end;
+    GetUserName(IVCashr.SalesMan,pername);
+    SPr.Code = IVCashr.StandProblemCode;
+    ReadFirstMain(SPr,1,true);
+    RepSpec.vals0 = IVCashr.Sum4;
+    RepSpec.f1 = pername;
+    RepSpec.f2 = SPr.ShortDesc;
+    ParseTextField(a,LTxtr,RepSpec,"DOLLTxtVcReplaceToken");
+    l = GetAreaLength(a);
+    pos = 0;
+    while (pos<l) begin
+      tstr = GetStringFromArea(a,pos,255);
+      res = res & tstr;
+      pos = pos + 255;
+    end;
+    chrcnt = 42;
+    tstr = res;
+    tpos = InString(tstr,chr(13));
+    while (tpos>0) begin
+      tmp = mid(tstr,0,tpos-1);
+      printLimitedTextLine(chrcnt,tmp);
+      tstr = mid(tstr,tpos,len(tstr)-tpos);
+      tpos = InString(tstr,chr(13));
+    end;
+    if (len(tstr)>0) then begin
+      printLimitedTextLine(chrcnt,tstr);      
+    end;
+  end;
+  
+  return;
+end;
+
 function Integer EBS_PrintInvoiceLines(record IVCashVc IVCashr,boolean retinvf)
 begin
   Integer res,noErr;
@@ -266,6 +362,7 @@ LSkipRow:;
   end;
   
   if retinvf then begin
+    PrintReturnText(IVCashr);
     printCmdLine(1070,"G" & ValToString(IVCashr.Sum4,M4Val,"",".",0));
   end;
   
@@ -308,87 +405,6 @@ procedure RenameIfNotExists(string fromfn,string tofn,boolean initwaitf) begin
   end;
 
 return;
-end;
-
-procedure printLimitedTextLine(Integer chrcnt,string tstr)
-begin
-  string 255 t,tmp;
-  Longint lastspace,i;
-  
-  tmp = tstr;
-  if (len(tmp)==0) then begin
-    printTextInFiscalReceipt(" ");
-  end else begin
-    while (len(tmp)>0) begin
-      t = "";
-      lastspace = chrcnt;
-      for (i=0;i<len(tmp);i=i+1) begin
-        if (mid(tmp,i,1)==" ") then begin
-          lastspace = i + 1;
-        end;
-        if (chrcnt<=i) then begin
-          i = len(tmp);
-          t = mid(tmp,0,lastspace);
-        end;
-      end;
-      if (blank(t)) then begin
-        t = tmp;
-      end;
-      printTextInFiscalReceipt(t);
-      tmp = mid(tmp,len(t),len(tmp)-len(t));
-    end;
-  end;
-  return;
-end;
-
-procedure PrintReturnText(record IVCashVc IVCashr)
-begin
-  record POSReturnTextVc RTr;
-  record RcVc RepSpec;
-  record LTxtVc LTxtr;
-  area a;
-  Integer i,chrcnt;
-  Longint pos,l,tpos;
-  string 255 res,tstr,tmp;
-  string 255 pername;
-  record StandProblemVc SPr;
-
-
-  ReadFirstMain(RTr,1,true);
-//logtext(0,"PrintReturnText  " & StringFromText(RTr,0,20));
-  if (SizeTextCnt(RTr)>0) then begin
-    for (i=0;i<SizeTextCnt(RTr);i=i+255) begin
-      AddToText(StringFromText(RTr,pos,255),LTxtr); 
-    end;
-    GetUserName(IVCashr.SalesMan,pername);
-    SPr.Code = IVCashr.StandProblemCode;
-    ReadFirstMain(SPr,1,true);
-    RepSpec.vals0 = IVCashr.Sum4;
-    RepSpec.f1 = pername;
-    RepSpec.f2 = SPr.ShortDesc;
-    ParseTextField(a,LTxtr,RepSpec,"DOLLTxtVcReplaceToken");
-    l = GetAreaLength(a);
-    pos = 0;
-    while (pos<l) begin
-      tstr = GetStringFromArea(a,pos,255);
-      res = res & tstr;
-      pos = pos + 255;
-    end;
-    chrcnt = 42;
-    tstr = res;
-    tpos = InString(tstr,chr(13));
-    while (tpos>0) begin
-      tmp = mid(tstr,0,tpos-1);
-      printLimitedTextLine(chrcnt,tmp);
-      tstr = mid(tstr,tpos,len(tstr)-tpos);
-      tpos = InString(tstr,chr(13));
-    end;
-    if (len(tstr)>0) then begin
-      printLimitedTextLine(chrcnt,tstr);      
-    end;
-  end;
-  
-  return;
 end;
 
 global
@@ -437,14 +453,12 @@ procedure PrintReceipt_SendToFiscal(record IVCashVc IVCashr,string donotprint,bo
     printHeader(MCr);
   end;
 //print return intro text... should I print username as well anyway?
-  if (retinvf) then begin
-    PrintReturnText(IVCashr);
-  end else begin
+  if (!retinvf) then begin
     GetUserName(IVCashr.SalesMan,pername);
     printUserName(pername);
   end;
   EBS_PrintInvoiceLines(IVCashr,retinvf);
-  
+
   if foundf then begin
     printFooter(MCr);
   end;
