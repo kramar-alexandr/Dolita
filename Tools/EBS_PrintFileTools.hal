@@ -2,6 +2,8 @@ external inner procedure GetUserName(String,var String);
 external inner function RoundMode SetRoundModeD(integer);
 external inner function string 50 TimeToString(time,string,boolean);
 external function boolean DOLCheckForInvReturn(record IVCashVc);
+external inner function Boolean FindItemVAR(string,var string,var string,var string,var string); //EBS
+external inner procedure SplitVars(string,Array string,Array string,Array string); //EBS
 
 function string 255 ConvertStr(string tstr) begin
   integer i,l;
@@ -213,7 +215,7 @@ begin
   
   tmp = tstr;
   if (len(tmp)==0) then begin
-    printTextInFiscalReceipt(" ");
+    printTextInFiscalReceipt2(" ");
   end else begin
     while (len(tmp)>0) begin
       t = "";
@@ -237,6 +239,78 @@ begin
   return;
 end;
 
+
+procedure ExtractItem(string tstr,var string item,var string varmask)
+begin
+  string 60 sz,msk,mskrep;  
+  string 200 varsubset;
+  array string 255 nilmaskvar,nilmaskvarsz,amsk;
+  record VARVc VARr;
+ 
+  item = "";
+  varmask = "";
+  if (FindItemVAR(tstr,sz,msk,mskrep,varsubset)) then begin
+    SplitVars(tstr,nilmaskvar,nilmaskvarsz,amsk);
+    item = amsk[0];
+    varmask = amsk[1];
+    if (nonblank(varmask)) then begin
+      VARr.Code = varmask;
+      if (ReadFirstMain(VARr,1,true)) then begin
+        varmask = VARr.Comment;
+      end;
+    end;  
+  end else begin
+    item = tstr;
+  end;
+
+  return;
+end;
+
+function string 255 MakeItemList(string list)
+begin
+  string 255 res;
+  string 255 tmp,item,varmask;
+  Longint pos;
+
+  while (GetNextSubstring(list,pos,":",tmp)) begin
+    ExtractItem(tmp,item,varmask);
+    res = res & item;
+    if (nonblank(varmask)) then begin
+      res = res & "/" & varmask;
+    end;
+    res = res & chr(13);
+  end;
+  if (len(res)>0) then begin
+    res = mid(res,0,len(res)-1);
+  end;
+
+  MakeItemList = res;
+  return;
+end;
+
+function string 255 GetItemList(record IVCashVc IVCashr)
+begin
+  Integer i,rwcnt;
+  row IVCashVc IVCashrw;
+  string 255 res;
+  
+  rwcnt = MatRowCnt(IVCashr);
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowGet(IVCashr,i,IVCashrw);
+    if (nonblank(IVCashrw.ArtCode)) then begin
+      if (nonblank(res)) then begin
+        res = res & ":";
+      end;
+      res = res & IVCashrw.ArtCode;
+    end;
+  end;
+
+  res = MakeItemList(res);
+
+  GetItemList = res;
+  return;
+end;
+
 procedure PrintReturnText(record IVCashVc IVCashr)
 begin
   record POSReturnTextVc RTr;
@@ -248,12 +322,13 @@ begin
   string 255 res,tstr,tmp;
   string 255 pername;
   record StandProblemVc SPr;
+  row IVCashVc IVCashrw;
 
 
   ReadFirstMain(RTr,1,true);
   if (SizeTextCnt(RTr)>0) then begin
-    for (i=0;i<SizeTextCnt(RTr);i=i+255) begin
-      AddToText(StringFromText(RTr,pos,255),LTxtr); 
+    for (i=0;i<LineTextCnt2(RTr);i=i+1) begin
+      LineTextPut2(LTxtr,i,LineTextGet(RTr,i));
     end;
     GetUserName(IVCashr.SalesMan,pername);
     SPr.Code = IVCashr.StandProblemCode;
@@ -261,6 +336,11 @@ begin
     RepSpec.vals0 = IVCashr.Sum4;
     RepSpec.f1 = pername;
     RepSpec.f2 = SPr.ShortDesc;
+    MatRowGet(IVCashr,0,IVCashrw);
+    if (IVCashrw.OrgIVNr>0) then begin
+      RepSpec.long1 = IVCashrw.OrgIVNr;
+    end;
+    RepSpec.f3 = GetItemList(IVCashr);
     ParseTextField(a,LTxtr,RepSpec,"DOLLTxtVcReplaceToken");
     l = GetAreaLength(a);
     pos = 0;
@@ -269,6 +349,7 @@ begin
       res = res & tstr;
       pos = pos + 255;
     end;
+    writeareatofile(a,"__receipt.txt",0);
     chrcnt = 42;
     tstr = res;
     tpos = InString(tstr,chr(13));
@@ -419,6 +500,10 @@ begin
       res = RepSpec.f2;
     case "amount":
       res = RepSpec.vals0;
+    case "receiptnr":
+      res = RepSpec.long1;
+    case "itemlist":
+      res = RepSpec.f3;
   end;
 
   DOLLTxtVcReplaceToken = res;

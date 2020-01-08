@@ -791,7 +791,7 @@ procedure PasteRetInvoiceRows(var record IVCashVc IVCashr,longint orgnr) begin
     IVCashr.ClientContact =orgIVCashr.ClientContact;
     IVCashr.CustCat = orgIVCashr.CustCat;
     IVCashr.Objects = AddLocationObject(orgIVCashr.Objects,IVCashr.Location,true);
-    IVCashr.SalesMan = orgIVCashr.SalesMan;
+    //IVCashr.SalesMan = orgIVCashr.SalesMan;//need to be the current sales man
     IVCashr.LangCode = orgIVCashr.LangCode;
     IVCashr.CustVATCode = orgIVCashr.CustVATCode;
     IVCashr.CurncyCode = orgIVCashr.CurncyCode;
