@@ -1028,6 +1028,7 @@ begin
 	record LetVc Letr;
 	record CUVc lCUr;
   record CustomerSettingBlock CSb;
+  Boolean genderf;
 
 	blockload(SNCb);
 	
@@ -1112,14 +1113,20 @@ begin
 		CUr.Classification = SNCb.Classification;
     tstr = JSONGet(jdata,"orders/[" & order & "]/customer/tags");
     tstr = StrReplace(tstr," ","");
+    genderf = false;
     if (SetInSet(tstr,"WOMEN")) then begin
       CUr.Classification = AddObjectToObjectList(CUr.Classification,SNCb.FemaleClassification);
+      genderf = true;
     end else begin
       if (SetInSet(tstr,"MEN")) then begin
         CUr.Classification = AddObjectToObjectList(CUr.Classification,SNCb.MaleClassification);
+        genderf = true;
       end;
     end;
-		CUR.VATNr = SNCb.VATNr;
+    if (!genderf) then begin
+      CUr.Classification = AddObjectToObjectList(CUr.Classification,SNCb.FemaleClassification);
+    end;
+  	CUR.VATNr = SNCb.VATNr;
 		CUr.RegNr1 = SNCb.RegNr1;
 		CUr.PayDeal = SNCb.PayDeal;
 
