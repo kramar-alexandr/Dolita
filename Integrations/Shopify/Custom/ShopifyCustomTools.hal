@@ -4,6 +4,7 @@ external inner procedure StockMovGetRate(var record StockMovVc);
 external inner function Boolean StockMovVc_PasteArtCode(var record StockMovVc,Integer,Integer,var array string);
 external inner function string 255 StringFromSysList(Integer,Integer);
 external inner function val GetStockQty(string,string,Date,Boolean);
+external inner function Boolean StockMovVc_PasteQuant(var record StockMovVc,Integer);
 remote procedure GetShopifyOrderList(string,var array record ORVc,var array record StockMovVc);
 remote procedure GetInternalOrderList(string,var array record StockMovVc);
 remote updating procedure RemoteApproveStockMov(Longint,var Boolean);
@@ -442,7 +443,8 @@ global
 updating procedure RemoteApproveStockMov2(array Longint alist,var Boolean errf)
 begin
   record StockMovVc StockMovr,oldStockMovr;
-  Integer i;
+  row StockMovVc StockMovrw;
+  Integer i,j,rwcnt;
 
   for (i=0;i<alist.length;i=i+1) begin
     StockMovr.SerNr = alist[i];
@@ -454,6 +456,17 @@ begin
       end;
       if (blank(StockMovr.TransDate)) then begin
         StockMovr.TransDate = CurrentDate;
+      end;
+      rwcnt = MatRowCnt(StockMovr);
+      for (j=0;j<rwcnt;j=j+1) begin
+        MatRowGet(StockMovr,j,StockMovrw);
+        if (StockMovrw.Quant==0) then begin
+          if (StockMovrw.SentQuant!=0) then begin
+            StockMovrw.Quant = StockMovrw.SentQuant;
+            MatRowPut(StockMovr,j,StockMovrw);
+            StockMovVc_PasteQuant(StockMovr,j);
+          end;
+        end;
       end;
       if (RecordUpdate(oldStockMovr,StockMovr,true)!=0) then begin
         errf = true;
