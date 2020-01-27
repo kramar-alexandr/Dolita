@@ -50,7 +50,7 @@ LDOL_FindDefStockValue:
   return;
 end;
 
-function val FindReceivedValue(string item, string loc)
+function val FindReceivedValue2(string item, string loc,string supplier)
 begin
   val res;
   record ItemHistVc IHr;
@@ -79,10 +79,12 @@ begin
       if ((blank(varcode) or varcode == IHr.Variety) and (blank(loc) or loc == IHr.Location)) then begin
         PUr.SerNr = IHr.TransNr;
         if (ReadFirstMain(PUr,1,true)) then begin
-          if (PUr.PONr > -1) then begin
-            RetPUr.PUNr = PUr.SerNr;
-            if (!ReadFirstKey("PUNr",RetPUr,1,true)) then begin
-              res = res + IHr.Qty;
+          if (blank(supplier) or supplier==PUr.VECode) then begin
+            if (PUr.PONr > -1) then begin
+              RetPUr.PUNr = PUr.SerNr;
+              if (!ReadFirstKey("PUNr",RetPUr,1,true)) then begin
+                res = res + IHr.Qty;
+              end;
             end;
           end;
         end;
@@ -91,7 +93,13 @@ begin
   end;
 
 
-  FindReceivedValue = res;
+  FindReceivedValue2 = res;
+return;
+end;
+
+function val FindReceivedValue(string item, string loc)
+begin
+  FindReceivedValue = FindReceivedValue2(item,loc,"");
 return;
 end;
 
@@ -224,6 +232,7 @@ begin
     case 2: tstr = USetStr(1000046);//Funkcijos: Perï¿½iï¿½ra
     case 0: tstr = USetStr(1000115);//Funkcijos: Perï¿½iï¿½ra su ï¿½vairoves
     case 1: tstr = USetStr(1000047);//Funkcijos: Detaliai
+    case 3: tstr = USetStr(1000152);//Funkcijos: Tiek˜j÷ apìvalga
   end;
   Header(rw,tstr,1);
   rw = rw + 1;
@@ -272,7 +281,6 @@ end;
 
 procedure PrintColumnHeaders(record RcVc RepSpec)
 begin
-
   StartFormat(15);
   if (RepSpec.ArtMode == 1) then begin
     OutString(7,0,USetStr(1000086),true);//Pardavimo
@@ -282,13 +290,20 @@ begin
   OutString(1,0,USetStr(1000045),true);//Viso
   EndFormat;
   StartFormat(15);
+  if (RepSpec.ArtMode==3) then begin
+    OutString(0,0,USetStr(1000151),false);//Supplier
+  end else begin
     OutString(0,0,USetStr(1000040),false);//Prekï¿½
+  end;
     OutString(2,0,USetStr(1000041),false);//Pavadinimas
     if (RepSpec.ArtMode == 1) then begin
       OutString(3,0,USetStr(1000042),false);//Faktï¿½ra
       OutString(4,0,USetStr(1000087),true);//Savikaina
       OutString(5,0,USetStr(1000088),true);//Nuolaida
     end else begin
+      if (RepSpec.ArtMode==3) then begin
+        OutString(170,0,USetStr(1000150),true); // likutis
+      end;
       OutString(4,0,USetStr(1000130),true); // likutis
       OutString(8,0,USetStr(1000141),true); // Brokas
       OutString(9,0,USetStr(1000142),true); // Brokas %
@@ -457,7 +472,7 @@ begin
     qty = v_artinvqty[a_art[i] & "|0"] + v_artinvqty[a_art[i] & "|0|IVVc"];
     instock = v_artinvinstock[a_art[i] & "|0"] + v_artinvinstock[a_art[i] & "|0|IVVc"] + v_artinvinstock[a_art[i] & "|0|IHVc"];
     recvd = v_artrecvd[a_art[i] & "|0"] + v_artrecvd[a_art[i] & "|0|IVVc"] + v_artrecvd[a_art[i] & "|0|IHVc"];
-    if (artmode == 2) then begin
+    if (artmode == 2 or artmode == 3) then begin
       if (FindItemVAR(a_art[i],itsz,mask,mskrep,varsubset)) then begin
         SplitVars(a_art[i],a_maskvar,a_maskvarsz,a_amsk);
         artcode = a_amsk[0];
@@ -619,6 +634,7 @@ begin
   val iv_indefstock,ivcash_indefstock;
   val indefstock,totindefstock;
   val ih_instock,ih_recvd,ih_indefstock;
+  record CUVc CUr;
 
   qtytotal = 0;
   sumtotal = 0;
@@ -631,8 +647,15 @@ begin
     ivcash_indefstock = 0;
     ivcash_recvd = 0;
     StartFormat(15);
+    if (RepSpec.ArtMode==3) then begin
+      OutString(0,"DblCUVc",a_art[i],false);
+      CUr.Code = a_art[i];
+      ReadFirstMain(CUr,1,true);
+      OutString(2,0,CUr.Name,false);      
+    end else begin
       OutString(0,"DblINVc",a_art[i],false);
       OutString(2,0,v_artname[a_art[i]],false);
+    end;
       for (j=0;j<a_inv.length;j=j+1) begin
         qty = v_artinvqty[a_art[i] & "|" & a_inv[j]];
         sum = v_artinvsum[a_art[i] & "|" & a_inv[j]];
@@ -667,6 +690,7 @@ begin
           end;
         end;
       end;
+      logtext(0,"check ivcash " & ivcash_qty & ":" & ivcash_sum & ":" & totqty);
       // EVS: DOL-159
       for (j=0;j<a_slinv.length;j=j+1) begin
         qty = v_artinvqty[a_art[i] & "|" & a_slinv[j] & "|IVVc"];
@@ -732,9 +756,14 @@ begin
         end;
       end;
 
-      if (RepSpec.ArtMode == 0 or RepSpec.ArtMode == 2) then begin
-        qty = ivcash_qty + iv_qty;
-        sum = ivcash_sum + iv_sum;
+      if (RepSpec.ArtMode == 0 or RepSpec.ArtMode == 2 or RepSpec.ArtMode == 3) then begin
+        if (RepSpec.ArtMode==3) then begin
+          qty = totqty;
+          sum = totsum;
+        end else begin
+          qty = ivcash_qty + iv_qty;
+          sum = ivcash_sum + iv_sum;
+        end;
         instock = ivcash_instock + iv_instock + ih_instock;
         indefstock = ivcash_indefstock + iv_indefstock + ih_indefstock;
         recvd = ivcash_recvd + iv_recvd + ih_recvd;
@@ -753,6 +782,17 @@ begin
             totinstock = totinstock + instock;
             recvd = FindReceivedValue(a_art[i],RepSpec.f4);
             totrecvd = totrecvd + recvd;
+          end;
+          if (RepSpec.ArtMode == 3) then begin
+            indefstock = v_artindefstock[a_art[i]];
+            instock = v_artinvinstock[a_art[i]] - indefstock;
+            totindefstock = totindefstock + indefstock;
+            totinstock = totinstock + instock;
+            recvd = v_artrecvd[a_art[i]];
+            totrecvd = totrecvd + recvd;
+          end;
+          if (RepSpec.ArtMode==3) then begin
+            OutString(170,0,ZeroString(recvd),true);
           end;
           OutString(4,0,ZeroString(instock),true);
           OutString(8,0,ZeroString(indefstock),true);
@@ -789,14 +829,18 @@ begin
   StartFormat(3);
   EndFormat;
   Black_Divider(0,1);
-  if (RepSpec.ArtMode == 0 or RepSpec.ArtMode == 2) then begin
+  if (RepSpec.ArtMode == 0 or RepSpec.ArtMode == 2 or RepSpec.ArtMode == 3) then begin
     StartFormat(3);
     EndFormat;
     Black_Divider(0,1);
   end;
   StartFormat(15);
+  if (RepSpec.ArtMode==3) then begin
+    OutString(170,0,ZeroString(totrecvd),true);
+    
+  end;
     OutString(4,0,ZeroString(totinstock),true);
-    if (RepSpec.ArtMode == 0 or RepSpec.ArtMode == 2) then begin
+    if (RepSpec.ArtMode == 0 or RepSpec.ArtMode == 2 or RepSpec.ArtMode == 3) then begin
       OutString(8,0,ZeroString(totindefstock),true);
       toint = round(((totindefstock / (totinstock+qtytotal+totindefstock))) * 100,SetRoundModed(0));
       OutString(9,0,ZeroString(toint) & "%",true);
@@ -854,6 +898,22 @@ begin
   return;
 end;
 
+function string 255 GetDefaultSupplier(string artcode,string location)
+begin
+  record PIVc PIr;
+  string 255 res;
+  
+  PIr.ItemCode = artcode;
+  PIr.Location = location;
+  PIr.DefaultChoice = 1;
+  if (ReadFirstKey("DefaultChoice",PIr,3,true)) then begin
+    res = PIr.VECode;
+  end;
+
+  GetDefaultSupplier = res;
+  return;
+end;
+
 procedure AddInfoToVector(record RcVc RepSpec,row IVCashVc IVCashrw,longint ivcashnr,
      var integer artcnt,var array string a_art,var vector string v_artname,var vector boolean v_artf,
                                 var integer invcnt,var array string a_inv,var vector boolean v_invf,
@@ -868,7 +928,7 @@ begin
   string 255 index;
   string 255 itsz,mask,mskrep,varsubset;
   array string 255 a_maskvar,a_maskvarsz,a_amsk;
-  string 20 artcode,artname;
+  string 20 artcode,artname,supplier,artcode2;
   val t,fromreb,toreb;// Edit ************************** BPI Ukraine - KramarAlexandr - Monday, 17 December 2018 10:10:52
 
   infrvarf = false;
@@ -957,7 +1017,7 @@ begin
 
       if (testf) then begin
 
-        if (RepSpec.ArtMode == 2) then begin
+        if (RepSpec.ArtMode == 2 or RepSpec.ArtMode == 3) then begin
           if (FindItemVAR(IVCashrw.ArtCode,itsz,mask,mskrep,varsubset)) then begin
             SplitVars(IVCashrw.ArtCode,a_maskvar,a_maskvarsz,a_amsk);
             artcode = a_amsk[0];
@@ -966,6 +1026,14 @@ begin
           end;
         end else begin
           artcode = IVCashrw.ArtCode;
+        end;
+
+        if (RepSpec.ArtMode==3) then begin
+          supplier = GetDefaultSupplier(artcode,RepSpec.f4);
+          if (nonblank(supplier)) then begin
+            artcode2 = artcode;
+            artcode = supplier;
+          end;
         end;
 
         index = artcode & "|" & ivcashnr;
@@ -1032,6 +1100,16 @@ begin
         end;
         v_artinvf[artcode] = true;
         // :EVS
+        if (RepSpec.ArtMode==3) then begin
+          if (nonblank(artcode) and !v_artinvf[artcode & ":" & artcode2]) then begin
+            t = DOL_FindDefStockValue(IVCashrw.ArtCode,RepSpec.f4);
+            v_artindefstock[artcode] = v_artindefstock[artcode] + t;
+            FindStockValue(IVCashrw.ArtCode,RepSpec.f4,ISr);
+            v_artinvinstock[artcode] = v_artinvinstock[artcode] + ISr.Instock - t;
+            v_artrecvd[artcode] = v_artrecvd[artcode2] + FindReceivedValue2(IVCashrw.ArtCode,RepSpec.f4,artcode);
+            v_artinvf[artcode & ":" & artcode2] = true;
+          end;
+        end;
       end;
 
     end;
@@ -1055,7 +1133,7 @@ begin
   string 255 frart,toart,art,tstr;
   string 255 index;
   string 255 itsz,mask,mskrep,varsubset;
-  string 20 artcode,artname;
+  string 20 artcode,artname,supplier,artcode2;
   array string 255 a_maskvar,a_maskvarsz,a_amsk;
   val t,fromreb,toreb;
 
@@ -1150,7 +1228,7 @@ begin
 
       if (testf) then begin
 
-        if (RepSpec.ArtMode == 2) then begin
+        if (RepSpec.ArtMode == 2 or RepSpec.ArtMode == 3) then begin
           if (FindItemVAR(IVrw.ArtCode,itsz,mask,mskrep,varsubset)) then begin
             SplitVars(IVrw.ArtCode,a_maskvar,a_maskvarsz,a_amsk);
             artcode = a_amsk[0];
@@ -1160,6 +1238,14 @@ begin
         end else begin
           artcode = IVrw.ArtCode;
         end;
+        if (RepSpec.ArtMode==3) then begin
+          supplier = GetDefaultSupplier(artcode,RepSpec.f4);
+          if (nonblank(supplier)) then begin
+            artcode2 = artcode;
+            artcode = supplier;
+          end;
+        end;
+
         index = artcode & "|" & IVnr & "|IVVc";
 
         if (!v_artinvf[index]) then begin
@@ -1227,7 +1313,16 @@ begin
         end;
         v_artinvf[artcode] = true;
         // :EVS
-
+        if (RepSpec.ArtMode==3) then begin
+          if (nonblank(artcode) and !v_artinvf[artcode & ":" & artcode2]) then begin
+            t = DOL_FindDefStockValue(IVrw.ArtCode,RepSpec.f4);
+            v_artindefstock[artcode] = v_artindefstock[artcode] + t;
+            FindStockValue(IVrw.ArtCode,RepSpec.f4,ISr);
+            v_artinvinstock[artcode] = v_artinvinstock[artcode] + ISr.Instock - t;
+            v_artrecvd[artcode] = v_artrecvd[artcode] + FindReceivedValue2(IVrw.ArtCode,RepSpec.f4,artcode);
+            v_artinvf[artcode & ":" & artcode2] = true;
+          end;
+        end;
       end;
 
     end;
@@ -1247,7 +1342,7 @@ begin
   string 255 frart,toart,art,tstr;
   string 255 index;
   string 255 itsz,mask,mskrep,varsubset;
-  string 20 artcode,artname;
+  string 20 artcode,artname,supplier,artcode2;
   array string 255 a_maskvar,a_maskvarsz,a_amsk;
   val t;
 
@@ -1297,7 +1392,7 @@ begin
       end;
 
       if (testf) then begin
-        if (RepSpec.ArtMode == 2) then begin
+        if (RepSpec.ArtMode == 2 or RepSpec.ArtMode == 3) then begin
           artcode = IHr.ArtCode;
         end else begin
           artcode = IHr.ArtCode;
@@ -1305,6 +1400,14 @@ begin
             artcode = IHr.ArtCode & IHr.Variety;
           end;
         end;
+        if (RepSpec.ArtMode==3) then begin
+          supplier = GetDefaultSupplier(artcode,RepSpec.f4);
+          if (nonblank(supplier)) then begin
+            artcode2 = artcode;
+            artcode = supplier;
+          end;
+        end;
+
         index = artcode & "|0|IHVc";
 
         // item hist values should be added one per item and only for those
@@ -1343,6 +1446,16 @@ begin
             FindStockValue(artcode,RepSpec.f4,ISr);
             v_artinvinstock[index] = v_artinvinstock[index] + ISr.Instock - t;
             v_artrecvd[index] = v_artrecvd[index] + FindReceivedValue(artcode,RepSpec.f4);
+          end;
+          if (RepSpec.ArtMode==3) then begin
+            if (nonblank(artcode) and !v_artinvf[artcode & ":" & artcode2]) then begin
+              t = DOL_FindDefStockValue(artcode2,RepSpec.f4);
+              v_artindefstock[artcode] = v_artindefstock[supplier] + t;
+              FindStockValue(artcode,RepSpec.f4,ISr);
+              v_artinvinstock[artcode] = v_artinvinstock[artcode] + ISr.Instock - t;
+              v_artrecvd[artcode] = v_artrecvd[artcode] + FindReceivedValue2(artcode2,RepSpec.f4,artcode);
+              v_artinvf[artcode & ":" & artcode2] = true;
+            end;
           end;
         end;
       end;

@@ -566,6 +566,10 @@ begin
 	SString(1000147,"Nevisi pardav˜jai atsiìym˜jo");
 	SString(1000148,"Location");
 	SString(1000149,"Employee Time");
+
+	SString(1000150,"Gauta");
+	SString(1000151,"Tiekejas");
+	SString(1000152,"Funkcijos: Tiek˜j÷ apìvalga");
 	
   return;
 end;

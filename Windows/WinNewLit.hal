@@ -6,7 +6,7 @@ external inner function string 60 UserDefined(string,string);
 external procedure DrawClockInUserButtons(real,real,real,real,integer);
 external procedure DrawClockOutUserButtons(real,real,real,real,integer);
 
-SetLangMode(LangLithuanian,"LIT",2);
+SetLangMode(LangLithuanian,"LIT",0);
 
 window DiscEntTouchScreenDClass:1
   wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
@@ -39,7 +39,7 @@ begin
     h = h+l; ColourPushButton(h,v,h+h2,v+v3,"DiscEntToolKeyPad0","0_",2);
     v = v+vs+10;
     h = hm; ColourPushButton(h,v,h+2*h2,v+v3,"DiscEntToolKeyCancel","Nutraukti",2);
-    h = h+(2*h2)+2; ColourPushButton(h,v,h+2*h2,v+v3,"DiscEntToolKeyOK","Pridƒóti",2);
+    h = h+(2*h2)+2; ColourPushButton(h,v,h+2*h2,v+v3,"DiscEntToolKeyOK","Pridòti",2);
   EndWindow;
 
   return;
@@ -50,15 +50,15 @@ window PriceChTouchScreenDClass:1
 begin
   real h,h2,hm,v,v2,v3,vs,l;
 
-  WindowBegin("Pakeisti prekƒós kainƒÖ",PriceChTouchScreenDClass,CGother,RcType);
+  WindowBegin("Pakeisti prekòs kainà",PriceChTouchScreenDClass,CGother,RcType);
     Modality(kModalityGlobal);
     UseView(RcVc);
     ActiveFieldOnNew("vals0");
     SetWRect(80,200,400,340);
     Sizeable(-1,-1,0,0);
     h = 120; h2 = 170; v=40; vs=20;
-    EditFieldTL(h,v=6, 100,"Prekƒó",M4Str,ViewOnly,100,f1,false,0);
-    EditFieldTL(h,v+=vs,-20,"Apra≈°ymas",M4Str,ViewOnly,200,f2,false,0);
+    EditFieldTL(h,v=6, 100,"Prekò",M4Str,ViewOnly,100,f1,false,0);
+    EditFieldTL(h,v+=vs,-20,"Apra‰ymas",M4Str,ViewOnly,200,f2,false,0);
     EditFieldTL(h,v+=vs,100,"Kaina su nuolaida",M423Val,Normal,0,vals0,true,0);
 
     v = 80; h2 = 55; v3 = 48; vs = 52; hm = 40; l = 57;
@@ -79,7 +79,7 @@ begin
     h = h+l; ColourPushButton(h,v,h+h2,v+v3,"PriceChToolKeyPadPoint",".",2);
     v = v+vs+10;
     h = hm; ColourPushButton(h,v,h+2*h2,v+v3,"PriceChToolKeyCancel","Nutraukti",2);
-    h = h+(2*h2)+2; ColourPushButton(h,v,h+2*h2,v+v3,"PriceChToolKeyOK","Pridƒóti",2);
+    h = h+(2*h2)+2; ColourPushButton(h,v,h+2*h2,v+v3,"PriceChToolKeyOK","Pridòti",2);
   EndWindow;
 
   return;
@@ -90,18 +90,18 @@ window DOLPOSCrossSalesWClass:1
 begin
   real h,h2,hm,v,v2,v3,vs,l;
 
-  WindowBegin("Parduodama prekƒó",DOLPOSCrossSalesWClass,CGother,-);
+  WindowBegin("Parduodama prekò",DOLPOSCrossSalesWClass,CGother,-);
   Modality(kModalityGlobal);
   UseView(INVc);
   SetWRect(20,80,500,400);
   Sizeable(-1,-1,0,0);
   h = 120; h2 = 170; v = 20;
   Pict_Field(h,v,h+150,160,"");
-  EditFieldTL(h,v+=170, 200,"Prekƒó",M4Str,ViewOnly,100,Name,false,0);
+  EditFieldTL(h,v+=170, 200,"Prekò",M4Str,ViewOnly,100,Name,false,0);
   EditFieldTL(h,v+=22, 80,"Kaina",M4Val,ViewOnly,0,UPrice1,true,0);
   v = v - 30; h = 80; v3 = 50; h2 = 85;
-  ColourPushButton(h=h-20,v+=80,h+2*h2,v+v3,"DOLPOSCrossSalesCancel","At≈°aukti",1);
-  h = h+(2*h2)+20; ColourPushButton(h,v,h+2*h2,v+v3,"DOLPOSCrossSalesNext","Pridƒóti",2);
+  ColourPushButton(h=h-20,v+=80,h+2*h2,v+v3,"DOLPOSCrossSalesCancel","At‰aukti",1);
+  h = h+(2*h2)+20; ColourPushButton(h,v,h+2*h2,v+v3,"DOLPOSCrossSalesNext","Pridòti",2);
   EndWindow;
 
   return;
@@ -112,12 +112,12 @@ window NPTSVarEnqWClass:1
 begin
   real h,h2,hm,v,v2,v3,vs,l;
 
-  WindowBegin("ƒÆvairovi≈≥ u≈æklausa",NPTSVarEnqWClass,CGother,-);
+  WindowBegin("Øvairovi˜ uÏklausa",NPTSVarEnqWClass,CGother,-);
   UseView(RcVc);
   SetWRect(20,80,520,420);
   Sizeable(-1,-1,0,0);
 
-  EditFieldTL(h=270,v=140, 150,"Prekƒó",M4UStr,Normal,60,f4,false,0);
+  EditFieldTL(h=270,v=140, 150,"Prekò",M4UStr,Normal,60,f4,false,0);
   h = 120; v = 30; h2 = 55; v3 = 48; vs = 52; hm = 40; l = 57;
   h = hm-2; ColourPushButton(h,v,h+h2,v+v3,"PriceChToolKeyPad1","1_",2);
   h = h+l; ColourPushButton(h,v,h+h2,v+v3,"PriceChToolKeyPad2","2_",2);
@@ -137,7 +137,7 @@ begin
   v = v+vs+10;
   h = hm-2; ColourPushButton(h,v,h+h2,v+v3,"PriceChToolKeyPadC","C",2);
   h = h+l; ColourPushButton(h,v,h+h2,v+v3,"PriceChToolKeyPadV","V",2);
-//  ColourPushButton(h=h-2*l,v,h=h+2*h2+30,v+v3,"PriceChToolKeyOK","Pridƒóti",2);
+//  ColourPushButton(h=h-2*l,v,h=h+2*h2+30,v+v3,"PriceChToolKeyOK","Pridòti",2);
 
 //  v = v - 30; v3 = 50; h2 = 85;
   ColourPushButton(h=h+130,v,h+2*h2+20,v+v3,"DOLNPTSVarEnqRnRun","Vykdyti",2);
@@ -156,7 +156,7 @@ begin
   Modality(kModalityGlobal);
   UseView(RcVc);
   v = 20;  vs = 45;
-  StaticText(20,v+=vs,"Padidinti kvito viso sumƒÖ, kad jinai sutaptu su Dovan≈≥ kupono suma?",false);
+  StaticText(20,v+=vs,"Padidinti kvito viso sumà, kad jinai sutaptu su Dovan˜ kupono suma?",false);
   v = v + vs;
   ColourPushButton(100,v,200,v+40,"DOLDialogDoNothing","Ne",1);
   ColourPushButton(-200,v,-100,v+40,"DOLDialogPOSAutoAdjustPrice","Taip",2);
@@ -170,7 +170,7 @@ window DOLOrdNumpadWClass:1
 begin
   real h,h2,hm,v,v2,v3,vs,l;
 
-  WindowBegin("Nurodykite datƒÖ - Plan. siuntimas",DOLOrdNumpadWClass,CGother,-);
+  WindowBegin("Nurodykite datà - Plan. siuntimas",DOLOrdNumpadWClass,CGother,-);
   SetWRect(20,80,400,350);
   UseView(RcVc);
   v = 20; h2 = 55; v3 = 48; vs = 52; hm = 40; l = 57;
@@ -189,7 +189,7 @@ begin
   h = hm-2; ColourPushButton(h,v,h+h2,v+v3,"DOLOrdNumpadDel","Del",2);
   h = h+l; ColourPushButton(h,v,h+h2,v+v3,"DOLOrdNumpadNum0","0_",2);
   h = h+l; ColourPushButton(h,v,h+h2,v+v3,"DOLOrdNumpadOK","OK",2);
-  h = h+100; ColourPushButton(h,v,h+h2*2,v+v3,"DOLOrdNumpadOKOrder","Ok ir i≈°saugoti",2);
+  h = h+100; ColourPushButton(h,v,h+h2*2,v+v3,"DOLOrdNumpadOKOrder","Ok ir i‰saugoti",2);
   EndWindow;
 
   return;
@@ -203,7 +203,7 @@ begin
   longint bm,lt,rt,tp;
   record RcVc RepSpec;
 
-  WindowBegin("Pasirinkti PardavƒójƒÖ",EBS_ChooseSalesManVClass,CGOther,RcType);
+  WindowBegin("Pasirinkti Pardavòjà",EBS_ChooseSalesManVClass,CGOther,RcType);
     Modality(kModalityGlobal);
     wn = CurWindow;
     GetScreenSize(wn,tp,lt,bm,rt);
@@ -235,11 +235,11 @@ begin
   hm = 280; v = 60;
   vs = 52; h2 = 55; v3 = 48; l = 57;
   h = hm;
-  EditFieldTLX(h+l+30,20,120,"GrƒÖ≈æa",M4Val,ViewOnly,100,25,patM4black,vals0,true,0);
-  EditFieldTL(h+l+30,v,120,"PardavƒójƒÖs",M4UStr,Normal,10,f1,false,0);
-  EditFieldTL(h+l+30,v+=20,120,"Slapta≈æodis",M4Star,Normal,20,f2,false,0);
+  EditFieldTLX(h+l+30,20,120,"GràÏa",M4Val,ViewOnly,100,25,patM4black,vals0,true,0);
+  EditFieldTL(h+l+30,v,120,"Pardavòjàs",M4UStr,Normal,10,f1,false,0);
+  EditFieldTL(h+l+30,v+=20,120,"SlaptaÏodis",M4Star,Normal,20,f2,false,0);
   v=v+29;
-  h = hm; ColourPushButton(h,v,h+h2*3,v+v3,"SalesAssistantVClassUserListBtn","Pard. sƒÖra≈°as",2);
+  h = hm; ColourPushButton(h,v,h+h2*3,v+v3,"SalesAssistantVClassUserListBtn","Pard. sàra‰as",2);
   v = v+vs;
   h = hm-2; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad1","1_",2);
   h = h+l; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad2","2_",2);
@@ -269,12 +269,12 @@ window NPTSInvValWClass:1
 begin
   real h,h2,hm,l,v,v3,vs;
 
-  WindowBegin("Preki≈≥ likuƒçiai",NPTSInvValWClass,CGother,-);
+  WindowBegin("Preki˜ likuãiai",NPTSInvValWClass,CGother,-);
   UseView(RcVc);
   SetWRect(20,80,520,420);
   Sizeable(-1,-1,0,0);
 
-  EditFieldTL(h=270,v=140, 150,"Prekƒó",M4UStr,Normal,60,f4,false,0);
+  EditFieldTL(h=270,v=140, 150,"Prekò",M4UStr,Normal,60,f4,false,0);
   h = 120; v = 30; h2 = 55; v3 = 48; vs = 52; hm = 40; l = 57;
   h = hm-2; ColourPushButton(h,v,h+h2,v+v3,"PriceChToolKeyPad1","1_",2);
   h = h+l; ColourPushButton(h,v,h+h2,v+v3,"PriceChToolKeyPad2","2_",2);
@@ -294,7 +294,7 @@ begin
   v = v+vs+10;
   h = hm-2; ColourPushButton(h,v,h+h2,v+v3,"PriceChToolKeyPadC","C",2);
   h = h+l; ColourPushButton(h,v,h+h2,v+v3,"PriceChToolKeyPadV","V",2);
-//  ColourPushButton(h=h-2*l,v,h=h+2*h2+30,v+v3,"PriceChToolKeyOK","Pridƒóti",2);
+//  ColourPushButton(h=h-2*l,v,h=h+2*h2+30,v+v3,"PriceChToolKeyOK","Pridòti",2);
 
 //  v = v - 30; v3 = 50; h2 = 85;
   ColourPushButton(h=h+130,v,h+2*h2+20,v+v3,"DOLNPTSInvValRnRun","Vykdyti",2);
@@ -308,7 +308,7 @@ window DOLNPTSIVCashListNumWClass:1
 begin
   real h,h2,hm,l,v,v3,vs;
 
-  WindowBegin("Nurodyti skaiƒçi≈≥",DOLNPTSIVCashListNumWClass,CGother,-);
+  WindowBegin("Nurodyti skaiãi˜",DOLNPTSIVCashListNumWClass,CGother,-);
   SetWRect(20,80,400,350);
   UseView(RcVc);
   v = 20; h2 = 55; v3 = 48; vs = 52; hm = 40; l = 57;
@@ -362,7 +362,7 @@ window EBS_UserSClass:1
   wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
 begin
 
-  WindowBegin("ƒÆstatyti asmenƒØ",EBS_UserSClass,CGother,HBlRecType);
+  WindowBegin("Østatyti asmen∞",EBS_UserSClass,CGother,HBlRecType);
     Modality(kModalityAboveParent);
     SetWRect(240,80,500,299);
     HalPushButton(10,10,100,30,"EBS_CloseWindowBtn","Nutraukti");
@@ -378,7 +378,7 @@ window RemoveORReservVClass:1
 begin
   real h,v;
 
-  WindowBegin("At≈°aukti negaliojanƒçias rezervacijas",RemoveORReservVClass,CGMnt,RcType);
+  WindowBegin("At‰aukti negaliojanãias rezervacijas",RemoveORReservVClass,CGMnt,RcType);
     SetWRect(100,120,400,278);
     EditField(h=100,v=10,100,"Data",Normal,d1,false,PasteCurDate);
   EndWindow;
@@ -397,7 +397,7 @@ begin
     SetBlid(UserPOSGroupBlock);
     MatrixBegin(h=8,v=20,-31,-20,-,99);
     MatCol(1,24,"Asmuo",0,UserCode,false,UserSClass);
-    MatCol(1,84,"POS grupƒó",0,POSGroups,false,EGSClass);
+    MatCol(1,84,"POS grupò",0,POSGroups,false,EGSClass);
     EndMatrix;
   EndWindow;
 
@@ -427,7 +427,7 @@ begin
   BlockLoad(lmb);
   DOLGetSalesmen(lmb.POSGroup,a_usrcodes,usrcnt);
 
-  WindowBegin("BP, POS fakt≈´ros",DOLTSPIVGPWClass,CGOther,-);
+  WindowBegin("BP, POS faktros",DOLTSPIVGPWClass,CGOther,-);
   if (usrcnt <= 3) then begin
     SetWRect(20,80,450,330);
   end else begin
@@ -436,29 +436,29 @@ begin
   UseView(RcVc);
   vs = 20;
   PeriodField(h=155,v=6,"Periodas");
-//  EditFieldTL(h,v+=vs, 150,"Fakt≈´ros nr.",   M4Str,Normal,30,f1,false,0);
-//  EditFieldTL(h,v+=vs ,150,"Pirkƒójas",M4UStr,Normal,50,f2,false,CUSClass);
-  EditFieldTL(h,v+=vs ,100,"Pardavƒójas",M4UStr,Normal,10,AccStr,false,UserSClass);
-//  EditFieldTL(h,v+=vs ,150,"Prekƒó",M4UStr,Normal,20,FirstAcc,false,INSClass);
-//  EditFieldTL(h,v+=vs ,80,"Prekƒós grupƒó",M4UStr,Normal,5,LastAcc,false,ITSClass);
-//  EditFieldTL(h,v+=vs ,150,"Prekƒós klasƒó",M4UStr,Normal,200,f6,false,DISClass);
+//  EditFieldTL(h,v+=vs, 150,"Faktros nr.",   M4Str,Normal,30,f1,false,0);
+//  EditFieldTL(h,v+=vs ,150,"Pirkòjas",M4UStr,Normal,50,f2,false,CUSClass);
+  EditFieldTL(h,v+=vs ,100,"Pardavòjas",M4UStr,Normal,10,AccStr,false,UserSClass);
+//  EditFieldTL(h,v+=vs ,150,"Prekò",M4UStr,Normal,20,FirstAcc,false,INSClass);
+//  EditFieldTL(h,v+=vs ,80,"Prekòs grupò",M4UStr,Normal,5,LastAcc,false,ITSClass);
+//  EditFieldTL(h,v+=vs ,150,"Prekòs klasò",M4UStr,Normal,200,f6,false,DISClass);
 //  EditFieldTL(h,v+=vs ,150,"Objektas",M4UStr,Normal,60,ObjStr,false,ObjSClass);
-//  EditFieldTL(h,v+=vs ,150,"Objektas i≈° eilutƒós (Detaliai)",M4UStr,Normal,60,f3,false,ObjSClass);
-//  EditFieldTL(h,v+=vs ,50,"Mokƒójimo tipas",M4UStr,Normal,5,TransStr,false,PDSClass);
+//  EditFieldTL(h,v+=vs ,150,"Objektas i‰ eilutòs (Detaliai)",M4UStr,Normal,60,f3,false,ObjSClass);
+//  EditFieldTL(h,v+=vs ,50,"Mokòjimo tipas",M4UStr,Normal,5,TransStr,false,PDSClass);
 //  EditFieldTL(h,v+=vs,50,"Lokalus kompiuteris",M4UStr,Normal,5,f7,false,0);
 //  EditFieldTL(h,v+=vs,80,"Patalpa",M4UStr,Normal,5,f4,false,LocationSClass);
-//  EditFieldTL(h,v+=vs,50,"Stalƒçius",M4UStr,Normal,5,f5,false,DrawerSClass);
+//  EditFieldTL(h,v+=vs,50,"Stalãius",M4UStr,Normal,5,f5,false,DrawerSClass);
 //  ButtonFrame(h,vm=(v+=41),140,3,"Funkcija");
-//  RadioButton(h,v,0,0,"Per≈æi≈´ra",ArtMode);
-//  RadioButton(h,v+=16,2,0,"Per≈æi≈´ra per valandƒÖ",ArtMode); // EVS: DOL-5
+//  RadioButton(h,v,0,0,"PerÏira",ArtMode);
+//  RadioButton(h,v+=16,2,0,"PerÏira per valandà",ArtMode); // EVS: DOL-5
 //  RadioButton(h,v+=16,1,0,"Detaliai",ArtMode);
 //  CheckBox(h+15,v+=16,0,"Tik su Nuol.",flags[3]); // EVS: DOL-5
 //  EndFrame;
   h = 20; v = v + 30; h2 = 100; v3 = 40;
   vs = 60;
-  ColourPushButtonTag(h,v,h+h2,v+v3,"DOLTSPIVGPWClassSetPer","≈†iandien",4,0);
-  ColourPushButtonTag(h=h+h2+20,v,h+h2,v+v3,"DOLTSPIVGPWClassSetPer","≈†iƒÖ savaitƒô",4,1);
-  ColourPushButtonTag(h=h+h2+20,v,h+h2,v+v3,"DOLTSPIVGPWClassSetPer","≈†ƒØ mƒónesƒØ",4,2);
+  ColourPushButtonTag(h,v,h+h2,v+v3,"DOLTSPIVGPWClassSetPer","·iandien",4,0);
+  ColourPushButtonTag(h=h+h2+20,v,h+h2,v+v3,"DOLTSPIVGPWClassSetPer","·ià savait´",4,1);
+  ColourPushButtonTag(h=h+h2+20,v,h+h2,v+v3,"DOLTSPIVGPWClassSetPer","·∞ mònes∞",4,2);
   v = v + vs;
   for (i = 0; i < usrcnt; i = i + 1) begin
     if (i == 0) then begin
@@ -477,7 +477,7 @@ begin
   end;
   v = v + vs;
   v3 = 45; h2 = 100;
-  ColourPushButtonTag(h=20,v,h+h2,v+v3,"DOLTSPIVGPWClassRunRep","Per≈æi≈´ra",2,4);
+  ColourPushButtonTag(h=20,v,h+h2,v+v3,"DOLTSPIVGPWClassRunRep","PerÏira",2,4);
   h=h+(h2+20);
   ColourPushButtonTag(h=h+(h2+20),v,h+h2,v+v3,"DOLTSPIVGPWClassRunRep","Tik Viso",2,3);
   EndWindow;
@@ -487,7 +487,7 @@ end;
 window StockMovFrLClass:1
   wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
 begin
-  WindowBegin("Sandƒólio perkƒólimai",StockMovFrLClass,CGmlist,-);
+  WindowBegin("Sandòlio perkòlimai",StockMovFrLClass,CGmlist,-);
   SpawnClass(StockMovDClass);
   SetWRect(64,80,800,298);
   Sizeable(-1,-1,0,0);
@@ -497,7 +497,7 @@ begin
     // EVS: DOL-27
     ToolBar;
     HalPushButton(50,6,50+140,6+20,"DOLOpenAllFilterLClassBtn","VISI");
-    HalPushButton(200,6,200+140,6+20,"DOLOpenToFilterLClassBtn","ƒÆ");
+    HalPushButton(200,6,200+140,6+20,"DOLOpenToFilterLClassBtn","Ø");
     EndToolBar;
     // :EVS
     RecordList(4,17,-21,-39);
@@ -505,29 +505,29 @@ begin
     // EVS: DOL-27
 //    ToolBar;
     HalPushButton(50,6,50+140,6+20,"DOLOpenAllFilterLClassBtn","VISI");
-    HalPushButton(200,6,200+140,6+20,"DOLOpenToFilterLClassBtn","ƒÆ");
+    HalPushButton(200,6,200+140,6+20,"DOLOpenToFilterLClassBtn","Ø");
 //    EndToolBar;
     // :EVS
     RecordList(4,50,-21,-39);
   end;
   RlColKey(4,4,  "Nr.",SerNr,false,FrSerNr);
-  RlColKey(71,71,"I≈°si≈≥sta",SentOKFlag,false,FrSentOKFlag);
+  RlColKey(71,71,"I‰si˜sta",SentOKFlag,false,FrSentOKFlag);
   RlColKey(111,111,"Gauta",OKFlag,false,FrOKFlag);
   RlColKey(151,151,"Siuntimo data",SentTransDate,false,FrSentTransDate);
   RlColKey(223,223,"Data",TransDate,false,FrTransDate);
   RlColKey(295,295,"Fr. patalpa",FrLocation,false,FrFrLocOK);
-  RlColKey(370,370,"Per patalpƒÖ",ThrouLocation,false,FrToThrouLocOK);
-  RlColKey(450,450,"ƒÆ patalpƒÖ",ToLocation,false,FrToLocOK);
+  RlColKey(370,370,"Per patalpà",ThrouLocation,false,FrToThrouLocOK);
+  RlColKey(450,450,"Ø patalpà",ToLocation,false,FrToLocOK);
   RlColKey(530,530, "Komentaras",Comment,false,FrComment);
   SpecialMenu("Gauti",'G',0,"OKStockMovLsm");
-  SearchField("Ie≈°koti");
+  SearchField("Ie‰koti");
   EndWindow;
 end;
 
 window StockMovToLClass:1 // the real stockmovlclass
   wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
 begin
-  WindowBegin("Sandƒólio perkƒólimai",StockMovToLClass,CGmlist,-);
+  WindowBegin("Sandòlio perkòlimai",StockMovToLClass,CGmlist,-);
   SpawnClass(StockMovDClass);
   SetWRect(64,80,800,298);
   Sizeable(-1,-1,0,0);
@@ -536,31 +536,31 @@ begin
   if (GuiType == kGuiCocoa) then begin
     // EVS: DOL-27
     ToolBar;
-    HalPushButton(50,6,50+140,6+20,"DOLOpenFrFilterLClassBtn","I≈†");
-    HalPushButton(200,6,200+140,6+20,"DOLOpenToFilterLClassBtn","ƒÆ");
+    HalPushButton(50,6,50+140,6+20,"DOLOpenFrFilterLClassBtn","I·");
+    HalPushButton(200,6,200+140,6+20,"DOLOpenToFilterLClassBtn","Ø");
     EndToolBar;
     // :EVS
     RecordList(4,17,-21,-39);
   end else begin
     // EVS: DOL-27
     //ToolBar;
-    HalPushButton(50,6,50+140,6+20,"DOLOpenFrFilterLClassBtn","I≈†");
-    HalPushButton(200,6,200+140,6+20,"DOLOpenToFilterLClassBtn","ƒÆ");
+    HalPushButton(50,6,50+140,6+20,"DOLOpenFrFilterLClassBtn","I·");
+    HalPushButton(200,6,200+140,6+20,"DOLOpenToFilterLClassBtn","Ø");
     //EndToolBar;
     // :EVS
     RecordList(4,50,-21,-39);
   end;
   RlColKey(4,4,  "Nr.",SerNr,false,SerNr);
-  RlColKey(71,71,"I≈°si≈≥sta",SentOKFlag,false,SentOKFlag);
+  RlColKey(71,71,"I‰si˜sta",SentOKFlag,false,SentOKFlag);
   RlColKey(111,111,"Gauta",OKFlag,false,OKFlag);
   RlColKey(151,151,"Siuntimo data",SentTransDate,false,SentTransDate);
   RlColKey(223,223,"Data",TransDate,false,TransDate);
   RlColKey(295,295,"Fr. patalpa",FrLocation,false,FrLocOK);
-  RlColKey(370,370,"Per patalpƒÖ",ThrouLocation,false,ToThrouLocOK);
-  RlColKey(450,450,"ƒÆ patalpƒÖ",ToLocation,false,ToLocOK);
+  RlColKey(370,370,"Per patalpà",ThrouLocation,false,ToThrouLocOK);
+  RlColKey(450,450,"Ø patalpà",ToLocation,false,ToLocOK);
   RlColKey(530,530, "Komentaras",Comment,false,Comment);
   SpecialMenu("Gauti",'G',0,"OKStockMovLsm");
-  SearchField("Ie≈°koti");
+  SearchField("Ie‰koti");
   EndWindow;
 end;
 
@@ -569,13 +569,13 @@ window DOLSoldINBalRClass:1
   wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
 begin
   real h,v,vm,vs;
-  WindowBegin("DOL - Parduot≈≥ preki≈≥ likuƒçiai",DOLSoldINBalRClass,CGRcW,RcType);
+  WindowBegin("DOL - Parduot˜ preki˜ likuãiai",DOLSoldINBalRClass,CGRcW,RcType);
   SetWRect(20,80,400,220);
   vs = 20; h = 130; v = 6;
   PeriodField(h,v,"Periodas");
-  EditFieldTL(h,v+=vs,70,"Grupƒó",M4Code,Normal,5,f1,false,ITSClass);
+  EditFieldTL(h,v+=vs,70,"Grupò",M4Code,Normal,5,f1,false,ITSClass);
   EditFieldTL(h,v+=vs, 70,"Patalpa 1",M4Code,Normal,10,f2,false,LocationSClass);
-  EditFieldTL(h,v+=vs, 70,"Per patalpƒÖ",M4Code,Normal,10,f3,false,LocationSClass);
+  EditFieldTL(h,v+=vs, 70,"Per patalpà",M4Code,Normal,10,f3,false,LocationSClass);
   EditFieldTL(h,v+=vs, 70,"Patalpa 2",M4Code,Normal,10,f4,false,LocationSClass);
   EditFieldTL(h,v+=vs, 50,"Minimalus lygis",M4UVal,Normal,10,vals0,true,0);
   EndWindow;
@@ -597,15 +597,15 @@ begin
   SetWRect(20,80,450,250 + (probcnt*50));
   UseView(RcVc);
   v = 20;  vs = 45;
-  EditFieldTL(140,v,80,"Prie≈æastis",M4Code,Normal,20,f1,false,StandProblemsSClass);
+  EditFieldTL(140,v,80,"PrieÏastis",M4Code,Normal,20,f1,false,StandProblemsSClass);
   v = v + vs;
   for(i=0;i<probcnt;i=i+1)begin
     ColourPushButtonTag(100,v,-100,v+40,"DOLPOSPasteStandProblemWClassPasteProblem",a_probnames[i],7,a_probcodes[i]);
     v=v+50;
   end;
 
-  ColourPushButton(100,v,200,v+40,"DOLDialogDoNothing","At≈°aukti",1);
-  ColourPushButton(-200,v,-100,v+40,"DOLDialogPOSPasteStandProblem","Tƒôsti",2);
+  ColourPushButton(100,v,200,v+40,"DOLDialogDoNothing","At‰aukti",1);
+  ColourPushButton(-200,v,-100,v+40,"DOLDialogPOSPasteStandProblem","T´sti",2);
   EndWindow;
 
 end;
@@ -627,15 +627,15 @@ begin
     i = 0;
   end;
 
-  WindowBegin("Pardavimo paie≈°ka",RetInvoiceRunRepWClass,CGother,-);
+  WindowBegin("Pardavimo paie‰ka",RetInvoiceRunRepWClass,CGother,-);
   DynamicWindow;
   SetWRect(20,80,720,400 + (i * 50));
   UseView(RcVc);
   v = 20;  vs = 45;
   EditFieldTLX(h=200,v,150,"Data",M4Date,Normal,0,25,patM4black,d1,false,PasteCurDate);
-  EditFieldTLX(h,v+=40,150,"Mokƒóta kort.",M4Val,Normal,0,25,patM4black,vals1,true,0);
-  EditFieldTLX(h,v+=40,150,"Prekƒós kodas",M4Code,Normal,20,25,patM4black,f1,false,0);
-  EditFieldTLX(h,vm=(v+=40),150,"Parduotuvƒó",M4Code,Normal,20,25,patM4black,f2,false,0);
+  EditFieldTLX(h,v+=40,150,"Mokòta kort.",M4Val,Normal,0,25,patM4black,vals1,true,0);
+  EditFieldTLX(h,v+=40,150,"Prekòs kodas",M4Code,Normal,20,25,patM4black,f1,false,0);
+  EditFieldTLX(h,vm=(v+=40),150,"Parduotuvò",M4Code,Normal,20,25,patM4black,f2,false,0);
 
   v = 20; h2 = 55; v3 = 48; vs = 52; hm = 370; l = 57;
   h = hm-2; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad1","1_",2);
@@ -654,8 +654,8 @@ begin
   h = h+l; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad0","0_",2);
   h = h+l; ColourPushButton(h,v,h+h2,v+v3,"PriceChToolKeyPadPoint",".",2);
 
-  ColourPushButton(h = hm-2,v+=80,h+=100,v+40,"DOLDialogDoNothing","At≈°aukti",1);
-  ColourPushButton(h+=10,v,h+100,v+40,"RetInvoiceRunRepWClassRunReport","Tƒôsti",2);
+  ColourPushButton(h = hm-2,v+=80,h+=100,v+40,"DOLDialogDoNothing","At‰aukti",1);
+  ColourPushButton(h+=10,v,h+100,v+40,"RetInvoiceRunRepWClassRunReport","T´sti",2);
 
   v = vm + 60;
   for(i=0;i<loccnt;i=i+2)begin
@@ -676,22 +676,22 @@ window DOL_SoldINStatRClass:1
 begin
   real h,v,vm,vs,vt;
 
-  WindowBegin("DOL - Preki≈≥ pardavim≈≥ statistika",DOL_SoldINStatRClass,CGRcW,RcType);
+  WindowBegin("DOL - Preki˜ pardavim˜ statistika",DOL_SoldINStatRClass,CGRcW,RcType);
   SetWRect(20,80,640,320);
   v = 6; h = 130; vs = 20; vm = 16;
   PeriodField(h,v,"Periodas");
   EditFieldTL(h,v+=vs,50,"Laikas",M4STime,Normal,0,sStartTime,false,PasteCurTime);
   StaticText(h+52,v+12,":",false);
   EditFieldTL(h+63,v,50,"",M4STime,Normal,0,sEndTime,false,PasteCurTime);
-  EditFieldTL(h,v+=vs,150,"Prekƒó",M4Str,Normal,50,f1,false,INSClass);
-  EditFieldTL(h,v+=vs,100,"Pirkƒójas",M4Code,Normal,20,f10,false,CUSClass);
+  EditFieldTL(h,v+=vs,150,"Prekò",M4Str,Normal,50,f1,false,INSClass);
+  EditFieldTL(h,v+=vs,100,"Pirkòjas",M4Code,Normal,20,f10,false,CUSClass);
   EditFieldTL(h,v+=vs,100,"Pirkejo klase",M4UStr,Normal,60,f12,false,CClassSClass);
-  EditFieldTL(h,v+=vs,100,"Prekƒós grupƒó",M4Code,Normal,5,f2,false,ITSClass);
-  EditFieldTL(h,v+=vs,150,"Prekƒós klasifikacija",M4UStr,Normal,200,f3,false,DISClass);
+  EditFieldTL(h,v+=vs,100,"Prekòs grupò",M4Code,Normal,5,f2,false,ITSClass);
+  EditFieldTL(h,v+=vs,150,"Prekòs klasifikacija",M4UStr,Normal,200,f3,false,DISClass);
   EditFieldTL(h,v+=vs,100,"Patalpa",M4Code,Normal,10,f4,false,LocationSClass);
-  EditFieldTL(h,v+=vs,100,"Pagrindinis tiekƒójas",M4Code,Normal,20,f5,false,VESClass);
-  EditFieldTL(h,v+=vs,100,"Preki≈≥ ƒØvairovƒó",M4Code,Normal,20,f6,false,VARSClass);
-  EditFieldTL(h,v+=vs,100,"Pardavƒójas",M4Code,Normal,10,f7,false,UserSClass);
+  EditFieldTL(h,v+=vs,100,"Pagrindinis tiekòjas",M4Code,Normal,20,f5,false,VESClass);
+  EditFieldTL(h,v+=vs,100,"Preki˜ ∞vairovò",M4Code,Normal,20,f6,false,VARSClass);
+  EditFieldTL(h,v+=vs,100,"Pardavòjas",M4Code,Normal,10,f7,false,UserSClass);
   EditFieldTL(h,v+=vs,100,"Lojalumo kort.",M4Str,Normal,50,f11,false,LoyaltyCardSClass);
   EditFieldTL(h,v+=vs,100,"Narystes lygis",M4Code,Normal,20,f13,false,LCMemberLevelSClass);
   EditFieldTL(h,v+=vs,100,"Nuolaida (detaliai)",M4Val,Normal,0,vals0,false,0);
@@ -701,31 +701,32 @@ begin
   h = 300;
   v = 6;
   CheckBox(h,v+=vs,0,"Tik Patvirtintos",flags[1]);
-  CheckBox(h,v+=vs,0,"ƒÆskaitant pardavim≈≥ knygos duomenis",flags[2]);
-  CheckBox(h,v+=vs,0,"ƒÆtraukti visas gautas prekes",flags[3]);
-  CheckBox(h,v+=vs,0,"NeƒØtraukti u≈ædaryt≈≥",flags[4]);
+  CheckBox(h,v+=vs,0,"Øskaitant pardavim˜ knygos duomenis",flags[2]);
+  CheckBox(h,v+=vs,0,"Øtraukti visas gautas prekes",flags[3]);
+  CheckBox(h,v+=vs,0,"Ne∞traukti uÏdaryt˜",flags[4]);
   ButtonFrame(h=300,vt=(v+=(2*vs+7)),130,3,"Funkcija");
-  RadioButton(h,v,2,0,"Per≈æi≈´ra",ArtMode);
-  RadioButton(h,v+=vm,0,0,"Per≈æi≈´ra su ƒØvairoves",ArtMode);
+  RadioButton(h,v,2,0,"PerÏira",ArtMode);
+  RadioButton(h,v+=vm,0,0,"PerÏira su ∞vairoves",ArtMode);
   RadioButton(h,v+=vm,1,0,"Detaliai",ArtMode);
+  RadioButton(h,v+=vm,3,0,"Tiekòj˜ apÏvalga",ArtMode);
   EndFrame;
   ButtonFrame(h,v+=(2*vs+7),130,3,"Operacijos tipas");
   RadioButton(h,v,0,0,"Visi",Priority);
   RadioButton(h,v+=vm,1,0,"Tik pardavimai",Priority);
-  RadioButton(h,v+=vm,2,0,"Tik grƒÖ≈æinimai",Priority);
+  RadioButton(h,v+=vm,2,0,"Tik gràÏinimai",Priority);
   EndFrame;
-  ButtonFrame(h=470,v=vt,130,3,"R≈´≈°iavimas");
-  RadioButton(h,v,0,0,"Prekƒós kodas",Comparison);
-  RadioButton(h,v+=vm,1,0,"Auk≈°ƒçiausi pardavimai",Comparison);
-  RadioButton(h,v+=vm,2,0,"≈Ωemiausi pardavimai",Comparison);
-  RadioButton(h,v+=vm,3,0,"Did≈æiausia %",Comparison);
-  RadioButton(h,v+=vm,4,0,"Ma≈æiausia %",Comparison);
+  ButtonFrame(h=470,v=vt,130,3,"R‰iavimas");
+  RadioButton(h,v,0,0,"Prekòs kodas",Comparison);
+  RadioButton(h,v+=vm,1,0,"Auk‰ãiausi pardavimai",Comparison);
+  RadioButton(h,v+=vm,2,0,"Îemiausi pardavimai",Comparison);
+  RadioButton(h,v+=vm,3,0,"DidÏiausia %",Comparison);
+  RadioButton(h,v+=vm,4,0,"MaÏiausia %",Comparison);
   EndFrame;
   
-  ButtonFrame(h,v+=vm*2+10,130,3,"Esama prekƒós nuolaida");// Edit ************************** BPI Ukraine - KramarAlexandr - Tuesday, 20 November 2018 17:00:42
+  ButtonFrame(h,v+=vm*2+10,130,3,"Esama prekòs nuolaida");// Edit ************************** BPI Ukraine - KramarAlexandr - Tuesday, 20 November 2018 17:00:42
   RadioButton(h,v,0,0,"Default",flags[5]);
-  RadioButton(h,v+=vm,1,0,"Did≈æiausia nuolaida",flags[5]);
-  RadioButton(h,v+=vm,2,0,"Ma≈æiausia nuolaida",flags[5]);
+  RadioButton(h,v+=vm,1,0,"DidÏiausia nuolaida",flags[5]);
+  RadioButton(h,v+=vm,2,0,"MaÏiausia nuolaida",flags[5]);
   EndFrame;
   EndWindow;
 
@@ -738,14 +739,14 @@ window DOLShopSalesRClass:1
 begin
   real h,v,vm,vs;
 
-  WindowBegin("DOL - Parduotuvƒós pardavimai",DOLShopSalesRClass,CGRcW,RcType);
+  WindowBegin("DOL - Parduotuvòs pardavimai",DOLShopSalesRClass,CGRcW,RcType);
   SetWRect(20,80,400,220);
   v = 6; h = 130; vs = 20; vm = 16;
   EditFieldTL(h,v+=vs,80,"Periodas iki",M4Date,Normal,0,d1,false,PasteCurDate);
   EditFieldTL(h,v+=vs,100,"Patalpa",M4Code,Normal,10,f1,false,LocationSClass);
-  EditFieldTL(h,v+=vs,100,"Patalpos grupƒó",M4Code,Normal,10,f2,false,LocGrSClass);
+  EditFieldTL(h,v+=vs,100,"Patalpos grupò",M4Code,Normal,10,f2,false,LocGrSClass);
   EditFieldTL(h,v+=vs,100,"Vienetas",M4Code,Normal,10,f3,false,UnitSClass);
-  CheckBox(h,v+=vs,0,"ƒÆskaitant pardavim≈≥ knygos duomenis",flags[3]); // EVS: DOL-152
+  CheckBox(h,v+=vs,0,"Øskaitant pardavim˜ knygos duomenis",flags[3]); // EVS: DOL-152
   ButtonFrame(h,v+=(2*vs+7),123,5,"Funkcija");
   RadioButton(h,v,0,0,"Pardavimai su PVM",flags[0]);
   RadioButton(h,v+=vm,1,0,"Pardavimai be PVM",flags[0]);
@@ -753,15 +754,15 @@ begin
   RadioButton(h,v+=vm,3,0,"BP",flags[0]);
   RadioButton(h,v+=vm,4,0,"BP %",flags[0]);
   EndFrame;
-  ButtonFrame(h,v+=(2*vs+7),123,3,"ƒÆtraukti");
+  ButtonFrame(h,v+=(2*vs+7),123,3,"Øtraukti");
   RadioButton(h,v,0,0,"Viskas",flags[1]);
   RadioButton(h,v+=vm,1,0,"Tik pardavimai",flags[1]);
-  RadioButton(h,v+=vm,2,0,"Tik grƒÖ≈æinimai",flags[1]);
+  RadioButton(h,v+=vm,2,0,"Tik gràÏinimai",flags[1]);
   EndFrame;
   ButtonFrame(h,v+=(2*vs+7),123,5,"Periodo tipas");
   RadioButton(h,v,0,0,"Diena",flags[2]);
-  RadioButton(h,v+=vm,1,0,"Savaitƒó",flags[2]);
-  RadioButton(h,v+=vm,2,0,"Mƒónuo",flags[2]);
+  RadioButton(h,v+=vm,1,0,"Savaitò",flags[2]);
+  RadioButton(h,v+=vm,2,0,"Mònuo",flags[2]);
   RadioButton(h,v+=vm,3,0,"Ketvirtis",flags[2]);
   RadioButton(h,v+=vm,4,0,"Metai",flags[2]);
   EndFrame;
@@ -786,15 +787,15 @@ begin
   SetWRect(20,80,450,250 + (probcnt*50));
   UseView(RcVc);
   v = 20;  vs = 45;
-  EditFieldTL(140,v,80,"Prie≈æastis",M4Code,Normal,20,f1,false,StandProblemsSClass);
+  EditFieldTL(140,v,80,"PrieÏastis",M4Code,Normal,20,f1,false,StandProblemsSClass);
   v = v + vs;
   for(i=0;i<probcnt;i=i+1)begin
     ColourPushButtonTag(100,v,-100,v+40,"DOLPOSPasteStandProblemWClassPasteProblem",a_probnames[i],7,a_probcodes[i]);
     v=v+50;
   end;
 
-  ColourPushButton(100,v,200,v+40,"DOLDialogDoNothing","At≈°aukti",1);
-  ColourPushButton(-200,v,-100,v+40,"DOLDialogPOSStandProblemVClassOnOKWindow","Tƒôsti",2);
+  ColourPushButton(100,v,200,v+40,"DOLDialogDoNothing","At‰aukti",1);
+  ColourPushButton(-200,v,-100,v+40,"DOLDialogPOSStandProblemVClassOnOKWindow","T´sti",2);
   EndWindow;
 
 end;
@@ -805,11 +806,11 @@ window EBS_ChangeINVarVClass:1
 begin
   real h,v,vm,vs;
 
-  WindowBegin("Dyd≈æio keitimas",EBS_ChangeINVarVClass,CGMnt,RcType);
+  WindowBegin("DydÏio keitimas",EBS_ChangeINVarVClass,CGMnt,RcType);
   SetWRect(20,80,370,240);
   v = 30; h = 137; vs=22;
-  EditFieldTL(h,v,120,"Pa≈°alinti",M4Code,Normal,20,f1,false,INSClass);
-  EditFieldTL(h,v+=vs,120,"Pridƒóti",M4Code,Normal,20,f2,false,INSClass);
+  EditFieldTL(h,v,120,"Pa‰alinti",M4Code,Normal,20,f1,false,INSClass);
+  EditFieldTL(h,v+=vs,120,"Pridòti",M4Code,Normal,20,f2,false,INSClass);
   EditFieldTL(h,v+=vs,120,"Patalpa",M4Code,Normal,20,f3,false,LocationSClass);
   EndWindow;
 
@@ -820,12 +821,12 @@ window DOLRemoveDIINVClass:2
   wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
 begin
   real h,v,vs;
-  WindowBegin("I≈°mesti klasƒô i≈° prekƒó",DOLRemoveDIINVClass,CGMnt,RcType);
+  WindowBegin("I‰mesti klas´ i‰ prekò",DOLRemoveDIINVClass,CGMnt,RcType);
   SetWRect(20,80,500,215);
   vs = 20;h = 160; v = 6;
-  EditFieldTL(h,v+=vs,150,"Prekƒós",M4UStr,Normal,41,f1,false,INSClass);
-  EditFieldTL(h,v+=vs,80,"Grupƒó",M4UStr,Normal,20,f2,false,ITSClass);
-  EditFieldTL(h,v+=vs,80,"Klasƒó",M4UStr,Normal,20,FirstAcc,false,DISClass);
+  EditFieldTL(h,v+=vs,150,"Prekòs",M4UStr,Normal,41,f1,false,INSClass);
+  EditFieldTL(h,v+=vs,80,"Grupò",M4UStr,Normal,20,f2,false,ITSClass);
+  EditFieldTL(h,v+=vs,80,"Klasò",M4UStr,Normal,20,FirstAcc,false,DISClass);
   EndWindow;
 end;
 // :EVS
@@ -846,13 +847,13 @@ window DOLGenLCVClass:2
   wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
 begin
   real h,v,vs;
-  WindowBegin("DOL - Lojalumo korteli≈≥ k≈´rimas",DOLGenLCVClass,CGMnt,RcType);
+  WindowBegin("DOL - Lojalumo korteli˜ krimas",DOLGenLCVClass,CGMnt,RcType);
   SetWRect(20,80,500,215);
   vs = 20;h = 160; v = 6;
   EditFieldTL(h,v+=vs,80,"Kurti nuo",M4Str,Normal,41,f3,false,0);
   EditFieldTL(h,v+=vs,60,"Kiekis",M4Long,Normal,20,long2,false,0);
-  EditFieldTL(h,v+=vs,80,"Pirkƒójas",M4Code,Normal,20,f1,false,AllCUSClass);
-  EditFieldTL(h,v+=vs,80,"Narystƒós lygis",M4Code,Normal,10,f2,false,LCMemberLevelSClass);
+  EditFieldTL(h,v+=vs,80,"Pirkòjas",M4Code,Normal,20,f1,false,AllCUSClass);
+  EditFieldTL(h,v+=vs,80,"Narystòs lygis",M4Code,Normal,10,f2,false,LCMemberLevelSClass);
   EndWindow;
 end;
 // :EVS
@@ -874,13 +875,13 @@ window DOLFindItemInWinWClass:1
 begin
   real h,v,vm,vs;
 
-  WindowBegin("Prekƒós paie≈°ka",DOLFindItemInWinWClass,CGOther,-);
+  WindowBegin("Prekòs paie‰ka",DOLFindItemInWinWClass,CGOther,-);
   SetWRect(20,80,330,200);
   UseView(RcVc);
 //  Modality(1);
 
   h = 100; v = 10;
-  EditFieldTL(h,v,100,"Prekƒó",M4Code,Normal,20,f1,false,INSClass);
+  EditFieldTL(h,v,100,"Prekò",M4Code,Normal,20,f1,false,INSClass);
   EndWindow;
 
 end;
@@ -890,22 +891,22 @@ window DOLPOItemsRClass:1
   wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
 begin
   real h,v,vm,vs;
-  WindowBegin("DOL - Preki≈≥ u≈æsakymo i≈° tiekƒój≈≥",DOLPOItemsRClass,CGRcW,RcType);
+  WindowBegin("DOL - Preki˜ uÏsakymo i‰ tiekòj˜",DOLPOItemsRClass,CGRcW,RcType);
   SetWRect(20,80,400,220);
   vs = 20; h = 130; v = 6;
   PeriodField(h,v,"Periodas");
-  EditFieldTL(h,v+=vs,100,"Prekƒó",M4Code,Normal,20,f1,false,INSClass);
-  EditFieldTL(h,v+=vs,100,"Prekƒós grupƒó",M4Code,Normal,5,f2,false,ITSClass);
-  EditFieldTL(h,v+=vs,150,"Prekƒós klasifikacija",M4UStr,Normal,200,f3,false,DISClass);
-  EditFieldTL(h,v+=vs,100,"Tiekƒójas",M4Code,Normal,20,f4,false,VESClass);
+  EditFieldTL(h,v+=vs,100,"Prekò",M4Code,Normal,20,f1,false,INSClass);
+  EditFieldTL(h,v+=vs,100,"Prekòs grupò",M4Code,Normal,5,f2,false,ITSClass);
+  EditFieldTL(h,v+=vs,150,"Prekòs klasifikacija",M4UStr,Normal,200,f3,false,DISClass);
+  EditFieldTL(h,v+=vs,100,"Tiekòjas",M4Code,Normal,20,f4,false,VESClass);
   EditFieldTL(h,v+=vs,100,"Vienetas",M4Code,Normal,10,f5,false,UnitSClass);
   EditFieldTL(h,v+=vs,80,"Dydis",M4Code,Normal,20,f6,false,VARSClass);
 
-  ButtonFrame(h,v+=40,123,2,"ƒÆtraukti");
-  CheckBox(h,v,0,"U≈ædarytus",flags[1]);
+  ButtonFrame(h,v+=40,123,2,"Øtraukti");
+  CheckBox(h,v,0,"UÏdarytus",flags[1]);
   CheckBox(h,v+=16,0,"Nepatvirtintus",flags[2]);
   EndFrame;
-  ButtonFrame(h,v+=40,123,3,"B≈´klƒó");
+  ButtonFrame(h,v+=40,123,3,"Bklò");
   RadioButton(h,v,0,0,"Visi",flags[3]);
   RadioButton(h,v+=16,1,0,"Pristatyta",flags[3]);
   RadioButton(h,v+=16,2,0,"Nepristatyta",flags[3]);
@@ -935,7 +936,7 @@ begin
   SetWRect(20,80,480,320);
   SetBlid(DOLSetBlock);
   Tile(0,20,false,"",SeasonCType);
-  TileButton(1,"Prekƒós");
+  TileButton(1,"Prekòs");
   Tile(1,120,true,"",SeasonCType);
   EditField(h,v = 10,80,"Sezonas klasifikacijos tipas",Normal,SeasonCType,false,CTypeSClass);
   EditField(h,v += vs,80,"Tipas klasifikacijos tipas",Normal,TypeCType,false,CTypeSClass);
@@ -947,7 +948,7 @@ window DOLCUClassSClass:1
 begin
   real h,v,vs;
   string 255 label;
-  WindowBegin("Klasi≈≥ ƒØvedimas",DOLCUClassSClass,CGother,RcType);
+  WindowBegin("Klasi˜ ∞vedimas",DOLCUClassSClass,CGother,RcType);
   ToolBar;
   PushButton(-70,5,-10,22,ToolOK,"OK");
   HalPushButton(-140,5,-80,22,"CUClassReplace","Pakeisti");
@@ -961,7 +962,7 @@ begin
   StaticText(h+60,v,label,true);
   StaticText(h-8,v+=20,"Reikiamos",true);
 //  StaticText(12,v+=20,"Required Types",false);
-  StaticText(h,v,"Klasƒós",false);
+  StaticText(h,v,"Klasòs",false);
   label = UserDefined("CUClassSClass","1");
   if (nonblank(label)) then begin
     EditField(h,v+=vs,-20,label,Normal,f1,false,CClassBTSClass);
@@ -1003,14 +1004,14 @@ window EBS_AddDiscountWClass:1
 begin
   real h,v,vs;
 
-  WindowBegin("Paskirstyti nuolaidƒÖ",EBS_AddDiscountWClass,CGother,-);
+  WindowBegin("Paskirstyti nuolaidà",EBS_AddDiscountWClass,CGother,-);
   Modality(kModalityGlobal);
   UseView(RcVc);
   SetWRect(20,80,400,200);
   Sizeable(-1,-1,0,0);
   EditFieldTL(h=150,v=10, 60,"Visa nuolaida",M4Val,Normal,0,vals0,true,0);
-  EditFieldTL(h,v+=20, 60,"Procentinƒó nuolaida",M4Val,Normal,0,vals1,true,0);
-  HalPushButton(h,v+=25,h+140,v+20,"EBS_AddDiscountBtn","Pridƒóti");
+  EditFieldTL(h,v+=20, 60,"Procentinò nuolaida",M4Val,Normal,0,vals1,true,0);
+  HalPushButton(h,v+=25,h+140,v+20,"EBS_AddDiscountBtn","Pridòti");
   EndWindow;
 
   return;
@@ -1042,9 +1043,9 @@ begin
     Sizeable(-1,-1,0,0);
     UseView(EBS_AddUserFieldVc);
     RecordList(4,17,-21,-39);
-    RlColKey(4,4,"Para≈°as",Code,false,Code);
+    RlColKey(4,4,"Para‰as",Code,false,Code);
     RlCol(90,90,"Maks. nuolaida",MaxvRebate,false);
-    SearchField("Ie≈°koti");
+    SearchField("Ie‰koti");
   EndWindow;
 
   return;
@@ -1060,9 +1061,9 @@ begin
     UseView(EBS_AddUserFieldVc);
     h=100;
     vs = 20;
-    EditField(h,v=12,100,"Para≈°as",Normal,Code,false,UserSClass);
+    EditField(h,v=12,100,"Para‰as",Normal,Code,false,UserSClass);
     EditField(h,v+=vs,100,"Maks. nuolaida",Normal,MaxvRebate,true,0);
-    CheckBox(h,v+=vs,0,"Si≈´lyti prekƒô",ShowCrossSalesFlag); // EVS: DOL-2
+    CheckBox(h,v+=vs,0,"Silyti prek´",ShowCrossSalesFlag); // EVS: DOL-2
   EndWindow;
 
   return;
@@ -1108,14 +1109,14 @@ window EBS_NewCUFieldsTClass:1
   wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
 begin
   real h,v;
-  WindowBegin("DOL - Laukai naujo kliento suk≈´rimui",EBS_NewCUFieldsTClass,CGHbl,HBlRecType);
+  WindowBegin("DOL - Laukai naujo kliento sukrimui",EBS_NewCUFieldsTClass,CGHbl,HBlRecType);
   SetBlid(EBS_NewCUFieldsBlock);
   SetWRect(20,80,520,300);
   h = 8; v = 20;
   MatrixBegin(h,v,-25,-1,-,99);
   MatCol(1,24,"Lauko tipas",0,FieldType,false,SetSClass);
   MatCol(1,144,"Tipas",0,EditState,false,SetSClass);
-  MatCol(1,224,"Kortelƒó",0,Label,false,0);
+  MatCol(1,224,"Kortelò",0,Label,false,0);
   MatCol(1,324,"Default value",0,DefValue,false,0);
   EndMatrix;
   EndWindow;
@@ -1126,11 +1127,11 @@ window EBS_ScanLoyCardWClass:1
 begin
   real h,v,vs;
 
-  WindowBegin("Skenuoti anketos barkodƒÖ",EBS_ScanLoyCardWClass,CGother,-);
+  WindowBegin("Skenuoti anketos barkodà",EBS_ScanLoyCardWClass,CGother,-);
   Modality(kModalityGlobal);
   UseView(RcVc);
   SetWRect(20,80,650,200);
-  EditFieldTLX(h=360,v=20,-20,"Skenuoti anketos barkodƒÖ",M4Str,Normal,100,25,patM4black,f2,false,0);
+  EditFieldTLX(h=360,v=20,-20,"Skenuoti anketos barkodà",M4Str,Normal,100,25,patM4black,f2,false,0);
   ColourPushButton(40,v+=40,240,v+40,"EBS_ScanLoyCardCancelBtn","Nutraukti",20);
   ColourPushButton(270,v,470,v+40,"EBS_ScanLoyCardOkBtn","Gerai",20);
   EndWindow;
@@ -1307,11 +1308,11 @@ begin
   hm = 280; v = 60;
   vs = 52; h2 = 55; v3 = 48; l = 57;
   h = hm;
-  EditFieldTLX(h+l+30,20,120,"GrƒÖ≈æa",M4Val,ViewOnly,100,25,patM4black,vals0,true,0);
-  EditFieldTL(h+l+30,v,120,"PardavƒójƒÖs",M4UStr,Normal,10,f1,false,0);
-  EditFieldTL(h+l+30,v+=20,120,"Slapta≈æodis",M4Star,Normal,20,f2,false,0);
+  EditFieldTLX(h+l+30,20,120,"GràÏa",M4Val,ViewOnly,100,25,patM4black,vals0,true,0);
+  EditFieldTL(h+l+30,v,120,"Pardavòjàs",M4UStr,Normal,10,f1,false,0);
+  EditFieldTL(h+l+30,v+=20,120,"SlaptaÏodis",M4Star,Normal,20,f2,false,0);
   v=v+29;
-  h = hm; ColourPushButton(h,v,h+h2*3,v+v3,"SalesAssistantVClassUserListBtn","Pard. sƒÖra≈°as",2);
+  h = hm; ColourPushButton(h,v,h+h2*3,v+v3,"SalesAssistantVClassUserListBtn","Pard. sàra‰as",2);
   v = v+vs;
   h = hm-2; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad1","1_",2);
   h = h+l; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad2","2_",2);
@@ -1379,11 +1380,11 @@ begin
   hm = 280; v = 60;
   vs = 52; h2 = 55; v3 = 48; l = 57;
   h = hm;
-  EditFieldTLX(h+l+30,20,120,"GrƒÖ≈æa",M4Val,ViewOnly,100,25,patM4black,vals0,true,0);
-  EditFieldTL(h+l+30,v,120,"PardavƒójƒÖs",M4UStr,Normal,10,f1,false,0);
-  EditFieldTL(h+l+30,v+=20,120,"Slapta≈æodis",M4Star,Normal,20,f2,false,0);
+  EditFieldTLX(h+l+30,20,120,"GràÏa",M4Val,ViewOnly,100,25,patM4black,vals0,true,0);
+  EditFieldTL(h+l+30,v,120,"Pardavòjàs",M4UStr,Normal,10,f1,false,0);
+  EditFieldTL(h+l+30,v+=20,120,"SlaptaÏodis",M4Star,Normal,20,f2,false,0);
   v=v+29;
-  h = hm; ColourPushButton(h,v,h+h2*3,v+v3,"SalesAssistantVClassUserListBtn","Pard. sƒÖra≈°as",2);
+  h = hm; ColourPushButton(h,v,h+h2*3,v+v3,"SalesAssistantVClassUserListBtn","Pard. sàra‰as",2);
   v = v+vs;
   h = hm-2; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad1","1_",2);
   h = h+l; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad2","2_",2);
