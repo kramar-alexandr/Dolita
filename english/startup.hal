@@ -50,6 +50,14 @@ begin
 	SString(1000156,"Item not found");
 	SString(1000157,"Specify Quantity");
 
+	SString(1000158,"Patalpa");
+	SString(1000159,"KPID");
+	SString(1000160,"Vardas, Pavarde");
+	SString(1000161,"Clock-in");
+	SString(1000162,"Clock-out");
+	SString(1000163,"Total Time");
+
+
   SetBegin(11002);
   SetText(0,"Clock Out");
   SetText(1,"Clock In");

@@ -1,22 +1,40 @@
+external inner function Date DateFromString(string,string);
+external inner function Time TimeDiff(Time,Time);
+
 global
 procedure DOL_EmpTimeRn(record RcVc RepSpec)
 begin
   record POSClockInOutVc PCr;
   Boolean TrHs,testf;
+  string 255 datestr,tmp;
+  Date td;
+  Longint pos;
+  vector time vClockIn,vClockOut;
+  array string 255 aClockIn;
+  Integer i;
+  Time diff;
+  record UserVc Userr;
+  vector string 255 vLocation;
   
   StartReportJob(UsetStr(1000149));
 
   EndHeader;
 
   SetRepCol(2,70);
-  SetRepCol(3,140);
-  SetRepCol(4,210);
+  SetRepCol(3,120);
+  SetRepCol(4,160);
+  SetRepCol(5,280);
+  SetRepCol(6,350);
+  SetRepCol(7,420);
   
   StartFormat(15);
-  OutString(0,0,USetStr(14281),false);
-  OutString(2,0,USetStr(14284),false);
-  OutString(3,0,USetStr(16050),false);
-  OutString(4,0,USetStr(1000148),false);
+  OutString(0,0,USetStr(14281),false);//date
+  OutString(2,0,USetStr(1000158),false);//location
+  OutString(3,0,USetStr(1000159),false);//user id
+  OutString(4,0,USetStr(1000160),false);//user name
+  OutString(5,0,USetStr(1000161),false);
+  OutString(6,0,USetStr(1000162),false);
+  OutString(7,0,USetStr(1000163),false);
   EndFormat;
   StartFormat(1);
   Gray_Divider(0,1);
@@ -36,14 +54,37 @@ begin
         testf = false;
       end;
       if (testf) then begin
-        StartFormat(15);
-        OutString(0,0,PCr.TransDate,false);
-        OutString(2,0,PCr.TransTime,false);
-        OutString(3,0,PCr.LocalMachine,false);
-        OutString(4,0,StringFromSet(11002,PCr.Type),false);
-        EndFormat;
+        datestr = DateToString(PCr.TransDate,"YYYY-MM-DD");
+        switch (PCr.Type) begin
+          case 1: vClockIn[datestr & ":" & PCr.UserCode] = PCr.TransTime;
+          case 0: vClockOut[datestr & ":" & PCr.UserCode] = PCr.TransTime;
+        end;
+        vLocation[datestr & ":" & PCr.UserCode] = PCr.LocalMachine;
       end;
     end;
+  end;
+
+  GetVectorTags(vClockIn,aClockIn);
+  SortStringArray(aClockIn);
+  for (i=0;i<aClockIn.length;i=i+1) begin
+    pos = -1;
+    GetNextSubString(aClockIn[i],pos,":",tmp);
+    td = DateFromString(tmp,"YYYY-MM-DD");
+    GetNextSubString(aClockIn[i],pos,":",tmp);
+    Userr.Code = tmp;
+    ReadFirstMain(Userr,1,true);
+    diff = TimeDiff(vClockOut[aClockIn[i]],vClockIn[aClockIn[i]]);
+
+    StartFormat(15);
+    OutString(0,0,td,false);
+    OutString(2,0,vLocation[aClockIn[i]],false);
+    OutString(3,0,Userr.Code,false);
+    OutString(4,0,Userr.Name,false);
+    OutString(5,0,vClockOut[aClockIn[i]],false);
+    OutString(6,0,vClockIn[aClockIn[i]],false);
+    OutString(7,0,diff,false);
+    EndFormat;
+
   end;
 
   EndJob;
