@@ -22,6 +22,7 @@ enum begin
   kPOSButtonTypeInternalOrders = 220,
   kPOSButtonTypeClockIn = 221,
   kPOSButtonTypeClockOut = 222,
+  kPOSButtonTypeStockMovement = 223,
 
 end;
 
@@ -38,6 +39,16 @@ begin
 	SString(1000147,"Not all salesmen are clocked out");
 	SString(1000148,"Location");
 	SString(1000149,"Employee Time");
+
+	SString(1000150,"Received");
+	SString(1000151,"Supplier");
+	SString(1000152,"Function: Supplier Overview");
+
+	SString(1000153,"Fill Location");
+	SString(1000154,"Local Location not found");
+	SString(1000155,"Specify at least one Item");
+	SString(1000156,"Item not found");
+	SString(1000157,"Specify Quantity");
 
   SetBegin(11002);
   SetText(0,"Clock Out");
@@ -209,6 +220,8 @@ begin
   SetText(kPOSButtonTypeInternalOrders,"Internal Orders");
   SetText(kPOSButtonTypeClockIn,"Clock-in");//CHN
   SetText(kPOSButtonTypeClockOut,"Clock-out");//CHN
+  SetText(kPOSButtonTypeStockMovement,"Stock Movement");//CHN
+  
   EndSet;
 
   return;

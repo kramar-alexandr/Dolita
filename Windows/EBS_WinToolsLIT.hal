@@ -1,6 +1,7 @@
 remote procedure EBS_UserSClassOnOpenRemote(record LocalMachineBlock,var array string,var array string,var integer);
 remote procedure EBS_UserSClassOnOpenRemoteClockIn(record LocalMachineBlock,var array string,var array string,var integer); 
 remote procedure EBS_UserSClassOnOpenRemoteClockOut(record LocalMachineBlock,var array string,var array string,var integer); 
+remote procedure EBS_GetIntOrderLocationsRemote(var array record LocationVc);
 
 global
 procedure DrawUserButtons(real h,real sv,real vs,real v3,integer maxbtn) begin
@@ -65,6 +66,30 @@ procedure DrawClockOutUserButtons(real h,real sv,real vs,real v3,integer maxbtn)
     v = v + vs;
   end;
   
+  return;
+end;
+
+global
+procedure DrawLocationButtons(real h,real sv,real vs,real v3,integer maxbtn)
+begin
+  real v;
+  integer i,cnt,mwn,currow,size;
+  array record LocationVc aLocr;
+  record LocationVc Locr;
+
+  EBS_GetIntOrderLocationsRemote(aLocr);
+  size = aLocr.length;
+  if size>maxbtn then begin
+    size = maxbtn;
+  end;
+  
+  v = sv;
+  for(i=0;i<aLocr.length;i=i+1)begin
+    Locr = aLocr[i];
+    ColourPushButtonTag(h,v,h+200,v+v3,"ChooseLocationBtn",Locr.Name & " (" & Locr.Code & ")",2,Locr.Code);
+    v = v + vs;
+  end;
+
   return;
 end;
 

@@ -1,5 +1,6 @@
-external procedure DrawClockInUserButtons(real,real,real,real,integer);
-external procedure DrawClockOutUserButtons(real,real,real,real,integer);
+external outer procedure DrawClockInUserButtons(real,real,real,real,integer);
+external outer procedure DrawClockOutUserButtons(real,real,real,real,integer);
+external outer procedure DrawLocationButtons(real,real,real,real,integer);
 
 window EBS_ClosedLoyaltyCardsVClass:1
   wtag("language","ENG"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
@@ -141,7 +142,6 @@ begin
   return;
 end;
 
-
 window EBS_ClockOutWClass:1
   wtag("language","ENG"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
 begin
@@ -226,4 +226,59 @@ begin
   EditFieldTL(h,v+=vs,100,"Location",M4Code,Normal,10,f2,false,LocalMachineSClass);
   EndWindow;
 
+end;
+
+window EBS_POSCreateStockMovWClass:1
+  wtag("language","ENG"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,h2,hm,v,v2,v3,vs,l;
+  integer wn;
+  longint bm,lt,rt,tp;
+  record RcVc RepSpec;
+
+  WindowBegin("Create Stock Movement",EBS_POSCreateStockMovWClass,CGOther,-);
+    //Modality(kModalityGlobal);
+    DynamicWindow;
+    wn = CurWindow;
+
+  SetWRect(64,80,870,610);
+  UseView(ORVc);
+
+  v = 60;
+  vs = 52; h2 = 55; v3 = 48; l = 57;
+  h = 270;
+  EditFieldTLX(h,20,120,"Location",M4Code,ViewOnly,10,18,patM4black,Location,true,0);
+  MatrixBegin(h,80,h+210,183,-,5);
+  MatCol(1,24,"Item",0,ArtCode,false,INSClass);
+  MatCol(1,-70,"Qty",0,Quant,true,0);
+  EndMatrix;
+
+  h = 520;
+  hm = h;
+  v=6+v3;
+  h = hm; ColourPushButton(h,v,h+h2*3,v+v3,"EBS_POSCreateStockMovWClassItemList","Items",2);
+  v = v+vs;
+  h = hm-2; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad1","1_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad2","2_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad3","3_",2);
+  v = v+vs;
+  h = hm-2; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad4","4_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad5","5_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad6","6_",2);
+  v = v+vs;
+  h = hm-2; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad7","7_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad8","8_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad9","9_",2);
+  v = v+vs;
+  h = hm-2+l; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad0","0_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyDel","Del",2);
+  v = v + vs;
+  h = hm-2; ColourPushButton(h,v,h+(3*l),v+v3,"EBS_CreateStockMovWClassOKBtn","Create",2);//EBS_ChooseSalesManVClassOKBtn//Patvirtinti
+
+
+  DrawLocationButtons(50,56,vs,v3,8);
+
+  EndWindow;
+
+  return;
 end;

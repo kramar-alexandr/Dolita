@@ -1,5 +1,7 @@
 remote inner procedure CUVc_CUClassSClass(record CUVc,var record RcVc);
 external inner procedure PasteFromTRObjS(Integer,Integer);
+external inner function string 255 StringFromSysList(Integer,Integer);
+external inner procedure PasteFromWn(Integer,string);
 
 // EVS: DOL-142
 global
@@ -28,3 +30,45 @@ begin
   return;
 end;
 // :EVS
+
+
+global
+function Boolean INNPTSSClassListClickOnOKWindow(Integer wn)
+begin
+  Integer mwn;
+  string 60 tstr;
+  record ORVc ORr;
+  Integer sline,rw;
+  Boolean res;
+    
+  mwn = MotherWindow(wn);
+  switch (GetWindowClass(mwn)) begin
+    case "EBS_POSCreateStockMovWClass":
+      if (StringFromSysList(wn,-1)!=USetStr(19390)) and (StringFromSysList(wn,-1)!=USetStr(24160)) then begin
+        rw = WindowActiveRow(mwn);
+        if (rw<0) then begin
+          rw = MatRowCnt(ORr);
+        end;
+        WindowFieldGoto(mwn,ORr,rw,"ArtCode",false); 
+        //WindowFieldGotoForTouchScreen(mwn,-1,"ivcashcommand",false);
+//        PasteFromSysList(wn,-2);
+        sline = SelectedListLine(wn);
+        tstr = GetListTag(wn,sline);
+        PasteFromWn(wn,GetListTag(wn,sline));
+        KeyPadEnter(mwn);
+      end;
+    otherwise 
+      res = inner.INNPTSSClassListClickOnOKWindow(wn);
+  end;
+
+  INNPTSSClassListClickOnOKWindow = false;
+  return;
+end;
+
+global
+function Boolean INNPTSSClassListDoubleClick(Integer wn,Integer rownr)
+begin
+  INNPTSSClassListClickOnOKWindow(wn);
+  INNPTSSClassListDoubleClick = true;
+  return;
+end;

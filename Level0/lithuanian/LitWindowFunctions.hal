@@ -132,6 +132,7 @@ enum begin
   kPOSButtonTypeInternalOrders = 220,
   kPOSButtonTypeClockIn = 221,
   kPOSButtonTypeClockOut = 222,
+  kPOSButtonTypeStockMovement = 223,
 
 end;
 
@@ -1137,6 +1138,8 @@ begin
         procstr = procstr & "DOLDoClockIn";
       case kPOSButtonTypeClockOut:
         procstr = procstr & "DOLDoClockOut";
+      case kPOSButtonTypeStockMovement:
+        procstr = procstr & "DOLCreateStockMov";
     end;
 LDrawPOSButtons_LITButton:;
 

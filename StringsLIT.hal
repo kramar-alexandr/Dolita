@@ -22,6 +22,7 @@ enum begin
   kPOSButtonTypeInternalOrders = 220,
   kPOSButtonTypeClockIn = 221,
   kPOSButtonTypeClockOut = 222,
+  kPOSButtonTypeStockMovement = 223,
 end;
 
 event startup
@@ -193,6 +194,7 @@ begin
   SetText(kPOSButtonTypeInternalOrders,"Internal Orders");//CHN
   SetText(kPOSButtonTypeClockIn,"Clock-in");//CHN
   SetText(kPOSButtonTypeClockOut,"Clock-out");//CHN
+  SetText(kPOSButtonTypeStockMovement,"Stock Movement");//CHN
   EndSet;
 
   SetBegin(1495); // pos invoice, subset of 431
@@ -323,6 +325,7 @@ begin
   SetText(kPOSButtonTypeShopifyOrders,"Shopify Orders");//CHN
   SetText(kPOSButtonTypeVoidBankPayment,"Void Bank Payment");//TOUCHLESS PAYMENTS
   SetText(kPOSButtonTypeInternalOrders,"Internal Orders");//CHN
+  SetText(kPOSButtonTypeStockMovement,"Stock Movement");//CHN
 
   EndSet;
 
@@ -570,6 +573,13 @@ begin
 	SString(1000150,"Gauta");
 	SString(1000151,"Tiekejas");
 	SString(1000152,"Funkcijos: Tiek˜j÷ apìvalga");
-	
+
+	SString(1000153,"Fill Location");
+	SString(1000154,"Local Location not found");
+	SString(1000155,"Specify at least one Item");
+	SString(1000156,"Item not found");
+	SString(1000157,"Specify Quantity");
+
+
   return;
 end;

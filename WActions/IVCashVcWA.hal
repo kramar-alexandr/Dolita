@@ -1729,3 +1729,14 @@ begin
 
   return;
 end;
+
+global
+procedure IVCashDClassDOLCreateStockMov()
+begin
+  record ORVc ORr;
+  Integer nwn;
+
+  nwn = OpenWindow("EBS_POSCreateStockMovWClass",0,0,"","",ORr);
+
+  return;
+end;

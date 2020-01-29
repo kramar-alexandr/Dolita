@@ -107,9 +107,10 @@ begin
   WindowBegin("Dolita - POS Internal Orders",POSIntORTClass,CGSbl,-);
   SetBlid(POSIntORBlock);
   SetWRect(20,80,340,400);
-  h = 120; vs = 20;
+  h = 150; vs = 20;
   EditField(h,v=6,150,"Route",Normal,Route,false,DelRouteSClass);
   EditField(h,v+=vs,150,"Shopify Route",Normal,ShopifyRoute,false,DelRouteSClass);
+  EditField(h,v+=vs,150,"Stock Mov. Locations",Normal,LocationClass,false,LocClSClass);
 
   EndWindow;
 end;

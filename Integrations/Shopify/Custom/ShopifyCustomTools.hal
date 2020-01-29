@@ -323,29 +323,39 @@ begin
   return;
 end;
 
-
 global
-procedure GetShopifyOrderList(string lm,var array record ORVc aORr,var array record StockMovVc aStockMovr)
+function string 255 GetLocalMachineLocation(string lm)
 begin
   record ShopifyLocLinkBlock SLb;
   row ShopifyLocLinkBlock SLbrw;
-  string 255 frloc;
-  vector Boolean vOrders;
-  record StockMovVc StockMovr;
-  Boolean TrHs;
+  string 255 res;
   Integer i,rwcnt;
-  record ORVc ORr;
 
-  
   BlockLoad(SLb);
   rwcnt = MatRowCnt(SLb);
   for (i=0;i<rwcnt;i=i+1) begin
     MatRowGet(SLb,i,SLbrw);
     if (SetInSet(lm,SLbrw.LocalMachine)) then begin
-      frloc = SLbrw.MainLocation;
+      res = SLbrw.MainLocation;
       i = rwcnt;
     end;
   end;
+
+
+  GetLocalMachineLocation = res;
+  return;
+end;
+
+global
+procedure GetShopifyOrderList(string lm,var array record ORVc aORr,var array record StockMovVc aStockMovr)
+begin
+  string 255 frloc;
+  vector Boolean vOrders;
+  record StockMovVc StockMovr;
+  Boolean TrHs;
+  record ORVc ORr;
+
+  frloc = GetLocalMachineLocation(lm);
 
   if (nonblank(frloc)) then begin
     TrHs = true;

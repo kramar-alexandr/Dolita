@@ -1,0 +1,23 @@
+global
+function Boolean EBS_POSCreateStockMovWClassAfterEditField(Integer wn,string fieldname,Integer fn,Integer rownr,Integer changed)
+begin
+  Boolean res;
+  record ORVc ORr;
+  row ORVc ORrw;
+  
+  res = false;
+  switch (fieldname) begin
+    case "ArtCode":
+      if (rownr>-1 and changed!=0) then begin
+        GetWindowRecord(wn,ORr);
+        MatRowGet(ORr,rownr,ORrw)
+        if (ORrw.Quant<1) then begin
+          ORrw.Quant = 1;
+          MatRowPut(ORr,rownr,ORrw);
+          PutWindowRecord(wn,ORr);
+        end;
+      end;
+  end;
+  EBS_POSCreateStockMovWClassAfterEditField = res;
+  return;
+end;

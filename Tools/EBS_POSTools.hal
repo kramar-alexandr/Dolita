@@ -20,6 +20,7 @@ external inner procedure SetPOSWindowDisplay(string,string);
 external procedure ShowTextClientDisplay_SendToFiscal(string,string);
 external function boolean VerifyUserPassword(string,string);
 remote updating procedure EBSRegisterClock(string,record LocalMachineBlock,Integer);
+remote updating procedure EBS_POSCreateStockMoveRemote(record ORVc,var Longint,var string);
 
 procedure EBS_POSPOSMoney2Insm(string tag)
 begin
@@ -340,6 +341,94 @@ procedure ChooseSalesManBtn() begin
   end;
 
 return;
+end;
+
+global
+procedure ChooseLocationBtn() begin
+  string 255 tagstr;
+  record ORVc ORr;
+  record IVCashVc IVCashr;
+  integer wn,mwn;
+
+  tagstr = PushButtonTag;
+  wn = CurWindow;
+  if nonblank(tagstr) then begin
+    DeselectWindow(wn,false);
+    GetWindowRecord(wn,ORr);
+    ORr.Location = tagstr;
+    PutWindowRecord(wn,ORr);
+    SelectWindow(wn);
+    WindowFieldGoto(wn,ORr,-1,"Location",true);
+
+    // mwn = MotherWindow(wn);
+    // GetWindowRecord(mwn,IVCashr);
+    // IVCashr.SalesMan = tagstr;
+    // IVCashr.RetValue = blankval;
+    // PutWindowString(mwn,"touchscreenwindowcursalesman",tagstr);
+    // PutWindowString(mwn,"CustomerDisplayData_Line1",USetStr(1000009));
+    // PutWindowString(mwn,"CustomerDisplayData_Line2","");
+    // PutWindowRecord(mwn,IVCashr);
+    // IVCashDClass_RefreshStringList(mwn,IVCashr);
+    // CloseWindow(wn);
+  end;
+
+return;
+end;
+
+global 
+procedure EBS_POSCreateStockMovWClassItemList()
+begin
+  record RcVc RepSpec;
+  Integer nwn,wn,rw;
+  record ORVc ORr;
+
+  wn = FindWindow("INNPTSSClass");
+  if (wn>0) then begin
+    CloseWindow(wn);
+  end;
+  wn = CurWindow;
+  GetWindowRecord(wn,ORr)
+  rw = WindowActiveRow(CurWindow);
+  if (rw<0) then begin
+    rw = MatRowCnt(ORr);
+    WindowFieldGoto(wn,ORr,rw,"ArtCode",false); 
+  end else begin
+    if (WindowActiveField(wn)=="Quant") then begin
+    WindowFieldGoto(wn,ORr,MatRowCnt(ORr),"ArtCode",false); 
+    end;
+  end;
+
+  ReportDefaults(RepSpec,"SearchItemRClass");
+  RepSpec.UsedOnly = CurWindow;
+  RepSpec.f3 = "EBS_POSCreateStockMovWClass";
+  RepSpec.repname = "SearchItemRn";
+  RepSpec.Media = mtScreen;
+  RepSpec.ArtMode = 1;  
+  nwn = OpenWindow("NPTSSearchItemRClass",0,CurWindow,"","",RepSpec);
+//  GetWindowRecord(nwn,RepSpec);
+
+return;
+end;
+
+global
+updating procedure EBS_CreateStockMovWClassOKBtn()
+begin
+  Integer wn;
+  record ORVc ORr;
+  Longint err;
+  string 255 errstr;
+
+  wn = CurWindow;
+  DeselectWindow(wn,true);
+  GetWindowRecord(wn,ORr);
+  EBS_POSCreateStockMoveRemote(ORr,err,errstr);
+  if (err==-1) then begin
+    CloseWindow(wn);
+  end else begin
+    MessageBox(err," " & errstr);
+  end;
+
+  return;
 end;
 
 global

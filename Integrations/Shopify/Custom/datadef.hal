@@ -12,6 +12,7 @@ begin
   BlockBegin(POSIntORBlock,-,"");
 	RecordField(Route,M4Code,20,DelRouteVc);
 	RecordField(ShopifyRoute,M4Code,20,DelRouteVc);
+  RecordField(LocationClass,M4Code,20,LocClVc);
   EndBlock;
 
   return;
