@@ -50,7 +50,7 @@ LDOL_FindDefStockValue:
   return;
 end;
 
-function val FindReceivedValue2(string item, string loc,string supplier)
+function val FindReceivedValue(string item, string loc)
 begin
   val res;
   record ItemHistVc IHr;
@@ -79,6 +79,52 @@ begin
       if ((blank(varcode) or varcode == IHr.Variety) and (blank(loc) or loc == IHr.Location)) then begin
         PUr.SerNr = IHr.TransNr;
         if (ReadFirstMain(PUr,1,true)) then begin
+          if (PUr.PONr > -1) then begin
+            RetPUr.PUNr = PUr.SerNr;
+            if (!ReadFirstKey("PUNr",RetPUr,1,true)) then begin
+              res = res + IHr.Qty;
+            end;
+          end;
+        end;
+      end;
+    end;
+  end;
+
+
+  FindReceivedValue = res;
+return;
+end;
+
+function val FindReceivedValuePeriod(string item, string loc,string supplier,Date sd,Date ed)
+begin
+  val res;
+  record ItemHistVc IHr;
+  record PUVc PUr;
+  record RetPUVc RetPUr;
+  boolean trhs;
+  string 20 artcode,varcode;
+  string 255 itsz,mask,mskrep,varsubset;
+  array string 255 a_maskvar,a_maskvarsz,a_amsk;
+
+  if (FindItemVAR(item,itsz,mask,mskrep,varsubset)) then begin
+    SplitVars(item,a_maskvar,a_maskvarsz,a_amsk);
+    artcode = a_amsk[0];
+    varcode = right(item,len(item) - len(artcode));
+  end else begin
+    artcode = item;
+  end;
+
+  IHr.ArtCode = artcode;
+  IHr.FileName = "PUVc";
+  IHr.TransDate = sd;
+  trhs = true;
+  while (LoopKey("FNArtCode",Ihr,3,trhs)) begin
+    if (IHr.ArtCode != artcode or IHr.FileName != "PUVc" or IHr.TransDate>ed) then begin
+      trhs = false;
+    end else begin
+      if ((blank(varcode) or varcode == IHr.Variety) and (blank(loc) or loc == IHr.Location)) then begin
+        PUr.SerNr = IHr.TransNr;
+        if (ReadFirstMain(PUr,1,true)) then begin
           if (blank(supplier) or supplier==PUr.VECode) then begin
             if (PUr.PONr > -1) then begin
               RetPUr.PUNr = PUr.SerNr;
@@ -92,14 +138,7 @@ begin
     end;
   end;
 
-
-  FindReceivedValue2 = res;
-return;
-end;
-
-function val FindReceivedValue(string item, string loc)
-begin
-  FindReceivedValue = FindReceivedValue2(item,loc,"");
+  FindReceivedValuePeriod = res;
 return;
 end;
 
@@ -307,7 +346,9 @@ begin
       OutString(4,0,USetStr(1000130),true); // likutis
       OutString(8,0,USetStr(1000141),true); // Brokas
       OutString(9,0,USetStr(1000142),true); // Brokas %
-      OutString(5,0,USetStr(1000131),true); // %
+      if (RepSpec.ArtMode!=3) then begin
+        OutString(5,0,USetStr(1000131),true); // %
+      end;
     end;
     OutString(6,0,USetStr(1000043),true);//Kiekis
     OutString(7,0,USetStr(1000089),true);//kaina
@@ -800,7 +841,9 @@ begin
           OutString(9,0,ZeroString(toint) & "%",true);
           toint = round((1 - (instock / recvd)) * 100,SetRoundModed(0));
 //          outstring(0,0,instock & " " & recvd,false);
-          OutString(5,0,ZeroString(toint) & "%",true);
+          if (RepSpec.ArtMode!=3) then begin
+            OutString(5,0,ZeroString(toint) & "%",true);
+          end;
           // :EVS
           OutString(6,0,ZeroString(qty),true);
           OutVal(7,0,avprice,M4Val,true);
@@ -846,7 +889,9 @@ begin
       OutString(9,0,ZeroString(toint) & "%",true);
       toint = round((1 - (totinstock / totrecvd)) * 100,SetRoundModed(0));
     end;
-    OutString(5,0,ZeroString(toint) & "%",true);
+    if (RepSpec.ArtMode!=3) then begin
+      OutString(5,0,ZeroString(toint) & "%",true);
+    end;
     OutString(6,0,ZeroString(qtytotal),true);
     OutVal(1,0,sumtotal,M4Val,true);
   EndFormat;
@@ -1106,7 +1151,7 @@ begin
             v_artindefstock[artcode] = v_artindefstock[artcode] + t;
             FindStockValue(IVCashrw.ArtCode,RepSpec.f4,ISr);
             v_artinvinstock[artcode] = v_artinvinstock[artcode] + ISr.Instock - t;
-            v_artrecvd[artcode] = v_artrecvd[artcode2] + FindReceivedValue2(IVCashrw.ArtCode,RepSpec.f4,artcode);
+            v_artrecvd[artcode] = v_artrecvd[artcode2] + FindReceivedValuePeriod(IVCashrw.ArtCode,RepSpec.f4,artcode,RepSpec.sStartDate,RepSpec.sEndDate);
             v_artinvf[artcode & ":" & artcode2] = true;
           end;
         end;
@@ -1319,7 +1364,7 @@ begin
             v_artindefstock[artcode] = v_artindefstock[artcode] + t;
             FindStockValue(IVrw.ArtCode,RepSpec.f4,ISr);
             v_artinvinstock[artcode] = v_artinvinstock[artcode] + ISr.Instock - t;
-            v_artrecvd[artcode] = v_artrecvd[artcode] + FindReceivedValue2(IVrw.ArtCode,RepSpec.f4,artcode);
+            v_artrecvd[artcode] = v_artrecvd[artcode] + FindReceivedValuePeriod(IVrw.ArtCode,RepSpec.f4,artcode,RepSpec.sStartDate,RepSpec.sEndDate);
             v_artinvf[artcode & ":" & artcode2] = true;
           end;
         end;
@@ -1453,7 +1498,7 @@ begin
               v_artindefstock[artcode] = v_artindefstock[supplier] + t;
               FindStockValue(artcode,RepSpec.f4,ISr);
               v_artinvinstock[artcode] = v_artinvinstock[artcode] + ISr.Instock - t;
-              v_artrecvd[artcode] = v_artrecvd[artcode] + FindReceivedValue2(artcode2,RepSpec.f4,artcode);
+              v_artrecvd[artcode] = v_artrecvd[artcode] + FindReceivedValuePeriod(artcode2,RepSpec.f4,artcode,RepSpec.sStartDate,RepSpec.sEndDate);
               v_artinvf[artcode & ":" & artcode2] = true;
             end;
           end;
