@@ -2,6 +2,8 @@ remote inner procedure CUVc_CUClassSClass(record CUVc,var record RcVc);
 external inner procedure PasteFromTRObjS(Integer,Integer);
 external inner function string 255 StringFromSysList(Integer,Integer);
 external inner procedure PasteFromWn(Integer,string);
+external procedure EBS_POSCreateStockMovWClassVarieties();
+external inner function Boolean FindItemVAR(string,var string,var string,var string,var string);
 
 // EVS: DOL-142
 global
@@ -40,6 +42,8 @@ begin
   record ORVc ORr;
   Integer sline,rw;
   Boolean res;
+  string 60 sz,msk,mskrep;
+  string 200 varsubset;
     
   mwn = MotherWindow(wn);
   switch (GetWindowClass(mwn)) begin
@@ -56,6 +60,10 @@ begin
         tstr = GetListTag(wn,sline);
         PasteFromWn(wn,GetListTag(wn,sline));
         KeyPadEnter(mwn);
+        if (FindItemVAR(tstr,sz,msk,mskrep,varsubset)) then begin
+          SelectWindow(mwn);
+          EBS_POSCreateStockMovWClassVarieties;
+        end;
       end;
     otherwise 
       res = inner.INNPTSSClassListClickOnOKWindow(wn);

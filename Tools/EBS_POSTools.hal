@@ -349,7 +349,7 @@ procedure ChooseLocationBtn() begin
   string 255 tagstr;
   record ORVc ORr;
   record IVCashVc IVCashr;
-  integer wn,mwn;
+  integer wn,mwn,rw;
 
   tagstr = PushButtonTag;
   wn = CurWindow;
@@ -359,18 +359,9 @@ procedure ChooseLocationBtn() begin
     ORr.Location = tagstr;
     PutWindowRecord(wn,ORr);
     SelectWindow(wn);
-    WindowFieldGoto(wn,ORr,-1,"Location",true);
 
-    // mwn = MotherWindow(wn);
-    // GetWindowRecord(mwn,IVCashr);
-    // IVCashr.SalesMan = tagstr;
-    // IVCashr.RetValue = blankval;
-    // PutWindowString(mwn,"touchscreenwindowcursalesman",tagstr);
-    // PutWindowString(mwn,"CustomerDisplayData_Line1",USetStr(1000009));
-    // PutWindowString(mwn,"CustomerDisplayData_Line2","");
-    // PutWindowRecord(mwn,IVCashr);
-    // IVCashDClass_RefreshStringList(mwn,IVCashr);
-    // CloseWindow(wn);
+    rw = MatRowCnt(ORr);
+    WindowFieldGoto(wn,ORr,rw,"ArtCode",false); 
   end;
 
 return;
