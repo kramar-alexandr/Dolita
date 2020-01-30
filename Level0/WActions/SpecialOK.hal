@@ -1139,6 +1139,24 @@ begin
 end;
 // :EVS
 
+procedure DOLPasteRowsToPOSCreateStockMovWClass(Integer wn,Integer currow,array string incode,array val qty,Integer pos)
+begin
+  record INVc INr;
+  record ORVc ORr;
+  row ORVc ORrw;
+
+  GetWindowRecord(wn,ORr);
+  DeselectWindow(wn,false);
+  MatRowGet(ORr,currow,ORrw);
+  ORrw.ArtCode = incode[0];
+  ORrw.Quant = 1;
+  MatRowPut(ORr,currow,ORrw);
+  PutWindowRecord(wn,ORr);
+  WindowFieldGoto(wn,ORr,currow+1,"ArtCode",true);
+  return;
+end;
+
+
 procedure BuildVarString(string theitemcode,val theqty,string varx,string vary,array string maskvar2,array string maskvarsz2,
                          array string maskvar,string itemsize,var array string incode,var array val qty,var Integer pos,Boolean checkqty)
 begin
@@ -1473,6 +1491,8 @@ begin
           PasteVarInEBS_ChangeINVarVClass(mwn,incode,qty,pos);
         case "RetPUDClass": // EVS: DOL-139
               DOLPasteRowsToRetPUDClass(mwn,GetWindowCurRow(mwn),incode,qty,pos);
+        case "EBS_POSCreateStockMovWClass":
+          DOLPasteRowsToPOSCreateStockMovWClass(mwn,GetWindowCurRow(mwn),incode,qty,pos);
       end;
     end else begin
     // EVS: DOL-11

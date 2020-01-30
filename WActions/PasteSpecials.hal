@@ -72,3 +72,10 @@ begin
   INNPTSSClassListDoubleClick = true;
   return;
 end;
+
+global
+function Boolean INNPTSSClassListDblClick(Integer wn)
+begin
+  INNPTSSClassListDblClick = INNPTSSClassListDoubleClick(wn,-1);
+  return;
+end;

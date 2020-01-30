@@ -21,6 +21,7 @@ external procedure ShowTextClientDisplay_SendToFiscal(string,string);
 external function boolean VerifyUserPassword(string,string);
 remote updating procedure EBSRegisterClock(string,record LocalMachineBlock,Integer);
 remote updating procedure EBS_POSCreateStockMoveRemote(record ORVc,var Longint,var string);
+external inner function Boolean MATVARINSClassOnOpenPaste(Integer,string);
 
 procedure EBS_POSPOSMoney2Insm(string tag)
 begin
@@ -408,6 +409,26 @@ begin
 //  GetWindowRecord(nwn,RepSpec);
 
 return;
+end;
+
+global
+procedure EBS_POSCreateStockMovWClassVarieties()
+begin
+  record VarMatrxEntryVc VMEr;
+  record ORVc ORr;
+  row ORVc ORrw;
+  Integer wn,rw,nwn;
+
+  wn = CurWindow;
+  rw = WindowActiveRow(wn);
+  GetWindowRecord(wn,ORr)
+  MatRowGet(ORr,rw,ORrw);
+  //nwn = OpenPasteWindow(wn,"MATVARINSClass",ORrw.ArtCode);
+  //nwn = OpenWindow("MATVARINSClass",0,wn,ORrw.ArtCode & ":" & ORr.Location,"",VMEr);
+  SetWindowNameArg(wn,ORrw.ArtCode & ":" & ORr.Location);
+  MATVARINSClassOnOpenPaste(wn,"");
+
+  return;
 end;
 
 global
