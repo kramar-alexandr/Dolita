@@ -95,41 +95,44 @@ begin
 return;
 end;
 
-function val FindReceivedValuePeriod(string item, string loc,string supplier,Date sd,Date ed)
+function val FindReceivedValuePeriod(string loc,string supplier,Date sd,Date ed)
 begin
   val res;
-  record ItemHistVc IHr;
   record PUVc PUr;
+  row PUVc PUrw;
   record RetPUVc RetPUr;
-  boolean trhs;
-  string 20 artcode,varcode;
-  string 255 itsz,mask,mskrep,varsubset;
-  array string 255 a_maskvar,a_maskvarsz,a_amsk;
+  row RetPUVc RetPUrw;
+  boolean TrHs,TrHs2;
+  Integer i,rwcnt;
 
-  if (FindItemVAR(item,itsz,mask,mskrep,varsubset)) then begin
-    SplitVars(item,a_maskvar,a_maskvarsz,a_amsk);
-    artcode = a_amsk[0];
-    varcode = right(item,len(item) - len(artcode));
-  end else begin
-    artcode = item;
-  end;
-
-  IHr.ArtCode = artcode;
-  IHr.FileName = "PUVc";
-  IHr.TransDate = sd;
-  trhs = true;
-  while (LoopKey("FNArtCode",Ihr,3,trhs)) begin
-    if (IHr.ArtCode != artcode or IHr.FileName != "PUVc" or IHr.TransDate>ed) then begin
-      trhs = false;
+  TrHs = true;
+  PUr.VECode = supplier;
+  PUr.TransDate = sd;
+  while (LoopKey("VECodeTransDate",PUr,2,TrHs)) begin
+    if (PUr.VECode!=supplier or PUr.TransDate>ed) then begin
+      TrHs = false;
     end else begin
-      if ((blank(varcode) or varcode == IHr.Variety) and (blank(loc) or loc == IHr.Location)) then begin
-        PUr.SerNr = IHr.TransNr;
-        if (ReadFirstMain(PUr,1,true)) then begin
-          if (blank(supplier) or supplier==PUr.VECode) then begin
-            if (PUr.PONr > -1) then begin
-              RetPUr.PUNr = PUr.SerNr;
-              if (!ReadFirstKey("PUNr",RetPUr,1,true)) then begin
-                res = res + IHr.Qty;
+      if (PUr.OKFlag==1) then begin
+        rwcnt = MatRowCnt(PUr);
+        for (i=0;i<rwcnt;i=i+1) begin
+          MatRowGet(PUr,i,PUrw);
+          res = res + PUrw.Quant;
+        end;
+        if (PUr.PONr>-1) then begin
+          TrHs2 = true;
+          ResetLoop(RetPUr);
+          RecordClear(RetPUr);
+          RetPUr.PUNr = PUr.SerNr;
+          while (LoopKey("PUNr",RetPUr,1,TrHs2)) begin
+            if (RetPUr.PUNr!=PUr.SerNr) then begin
+              TrHs2 = false;
+            end else begin
+              if (RetPUr.OKFlag==1) then begin
+                rwcnt = MatRowCnt(RetPUr);
+                for (i=0;i<rwcnt;i=i+1) begin
+                  MatRowGet(RetPUr,i,RetPUrw);
+                  res = res - RetPUrw.Quant;
+                end;
               end;
             end;
           end;
@@ -829,7 +832,7 @@ begin
             instock = v_artinvinstock[a_art[i]] - indefstock;
             totindefstock = totindefstock + indefstock;
             totinstock = totinstock + instock;
-            recvd = v_artrecvd[a_art[i]];
+            recvd = FindReceivedValuePeriod(RepSpec.f4,a_art[i],RepSpec.sStartDate,RepSpec.sEndDate);//v_artrecvd[a_art[i]];
             totrecvd = totrecvd + recvd;
           end;
           if (RepSpec.ArtMode==3) then begin
@@ -1151,7 +1154,7 @@ begin
             v_artindefstock[artcode] = v_artindefstock[artcode] + t;
             FindStockValue(IVCashrw.ArtCode,RepSpec.f4,ISr);
             v_artinvinstock[artcode] = v_artinvinstock[artcode] + ISr.Instock - t;
-            v_artrecvd[artcode] = v_artrecvd[artcode2] + FindReceivedValuePeriod(IVCashrw.ArtCode,RepSpec.f4,artcode,RepSpec.sStartDate,RepSpec.sEndDate);
+            //v_artrecvd[artcode] = v_artrecvd[artcode2] + FindReceivedValuePeriod(IVCashrw.ArtCode,RepSpec.f4,artcode,RepSpec.sStartDate,RepSpec.sEndDate);
             v_artinvf[artcode & ":" & artcode2] = true;
           end;
         end;
@@ -1364,7 +1367,7 @@ begin
             v_artindefstock[artcode] = v_artindefstock[artcode] + t;
             FindStockValue(IVrw.ArtCode,RepSpec.f4,ISr);
             v_artinvinstock[artcode] = v_artinvinstock[artcode] + ISr.Instock - t;
-            v_artrecvd[artcode] = v_artrecvd[artcode] + FindReceivedValuePeriod(IVrw.ArtCode,RepSpec.f4,artcode,RepSpec.sStartDate,RepSpec.sEndDate);
+            //v_artrecvd[artcode] = v_artrecvd[artcode] + FindReceivedValuePeriod(IVrw.ArtCode,RepSpec.f4,artcode,RepSpec.sStartDate,RepSpec.sEndDate);
             v_artinvf[artcode & ":" & artcode2] = true;
           end;
         end;
@@ -1498,7 +1501,7 @@ begin
               v_artindefstock[artcode] = v_artindefstock[supplier] + t;
               FindStockValue(artcode,RepSpec.f4,ISr);
               v_artinvinstock[artcode] = v_artinvinstock[artcode] + ISr.Instock - t;
-              v_artrecvd[artcode] = v_artrecvd[artcode] + FindReceivedValuePeriod(artcode2,RepSpec.f4,artcode,RepSpec.sStartDate,RepSpec.sEndDate);
+              //v_artrecvd[artcode] = v_artrecvd[artcode] + FindReceivedValuePeriod(artcode2,RepSpec.f4,artcode,RepSpec.sStartDate,RepSpec.sEndDate);
               v_artinvf[artcode & ":" & artcode2] = true;
             end;
           end;
