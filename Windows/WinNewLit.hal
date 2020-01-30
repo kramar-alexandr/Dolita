@@ -1446,16 +1446,16 @@ begin
   v = 60;
   vs = 52; h2 = 55; v3 = 48; l = 57;
   h = 270;
-  EditFieldTLX(h,20,120,"Location",M4Code,ViewOnly,10,18,patM4black,Location,true,0);
+  EditField(h,40,120,"Patalpa",ViewOnly,Location,false,0);
   MatrixBegin(h,80,h+210,183,-,5);
-  MatCol(1,24,"Item",0,ArtCode,false,INSClass);
-  MatCol(1,-70,"Qty",0,Quant,true,0);
+  MatCol(1,24,"Prek˜",0,ArtCode,false,INSClass);
+  MatCol(1,-70,"Kiekis",0,Quant,true,0);
   EndMatrix;
 
   h = 520;
   hm = h;
   v=6+v3;
-  h = hm; ColourPushButton(h,v,h+h2*3,v+v3,"EBS_POSCreateStockMovWClassItemList","Items",2);
+  h = hm; ColourPushButton(h,v,h+h2*3,v+v3,"EBS_POSCreateStockMovWClassItemList","Prek˜s",2);
   v = v+vs;
   h = hm-2; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad1","1_",2);
   h = h+l; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad2","2_",2);
