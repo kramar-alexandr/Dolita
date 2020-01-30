@@ -73,15 +73,15 @@ begin
     GetNextSubString(aClockIn[i],pos,":",tmp);
     Userr.Code = tmp;
     ReadFirstMain(Userr,1,true);
-    diff = TimeDiff(vClockOut[aClockIn[i]],vClockIn[aClockIn[i]]);
+    diff = TimeDiff(vClockIn[aClockIn[i]],vClockOut[aClockIn[i]]);
 
     StartFormat(15);
     OutString(0,0,td,false);
     OutString(2,0,vLocation[aClockIn[i]],false);
     OutString(3,0,Userr.Code,false);
     OutString(4,0,Userr.Name,false);
-    OutString(5,0,vClockOut[aClockIn[i]],false);
-    OutString(6,0,vClockIn[aClockIn[i]],false);
+    OutString(5,0,vClockIn[aClockIn[i]],false);
+    OutString(6,0,vClockOut[aClockIn[i]],false);
     OutString(7,0,diff,false);
     EndFormat;
 
