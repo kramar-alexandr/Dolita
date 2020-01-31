@@ -412,12 +412,22 @@ begin
 
   wn = CurWindow;
   rw = WindowActiveRow(wn);
+
   GetWindowRecord(wn,ORr)
   MatRowGet(ORr,rw,ORrw);
   //nwn = OpenPasteWindow(wn,"MATVARINSClass",ORrw.ArtCode);
   //nwn = OpenWindow("MATVARINSClass",0,wn,ORrw.ArtCode & ":" & ORr.Location,"",VMEr);
   SetWindowNameArg(wn,ORrw.ArtCode & ":" & ORr.Location);
   MATVARINSClassOnOpenPaste(wn,"");
+
+  return;
+end;
+
+global
+procedure EBS_POSCreateStockMovWClassVarietiesTask(string args)
+begin
+  
+  EBS_POSCreateStockMovWClassVarieties;
 
   return;
 end;

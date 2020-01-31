@@ -1,10 +1,15 @@
+external procedure EBS_POSCreateStockMovWClassVarieties();
+external inner function Boolean FindItemVAR(string,var string,var string,var string,var string); //EBS
+
 global
 function Boolean EBS_POSCreateStockMovWClassAfterEditField(Integer wn,string fieldname,Integer fn,Integer rownr,Integer changed)
 begin
   Boolean res;
   record ORVc ORr;
   row ORVc ORrw;
-  
+  string 60 sz,msk,mskrep;
+  string 200 varsubset;
+
   res = false;
   switch (fieldname) begin
     case "ArtCode":
@@ -15,6 +20,10 @@ begin
           ORrw.Quant = 1;
           MatRowPut(ORr,rownr,ORrw);
           PutWindowRecord(wn,ORr);
+          if (FindItemVAR(ORrw.ArtCode,sz,msk,mskrep,varsubset)) then begin
+            NewTimedTask("EBS_POSCreateStockMovWClassVarieties","EBS_POSCreateStockMovWClassVarieties","EBS_POSCreateStockMovWClassVarietiesTask","",CurrentDate,AddSeconds(CurrentTime,1),"","");
+          end;
+
         end;
       end;
   end;
