@@ -1,6 +1,17 @@
 external inner function Date DateFromString(string,string);
 external inner function Time TimeDiff(Time,Time);
 
+procedure AddDuration(Time st,Time et,var duration res)
+begin
+  Time t,rest;
+  
+  rest = TimeDiff(st,et);  
+  res.hour = res.hour + rest.hour;
+  res.minute = res.minute + rest.minute;
+  res.second = res.second + rest.second;
+  return;
+end;
+
 global
 procedure DOL_EmpTimeRn(record RcVc RepSpec)
 begin
@@ -15,6 +26,7 @@ begin
   Time diff;
   record UserVc Userr;
   vector string 255 vLocation;
+  duration totdur;
   
   StartReportJob(UsetStr(1000149));
 
@@ -39,6 +51,10 @@ begin
   StartFormat(1);
   Gray_Divider(0,1);
   EndFormat;
+
+  totdur.hour = 0;
+  totdur.minute = 0;
+  totdur.second = 0;
 
   TrHs = true;
   PCr.TransDate = RepSpec.sStartDate;
@@ -74,6 +90,7 @@ begin
     Userr.Code = tmp;
     ReadFirstMain(Userr,1,true);
     diff = TimeDiff(vClockIn[aClockIn[i]],vClockOut[aClockIn[i]]);
+    AddDuration(vClockIn[aClockIn[i]],vClockOut[aClockIn[i]],totdur);
 
     StartFormat(15);
     OutString(0,0,td,false);
@@ -86,6 +103,19 @@ begin
     EndFormat;
 
   end;
+  
+  StartFormat(1);
+  Gray_divider(0,1);
+  EndFormat;
+  StartFormat(15);
+  OutString(0,0,"",false);
+  OutString(2,0,"",false);
+  OutString(3,0,"",false);
+  OutString(4,0,"",false);
+  OutString(5,0,"",false);
+  OutString(6,0,"",false);
+  OutString(7,0,left("00",2-len(totdur.hour)) & totdur.hour & ":" & left("00",2-len(totdur.minute)) & totdur.minute & ":" & left("00",2-len(totdur.second)) & totdur.second,false);//hw doesn't know how to output duration...
+  EndFormat;
 
   EndJob;
 
