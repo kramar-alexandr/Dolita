@@ -1211,12 +1211,11 @@ begin
 end;
 
 global
-updating procedure EBS_POSCreateStockMoveRemote(record ORVc ORr,var Longint err,var string errstr)
+updating procedure EBS_POSCreateStockMoveRemote(string lm,record ORVc ORr,var Longint err,var string errstr)
 begin
   record POSIntORBlock IORb;
-  record LocalMachineBlock LMb;
   string 255 frloc;
-  record StockMovVc StockMovr;
+  record StockMovVc StockMovr,oldStockMovr;
   row StockMovVc StockMovrw;
   Integer i,rwcnt;
   record INVc INr;
@@ -1224,8 +1223,7 @@ begin
   row ORVc ORrw;
 
   BlockLoad(IORb);
-  BlockLoad(LMb);
-  frloc = GetLocalMachineLocation(LMb.LocalMachineCode);
+  frloc = GetLocalMachineLocation(lm);
   if (blank(frloc)) then begin
     err = 1000154;
     goto LEBS_POSCreateStockMoveRemote;
@@ -1264,8 +1262,6 @@ begin
   StockMovr.OrdTransDate = CurrentDate;
   StockMovr.SentTransDate = CurrentDate;
   StockMovGetRate(StockMovr);
-  StockMovr.SentOKFlag = 1;
-  StockMovr.OrdFlag = 1;
 
   rwcnt = MatRowCnt(ORr);
   for (i=0;i<rwcnt;i=i+1) begin
@@ -1278,7 +1274,12 @@ begin
     StockMovVc_PasteArtCode(StockMovr,i,1,aWarning);
   end;
   
-  RecordInsert(StockMovr,true);
+  if (RecordInsert(StockMovr,true)) then begin
+    RecordCopy(oldStockMovr,StockMovr);
+    StockMovr.SentOKFlag = 1;
+    StockMovr.OrdFlag = 1;
+    RecordUpdate(oldStockMovr,StockMovr,true);
+  end;
   
 LEBS_POSCreateStockMoveRemote:;
   return;

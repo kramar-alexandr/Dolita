@@ -1,5 +1,7 @@
 external procedure EBS_POSCreateStockMovWClassVarieties();
 external inner function Boolean FindItemVAR(string,var string,var string,var string,var string); //EBS
+external inner function Boolean GetFirstItem(var string,var record INVc);
+external inner procedure SplitVars(string,Array string,Array string,Array string); //EBS
 
 global
 function Boolean EBS_POSCreateStockMovWClassAfterEditField(Integer wn,string fieldname,Integer fn,Integer rownr,Integer changed)
@@ -9,6 +11,8 @@ begin
   row ORVc ORrw;
   string 60 sz,msk,mskrep;
   string 200 varsubset;
+  record INVc INr;
+  array string 255 maskvar,maskvarsz,amsk;
 
   res = false;
   switch (fieldname) begin
@@ -16,14 +20,19 @@ begin
       if (rownr>-1 and changed!=0) then begin
         GetWindowRecord(wn,ORr);
         MatRowGet(ORr,rownr,ORrw)
+        if (GetFirstItem(ORrw.ArtCode,INr)) then begin
+        end; 
         if (ORrw.Quant<1) then begin
           ORrw.Quant = 1;
-          MatRowPut(ORr,rownr,ORrw);
-          PutWindowRecord(wn,ORr);
-          if (FindItemVAR(ORrw.ArtCode,sz,msk,mskrep,varsubset)) then begin
+        end;
+        MatRowPut(ORr,rownr,ORrw);
+
+        PutWindowRecord(wn,ORr);
+        if (FindItemVAR(ORrw.ArtCode,sz,msk,mskrep,varsubset)) then begin
+          SplitVars(ORrw.ArtCode,maskvar,maskvarsz,amsk);
+          if (blank(amsk[1])) then begin
             NewTimedTask("EBS_POSCreateStockMovWClassVarieties","EBS_POSCreateStockMovWClassVarieties","EBS_POSCreateStockMovWClassVarietiesTask","",CurrentDate,AddSeconds(CurrentTime,1),"","");
           end;
-
         end;
       end;
   end;

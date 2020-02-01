@@ -20,7 +20,7 @@ external inner procedure SetPOSWindowDisplay(string,string);
 external procedure ShowTextClientDisplay_SendToFiscal(string,string);
 external function boolean VerifyUserPassword(string,string);
 remote updating procedure EBSRegisterClock(string,record LocalMachineBlock,Integer);
-remote updating procedure EBS_POSCreateStockMoveRemote(record ORVc,var Longint,var string);
+remote updating procedure EBS_POSCreateStockMoveRemote(string,record ORVc,var Longint,var string);
 external inner function Boolean MATVARINSClassOnOpenPaste(Integer,string);
 
 procedure EBS_POSPOSMoney2Insm(string tag)
@@ -439,11 +439,13 @@ begin
   record ORVc ORr;
   Longint err;
   string 255 errstr;
+  record LocalMachineBlock LMb;
 
+  BlockLoad(LMb);
   wn = CurWindow;
   DeselectWindow(wn,true);
   GetWindowRecord(wn,ORr);
-  EBS_POSCreateStockMoveRemote(ORr,err,errstr);
+  EBS_POSCreateStockMoveRemote(LMb.LocalMachineCode,ORr,err,errstr);
   if (err==-1) then begin
     CloseWindow(wn);
   end else begin
