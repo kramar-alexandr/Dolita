@@ -11,6 +11,105 @@ begin
   res.second = res.second + rest.second;
   return;
 end;
+function duration AddDuration2(duration dur1,duration dur2)
+begin
+  duration res;
+  
+  res.hour = dur1.hour + dur2.hour;
+  res.minute = dur1.minute + dur2.minute;
+  res.second = dur1.second + dur2.second;
+
+  AddDuration2 = res;
+  return;
+end;
+
+function duration BlankDur()
+begin
+  duration res;
+
+  res.hour = 0;
+  res.minute = 0;
+  res.second = 0;
+
+  BlankDur = res;
+end;
+
+procedure AddDurationToRow(var record RoutingVc Rr,Integer rw,duration dur)
+begin
+  row RoutingVc Rrw;
+
+  MatRowGet(Rr,rw,Rrw);
+  Rrw.RunTime = AddDuration2(Rrw.RunTime,dur);
+  MatRowPut(Rr,rw,Rrw);
+
+  return;
+end;
+
+
+procedure AddDurationToArray(var array record RoutingVc aRr,string usercode,string location,Time st,Time et)
+begin
+  duration dur;
+  record RoutingVc Rr;
+  row RoutingVc Rrw;
+  Integer i,rwcnt,j,userpos;
+  Boolean foundf;
+  
+  dur = BlankDur;
+  AddDuration(st,et,dur);
+  for (i=0;i<aRr.length;i=i+1) begin
+    Rr = aRr[i];
+    if (Rr.Code==location) then begin
+      foundf = true;
+      rwcnt = MatRowCnt(Rr);
+      for (j=1;j<rwcnt;j=j+1) begin
+        MatRowGet(Rr,j,Rrw);
+        if (Rrw.Machine==usercode) then begin
+          userpos = j;
+          j = rwcnt;
+        end;
+      end;
+      if (userpos==0) then begin
+        ClearRow(Rr,Rrw,1);
+        Rrw.Machine = usercode;
+        Rrw.RunTime = BlankDur;
+        userpos = MatRowCnt(Rr);
+        if (userpos==0) then begin
+          userpos = 1;
+        end;
+        MatRowPut(Rr,userpos,Rrw);
+      end;
+      AddDurationToRow(Rr,0,dur);
+      AddDurationToRow(Rr,userpos,dur);
+      aRr[i] = Rr;
+      i = aRr.length;
+    end;
+  end;
+
+  if (!foundf) then begin
+    RecordClear(Rr);
+    Rr.Code = location;
+    ClearRow(Rr,Rrw,1);
+    Rrw.RunTime = dur;
+    MatRowPut(Rr,0,Rrw);
+    ClearRow(Rr,Rrw,1);
+    Rrw.Machine = usercode;
+    Rrw.RunTime = dur;
+    MatRowPut(Rr,1,Rrw);
+    aRr[aRr.length] = Rr;
+  end;
+
+  return;
+end;
+
+function string 255 FormatDuration(duration dur)
+begin
+  string 255 res;
+  
+  res = left("00",2-len(dur.hour)) & dur.hour & ":" & left("00",2-len(dur.minute)) & dur.minute & ":" & left("00",2-len(dur.second)) & dur.second;
+
+  FormatDuration = res;
+  return;
+end;
 
 global
 procedure DOL_EmpTimeRn(record RcVc RepSpec)
@@ -22,11 +121,14 @@ begin
   Longint pos;
   vector time vClockIn,vClockOut;
   array string 255 aClockIn;
-  Integer i;
+  Integer i,j,rwcnt;
   Time diff;
   record UserVc Userr;
   vector string 255 vLocation;
   duration totdur;
+  array record RoutingVc aRr;
+  record RoutingVc Rr;
+  row RoutingVc Rrw;
   
   StartReportJob(UsetStr(1000149));
 
@@ -91,6 +193,7 @@ begin
     ReadFirstMain(Userr,1,true);
     diff = TimeDiff(vClockIn[aClockIn[i]],vClockOut[aClockIn[i]]);
     AddDuration(vClockIn[aClockIn[i]],vClockOut[aClockIn[i]],totdur);
+    AddDurationToArray(aRr,Userr.Code,vLocation[aClockIn[i]],vClockIn[aClockIn[i]],vClockOut[aClockIn[i]]);
 
     StartFormat(15);
     OutString(0,0,td,false);
@@ -107,6 +210,7 @@ begin
   StartFormat(1);
   Gray_divider(0,1);
   EndFormat;
+/*
   StartFormat(15);
   OutString(0,0,"",false);
   OutString(2,0,"",false);
@@ -116,6 +220,24 @@ begin
   OutString(6,0,"",false);
   OutString(7,0,left("00",2-len(totdur.hour)) & totdur.hour & ":" & left("00",2-len(totdur.minute)) & totdur.minute & ":" & left("00",2-len(totdur.second)) & totdur.second,false);//hw doesn't know how to output duration...
   EndFormat;
+*/
+
+  for (i=0;i<aRr.length;i=i+1) begin
+    Rr = aRr[i];
+    StartFormat(15);
+    OutString(2,0,Rr.Code,false);
+    MatRowGet(Rr,0,Rrw);
+    OutString(7,0,FormatDuration(Rrw.RunTime),false);
+    EndFormat;
+    rwcnt = MatRowCnt(Rr);
+    for (j=1;j<rwcnt;j=j+1) begin
+      StartFormat(15);
+      MatRowGet(Rr,j,Rrw);
+      OutString(3,0,Rrw.Machine,false);
+      OutString(7,0,FormatDuration(Rrw.RunTime),false);
+      EndFormat;
+   end;
+  end;
 
   EndJob;
 
