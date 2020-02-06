@@ -224,7 +224,9 @@ begin
 
   for (i=0;i<aRr.length;i=i+1) begin
     Rr = aRr[i];
-    StartFormat(15);
+    StartFormat(5);
+    EndFormat;
+    StartFormat(20);
     OutString(2,0,Rr.Code,false);
     MatRowGet(Rr,0,Rrw);
     OutString(7,0,FormatDuration(Rrw.RunTime),false);
@@ -233,7 +235,10 @@ begin
     for (j=1;j<rwcnt;j=j+1) begin
       StartFormat(15);
       MatRowGet(Rr,j,Rrw);
+      Userr.Code = Rrw.Machine;
+      ReadFirstMain(Userr,1,true);
       OutString(3,0,Rrw.Machine,false);
+      OutString(4,0,Userr.Name,false);
       OutString(7,0,FormatDuration(Rrw.RunTime),false);
       EndFormat;
    end;
