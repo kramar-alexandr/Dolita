@@ -349,9 +349,7 @@ begin
       OutString(4,0,USetStr(1000130),true); // likutis
       OutString(8,0,USetStr(1000141),true); // Brokas
       OutString(9,0,USetStr(1000142),true); // Brokas %
-      if (RepSpec.ArtMode!=3) then begin
-        OutString(5,0,USetStr(1000131),true); // %
-      end;
+      OutString(5,0,USetStr(1000131),true); // %
     end;
     OutString(6,0,USetStr(1000043),true);//Kiekis
     OutString(7,0,USetStr(1000089),true);//kaina
@@ -665,6 +663,30 @@ begin
 return;
 end;
 
+function val GetSupplierTotalBalance(string supplier,string location)
+begin
+  val res;
+  record PIVc PIr;
+  Boolean TrHs;
+  record ItemStatusVc ISr;
+
+  PIr.VECode = supplier;
+  TrHs = true;
+  while (LoopKey("Vendor",PIr,1,TrHs)) begin
+    if (PIr.VECode!=supplier) then begin
+      TrHs = false;
+    end else begin
+      if (PIr.DefaultChoice==1) then begin
+        FindStockValue(PIr.ItemCode,location,ISr);
+        res = res + ISr.Instock;
+      end;
+    end;
+  end;
+
+  GetSupplierTotalBalance = res;
+  return;
+end;
+
 procedure PrintVector(record RcVc RepSpec,array string a_art,vector string v_artname,array string a_inv,
           vector val v_artinvqty,vector val v_artinvsum,vector val v_artcost,vector val v_artrebate, array string a_slinv, vector val v_artinvinstock,
           vector val v_artrecvd, vector val v_artindefstock, vector val v_artrebatebpi)// Edit ************************** BPI Ukraine - KramarAlexandr - Tuesday, 20 November 2018 17:14:04
@@ -734,7 +756,6 @@ begin
           end;
         end;
       end;
-      logtext(0,"check ivcash " & ivcash_qty & ":" & ivcash_sum & ":" & totqty);
       // EVS: DOL-159
       for (j=0;j<a_slinv.length;j=j+1) begin
         qty = v_artinvqty[a_art[i] & "|" & a_slinv[j] & "|IVVc"];
@@ -829,7 +850,7 @@ begin
           end;
           if (RepSpec.ArtMode == 3) then begin
             indefstock = v_artindefstock[a_art[i]];
-            instock = v_artinvinstock[a_art[i]] - indefstock;
+            instock = GetSupplierTotalBalance(a_art[i],RepSpec.f4);//v_artinvinstock[a_art[i]] - indefstock;
             totindefstock = totindefstock + indefstock;
             totinstock = totinstock + instock;
             recvd = FindReceivedValuePeriod(RepSpec.f4,a_art[i],RepSpec.sStartDate,RepSpec.sEndDate);//v_artrecvd[a_art[i]];
@@ -845,6 +866,9 @@ begin
           toint = round((1 - (instock / recvd)) * 100,SetRoundModed(0));
 //          outstring(0,0,instock & " " & recvd,false);
           if (RepSpec.ArtMode!=3) then begin
+            OutString(5,0,ZeroString(toint) & "%",true);
+          end else begin
+            toint = round(((recvd/instock)) * 100,SetRoundModed(0));
             OutString(5,0,ZeroString(toint) & "%",true);
           end;
           // :EVS
