@@ -1309,7 +1309,7 @@ begin
   hm = 280; v = 60;
   vs = 52; h2 = 55; v3 = 48; l = 57;
   h = hm;
-  EditFieldTLX(h+l+30,20,120,"Grˆìa",M4Val,ViewOnly,100,25,patM4black,vals0,true,0);
+  //EditFieldTLX(h+l+30,20,120,"Grˆìa",M4Val,ViewOnly,100,25,patM4black,vals0,true,0);
   EditFieldTL(h+l+30,v,120,"Pardav˜jˆs",M4UStr,Normal,10,f1,false,0);
   EditFieldTL(h+l+30,v+=20,120,"Slaptaìodis",M4Star,Normal,20,f2,false,0);
   v=v+29;
@@ -1381,7 +1381,7 @@ begin
   hm = 280; v = 60;
   vs = 52; h2 = 55; v3 = 48; l = 57;
   h = hm;
-  EditFieldTLX(h+l+30,20,120,"Grˆìa",M4Val,ViewOnly,100,25,patM4black,vals0,true,0);
+  //EditFieldTLX(h+l+30,20,120,"Grˆìa",M4Val,ViewOnly,100,25,patM4black,vals0,true,0);
   EditFieldTL(h+l+30,v,120,"Pardav˜jˆs",M4UStr,Normal,10,f1,false,0);
   EditFieldTL(h+l+30,v+=20,120,"Slaptaìodis",M4Star,Normal,20,f2,false,0);
   v=v+29;
