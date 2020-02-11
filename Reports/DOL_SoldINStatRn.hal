@@ -850,10 +850,12 @@ begin
           end;
           if (RepSpec.ArtMode == 3) then begin
             indefstock = v_artindefstock[a_art[i]];
-            instock = GetSupplierTotalBalance(a_art[i],RepSpec.f4);//v_artinvinstock[a_art[i]] - indefstock;
+            instock = v_artinvinstock[a_art[i]];//GetSupplierTotalBalance(a_art[i],RepSpec.f4);
             totindefstock = totindefstock + indefstock;
             totinstock = totinstock + instock;
-            recvd = FindReceivedValuePeriod(RepSpec.f4,a_art[i],RepSpec.sStartDate,RepSpec.sEndDate);//v_artrecvd[a_art[i]];
+            recvd = instock+indefstock+qty;//FindReceivedValuePeriod(RepSpec.f4,a_art[i],RepSpec.sStartDate,RepSpec.sEndDate);//v_artrecvd[a_art[i]];
+            //recvd = FindReceivedValue(a_art[i],RepSpec.f4);
+
             totrecvd = totrecvd + recvd;
           end;
           if (RepSpec.ArtMode==3) then begin
@@ -863,12 +865,12 @@ begin
           OutString(8,0,ZeroString(indefstock),true);
           toint = round(((indefstock / (instock + qty + indefstock))) * 100,SetRoundModed(0));
           OutString(9,0,ZeroString(toint) & "%",true);
-          toint = round((1 - (instock / recvd)) * 100,SetRoundModed(0));
 //          outstring(0,0,instock & " " & recvd,false);
           if (RepSpec.ArtMode!=3) then begin
+            toint = round((1 - (instock / recvd)) * 100,SetRoundModed(0));
             OutString(5,0,ZeroString(toint) & "%",true);
           end else begin
-            toint = round(((recvd/instock)) * 100,SetRoundModed(0));
+            toint = round(((instock/recvd)) * 100,SetRoundModed(0));
             OutString(5,0,ZeroString(toint) & "%",true);
           end;
           // :EVS
@@ -1174,9 +1176,9 @@ begin
         // :EVS
         if (RepSpec.ArtMode==3) then begin
           if (nonblank(artcode) and !v_artinvf[artcode & ":" & artcode2]) then begin
-            t = DOL_FindDefStockValue(IVCashrw.ArtCode,RepSpec.f4);
+            t = DOL_FindDefStockValue(artcode2,RepSpec.f4);
             v_artindefstock[artcode] = v_artindefstock[artcode] + t;
-            FindStockValue(IVCashrw.ArtCode,RepSpec.f4,ISr);
+            FindStockValue(artcode2,RepSpec.f4,ISr);
             v_artinvinstock[artcode] = v_artinvinstock[artcode] + ISr.Instock - t;
             //v_artrecvd[artcode] = v_artrecvd[artcode2] + FindReceivedValuePeriod(IVCashrw.ArtCode,RepSpec.f4,artcode,RepSpec.sStartDate,RepSpec.sEndDate);
             v_artinvf[artcode & ":" & artcode2] = true;
@@ -1387,9 +1389,9 @@ begin
         // :EVS
         if (RepSpec.ArtMode==3) then begin
           if (nonblank(artcode) and !v_artinvf[artcode & ":" & artcode2]) then begin
-            t = DOL_FindDefStockValue(IVrw.ArtCode,RepSpec.f4);
+            t = DOL_FindDefStockValue(artcode2,RepSpec.f4);
             v_artindefstock[artcode] = v_artindefstock[artcode] + t;
-            FindStockValue(IVrw.ArtCode,RepSpec.f4,ISr);
+            FindStockValue(artcode2,RepSpec.f4,ISr);
             v_artinvinstock[artcode] = v_artinvinstock[artcode] + ISr.Instock - t;
             //v_artrecvd[artcode] = v_artrecvd[artcode] + FindReceivedValuePeriod(IVrw.ArtCode,RepSpec.f4,artcode,RepSpec.sStartDate,RepSpec.sEndDate);
             v_artinvf[artcode & ":" & artcode2] = true;
