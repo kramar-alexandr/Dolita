@@ -870,7 +870,7 @@ begin
             toint = round((1 - (instock / recvd)) * 100,SetRoundModed(0));
             OutString(5,0,ZeroString(toint) & "%",true);
           end else begin
-            toint = round(((instock/recvd)) * 100,SetRoundModed(0));
+            toint = round(((qty/recvd)) * 100,SetRoundModed(0));
             OutString(5,0,ZeroString(toint) & "%",true);
           end;
           // :EVS
