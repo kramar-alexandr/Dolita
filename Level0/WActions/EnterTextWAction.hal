@@ -356,6 +356,22 @@ begin
 				otherwise
 				SoftKey(wn,anumberstr);
 			end;
+		case "EBS_ClockInWClass":
+      goto LEBS_ClockOutWClass;
+		case "EBS_ClockOutWClass":
+LEBS_ClockOutWClass:;
+			activefield = WindowActiveField(wn);
+			switch (activefield) begin
+				case "f2": 
+          DeselectWindow(wn,true);
+          GetWindowRecord(wn,RepSpec); 
+          RepSpec.f2 = RepSpec.f2 & anumberstr;
+          PutWindowRecord(wn,RepSpec);
+          WindowFieldGoto(wn,RepSpec,-1,activefield,false);
+				
+				otherwise
+  				SoftKey(wn,anumberstr);
+			end;
 		otherwise
 		SoftKey(wn,anumberstr);
 	end;
