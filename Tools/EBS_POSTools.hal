@@ -802,7 +802,7 @@ begin
 
   wn = CurWindow();
   mwn = MotherWindow(wn);
-  DeselectWindow(wn,false);
+  DeselectWindow(wn,true);
 
   GetWindowRecord(wn,RepSpec);
   if blank(RepSpec.f1) then begin
