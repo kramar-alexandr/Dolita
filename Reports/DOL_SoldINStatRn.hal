@@ -920,6 +920,9 @@ begin
     end;
     if (RepSpec.ArtMode!=3) then begin
       OutString(5,0,ZeroString(toint) & "%",true);
+    end else begin
+      toint = round(((qtytotal/totrecvd)) * 100,SetRoundModed(0));
+      OutString(5,0,ZeroString(toint) & "%",true);
     end;
     OutString(6,0,ZeroString(qtytotal),true);
     OutVal(1,0,sumtotal,M4Val,true);
