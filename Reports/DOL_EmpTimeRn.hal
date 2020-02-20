@@ -1,25 +1,45 @@
 external inner function Date DateFromString(string,string);
 external inner function Time TimeDiff(Time,Time);
 
-procedure AddDuration(Time st,Time et,var duration res)
-begin
-  Time t,rest;
-  
-  rest = TimeDiff(st,et);  
-  res.hour = res.hour + rest.hour;
-  res.minute = res.minute + rest.minute;
-  res.second = res.second + rest.second;
-  return;
-end;
 function duration AddDuration2(duration dur1,duration dur2)
 begin
   duration res;
+  Integer s,m,h;
   
-  res.hour = dur1.hour + dur2.hour;
-  res.minute = dur1.minute + dur2.minute;
-  res.second = dur1.second + dur2.second;
+  s = dur1.second + dur2.second;
+  m = dur1.minute + dur2.minute;
+  h = dur1.hour + dur2.hour;
+  if (s>60) then begin
+    m = m + (s/60);
+    s = mod(s,60);
+  end;
+  if (m>60) then begin
+    h = h + (m/60);
+    m = mod(m,60);
+  end;
+
+  res.hour = h;
+  res.minute = m;
+  res.second = s;
 
   AddDuration2 = res;
+  return;
+end;
+
+
+procedure AddDuration(Time st,Time et,var duration res)
+begin
+  Time t,rest;
+  duration tdur;
+  
+  rest = TimeDiff(st,et);
+
+  tdur.hour = rest.hour;
+  tdur.minute = rest.minute;
+  tdur.second = rest.second;
+
+  res = AddDuration2(res,tdur);
+
   return;
 end;
 
@@ -111,6 +131,24 @@ begin
   return;
 end;
 
+procedure AddToORRecord(var record ORVc ORr,Date td,string location,string usercode,string username,string st,string et,string diff)
+begin
+  row ORVc ORrw;
+  
+  ClearRow(ORr,ORrw,1);
+  ORrw.ArtCode = location;//20
+  ORrw.SalesAcc = usercode;//10
+  ORrw.Spec = username;
+  ORrw.SerialNr = st;
+  ORrw.PickingTime = et;
+  ORrw.InloadingDate = td;
+  ORrw.DespatchRowTime = diff;
+  ORrw.ShipNote = DateToString(td,"YYYY-MM-DD") & ":" & st;
+  MatRowPut(ORr,MatRowCnt(ORr),ORrw);
+
+  return;
+end;
+
 global
 procedure DOL_EmpTimeRn(record RcVc RepSpec)
 begin
@@ -129,6 +167,9 @@ begin
   array record RoutingVc aRr;
   record RoutingVc Rr;
   row RoutingVc Rrw;
+  Time et;
+  record ORVc ORr;
+  row ORVc ORrw;
   
   StartReportJob(UsetStr(1000149));
 
@@ -191,20 +232,31 @@ begin
     GetNextSubString(aClockIn[i],pos,":",tmp);
     Userr.Code = tmp;
     ReadFirstMain(Userr,1,true);
-    diff = TimeDiff(vClockIn[aClockIn[i]],vClockOut[aClockIn[i]]);
-    AddDuration(vClockIn[aClockIn[i]],vClockOut[aClockIn[i]],totdur);
-    AddDurationToArray(aRr,Userr.Code,vLocation[aClockIn[i]],vClockIn[aClockIn[i]],vClockOut[aClockIn[i]]);
+    et = vClockOut[aClockIn[i]];
+    if (blank(et)) then begin
+      et = CurrentTime;
+    end;
+    diff = TimeDiff(vClockIn[aClockIn[i]],et);
+    AddDuration(vClockIn[aClockIn[i]],et,totdur);
+    AddDurationToArray(aRr,Userr.Code,vLocation[aClockIn[i]],vClockIn[aClockIn[i]],et);
 
+    AddToORRecord(ORr,td,vLocation[aClockIn[i]],Userr.Code,Userr.Name,vClockIn[aClockIn[i]],vClockOut[aClockIn[i]],diff);
+
+  end;
+
+  SortRows(ORr,"ShipNote",true);
+  rwcnt = MatRowCnt(ORr);
+  for (i=0;i<rwcnt;i=i+1) begin
+    MatRowGet(ORr,i,ORrw);
     StartFormat(15);
-    OutString(0,0,td,false);
-    OutString(2,0,vLocation[aClockIn[i]],false);
-    OutString(3,0,Userr.Code,false);
-    OutString(4,0,Userr.Name,false);
-    OutString(5,0,vClockIn[aClockIn[i]],false);
-    OutString(6,0,vClockOut[aClockIn[i]],false);
-    OutString(7,0,diff,false);
+    OutString(0,0,ORrw.InloadingDate,false);
+    OutString(2,0,ORrw.ArtCode,false);
+    OutString(3,0,ORrw.SalesAcc,false);
+    OutString(4,0,ORrw.Spec,false);
+    OutString(5,0,ORrw.SerialNr,false);
+    OutString(6,0,ORrw.PickingTime,false);
+    OutString(7,0,ORrw.DespatchRowTime,false);
     EndFormat;
-
   end;
   
   StartFormat(1);
