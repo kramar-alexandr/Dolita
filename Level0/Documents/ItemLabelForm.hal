@@ -125,6 +125,7 @@ BEGIN
     VARr.Code = RepSpec.f12;
     ReadFirstMain(VARr,1,true);
     OutFormField("F_OBJECT",VARr.Comment);
+    OutFormField("F_DYDIS","DYDIS:");//I guess there's no need to translate this
   end;
 //EBS<--
   // EVS: DOL-33
