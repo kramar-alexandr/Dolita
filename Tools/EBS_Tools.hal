@@ -581,6 +581,7 @@ procedure PrintAdditionalFields(record PUVc PUr,row PUVc PUrw) begin
       ReadFirstMain(VARr,1,true);
       OutFormField("F_OBJECT",VARr.Comment);
       OutFormField("F_HALVARCODE",VARr.Code);
+      OutFormField("F_DYDIS","DYDIS:");
     end;
   end;
 
