@@ -153,8 +153,8 @@ global
 procedure DOL_EmpTimeRn(record RcVc RepSpec)
 begin
   record POSClockInOutVc PCr;
-  Boolean TrHs,testf;
-  string 255 datestr,tmp;
+  Boolean TrHs,testf,idf;
+  string 255 datestr,tmp,id;
   Date td;
   Longint pos;
   vector time vClockIn,vClockOut;
@@ -214,11 +214,31 @@ begin
       end;
       if (testf) then begin
         datestr = DateToString(PCr.TransDate,"YYYY-MM-DD");
-        switch (PCr.Type) begin
-          case 1: vClockIn[datestr & ":" & PCr.UserCode] = PCr.TransTime;
-          case 0: vClockOut[datestr & ":" & PCr.UserCode] = PCr.TransTime;
+        i = 1;
+        idf = false;
+        while (idf==false) begin
+          id = datestr & ":" & PCr.UserCode & ":" & i;
+
+          if (PCr.Type==1) then begin
+            if (nonblank(vLocation[id])) then begin
+              i = i + 1;
+            end else begin
+              idf = true;
+            end;
+          end else begin
+            if (blank(vLocation[id])) then begin
+              id = datestr & ":" & PCr.UserCode & ":" & (i-1);
+              idf = true;
+            end else begin
+              i = i + 1;
+            end;
+          end;
         end;
-        vLocation[datestr & ":" & PCr.UserCode] = PCr.LocalMachine;
+        switch (PCr.Type) begin
+          case 1: vClockIn[id] = PCr.TransTime;
+          case 0: vClockOut[id] = PCr.TransTime;
+        end;
+        vLocation[id] = PCr.LocalMachine;
       end;
     end;
   end;
