@@ -140,6 +140,91 @@ begin
 return;
 end;
 
+procedure GetCurlReplyAndPage(string stdout,var area areply,var string nextlink)
+begin
+  Longint l,i,reppos,j,pos;
+  area tarea;
+  string 255 tstr,tmp;
+  Boolean addf;
+  array string 255 linkarr;
+
+  //AddFileToArea("sh_output.txt",tarea,0);
+  AddTextToArea(stdout,tarea);
+  l = CountLinesInArea(tarea);
+  for (i=0;i<l;i=i+1) begin
+    tstr = GetLineFromArea(tarea,i);
+    if (left(tstr,5)=="Link:") then begin
+      pos = -1;
+      ClearArray(linkarr);
+      while (GetNextSubstring(tstr,pos,";",tmp)) begin
+        linkarr[linkarr.length] = tmp;
+      end;
+      for (j=linkarr.length-1;j>=0;j=j-1) begin
+        if (left(linkarr[j],11)==" rel=\"next\"") then begin
+          nextlink = UrlDecode(mid(linkarr[j-1],7,len(linkarr[j-1])-8));
+          reppos = InString(nextlink,"shopify.com");
+          if (reppos>0) then begin
+            nextlink = mid(nextlink,reppos+10,len(nextlink)-(reppos+10));
+          end;
+          j = -1;
+        end;
+      end;
+    end;
+  end;
+  reppos = FindStringInArea(chr(13) & chr(10) & chr(13) & chr(10),tarea);
+  if (reppos>0) then begin
+    reppos = reppos + 4;
+    GetAreaFromArea(tarea,reppos,GetAreaLength(tarea)-reppos,areply);
+  end;
+
+  return;
+end;
+
+procedure DOLMakeWebRequest_external(string method,string apipath,var area areq,var area areply,Integer apinum,var string nextlink)
+begin
+  record DOLShopifyBlock DOLShopifyBl;
+	area request;
+  string 255 auth,apiuser,apipass,apiurl,cmd,stdout;
+  Longint apiport;
+	
+  nextlink = "";
+  SetAreaZeroSize(areply);
+	BlockLoad(DOLShopifyBl);	
+
+  apiuser = DOLShopifyBl.APIUser;
+  apipass = DOLShopifyBl.APIPass;
+  apiurl = DOLShopifyBl.ShopifyURL;
+  apiport = DOLShopifyBl.ShopifyPort;
+  if (apinum==2) then begin
+    apiuser = DOLShopifyBl.APIUser2;
+    apipass = DOLShopifyBl.APIPass2;
+    apiurl = DOLShopifyBl.ShopifyURL2;
+    apiport = DOLShopifyBl.ShopifyPort2;
+  end;
+
+
+  auth = "Authorization:Basic " & Base64Encode(apiuser & ":" & apipass);
+  //SendWebRequest(apiurl,apiport,-1,true,method,apipath,"application/json; charset=""utf-8""" & chr(10) & auth,"",false,areq,areply,15);
+
+  cmd = "curl  --connect-timeout 30 -i -s -H \"Content-Type: application/json\" --user " & apiuser & ":" & apipass & " --request GET  \"https://" & apiurl & ":" & apiport & apipath & "\"";//-o sh_output.txt ";
+  
+  RunShellScriptGetStdout(cmd,stdout); 
+  SetAreaZeroSize(areply);
+  GetCurlReplyAndPage(stdout,areply,nextlink);
+
+	logtext(0,"************************DOLShopifyBl.SaveReqResp=" & DOLShopifyBl.SaveReqResp);
+	if(DOLShopifyBl.SaveReqResp>0)then begin
+		if (!DirExists("ShopifyRQS")) then begin
+			CreateFolder("ShopifyRQS");
+		end;
+		logtext(0,"Write***");
+		WriteAreaToFile(areq,"ShopifyRQS/ShopifyRequest_" & GetCurTick & ".txt",0);
+		WriteAreaToFile(areply,"ShopifyRQS/ShopifyReply_" & GetCurTick & ".txt",0);
+	end;
+
+return;
+end;
+
 global procedure DOLMakeWebRequestAsync(string method,string apipath,var area areq,Integer apinum)
 begin
   record DOLShopifyBlock DOLShopifyBl;
@@ -904,7 +989,7 @@ begin
   json jdata;
   boolean breakf;
   integer i,loopc,pg,j;
-  string 255 data,since_id,pub_stat;
+  string 255 data,since_id,pub_stat,nextlink,link;
   val price;
   area a_req,a_reply;
   integer pos;
@@ -921,15 +1006,16 @@ begin
   if (RepSpec.ArtMode == 0 or RepSpec.ArtMode == 2) then begin // EVS: DOL-167 artmode == 2
     if (nonblank(DOLShopifyBl.APIUser) and nonblank(DOLShopifyBl.APIPass)) then begin
       
-      pg = 1;
-      DOLMakeWebRequest("GET","/admin/products.json?fields=title,id,variants&limit=250&page=" & pg,a_req,a_reply,1);
+      link = "/admin/api/2020-01/products.json?fields=title,id,variants&limit=250";
+LDOLGetShopifyProdIDMn_Nextpage:;
+      DOLMakeWebRequest_external("GET",link,a_req,a_reply,1,nextlink);
      	//PreparePostArea(a_reply);
-      WriteAreaToFile(a_reply,"Shopify.txt",0);
+      //WriteAreaToFile(a_reply,"Shopify.txt",0);
 			
       jdata = ParseJSONArea(a_reply);
 			
       while (GetAreaLength(a_reply) > 0 and JSONNodeExists(jdata,"products/[0]/id") and loopc < 100) begin // 25000 items max; to avoid infinite loop
-				logtext(0,"Begin to parse " & JSONNodeExists(jdata,"products/[" & i & "]/id"));
+				//logtext(0,"Begin to parse " & JSONNodeExists(jdata,"products/[" & i & "]/id"));
         i = 0;
         while (JSONNodeExists(jdata,"products/[" & i & "]/id")) begin
           if (JSONNodeExists(jdata,"products/[" & i & "]/variants/[0]/sku")) then begin
@@ -976,10 +1062,16 @@ begin
 							j = j + 1;
 						end;
           end;
-          logtext(0,"i = " & i & " pg = " & pg);
           i = i + 1;
         end;
 
+
+        if (nonblank(nextlink)) then begin
+          setareazerosize(a_reply);
+          link = nextlink;
+          goto LDOLGetShopifyProdIDMn_Nextpage;        
+        end;
+/*
         SetAreaZeroSize(a_reply);
 
         pg = pg + 1;
@@ -991,6 +1083,7 @@ begin
         logtext(0,pg & " AreaSize " & getarealength(a_reply));
 				logtext(0,pg & " AreaSizeNDExs " & JSONNodeExists(jdata,"products/[0]/id"));
         loopc = loopc + 1;
+*/
       end;
 
     end else begin
@@ -1186,6 +1279,8 @@ begin
   string 255 shippingline; // ARA: HAL-1145
   val discamount; // ARA: HAL-1145
   Integer apinum;
+  string 255 link,nextlink;
+  Integer limit;
 	
   BlockLoad(DOLShopifyBl);
   BlockLoad(SNCb); // ARA: HAL-1145
@@ -1202,14 +1297,16 @@ begin
   DOLShopifyBl.GetOrdersFrom = AddDay(RepSpec.sEndDate,-1);
   BlockStore(DOLShopifyBl);
   apinum = 1;
-
+  limit = 100;//250;
   if (nonblank(DOLShopifyBl.APIUser) and nonblank(DOLShopifyBl.APIPass) and DOLShopifyBl.GetOrdersFlag) then begin
+    // /admin/
+LRepeatAPI2:;
+    link = "/admin/api/2020-01/orders.json?status=" & status & "&fields=name,email,created_at,line_items,shipping_lines,customer,client_details,customer_locale&status=any&created_at_min=" & DateToString(RepSpec.sStartDate,"YYYY-MM-DD") & "T00:00:00-00:00" & "&created_at_max=" & DateToString(addday(RepSpec.sEndDate,1),"YYYY-MM-DD") & "T00:00:00-00:00&limit=" & limit;
 LHetNextOrders:;
 		setareazerosize(a_reply);
 		setareazerosize(a_req);
   	orders = 0;
-  	page = page + 1;
-  	DOLMakeWebRequest("GET","/admin/orders.json?status=" & status & "&fields=name,email,created_at,line_items,shipping_lines,customer,client_details,customer_locale&status=any&created_at_min=" & DateToString(RepSpec.sStartDate,"YYYY-MM-DD") & "T00:00:00-00:00" & "&created_at_max=" & DateToString(addday(RepSpec.sEndDate,1),"YYYY-MM-DD") & "T00:00:00-00:00&limit=250&page=" & page,a_req,a_reply,apinum);
+  	DOLMakeWebRequest_external("GET",link,a_req,a_reply,apinum,nextlink);
 		//PreparePostArea(a_reply);
 		
 		//addfiletoarea("Shopify.txt",a_reply,0);
@@ -1397,19 +1494,26 @@ LHetNextOrders:;
 					
 				i = i + 1;
 			end;
+      /*
 			if(orders>=250)then begin
 				setareazerosize(a_reply);
 				logtext(0,"Nextpage " & page);
 				goto LHetNextOrders;
 			end;
+      */
+      if (nonblank(nextlink)) then begin
+				setareazerosize(a_reply);
+        link = nextlink;
+				goto LHetNextOrders;        
+      end;
 		end;
-		
 		WriteAreaToFile(a_reply,"Shopify.json",0);
   
     if (DOLShopifyBl.APIEnable2==1 and apinum==1) then begin
       page = 0;
       apinum = 2;
-      goto LHetNextOrders;
+      link = "";
+      goto LRepeatAPI2;
     end;
   end;
   
