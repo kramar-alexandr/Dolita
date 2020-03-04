@@ -96,20 +96,20 @@ end;
 global procedure DOLMakeWebRequest(string method,string apipath,var area areq,var area areply,Integer apinum)
 begin
   record DOLShopifyBlock DOLShopifyBl;
-	area request;
+  area request;
   string 255 auth,apiuser,apipass,apiurl;
   Longint apiport;
-	
-	BlockLoad(DOLShopifyBl);	
+  
+  BlockLoad(DOLShopifyBl);  
 /*
-	addtexttoarea(method & " " & apipath & " HTTP/1.1" & chr(13) & chr(10),request);
- 	addtexttoarea("host: " & DOLShopifyBl.ShopifyURL & chr(13) & chr(10),request);
-	addtexttoarea("Authorization: Basic " & Base64Encode(DOLShopifyBl.APIUser & ":" & DOLShopifyBl.APIPass) & chr(13) & chr(10),request);
-	addtexttoarea(chr(13) & chr(10),request);
-	
-	insertareabeforearea(request,areq);
-		
-	SendRawWebRequest(DOLShopifyBl.ShopifyURL,DOLShopifyBl.ShopifyPort,true,method,apipath,"application/json","",false,areq,areply,20);
+  addtexttoarea(method & " " & apipath & " HTTP/1.1" & chr(13) & chr(10),request);
+   addtexttoarea("host: " & DOLShopifyBl.ShopifyURL & chr(13) & chr(10),request);
+  addtexttoarea("Authorization: Basic " & Base64Encode(DOLShopifyBl.APIUser & ":" & DOLShopifyBl.APIPass) & chr(13) & chr(10),request);
+  addtexttoarea(chr(13) & chr(10),request);
+  
+  insertareabeforearea(request,areq);
+    
+  SendRawWebRequest(DOLShopifyBl.ShopifyURL,DOLShopifyBl.ShopifyPort,true,method,apipath,"application/json","",false,areq,areply,20);
 */
 
   apiuser = DOLShopifyBl.APIUser;
@@ -127,15 +127,15 @@ begin
   auth = "Authorization:Basic " & Base64Encode(apiuser & ":" & apipass);
   SendWebRequest(apiurl,apiport,-1,true,method,apipath,"application/json; charset=""utf-8""" & chr(10) & auth,"",false,areq,areply,15);
 
-	logtext(0,"************************DOLShopifyBl.SaveReqResp=" & DOLShopifyBl.SaveReqResp);
-	if(DOLShopifyBl.SaveReqResp>0)then begin
-		if (!DirExists("ShopifyRQS")) then begin
-			CreateFolder("ShopifyRQS");
-		end;
-		logtext(0,"Write***");
-		WriteAreaToFile(areq,"ShopifyRQS/ShopifyRequest_" & DateToString(currentdate,"YYYY-MM-DD") & TimeToString(currenttime,"HHMMSS",false) & ".txt",0);
-		WriteAreaToFile(areply,"ShopifyRQS/ShopifyReply_" & DateToString(currentdate,"YYYY-MM-DD") & TimeToString(currenttime,"HHMMSS",false) & ".txt",0);
-	end;
+  logtext(0,"************************DOLShopifyBl.SaveReqResp=" & DOLShopifyBl.SaveReqResp);
+  if(DOLShopifyBl.SaveReqResp>0)then begin
+    if (!DirExists("ShopifyRQS")) then begin
+      CreateFolder("ShopifyRQS");
+    end;
+    logtext(0,"Write***");
+    WriteAreaToFile(areq,"ShopifyRQS/ShopifyRequest_" & DateToString(currentdate,"YYYY-MM-DD") & TimeToString(currenttime,"HHMMSS",false) & ".txt",0);
+    WriteAreaToFile(areply,"ShopifyRQS/ShopifyReply_" & DateToString(currentdate,"YYYY-MM-DD") & TimeToString(currenttime,"HHMMSS",false) & ".txt",0);
+  end;
 
 return;
 end;
@@ -183,13 +183,13 @@ end;
 procedure DOLMakeWebRequest_external(string method,string apipath,var area areq,var area areply,Integer apinum,var string nextlink)
 begin
   record DOLShopifyBlock DOLShopifyBl;
-	area request;
+  area request;
   string 255 auth,apiuser,apipass,apiurl,cmd,stdout;
   Longint apiport;
-	
+  
   nextlink = "";
   SetAreaZeroSize(areply);
-	BlockLoad(DOLShopifyBl);	
+  BlockLoad(DOLShopifyBl);  
 
   apiuser = DOLShopifyBl.APIUser;
   apipass = DOLShopifyBl.APIPass;
@@ -212,15 +212,15 @@ begin
   SetAreaZeroSize(areply);
   GetCurlReplyAndPage(stdout,areply,nextlink);
 
-	logtext(0,"************************DOLShopifyBl.SaveReqResp=" & DOLShopifyBl.SaveReqResp);
-	if(DOLShopifyBl.SaveReqResp>0)then begin
-		if (!DirExists("ShopifyRQS")) then begin
-			CreateFolder("ShopifyRQS");
-		end;
-		logtext(0,"Write***");
-		WriteAreaToFile(areq,"ShopifyRQS/ShopifyRequest_" & GetCurTick & ".txt",0);
-		WriteAreaToFile(areply,"ShopifyRQS/ShopifyReply_" & GetCurTick & ".txt",0);
-	end;
+  logtext(0,"************************DOLShopifyBl.SaveReqResp=" & DOLShopifyBl.SaveReqResp);
+  if(DOLShopifyBl.SaveReqResp>0)then begin
+    if (!DirExists("ShopifyRQS")) then begin
+      CreateFolder("ShopifyRQS");
+    end;
+    logtext(0,"Write***");
+    WriteAreaToFile(areq,"ShopifyRQS/ShopifyRequest_" & GetCurTick & ".txt",0);
+    WriteAreaToFile(areply,"ShopifyRQS/ShopifyReply_" & GetCurTick & ".txt",0);
+  end;
 
 return;
 end;
@@ -228,24 +228,24 @@ end;
 global procedure DOLMakeWebRequestAsync(string method,string apipath,var area areq,Integer apinum)
 begin
   record DOLShopifyBlock DOLShopifyBl;
-	area request,areply;
+  area request,areply;
   string 255 auth,apiuser,apipass,apiurl;
   Longint apiport;
-	
-	blockload(DOLShopifyBl);
-		
-	
-	//DOLShopifyBl.ShopifyURL = "z8farsqgafir.runscope.net";
+  
+  blockload(DOLShopifyBl);
+    
+  
+  //DOLShopifyBl.ShopifyURL = "z8farsqgafir.runscope.net";
 /*
- 	addtexttoarea(method & " " & apipath & " HTTP/1.1" & chr(13) & chr(10),request);
-	addtexttoarea("Host: " & DOLShopifyBl.ShopifyURL & chr(13) & chr(10),request);
-	addtexttoarea("Authorization: Basic " & Base64Encode(DOLShopifyBl.APIUser & ":" & DOLShopifyBl.APIPass) & chr(13) & chr(10),request);
-	
-	addtexttoarea(chr(13) & chr(10),request);
-	
-	insertareabeforearea(request,areq);
-	
-	SendAsyncRawWebRequest(DOLShopifyBl.ShopifyURL,DOLShopifyBl.ShopifyPort,true,method,apipath,"application/json","",areq,"DOLMakeWebRequestReply",20);
+   addtexttoarea(method & " " & apipath & " HTTP/1.1" & chr(13) & chr(10),request);
+  addtexttoarea("Host: " & DOLShopifyBl.ShopifyURL & chr(13) & chr(10),request);
+  addtexttoarea("Authorization: Basic " & Base64Encode(DOLShopifyBl.APIUser & ":" & DOLShopifyBl.APIPass) & chr(13) & chr(10),request);
+  
+  addtexttoarea(chr(13) & chr(10),request);
+  
+  insertareabeforearea(request,areq);
+  
+  SendAsyncRawWebRequest(DOLShopifyBl.ShopifyURL,DOLShopifyBl.ShopifyPort,true,method,apipath,"application/json","",areq,"DOLMakeWebRequestReply",20);
 */
 
   apiuser = DOLShopifyBl.APIUser;
@@ -262,31 +262,31 @@ begin
   auth = "Authorization:Basic " & Base64Encode(apiuser & ":" & apipass);
   SendAsyncWebRequest(apiurl,apiport,-1,true,method,apipath,"application/json; charset=""utf-8""" & chr(10) & auth,"",areq,"DOLMakeWebRequestReply",20);
 
-	logtext(0,"************************DOLShopifyBl.SaveReqResp=" & DOLShopifyBl.SaveReqResp);
-	if(DOLShopifyBl.SaveReqResp>0)then begin
-		if (!DirExists("ShopifyRQS")) then begin
-			CreateFolder("ShopifyRQS");
-		end;
-		WriteAreaToFile(areq,"ShopifyRQS/ShopifyRequest_" & DateToString(currentdate,"YYYY-MM-DD") & TimeToString(currenttime,"HHMMSS",false) & ".txt",0);
-	end;
+  logtext(0,"************************DOLShopifyBl.SaveReqResp=" & DOLShopifyBl.SaveReqResp);
+  if(DOLShopifyBl.SaveReqResp>0)then begin
+    if (!DirExists("ShopifyRQS")) then begin
+      CreateFolder("ShopifyRQS");
+    end;
+    WriteAreaToFile(areq,"ShopifyRQS/ShopifyRequest_" & DateToString(currentdate,"YYYY-MM-DD") & TimeToString(currenttime,"HHMMSS",false) & ".txt",0);
+  end;
 
 return;
 end;
 
 global updating procedure DOLMakeWebRequestReply(Area a_reply,Area a_replyheader,boolean timeout)
 begin
-	record DOLShopifyBlock DOLShopifyBl;
-	
-	blockload(DOLShopifyBl);
-	if (!DirExists("ShopifyRQS")) then begin
-		CreateFolder("ShopifyRQS");
-	end;
-	if(DOLShopifyBl.SaveReqResp>0)then begin
-		if (!DirExists("ShopifyRQS")) then begin
-			CreateFolder("ShopifyRQS");
-		end;
-		WriteAreaToFile(a_reply,"ShopifyRQS/ShopifyReply_" & DateToString(currentdate,"YYYY-MM-DD") & TimeToString(currenttime,"HHMMSS",false) & ".txt",0);
-	end;	
+  record DOLShopifyBlock DOLShopifyBl;
+  
+  blockload(DOLShopifyBl);
+  if (!DirExists("ShopifyRQS")) then begin
+    CreateFolder("ShopifyRQS");
+  end;
+  if(DOLShopifyBl.SaveReqResp>0)then begin
+    if (!DirExists("ShopifyRQS")) then begin
+      CreateFolder("ShopifyRQS");
+    end;
+    WriteAreaToFile(a_reply,"ShopifyRQS/ShopifyReply_" & DateToString(currentdate,"YYYY-MM-DD") & TimeToString(currenttime,"HHMMSS",false) & ".txt",0);
+  end;  
 return;
 end;
 
@@ -309,7 +309,7 @@ begin
   if (nonblank(Shopb.InchVARGCode)) then begin
     VArr.Code = right(serp_var,len(serp_var) - 1);
     if (ReadFirstMain(VARr,1,true)) then begin
-    	
+      
       if (VARr.VARGCode == Shopb.InchVARGCode) then begin
         BlockLoad(convb);
         rwc = MatRowCnt(convb);
@@ -323,9 +323,9 @@ begin
         end;
       end;
       if(VARr.ShopCM!=blankval)then begin
-    		aval = VARr.ShopCM;// Edit ************************** BPI Ukraine - KramarAlexandr - 05, 19 04 2019 y. at 10:29:30 AM
-    		convf = true;
-    	end;
+        aval = VARr.ShopCM;// Edit ************************** BPI Ukraine - KramarAlexandr - 05, 19 04 2019 y. at 10:29:30 AM
+        convf = true;
+      end;
     end;
   end;
 
@@ -896,33 +896,33 @@ end;
 
 procedure PreparePostArea(var area atarget) //Cut HTTP Header From raw reply
 begin
-	longint i,lenth;
-	string 10 ch,unix,win,mac;
-	area temparea;
-	
-	unix = chr(10) & chr(10);
-	win = chr(13) & chr(10) & chr(13) & chr(10);
-	mac = chr(13) & chr(13);
-	
-	lenth = GetAreaLength(atarget);
-	For(i=0;i<lenth;i=i+1) begin
-	  ch = GetStringfromarea(atarget,i,2);
-	  if(ch==unix or ch==mac)then begin
-	  	getareafromarea(atarget,i+2,lenth-i-2,temparea);
-	  	i = lenth;
-	  end else begin
-			ch = GetStringfromarea(atarget,i,4);
-			if(ch==win)then begin
-				getareafromarea(atarget,i+4,lenth-i-4,temparea);
-				i = lenth;
-			end;
-	  end;
-	end; 
-	
-	setareazerosize(atarget);
-	getareafromarea(temparea,0,getarealength(temparea),atarget);
-	WriteAreaToFile(atarget,"ShopifyNrm.txt",0);
-	
+  longint i,lenth;
+  string 10 ch,unix,win,mac;
+  area temparea;
+  
+  unix = chr(10) & chr(10);
+  win = chr(13) & chr(10) & chr(13) & chr(10);
+  mac = chr(13) & chr(13);
+  
+  lenth = GetAreaLength(atarget);
+  For(i=0;i<lenth;i=i+1) begin
+    ch = GetStringfromarea(atarget,i,2);
+    if(ch==unix or ch==mac)then begin
+      getareafromarea(atarget,i+2,lenth-i-2,temparea);
+      i = lenth;
+    end else begin
+      ch = GetStringfromarea(atarget,i,4);
+      if(ch==win)then begin
+        getareafromarea(atarget,i+4,lenth-i-4,temparea);
+        i = lenth;
+      end;
+    end;
+  end; 
+  
+  setareazerosize(atarget);
+  getareafromarea(temparea,0,getarealength(temparea),atarget);
+  WriteAreaToFile(atarget,"ShopifyNrm.txt",0);
+  
 return;
 end;
 
@@ -942,39 +942,39 @@ begin
 
   BlockLoad(DOLShopifyBl);
 
-	if (nonblank(DOLShopifyBl.APIUser) and nonblank(DOLShopifyBl.APIPass)) then begin
-		DOLMakeWebRequest("GET","/admin/locations.json",a_req,a_reply,1);
-		//PreparePostArea(a_reply);
-		jdata = ParseJSONArea(a_reply);
-		
-		i = 0;
-		while (JSONNodeExists(jdata,"locations/[" & i & "]/id")) begin
-			if (JSONNodeExists(jdata,"locations/[" & i & "]/id")) then begin
-				data = JSONGet(jdata,"locations/[" & i & "]/id");
-				SHLocr.Id = data;
-				if(readfirstmain(SHLocr,1,true))then begin
-					SHLocr.Name = JSONGet(jdata,"locations/[" & i & "]/name");
-					SHLocr.address1 = JSONGet(jdata,"locations/[" & i & "]/address1");
-					SHLocr.address2 = JSONGet(jdata,"locations/[" & i & "]/address2");
-					SHLocr.city = JSONGet(jdata,"locations/[" & i & "]/city");
-					recordstore(SHLocr,true);
-				end else begin
-					recordnew(SHLocr);
-					SHLocr.Id = JSONGet(jdata,"locations/[" & i & "]/id");
-					SHLocr.Name = JSONGet(jdata,"locations/[" & i & "]/name");
-					SHLocr.address1 = JSONGet(jdata,"locations/[" & i & "]/address1");
-					SHLocr.address2 = JSONGet(jdata,"locations/[" & i & "]/address2");
-					SHLocr.city = JSONGet(jdata,"locations/[" & i & "]/city");
-					recordstore(SHLocr,true);
-				end;
-				
-			end;
-			i = i + 1;
-		end;
+  if (nonblank(DOLShopifyBl.APIUser) and nonblank(DOLShopifyBl.APIPass)) then begin
+    DOLMakeWebRequest("GET","/admin/locations.json",a_req,a_reply,1);
+    //PreparePostArea(a_reply);
+    jdata = ParseJSONArea(a_reply);
+    
+    i = 0;
+    while (JSONNodeExists(jdata,"locations/[" & i & "]/id")) begin
+      if (JSONNodeExists(jdata,"locations/[" & i & "]/id")) then begin
+        data = JSONGet(jdata,"locations/[" & i & "]/id");
+        SHLocr.Id = data;
+        if(readfirstmain(SHLocr,1,true))then begin
+          SHLocr.Name = JSONGet(jdata,"locations/[" & i & "]/name");
+          SHLocr.address1 = JSONGet(jdata,"locations/[" & i & "]/address1");
+          SHLocr.address2 = JSONGet(jdata,"locations/[" & i & "]/address2");
+          SHLocr.city = JSONGet(jdata,"locations/[" & i & "]/city");
+          recordstore(SHLocr,true);
+        end else begin
+          recordnew(SHLocr);
+          SHLocr.Id = JSONGet(jdata,"locations/[" & i & "]/id");
+          SHLocr.Name = JSONGet(jdata,"locations/[" & i & "]/name");
+          SHLocr.address1 = JSONGet(jdata,"locations/[" & i & "]/address1");
+          SHLocr.address2 = JSONGet(jdata,"locations/[" & i & "]/address2");
+          SHLocr.city = JSONGet(jdata,"locations/[" & i & "]/city");
+          recordstore(SHLocr,true);
+        end;
+        
+      end;
+      i = i + 1;
+    end;
 
-	end else begin
-		MessageBox(0,"ERROR: API Access data must be provided. Check the Shopify settings.");
-	end;
+  end else begin
+    MessageBox(0,"ERROR: API Access data must be provided. Check the Shopify settings.");
+  end;
 
 
 return;
@@ -993,29 +993,29 @@ begin
   val price;
   area a_req,a_reply;
   integer pos;
-	record ShopifyProductsVc SPr;
-	
+  record ShopifyProductsVc SPr;
+  
   BlockLoad(DOLShopifyBl);
 
   pub_stat = "published";
   if (RepSpec.flags[0] == 1) then begin
     pub_stat = "any";
   end;
-	SPr.Id = "";
-		
+  SPr.Id = "";
+    
   if (RepSpec.ArtMode == 0 or RepSpec.ArtMode == 2) then begin // EVS: DOL-167 artmode == 2
     if (nonblank(DOLShopifyBl.APIUser) and nonblank(DOLShopifyBl.APIPass)) then begin
       
       link = "/admin/api/2020-01/products.json?fields=title,id,variants&limit=250";
 LDOLGetShopifyProdIDMn_Nextpage:;
       DOLMakeWebRequest_external("GET",link,a_req,a_reply,1,nextlink);
-     	//PreparePostArea(a_reply);
+       //PreparePostArea(a_reply);
       //WriteAreaToFile(a_reply,"Shopify.txt",0);
-			
+      
       jdata = ParseJSONArea(a_reply);
-			
+      
       while (GetAreaLength(a_reply) > 0 and JSONNodeExists(jdata,"products/[0]/id") and loopc < 100) begin // 25000 items max; to avoid infinite loop
-				//logtext(0,"Begin to parse " & JSONNodeExists(jdata,"products/[" & i & "]/id"));
+        //logtext(0,"Begin to parse " & JSONNodeExists(jdata,"products/[" & i & "]/id"));
         i = 0;
         while (JSONNodeExists(jdata,"products/[" & i & "]/id")) begin
           if (JSONNodeExists(jdata,"products/[" & i & "]/variants/[0]/sku")) then begin
@@ -1046,21 +1046,21 @@ LDOLGetShopifyProdIDMn_Nextpage:;
               end;
             end;*/
           
-						j=0;
-						while (JSONNodeExists(jdata,"products/[" & i & "]/variants/[" & j & "]/id")) begin
-							recordnew(SPr);
-							SPr.Id = JSONGet(jdata,"products/[" & i & "]/id");
-							SPr.VariantId = JSONGet(jdata,"products/[" & i & "]/variants/[" & j & "]/id");
-							SPr.Vproduct_id = JSONGet(jdata,"products/[" & i & "]/variants/[" & j & "]/product_id");
-							SPr.Vinvent_id = JSONGet(jdata,"products/[" & i & "]/variants/[" & j & "]/inventory_item_id");
-							SPr.Name = JSONGet(jdata,"products/[" & i & "]/title");
-							SPr.VarName = JSONGet(jdata,"products/[" & i & "]/variants/[" & j & "]/option1");
-							SPr.SKU = JSONGet(jdata,"products/[" & i & "]/variants/[" & j & "]/sku");
-							if(nonblank(SPr.Id))then begin
-								recordstore(SPr,true);
-							end;
-							j = j + 1;
-						end;
+            j=0;
+            while (JSONNodeExists(jdata,"products/[" & i & "]/variants/[" & j & "]/id")) begin
+              recordnew(SPr);
+              SPr.Id = JSONGet(jdata,"products/[" & i & "]/id");
+              SPr.VariantId = JSONGet(jdata,"products/[" & i & "]/variants/[" & j & "]/id");
+              SPr.Vproduct_id = JSONGet(jdata,"products/[" & i & "]/variants/[" & j & "]/product_id");
+              SPr.Vinvent_id = JSONGet(jdata,"products/[" & i & "]/variants/[" & j & "]/inventory_item_id");
+              SPr.Name = JSONGet(jdata,"products/[" & i & "]/title");
+              SPr.VarName = JSONGet(jdata,"products/[" & i & "]/variants/[" & j & "]/option1");
+              SPr.SKU = JSONGet(jdata,"products/[" & i & "]/variants/[" & j & "]/sku");
+              if(nonblank(SPr.Id))then begin
+                recordstore(SPr,true);
+              end;
+              j = j + 1;
+            end;
           end;
           i = i + 1;
         end;
@@ -1078,10 +1078,10 @@ LDOLGetShopifyProdIDMn_Nextpage:;
         setareazerosize(a_reply);
         setareazerosize(a_req);
         DOLMakeWebRequest("GET","/admin/products.json?fields=title,id,variants&limit=250&page=" & pg,a_req,a_reply,1);
-				//PreparePostArea(a_reply);
+        //PreparePostArea(a_reply);
         jdata = ParseJSONArea(a_reply);
         logtext(0,pg & " AreaSize " & getarealength(a_reply));
-				logtext(0,pg & " AreaSizeNDExs " & JSONNodeExists(jdata,"products/[0]/id"));
+        logtext(0,pg & " AreaSizeNDExs " & JSONNodeExists(jdata,"products/[0]/id"));
         loopc = loopc + 1;
 */
       end;
@@ -1116,22 +1116,22 @@ end;
 
 global updating procedure CreateShopifyCustomer(json jdata,var record CUVc CUr,integer order)
 begin
-	record ShopifyNewCustBlock SNCb;
-	string 255 acclang,tstr;
-	record LetVc Letr;
-	record CUVc lCUr;
+  record ShopifyNewCustBlock SNCb;
+  string 255 acclang,tstr;
+  record LetVc Letr;
+  record CUVc lCUr;
   record CustomerSettingBlock CSb;
   Boolean genderf;
 
-	blockload(SNCb);
-	
-	if(nonblank(SNCb.CustCatDOM))then begin
+  blockload(SNCb);
+  
+  if(nonblank(SNCb.CustCatDOM))then begin
     BlockLoad(CSb);
-		recordnew(CUr);	
-		CUr.Name = JSONGet(jdata,"orders/[" & order & "]/customer/default_address/first_name");
-		CUr.Name  = CUr.Name & " " & JSONGet(jdata,"orders/[" & order & "]/customer/default_address/last_name");
-		CUVc_PasteName(CUr);
-		CUr.InvAddr0 = JSONGet(jdata,"orders/[" & order & "]/customer/default_address/address1");//Street
+    recordnew(CUr);  
+    CUr.Name = JSONGet(jdata,"orders/[" & order & "]/customer/default_address/first_name");
+    CUr.Name  = CUr.Name & " " & JSONGet(jdata,"orders/[" & order & "]/customer/default_address/last_name");
+    CUVc_PasteName(CUr);
+    CUr.InvAddr0 = JSONGet(jdata,"orders/[" & order & "]/customer/default_address/address1");//Street
     tstr = JSONGet(jdata,"orders/[" & order & "]/customer/default_address/address2");//Street 2
     if (nonblank(tstr)) then begin
       if (nonblank(CUr.InvAddr0)) then begin
@@ -1139,71 +1139,71 @@ begin
       end;
       CUr.InvAddr0 = CUr.InvAddr0 & tstr;
     end;
-		if(nonblank(CUr.InvAddr0))then begin
-			CUVc_PasteInvAddr(CUr,0);
-		end;
-		CUr.InvAddr2 = JSONGet(jdata,"orders/[" & order & "]/customer/default_address/zip");//ZIP
-		if(nonblank(CUr.InvAddr2))then begin
-			CUVc_PasteInvAddr(CUr,2);
-		end;
-		CUr.InvAddr3 = JSONGet(jdata,"orders/[" & order & "]/customer/default_address/city");//City
-		if(nonblank(CUr.InvAddr3))then begin
-			CUVc_PasteInvAddr(CUr,3);
-		end;
-		CUr.InvAddr4 = JSONGet(jdata,"orders/[" & order & "]/customer/default_address/country");//Counrty
-		if(nonblank(CUr.InvAddr4))then begin
-			CUVc_PasteInvAddr(CUr,4);
-		end;
-		CUr.eMail = JSONGet(jdata,"orders/[" & order & "]/customer/email");
-		CUr.Phone = JSONGet(jdata,"orders/[" & order & "]/customer/default_address/phone");
+    if(nonblank(CUr.InvAddr0))then begin
+      CUVc_PasteInvAddr(CUr,0);
+    end;
+    CUr.InvAddr2 = JSONGet(jdata,"orders/[" & order & "]/customer/default_address/zip");//ZIP
+    if(nonblank(CUr.InvAddr2))then begin
+      CUVc_PasteInvAddr(CUr,2);
+    end;
+    CUr.InvAddr3 = JSONGet(jdata,"orders/[" & order & "]/customer/default_address/city");//City
+    if(nonblank(CUr.InvAddr3))then begin
+      CUVc_PasteInvAddr(CUr,3);
+    end;
+    CUr.InvAddr4 = JSONGet(jdata,"orders/[" & order & "]/customer/default_address/country");//Counrty
+    if(nonblank(CUr.InvAddr4))then begin
+      CUVc_PasteInvAddr(CUr,4);
+    end;
+    CUr.eMail = JSONGet(jdata,"orders/[" & order & "]/customer/email");
+    CUr.Phone = JSONGet(jdata,"orders/[" & order & "]/customer/default_address/phone");
     CUr.Phone = StrReplace(CUr.Phone,"+","");
-		CUr.CountryCode = JSONGet(jdata,"orders/[" & order & "]/customer/default_address/country_code");
+    CUr.CountryCode = JSONGet(jdata,"orders/[" & order & "]/customer/default_address/country_code");
     CUr.ExportFlag = GetVATZone(CUr.CountryCode);
-		CUVc_PasteCountryCode(CUr,"");
-		CUr.Comment = JSONGet(jdata,"orders/[" & order & "]/customer/default_address/company");
+    CUVc_PasteCountryCode(CUr,"");
+    CUr.Comment = JSONGet(jdata,"orders/[" & order & "]/customer/default_address/company");
 
     CUr.CreditLimit = CSb.CreditLimit;
     CUr.CreditLimitDays = CSb.CreditLimitDays;
-	
+  
     CUr.CustType = 1;
     /*if(nonblank(CUr.Comment))then begin
-			CUr.CustType = 0;
-		end;*/
+      CUr.CustType = 0;
+    end;*/
 
 //We might want to add language as a setting;
     // ARA: HAL-1145
-		switch(CUr.ExportFlag)begin
-			case 0:CUr.CustCat = SNCb.CustCatDOM;// CUr.LangCode = SNCb.CustLangDOM;
-			case 1:CUr.CustCat = SNCb.CustCatEU;// CUr.LangCode = SNCb.CustLangEU;
-			case 2:CUr.CustCat = SNCb.CustCatEXP;// CUr.LangCode = SNCb.CustLangEXP;
-			case 3:CUr.CustCat = SNCb.CustCatEU;// CUr.LangCode = SNCb.CustLangEU;
-			case 4:CUr.CustCat = SNCb.CustCatEXP;// CUr.LangCode = SNCb.CustLangEXP;
-		end;
+    switch(CUr.ExportFlag)begin
+      case 0:CUr.CustCat = SNCb.CustCatDOM;// CUr.LangCode = SNCb.CustLangDOM;
+      case 1:CUr.CustCat = SNCb.CustCatEU;// CUr.LangCode = SNCb.CustLangEU;
+      case 2:CUr.CustCat = SNCb.CustCatEXP;// CUr.LangCode = SNCb.CustLangEXP;
+      case 3:CUr.CustCat = SNCb.CustCatEU;// CUr.LangCode = SNCb.CustLangEU;
+      case 4:CUr.CustCat = SNCb.CustCatEXP;// CUr.LangCode = SNCb.CustLangEXP;
+    end;
     // :ARA
-	
-		acclang = JSONGet(jdata,"orders/[" & order & "]/client_details/accept_language");
-		acclang = acclang & "," & JSONGet(jdata,"orders/[" & order & "]/customer_locale");
-		AddToText(acclang,Letr);
-	
+  
+    acclang = JSONGet(jdata,"orders/[" & order & "]/client_details/accept_language");
+    acclang = acclang & "," & JSONGet(jdata,"orders/[" & order & "]/customer_locale");
+    AddToText(acclang,Letr);
+  
     // ARA: HAL-1145 removed
-		// if(StringInText("en-us",Letr))then begin
-		// 	CUr.LangCode = "ENG";
-		// end;
-		// if(StringInText("en",Letr))then begin
-		// 	CUr.LangCode = "ENG";
-		// end;
-		// if(StringInText("lv",Letr))then begin
-		// 	CUr.LangCode = "LAT";
-		// end;
-		// if(StringInText("ru",Letr))then begin
-		// 	CUr.LangCode = "RUS";
-		// end;
+    // if(StringInText("en-us",Letr))then begin
+    //   CUr.LangCode = "ENG";
+    // end;
+    // if(StringInText("en",Letr))then begin
+    //   CUr.LangCode = "ENG";
+    // end;
+    // if(StringInText("lv",Letr))then begin
+    //   CUr.LangCode = "LAT";
+    // end;
+    // if(StringInText("ru",Letr))then begin
+    //   CUr.LangCode = "RUS";
+    // end;
     // :ARA
 
 
 
 
-		CUr.Classification = SNCb.Classification;
+    CUr.Classification = SNCb.Classification;
     tstr = JSONGet(jdata,"orders/[" & order & "]/customer/tags");
     tstr = StrReplace(tstr," ","");
     genderf = false;
@@ -1219,25 +1219,25 @@ begin
     if (!genderf) then begin
       CUr.Classification = AddObjectToObjectList(CUr.Classification,SNCb.FemaleClassification);
     end;
-  	CUR.VATNr = SNCb.VATNr;
-		CUr.RegNr1 = SNCb.RegNr1;
-		CUr.PayDeal = SNCb.PayDeal;
+    CUR.VATNr = SNCb.VATNr;
+    CUr.RegNr1 = SNCb.RegNr1;
+    CUr.PayDeal = SNCb.PayDeal;
 
-		if (blank(CUr.Code)) then begin
-			if (GetNextCustNr(tstr)) then begin end;
-			CUr.Code = tstr;
-			lCUr.Code = CUr.Code;
-			if (ReadFirstMain(lCUr,1,true)) then begin
-				goto LCreateCU;
-			end;
-		end;
-		CUVcRecordCheck(CUr,lCUr,Rs_insert,0);
-		if (RecordInsert(CUr,true)==false) then begin
-		  logtext(0,"CreateShopifyCustomer failed - " & UsetStr(RecordCheckLastErrorNo));
+    if (blank(CUr.Code)) then begin
+      if (GetNextCustNr(tstr)) then begin end;
+      CUr.Code = tstr;
+      lCUr.Code = CUr.Code;
+      if (ReadFirstMain(lCUr,1,true)) then begin
+        goto LCreateCU;
+      end;
     end;
-	LCreateCU:;
-		logtext(0,"CreateShopifyCustomer " & CUr.Code);
-	end;
+    CUVcRecordCheck(CUr,lCUr,Rs_insert,0);
+    if (RecordInsert(CUr,true)==false) then begin
+      logtext(0,"CreateShopifyCustomer failed - " & UsetStr(RecordCheckLastErrorNo));
+    end;
+  LCreateCU:;
+    logtext(0,"CreateShopifyCustomer " & CUr.Code);
+  end;
 return;
 end;
 
@@ -1267,21 +1267,21 @@ begin
   val price;
   area a_req,a_reply;
   record ORVc ORr;
-	row ORVc ORrw;
-	date crat,bdat;
-	string 50 created_at;
-	record CUVc CUr, CU2r;
-	string 255 warning,errstr,itemid,varid,sku,vartitle,tstr;
-	boolean chsum,custfound;
-	integer page,orders;
-	string 20 status;
+  row ORVc ORrw;
+  date crat,bdat;
+  string 50 created_at;
+  record CUVc CUr, CU2r;
+  string 255 warning,errstr,itemid,varid,sku,vartitle,tstr;
+  boolean chsum,custfound;
+  integer page,orders;
+  string 20 status;
   boolean addshipartcodef; // ARA: HAL-1145
   string 255 shippingline; // ARA: HAL-1145
   val discamount; // ARA: HAL-1145
   Integer apinum;
   string 255 link,nextlink;
   Integer limit;
-	
+  
   BlockLoad(DOLShopifyBl);
   BlockLoad(SNCb); // ARA: HAL-1145
   
@@ -1289,9 +1289,9 @@ begin
   orders = 0;
   status = "open";
   switch(RepSpec.flags[2])begin
-  	case 1:status = "closed";
-  	case 2:status = "cancelled";
-  	case 3:status = "any";
+    case 1:status = "closed";
+    case 2:status = "cancelled";
+    case 3:status = "any";
   end;
 
   DOLShopifyBl.GetOrdersFrom = AddDay(RepSpec.sEndDate,-1);
@@ -1303,74 +1303,74 @@ begin
 LRepeatAPI2:;
     link = "/admin/api/2020-01/orders.json?status=" & status & "&fields=name,email,created_at,line_items,shipping_lines,customer,client_details,customer_locale&status=any&created_at_min=" & DateToString(RepSpec.sStartDate,"YYYY-MM-DD") & "T00:00:00-00:00" & "&created_at_max=" & DateToString(addday(RepSpec.sEndDate,1),"YYYY-MM-DD") & "T00:00:00-00:00&limit=" & limit;
 LHetNextOrders:;
-		setareazerosize(a_reply);
-		setareazerosize(a_req);
-  	orders = 0;
-  	DOLMakeWebRequest_external("GET",link,a_req,a_reply,apinum,nextlink);
-		//PreparePostArea(a_reply);
-		
-		//addfiletoarea("Shopify.txt",a_reply,0);
-		if(GetAreaLength(a_reply) > 0)then begin
-			jdata = ParseJSONArea(a_reply);
+    setareazerosize(a_reply);
+    setareazerosize(a_req);
+    orders = 0;
+    DOLMakeWebRequest_external("GET",link,a_req,a_reply,apinum,nextlink);
+    //PreparePostArea(a_reply);
+    
+    //addfiletoarea("Shopify.txt",a_reply,0);
+    if(GetAreaLength(a_reply) > 0)then begin
+      jdata = ParseJSONArea(a_reply);
 
-			i = 0;
-			while (JSONNodeExists(jdata,"orders/[" & i & "]/name")) begin
-					orders = orders + 1;
-					data = JSONGet(jdata,"orders/[" & i & "]/name");
-					
-					if(nonblank(data))then begin
-						ORr.CustOrdNr = data;
-						if(readfirstkey("CustOrdNr",ORr,1,true)==false)then begin
-							recordnew(ORr);
-							crat = bdat;//blanked crat
-							created_at = JSONGet(jdata,"orders/[" & i & "]/created_at");
-							crat.year = stringtoint(left(created_at,4));
-							crat.month = stringtoint(mid(created_at,5,2));
-							crat.day = stringtoint(mid(created_at,8,2));
-							ORr.OrdDate = crat;
-							ORr.CustOrdNr = data;
-							ORr.OrderClass = DOLShopifyBl.DefWebOrdClass;
+      i = 0;
+      while (JSONNodeExists(jdata,"orders/[" & i & "]/name")) begin
+          orders = orders + 1;
+          data = JSONGet(jdata,"orders/[" & i & "]/name");
+          
+          if(nonblank(data))then begin
+            ORr.CustOrdNr = data;
+            if(readfirstkey("CustOrdNr",ORr,1,true)==false)then begin
+              recordnew(ORr);
+              crat = bdat;//blanked crat
+              created_at = JSONGet(jdata,"orders/[" & i & "]/created_at");
+              crat.year = stringtoint(left(created_at,4));
+              crat.month = stringtoint(mid(created_at,5,2));
+              crat.day = stringtoint(mid(created_at,8,2));
+              ORr.OrdDate = crat;
+              ORr.CustOrdNr = data;
+              ORr.OrderClass = DOLShopifyBl.DefWebOrdClass;
               if (apinum==2) then begin
                 ORr.OrderClass = DOLShopifyBl.DefWebOrdClass2;
               end;
-							ORr.Location = DOLShopifyBl.DefWebLocation;
+              ORr.Location = DOLShopifyBl.DefWebLocation;
               ORVc_PasteLocation(ORr,-1);
-							ORr.CustCode = DOLShopifyBl.DefWebUserCode;
-							ORr.PlanShip = addday(ORr.OrdDate,DOLShopifyBl.DeliveryAfter);
+              ORr.CustCode = DOLShopifyBl.DefWebUserCode;
+              ORr.PlanShip = addday(ORr.OrdDate,DOLShopifyBl.DeliveryAfter);
               ORr.Objects = AddObjectToObjectList(ORr.Objects,DOLShopifyBl.HeaderObject);
-							
-							custfound = false;
-							CUr.eMail = JSONGet(jdata,"orders/[" & i & "]/customer/email");
-							if(readfirstkey("eMail",CUr,1,true))then begin
-								ORr.CustCode = CUr.Code;
-								custfound = true;
-							end else begin
-								CUr.Name = JSONGet(jdata,"orders/[" & i & "]/customer/first_name") & " " & JSONGet(jdata,"orders/[" & i & "]/customer/last_name");;
-								if(readfirstkey("Name",CUr,1,true))then begin
-									ORr.CustCode = CUr.Code;
-									custfound = true;
-								end;
-							end;
+              
+              custfound = false;
+              CUr.eMail = JSONGet(jdata,"orders/[" & i & "]/customer/email");
+              if(readfirstkey("eMail",CUr,1,true))then begin
+                ORr.CustCode = CUr.Code;
+                custfound = true;
+              end else begin
+                CUr.Name = JSONGet(jdata,"orders/[" & i & "]/customer/first_name") & " " & JSONGet(jdata,"orders/[" & i & "]/customer/last_name");;
+                if(readfirstkey("Name",CUr,1,true))then begin
+                  ORr.CustCode = CUr.Code;
+                  custfound = true;
+                end;
+              end;
 
-							if(custfound==false)then begin
-								CreateShopifyCustomer(jdata,CUr,i);
-								ORr.CustCode = CUr.Code;
-							end;
-							
-							PasteCustInOrder(ORr,ORr.CustCode,"",warning,errstr);
-							ORr.SalesMan = DOLShopifyBl.DefWebSalesMan;
+              if(custfound==false)then begin
+                CreateShopifyCustomer(jdata,CUr,i);
+                ORr.CustCode = CUr.Code;
+              end;
+              
+              PasteCustInOrder(ORr,ORr.CustCode,"",warning,errstr);
+              ORr.SalesMan = DOLShopifyBl.DefWebSalesMan;
               ORVc_PasteSalesMan(ORr,tstr);
-							//ORr.Addr0 = JSONGet(jdata,"orders/[" & i & "]/customer/first_name") & " " & JSONGet(jdata,"orders/[" & i & "]/customer/last_name");
-							
-							
-							linit = 0;
-							k = 0;
-							while (JSONNodeExists(jdata,"orders/[" & i & "]/line_items/[" & linit & "]/id")) begin
-								Clearrow(ORr,ORrw,1);
-								itemid = JSONGet(jdata,"orders/[" & i & "]/line_items/[" & linit & "]/id");
-								varid = JSONGet(jdata,"orders/[" & i & "]/line_items/[" & linit & "]/variant_id");
+              //ORr.Addr0 = JSONGet(jdata,"orders/[" & i & "]/customer/first_name") & " " & JSONGet(jdata,"orders/[" & i & "]/customer/last_name");
+              
+              
+              linit = 0;
+              k = 0;
+              while (JSONNodeExists(jdata,"orders/[" & i & "]/line_items/[" & linit & "]/id")) begin
+                Clearrow(ORr,ORrw,1);
+                itemid = JSONGet(jdata,"orders/[" & i & "]/line_items/[" & linit & "]/id");
+                varid = JSONGet(jdata,"orders/[" & i & "]/line_items/[" & linit & "]/variant_id");
                 vartitle = JSONGet(jdata,"orders/[" & i & "]/line_items/[" & linit & "]/variant_title");
-								sku = JSONGet(jdata,"orders/[" & i & "]/line_items/[" & linit & "]/sku");
+                sku = JSONGet(jdata,"orders/[" & i & "]/line_items/[" & linit & "]/sku");
                 // ARA: HAL-1145
                 if (nonblank(sku)) then begin
                   sku = StrReplace(sku,"\\","");
@@ -1389,14 +1389,14 @@ LHetNextOrders:;
                   ORrw.ArtCode = ORrw.ArtCode;                  
                 end;
                 // :ARA
-								matrowput(ORr,k,ORrw);
-								ORVc_PasteArtCode(ORr,k,warning,warning,false)
-								matrowget(ORr,k,ORrw);
+                matrowput(ORr,k,ORrw);
+                ORVc_PasteArtCode(ORr,k,warning,warning,false)
+                matrowget(ORr,k,ORrw);
                 if (ORrw.ArtCode == DOLShopifyBl.DefArtCode) then begin
-								  ORrw.Spec = JSONGet(jdata,"orders/[" & i & "]/line_items/[" & linit & "]/title"); // ARA: HAL-1145
+                  ORrw.Spec = JSONGet(jdata,"orders/[" & i & "]/line_items/[" & linit & "]/title"); // ARA: HAL-1145
                 end;
                 // ARA: HAL-1145
-								ORrw.Price = evaltoval(JSONGet(jdata,"orders/[" & i & "]/line_items/[" & linit & "]/price"));
+                ORrw.Price = evaltoval(JSONGet(jdata,"orders/[" & i & "]/line_items/[" & linit & "]/price"));
                 if (JSONNodeExists(jdata,"orders/[" & i & "]/line_items/[" & linit & "]/discount_allocations/[0]/amount")) then begin
                   discamount = evaltoval(JSONGet(jdata,"orders/[" & i & "]/line_items/[" & linit & "]/discount_allocations/[0]/amount"));
                   if (discamount > 0) then begin
@@ -1404,17 +1404,17 @@ LHetNextOrders:;
                   end;
                 end;
                 // :ARA
-								ORrw.Quant = evaltoval(JSONGet(jdata,"orders/[" & i & "]/line_items/[" & linit & "]/quantity"));
-								ORrw.Sum = ORrw.Price * ORrw.Quant;
-								if(nonblank(ORrw.Spec))then begin
-									matrowput(ORr,k,ORrw);
-								end;
-								ORVc_PasteQuant(ORr,k,true,chsum);
-								ORDchsum(ORr,k);
-								ORSumup(ORr);
-								k = k + 1;
-								linit = linit + 1;
-							end;
+                ORrw.Quant = evaltoval(JSONGet(jdata,"orders/[" & i & "]/line_items/[" & linit & "]/quantity"));
+                ORrw.Sum = ORrw.Price * ORrw.Quant;
+                if(nonblank(ORrw.Spec))then begin
+                  matrowput(ORr,k,ORrw);
+                end;
+                ORVc_PasteQuant(ORr,k,true,chsum);
+                ORDchsum(ORr,k);
+                ORSumup(ORr);
+                k = k + 1;
+                linit = linit + 1;
+              end;
 
               // ARA: HAL-1145
               addshipartcodef = false;
@@ -1484,30 +1484,30 @@ LHetNextOrders:;
               ORr.Addr3 = JSONGet(jdata,"orders/[" & i & "]/customer/default_address/zip");;
               ORr.InvAddr3 = JSONGet(jdata,"orders/[" & i & "]/customer/default_address/city");
               ORr.InvAddr4 = JSONGet(jdata,"orders/[" & i & "]/customer/default_address/country");;
-														
-							ORr.SerNr = NextSerNr("ORVc",ORr.OrdDate,-1,false,"");   
-							if (recordstore(ORr,true)) then begin
-							  OuterCustomShopifyOrderAction(ORr);
-							end;
-						end;
-					end;
-					
-				i = i + 1;
-			end;
+                            
+              ORr.SerNr = NextSerNr("ORVc",ORr.OrdDate,-1,false,"");   
+              if (recordstore(ORr,true)) then begin
+                OuterCustomShopifyOrderAction(ORr);
+              end;
+            end;
+          end;
+          
+        i = i + 1;
+      end;
       /*
-			if(orders>=250)then begin
-				setareazerosize(a_reply);
-				logtext(0,"Nextpage " & page);
-				goto LHetNextOrders;
-			end;
+      if(orders>=250)then begin
+        setareazerosize(a_reply);
+        logtext(0,"Nextpage " & page);
+        goto LHetNextOrders;
+      end;
       */
       if (nonblank(nextlink)) then begin
-				setareazerosize(a_reply);
+        setareazerosize(a_reply);
         link = nextlink;
-				goto LHetNextOrders;        
+        goto LHetNextOrders;        
       end;
-		end;
-		WriteAreaToFile(a_reply,"Shopify.json",0);
+    end;
+    WriteAreaToFile(a_reply,"Shopify.json",0);
   
     if (DOLShopifyBl.APIEnable2==1 and apinum==1) then begin
       page = 0;
@@ -1751,9 +1751,9 @@ end;
 global
 updating procedure UpdateShopifyLastCheck(Longint t)
 begin
-	record DOLShopifyBlock DOLShopifyBl;
-	
-	BlockLoad(DOLShopifyBl);
+  record DOLShopifyBlock DOLShopifyBl;
+  
+  BlockLoad(DOLShopifyBl);
   DOLShopifyBl.LastTickOR = t;
   BlockStore(DOLShopifyBl);
 
@@ -1763,35 +1763,35 @@ end;
 global 
 procedure PeriodicShopifyTasks(string args)
 begin
-	record RcVc RepSpec;
-	time t;
-	record DOLShopifyBlock DOLShopifyBl;
-	longint ordiff,indiff;
-	
-	BlockLoad(DOLShopifyBl);
-	
-	logtext(0,"PeriodicWebTasks");
-	
-	ordiff = GetCurTick - DOLShopifyBl.LastTickOR;
-	indiff = GetCurTick - DOLShopifyBl.LastTickIN;
-	logtext(0,"***************PeriodicWebTasks GetCurTick " & GetCurTick);
-	t = currenttime;
-	if(DOLShopifyBl.GetOrdFrq>0)then begin
-		if(ordiff<0 or (ordiff/1000)>DOLShopifyBl.GetOrdFrq*60)then begin
+  record RcVc RepSpec;
+  time t;
+  record DOLShopifyBlock DOLShopifyBl;
+  longint ordiff,indiff;
+  
+  BlockLoad(DOLShopifyBl);
+  
+  logtext(0,"PeriodicWebTasks");
+  
+  ordiff = GetCurTick - DOLShopifyBl.LastTickOR;
+  indiff = GetCurTick - DOLShopifyBl.LastTickIN;
+  logtext(0,"***************PeriodicWebTasks GetCurTick " & GetCurTick);
+  t = currenttime;
+  if(DOLShopifyBl.GetOrdFrq>0)then begin
+    if(ordiff<0 or (ordiff/1000)>DOLShopifyBl.GetOrdFrq*60)then begin
       qupdating.UpdateShopifyLastCheck(GetCurTick);//should have only one qupdating function here...for performance
-			RepSpec.sStartDate = DOLShopifyBl.GetOrdersFrom;
+      RepSpec.sStartDate = DOLShopifyBl.GetOrdersFrom;
       if (blank(RepSpec.sStartDate)) then begin
         RepSpec.sStartDate = addday(currentdate,-7);
       end;
-			RepSpec.sEndDate = currentdate;
-			qupdating.DOLGetShopifyOrdersMn(RepSpec);
-			Logtext(0,"***************Periodic task DOLGetShopifyOrdersMn");
-		end;
-	end;
+      RepSpec.sEndDate = currentdate;
+      qupdating.DOLGetShopifyOrdersMn(RepSpec);
+      Logtext(0,"***************Periodic task DOLGetShopifyOrdersMn");
+    end;
+  end;
 
-	if(t.hour==23 and t.minute==0)then begin
-		qupdating.DOLGetShopifyLocationsIDMn(RepSpec);
-	end;
+  if(t.hour==23 and t.minute==0)then begin
+    qupdating.DOLGetShopifyLocationsIDMn(RepSpec);
+  end;
 
   return;
 end;
