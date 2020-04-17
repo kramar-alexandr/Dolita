@@ -528,7 +528,7 @@ begin
       recvd = FindReceivedValue(artcode,location);
     end;
     if (artmode == 3) then begin
-      indefstock = v_artindefstock[a_arft[i]];
+      indefstock = v_artindefstock[a_art[i]];
       recvd = instock+indefstock+qty;
       prc = (qty/recvd) * 100;
     end else begin
@@ -1160,9 +1160,9 @@ begin
           v_artinvqty[index] = v_artinvqty[index] + IVCashrw.Quant;
           v_artinvsum[index] = v_artinvsum[index] + IVCashrw.Sum;
         end;
-        //if (RepSpec.ArtMode == 1) then begin
+        if (RepSpec.ArtMode == 1) then begin
           v_artinvqty[artcode & "|0"] = v_artinvqty[artcode & "|0"] + IVCashrw.Quant;
-        //end;
+        end;
         // EVS: DOL-160
         if (RepSpec.ArtMode == 2 or RepSpec.ArtMode == 1) then begin
           if (!v_artinvf[artcode]) then begin
@@ -1188,6 +1188,7 @@ begin
             v_artindefstock[artcode] = v_artindefstock[artcode] + t;
             FindStockValue(artcode2,RepSpec.f4,ISr);
             v_artinvinstock[artcode & "|0"] = v_artinvinstock[artcode & "|0"] + ISr.Instock - t;
+            v_artinvqty[artcode & "|0"] = v_artinvqty[artcode & "|0"] + IVCashrw.Quant;
             v_artinvinstock[artcode] = v_artinvinstock[artcode] + ISr.Instock - t;
             //v_artrecvd[artcode] = v_artrecvd[artcode2] + FindReceivedValuePeriod(IVCashrw.ArtCode,RepSpec.f4,artcode,RepSpec.sStartDate,RepSpec.sEndDate);
             v_artinvf[artcode & ":" & artcode2] = true;
@@ -1372,9 +1373,9 @@ begin
           v_artinvsum[index] = v_artinvsum[index] + (IVrw.Sum*coef);
         end;
 
-        //if (RepSpec.ArtMode == 1) then begin
+        if (RepSpec.ArtMode == 1) then begin
           v_artinvqty[artcode & "|0|IVVc"] = v_artinvqty[artcode & "|0|IVVc"] + (IVrw.Quant*coef);
-        //end;
+        end;
 
         // EVS: DOL-160
         if (RepSpec.ArtMode == 2 or RepSpec.ArtMode == 1) then begin
@@ -1404,6 +1405,7 @@ begin
             v_artinvinstock[artcode] = v_artinvinstock[artcode] + ISr.Instock - t;
             //v_artrecvd[artcode] = v_artrecvd[artcode] + FindReceivedValuePeriod(IVrw.ArtCode,RepSpec.f4,artcode,RepSpec.sStartDate,RepSpec.sEndDate);
             v_artinvf[artcode & ":" & artcode2] = true;
+            v_artinvqty[artcode & "|0|IVVc"] = v_artinvqty[artcode & "|0|IVVc"] + (IVrw.Quant*coef);
           end;
         end;
       end;
@@ -1517,12 +1519,12 @@ begin
             v_artinvinstock[index] = ISr.Instock - v_artindefstock[index];
             v_artrecvd[index] = FindReceivedValue(artcode,RepSpec.f4);
           end;
-          //if RepSpec.ArtMode == 1 then begin
+          if RepSpec.ArtMode == 1 then begin
             // This is for sorting in detailed mode
             FindStockValue(artcode,RepSpec.f4,ISr);
             v_artinvinstock[artcode & "|0"] = ISr.Instock - DOL_FindDefStockValue(artcode,RepSpec.f4);
             v_artrecvd[artcode & "|0"] = FindReceivedValue(artcode,RepSpec.f4);
-          //end;
+          end;
           if RepSpec.ArtMode == 2 then begin
             t = DOL_FindDefStockValue(artcode,RepSpec.f4);
             v_artindefstock[index] = v_artindefstock[index] + t;
@@ -1538,6 +1540,7 @@ begin
               v_artinvinstock[artcode] = v_artinvinstock[artcode] + ISr.Instock - t;
               //v_artrecvd[artcode] = v_artrecvd[artcode] + FindReceivedValuePeriod(artcode2,RepSpec.f4,artcode,RepSpec.sStartDate,RepSpec.sEndDate);
               v_artinvf[artcode & ":" & artcode2] = true;
+              v_artinvinstock[artcode & "|0"] = ISr.Instock - DOL_FindDefStockValue(artcode,RepSpec.f4);
             end;
           end;
         end;
