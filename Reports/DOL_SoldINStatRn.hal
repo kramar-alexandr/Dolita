@@ -491,12 +491,12 @@ begin
 end;
 
 
-procedure SortStringArray_AscDesc(integer sortmode,string location,integer artmode,var array string a_art,vector val v_artinvqty,vector val v_artinvinstock,vector val v_artrecvd,vector val v_artindefstock)
+procedure SortStringArray_AscDesc(integer sortmode,string location,integer artmode,var array string a_art,vector val v_artinvqty,vector val v_artinvinstock,vector val v_artrecvd,vector val v_artindefstock,array string a_inv,array string a_slinv)
 begin
   record ItemStatusVc ISr;
   record SMVc SMr,negSMr;
   row SMVc SMrw,negSMrw;
-  integer i,rwcnt,negrwcnt,cnt;
+  integer i,rwcnt,negrwcnt,cnt,j;
   val qty,prc,instock,recvd,indefstock;
   string 20 artcode;
   array val a_qty;
@@ -528,6 +528,15 @@ begin
       recvd = FindReceivedValue(artcode,location);
     end;
     if (artmode == 3) then begin
+      qty = 0;
+      for (j=0;j<a_slinv.length;j=j+1) begin
+        qty = qty + v_artinvqty[a_art[i] & "|" & a_slinv[j] & "|IVVc"];
+      end; 
+      for (j=0;j<a_inv.length;j=j+1) begin
+        qty = qty + v_artinvqty[a_art[i] & "|" & a_inv[j]];
+      end;
+      instock = v_artinvinstock[a_art[i]];
+      //qty = v_artinvqty[a_art[i] & "|0"];
       indefstock = v_artindefstock[a_art[i]];
       recvd = instock+indefstock+qty;
       prc = (qty/recvd) * 100;
@@ -1403,6 +1412,7 @@ begin
             v_artindefstock[artcode] = v_artindefstock[artcode] + t;
             FindStockValue(artcode2,RepSpec.f4,ISr);
             v_artinvinstock[artcode] = v_artinvinstock[artcode] + ISr.Instock - t;
+            v_artinvqty[artcode & "|0"] = v_artinvqty[artcode & "|0"] + (IVrw.Quant*coef);
             //v_artrecvd[artcode] = v_artrecvd[artcode] + FindReceivedValuePeriod(IVrw.ArtCode,RepSpec.f4,artcode,RepSpec.sStartDate,RepSpec.sEndDate);
             v_artinvf[artcode & ":" & artcode2] = true;
             v_artinvqty[artcode & "|0|IVVc"] = v_artinvqty[artcode & "|0|IVVc"] + (IVrw.Quant*coef);
@@ -1808,7 +1818,7 @@ begin
 
   if (artcnt > 0) then begin
     if (RepSpec.Comparison > 0) then begin
-      SortStringArray_AscDesc(RepSpec.Comparison,RepSpec.f4,RepSpec.ArtMode,a_art,v_artinvqty,v_artinvinstock,v_artrecvd,v_artindefstock);
+      SortStringArray_AscDesc(RepSpec.Comparison,RepSpec.f4,RepSpec.ArtMode,a_art,v_artinvqty,v_artinvinstock,v_artrecvd,v_artindefstock,a_inv,a_slinv);
     end else begin
       SortStringArray(a_art);
     end;
