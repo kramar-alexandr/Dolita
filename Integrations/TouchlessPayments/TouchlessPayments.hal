@@ -709,8 +709,10 @@ begin
   ProcessingWn = CurWindow;
   mwn = MotherWindow(ProcessingWn);
   FileName = GetWindowFileName(mwn);
+LogText(0,"TouchlessPaymentWClassProceed 1 " & ProcessingWn & ":" & mwn & ":" & FileName);
   if (mwn>0 and GetWindowString(ProcessingWn,"manualoverride")=="1") then begin
     SelectWindow(mwn);
+LogText(0,"TouchlessPaymentWClassProceed 2");
     switch (FileName) begin
       case "IVCashVc":
         GetWindowRecord(mwn,IVCashr);
