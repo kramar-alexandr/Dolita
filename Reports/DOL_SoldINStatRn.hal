@@ -496,7 +496,7 @@ begin
   record ItemStatusVc ISr;
   record SMVc SMr,negSMr;
   row SMVc SMrw,negSMrw;
-  integer i,rwcnt,negrwcnt,cnt,j;
+  Longint i,rwcnt,negrwcnt,cnt,j;
   val qty,prc,instock,recvd,indefstock;
   string 20 artcode;
   array val a_qty;
@@ -705,7 +705,8 @@ procedure PrintVector(record RcVc RepSpec,array string a_art,vector string v_art
           vector val v_artinvqty,vector val v_artinvsum,vector val v_artcost,vector val v_artrebate, array string a_slinv, vector val v_artinvinstock,
           vector val v_artrecvd, vector val v_artindefstock, vector val v_artrebatebpi)// Edit ************************** BPI Ukraine - KramarAlexandr - Tuesday, 20 November 2018 17:14:04
 begin
-  integer i,j,toint;
+  Longint i,j;
+  Integer toint;
   record ItemStatusVc ISr;
   val qty,totqty,sum,totsum,avprice;
   val ivcash_qty,ivcash_sum,iv_qty,iv_sum;
