@@ -399,7 +399,7 @@ end;
 
 procedure SplitIndex(string index,var string art,var string inv)
 begin
-  integer cnt;
+  Longint cnt;
   longint pos;
   string 255 element;
   array string 255 a_element;
@@ -438,10 +438,10 @@ begin
   return;
 end;
 
-procedure BubbleSortArrayByReference_VAL_DESC(array val tosort,var array integer ref, integer cnt)
+procedure BubbleSortArrayByReference_VAL_DESC(array val tosort,var array Longint ref, Longint cnt)
 begin
-  integer i;
-  integer tmp;
+  Longint i;
+  Longint tmp;
   boolean swapped;
 
   for (i=0;i<cnt;i=i+1) begin // fill up reference array
@@ -464,10 +464,10 @@ begin
   return;
 end;
 
-procedure BubbleSortArrayByReference_VAL_ASC(array val tosort,var array integer ref, integer cnt)
+procedure BubbleSortArrayByReference_VAL_ASC(array val tosort,var array Longint ref, Longint cnt)
 begin
-  integer i;
-  integer tmp;
+  Longint i;
+  Longint tmp;
   boolean swapped;
 
   for (i=0;i<cnt;i=i+1) begin // fill up reference array
@@ -501,7 +501,7 @@ begin
   string 20 artcode;
   array val a_qty;
   array val a_prc;
-  array integer a_ref;
+  array Longint a_ref;
   array string 20 a_arttmp;
   string 255 itsz,mask,mskrep,varsubset;
   array string 255 a_maskvar,a_maskvarsz,a_amsk;
