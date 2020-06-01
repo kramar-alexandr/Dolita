@@ -497,7 +497,7 @@ begin
   record SMVc SMr,negSMr;
   row SMVc SMrw,negSMrw;
   Longint i,rwcnt,negrwcnt,cnt,j;
-  val qty,prc,instock,recvd,indefstock;
+  val qty,prc,instock,recvd,indefstock,iv_qty,ivcash_qty;
   string 20 artcode;
   array val a_qty;
   array val a_prc;
@@ -506,12 +506,23 @@ begin
   string 255 itsz,mask,mskrep,varsubset;
   array string 255 a_maskvar,a_maskvarsz,a_amsk;
 
+  cnt = 0;
   RecordClear(SMr);
   RecordClear(negSMr);
   for (i=0;i<a_art.length;i=i+1) begin
     rwcnt = MatRowCnt(SMr);
     negrwcnt = MatRowCnt(negSMr);
-    qty = v_artinvqty[a_art[i] & "|0"] + v_artinvqty[a_art[i] & "|0|IVVc"];
+//    qty = v_artinvqty[a_art[i] & "|0"] + v_artinvqty[a_art[i] & "|0|IVVc"];
+    qty = 0;
+    for (j=0;j<a_slinv.length;j=j+1) begin
+      //qty = qty + v_artinvqty[a_art[i] & "|" & a_slinv[j] & "|IVVc"];
+      iv_qty = v_artinvqty[a_art[i] & "|" & a_slinv[j] & "|IVVc"];
+    end; 
+    for (j=0;j<a_inv.length;j=j+1) begin
+      //qty = qty + v_artinvqty[a_art[i] & "|" & a_inv[j]];
+      ivcash_qty = v_artinvqty[a_art[i] & "|" & a_inv[j]];
+    end;
+    qty = ivcash_qty + iv_qty;
     instock = v_artinvinstock[a_art[i] & "|0"] + v_artinvinstock[a_art[i] & "|0|IVVc"] + v_artinvinstock[a_art[i] & "|0|IHVc"];
     recvd = v_artrecvd[a_art[i] & "|0"] + v_artrecvd[a_art[i] & "|0|IVVc"] + v_artrecvd[a_art[i] & "|0|IHVc"];
     if (artmode == 2) then begin
@@ -528,13 +539,6 @@ begin
       recvd = FindReceivedValue(artcode,location);
     end;
     if (artmode == 3) then begin
-      qty = 0;
-      for (j=0;j<a_slinv.length;j=j+1) begin
-        qty = qty + v_artinvqty[a_art[i] & "|" & a_slinv[j] & "|IVVc"];
-      end; 
-      for (j=0;j<a_inv.length;j=j+1) begin
-        qty = qty + v_artinvqty[a_art[i] & "|" & a_inv[j]];
-      end;
       instock = v_artinvinstock[a_art[i]];
       //qty = v_artinvqty[a_art[i] & "|0"];
       indefstock = v_artindefstock[a_art[i]];
@@ -548,7 +552,6 @@ begin
     a_qty[cnt] = qty;
     a_arttmp[i] = a_art[i];
     cnt = cnt + 1;
-
 
 
 //    if (qty >= 0) then begin
