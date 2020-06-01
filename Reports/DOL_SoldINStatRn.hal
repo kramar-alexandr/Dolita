@@ -515,14 +515,16 @@ begin
 //    qty = v_artinvqty[a_art[i] & "|0"] + v_artinvqty[a_art[i] & "|0|IVVc"];
     qty = 0;
     for (j=0;j<a_slinv.length;j=j+1) begin
-      //qty = qty + v_artinvqty[a_art[i] & "|" & a_slinv[j] & "|IVVc"];
+      qty = qty + v_artinvqty[a_art[i] & "|" & a_slinv[j] & "|IVVc"];
       iv_qty = v_artinvqty[a_art[i] & "|" & a_slinv[j] & "|IVVc"];
     end; 
     for (j=0;j<a_inv.length;j=j+1) begin
-      //qty = qty + v_artinvqty[a_art[i] & "|" & a_inv[j]];
+      qty = qty + v_artinvqty[a_art[i] & "|" & a_inv[j]];
       ivcash_qty = v_artinvqty[a_art[i] & "|" & a_inv[j]];
     end;
-    qty = ivcash_qty + iv_qty;
+    if (artmode!=3) then begin
+      qty = ivcash_qty + iv_qty;
+    end;
     instock = v_artinvinstock[a_art[i] & "|0"] + v_artinvinstock[a_art[i] & "|0|IVVc"] + v_artinvinstock[a_art[i] & "|0|IHVc"];
     recvd = v_artrecvd[a_art[i] & "|0"] + v_artrecvd[a_art[i] & "|0|IVVc"] + v_artrecvd[a_art[i] & "|0|IHVc"];
     if (artmode == 2) then begin
