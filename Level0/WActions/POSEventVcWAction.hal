@@ -180,7 +180,7 @@ begin
   POSEr.Event = 2;
   if (POSEventVcCheck(POSEr,POSEr,0,0)==0) then begin
     LogText(0,"ClosePOSSessionsm :: After POSEventVcCheck");
-    POSEr.SerNr = NextSerNr("POSEventVc",POSEr.TransDate,-1,true,"");
+    POSEr.SerNr = NextSerNr("POSEventVc",POSEr.TransDate,-1,false,"");//CUST true>>false
     if (RecordStore(POSEr,true)) then begin 
 			LogText(0,"ClosePOSSessionsm :: After saving POS event, company " & CurrentCompany);
       POSEventVc_PrintToFiscalPrinter(POSEr,false);
