@@ -937,13 +937,16 @@ begin
   string 255 data,since_id,pub_stat;
   val price;
   area a_req,a_reply;
-  integer pos;
+  integer pos,apinum;
   record ShopifyLocVc SHLocr;
 
   BlockLoad(DOLShopifyBl);
-
+  apinum = 1;
   if (nonblank(DOLShopifyBl.APIUser) and nonblank(DOLShopifyBl.APIPass)) then begin
-    DOLMakeWebRequest("GET","/admin/locations.json",a_req,a_reply,1);
+
+LDOLGetShopifyLocationsIDMn_API:;
+    SetAreaZeroSize(a_reply);
+    DOLMakeWebRequest("GET","/admin/locations.json",a_req,a_reply,apinum);
     //PreparePostArea(a_reply);
     jdata = ParseJSONArea(a_reply);
     
@@ -971,6 +974,12 @@ begin
       end;
       i = i + 1;
     end;
+    if (DOLShopifyBl.APIEnable2==1 and apinum==1) then begin
+      apinum = 2;
+      logtext(0,"DOLGetShopifyLocationsIDMn set api 2");
+      goto LDOLGetShopifyLocationsIDMn_API;
+    end;
+
 
   end else begin
     MessageBox(0,"ERROR: API Access data must be provided. Check the Shopify settings.");
