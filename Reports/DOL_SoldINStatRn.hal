@@ -874,13 +874,13 @@ begin
             totindefstock = totindefstock + indefstock;
             totinstock = totinstock + instock;
             recvd = instock+indefstock+qty;
-            recvd2 = FindReceivedValuePeriod(RepSpec.f4,a_art[i],RepSpec.sStartDate,RepSpec.sEndDate);//v_artrecvd[a_art[i]];
+            //recvd2 = FindReceivedValuePeriod(RepSpec.f4,a_art[i],RepSpec.sStartDate,RepSpec.sEndDate);//v_artrecvd[a_art[i]];
             //recvd = FindReceivedValue(a_art[i],RepSpec.f4);
 
             totrecvd = totrecvd + recvd;
           end;
           if (RepSpec.ArtMode==3) then begin
-            OutString(170,0,ZeroString(recvd2),true);
+            OutString(170,0,ZeroString(recvd),true);
           end;
           OutString(4,0,ZeroString(instock),true);
           OutString(8,0,ZeroString(indefstock),true);
