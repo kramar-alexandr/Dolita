@@ -980,11 +980,63 @@ begin
 return;
 end;
 
+global
+updating procedure ReadAllProductIDs(json jdata)
+begin
+  Integer i,j;
+  string 255 data,since_id,pub_stat,nextlink,link;
+  integer pos;
+  record ShopifyProductsVc SPr;
+  
+  while (JSONNodeExists(jdata,"products/[" & i & "]/id")) begin
+    if (JSONNodeExists(jdata,"products/[" & i & "]/variants/[0]/sku")) then begin
+      data = JSONGet(jdata,"products/[" & i & "]/variants/[0]/sku");
+      pos = 0;
+      ExtractObj(data,pos,data);
+      since_id = JSONGet(jdata,"products/[" & i & "]/id");
+    
+      j=0;
+      while (JSONNodeExists(jdata,"products/[" & i & "]/variants/[" & j & "]/id")) begin
+        recordnew(SPr);
+        SPr.Id = JSONGet(jdata,"products/[" & i & "]/id");
+        SPr.VariantId = JSONGet(jdata,"products/[" & i & "]/variants/[" & j & "]/id");
+        SPr.Vproduct_id = JSONGet(jdata,"products/[" & i & "]/variants/[" & j & "]/product_id");
+        SPr.Vinvent_id = JSONGet(jdata,"products/[" & i & "]/variants/[" & j & "]/inventory_item_id");
+        SPr.Name = JSONGet(jdata,"products/[" & i & "]/title");
+        SPr.VarName = JSONGet(jdata,"products/[" & i & "]/variants/[" & j & "]/option1");
+        SPr.SKU = JSONGet(jdata,"products/[" & i & "]/variants/[" & j & "]/sku");
+        if(nonblank(SPr.Id))then begin
+          recordstore(SPr,true);
+        end;
+        j = j + 1;
+      end;
+    end;
+    i = i + 1;
+  end;
+
+
+  return;
+end;
 
 global
-updating procedure DOLGetShopifyProdIDMn(record RcVc RepSpec)
+updating procedure ResetAllShopifyIDs()
 begin
   record INVc INr,IN2r;
+  
+  logtext(0,"ResetAllShopifyIDs start");
+  while (LoopMain(INr,1,true)) begin
+    RecordCopy(IN2r,INr);
+    INr.ShopifyID = "";
+    RecordUpdate(IN2r,INr,false);
+  end;
+  logtext(0,"ResetAllShopifyIDs end");
+
+  return;
+end;
+
+global
+procedure DOLGetShopifyProdIDMn(record RcVc RepSpec)
+begin
   record DOLShopifyBlock DOLShopifyBl;
   json jdata;
   boolean breakf;
@@ -992,8 +1044,7 @@ begin
   string 255 data,since_id,pub_stat,nextlink,link;
   val price;
   area a_req,a_reply;
-  integer pos;
-  record ShopifyProductsVc SPr;
+  integer pos,apinum;
   
   BlockLoad(DOLShopifyBl);
 
@@ -1001,101 +1052,43 @@ begin
   if (RepSpec.flags[0] == 1) then begin
     pub_stat = "any";
   end;
-  SPr.Id = "";
-    
+  apinum = 1;
   if (RepSpec.ArtMode == 0 or RepSpec.ArtMode == 2) then begin // EVS: DOL-167 artmode == 2
     if (nonblank(DOLShopifyBl.APIUser) and nonblank(DOLShopifyBl.APIPass)) then begin
-      
+LDOLGetShopifyProdIDMn_API:;
+
       link = "/admin/api/2020-01/products.json?fields=title,id,variants&limit=250";
+      
 LDOLGetShopifyProdIDMn_Nextpage:;
-      DOLMakeWebRequest_external("GET",link,a_req,a_reply,1,nextlink);
+      DOLMakeWebRequest_external("GET",link,a_req,a_reply,apinum,nextlink);
        //PreparePostArea(a_reply);
       //WriteAreaToFile(a_reply,"Shopify.txt",0);
       
       jdata = ParseJSONArea(a_reply);
       
-      while (GetAreaLength(a_reply) > 0 and JSONNodeExists(jdata,"products/[0]/id") and loopc < 100) begin // 25000 items max; to avoid infinite loop
+      if (JSONNodeExists(jdata,"products/[0]/id")) then begin
         //logtext(0,"Begin to parse " & JSONNodeExists(jdata,"products/[" & i & "]/id"));
-        i = 0;
-        while (JSONNodeExists(jdata,"products/[" & i & "]/id")) begin
-          if (JSONNodeExists(jdata,"products/[" & i & "]/variants/[0]/sku")) then begin
-            data = JSONGet(jdata,"products/[" & i & "]/variants/[0]/sku");
-            pos = 0;
-            ExtractObj(data,pos,data);
-            since_id = JSONGet(jdata,"products/[" & i & "]/id");
-            /*INr.Code = data;
-            if (ReadFirstMain(INr,1,true)) then begin
-              if (RepSpec.ArtMode == 0) then begin
-                data = JSONGet(jdata,"products/[" & i & "]/id");
-                if (INr.ShopifyID != data and nonblank(data)) then begin
-                  RecordCopy(IN2r,INr);
-                  INr.ShopifyID = data;
-                  logtext(0,"IN Update " & INr.Code);
-                  RecordUpdate(IN2r,INr,false);
-                end;
-              end;
-              if (RepSpec.ArtMode == 2) then begin
-                data = JSONGet(jdata,"products/[" & i & "]/variants/[0]/price");
-                price = StringToVal(data,M4Val);
-                if (INr.ShopifyPrice != price and nonblank(data)) then begin
-                  RecordCopy(IN2r,INr);
-                  INr.ShopifyPrice = price;
-                  logtext(0,"IN Update " & INr.Code);
-                  RecordUpdate(IN2r,INr,false);
-                end;
-              end;
-            end;*/
-          
-            j=0;
-            while (JSONNodeExists(jdata,"products/[" & i & "]/variants/[" & j & "]/id")) begin
-              recordnew(SPr);
-              SPr.Id = JSONGet(jdata,"products/[" & i & "]/id");
-              SPr.VariantId = JSONGet(jdata,"products/[" & i & "]/variants/[" & j & "]/id");
-              SPr.Vproduct_id = JSONGet(jdata,"products/[" & i & "]/variants/[" & j & "]/product_id");
-              SPr.Vinvent_id = JSONGet(jdata,"products/[" & i & "]/variants/[" & j & "]/inventory_item_id");
-              SPr.Name = JSONGet(jdata,"products/[" & i & "]/title");
-              SPr.VarName = JSONGet(jdata,"products/[" & i & "]/variants/[" & j & "]/option1");
-              SPr.SKU = JSONGet(jdata,"products/[" & i & "]/variants/[" & j & "]/sku");
-              if(nonblank(SPr.Id))then begin
-                recordstore(SPr,true);
-              end;
-              j = j + 1;
-            end;
-          end;
-          i = i + 1;
-        end;
-
-
+        logtext(0,"DOLGetShopifyProdIDMn read one page with nextlink=" & nextlink);
+        qupdating.ReadAllProductIDs(jdata);
+        logtext(0,"DOLGetShopifyProdIDMn end read page");
         if (nonblank(nextlink)) then begin
           setareazerosize(a_reply);
           link = nextlink;
           goto LDOLGetShopifyProdIDMn_Nextpage;        
         end;
-/*
-        SetAreaZeroSize(a_reply);
-
-        pg = pg + 1;
-        setareazerosize(a_reply);
-        setareazerosize(a_req);
-        DOLMakeWebRequest("GET","/admin/products.json?fields=title,id,variants&limit=250&page=" & pg,a_req,a_reply,1);
-        //PreparePostArea(a_reply);
-        jdata = ParseJSONArea(a_reply);
-        logtext(0,pg & " AreaSize " & getarealength(a_reply));
-        logtext(0,pg & " AreaSizeNDExs " & JSONNodeExists(jdata,"products/[0]/id"));
-        loopc = loopc + 1;
-*/
+      if (DOLShopifyBl.APIEnable2==1 and apinum==1) then begin
+        apinum = 2;
+        logtext(0,"DOLGetShopifyProdIDMn set api 2");
+        goto LDOLGetShopifyProdIDMn_API;
       end;
+
 
     end else begin
       MessageBox(0,"ERROR: API Access data must be provided. Check the Shopify settings.");
     end;
   end;
   if (RepSpec.ArtMode == 1) then begin
-    while (LoopMain(INr,1,true)) begin
-      RecordCopy(IN2r,INr);
-      INr.ShopifyID = "";
-      RecordUpdate(IN2r,INr,false);
-    end;
+    qupdating.ResetAllShopifyIDs;
   end;
 
 return;
