@@ -837,6 +837,8 @@ LDOLUpdShopifyStock:;
     LoadAllowedLocations(v_locf,DOLShopifyBl.StockClass,at_least_onef);
 
     found = at_least_onef;
+    ResetLoop(INr);
+    RecordClear(INr);
     if (item != "*") then begin
       INr.Code = item;
     end;
