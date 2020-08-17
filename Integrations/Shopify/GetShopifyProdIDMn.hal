@@ -1076,6 +1076,7 @@ LDOLGetShopifyProdIDMn_Nextpage:;
           link = nextlink;
           goto LDOLGetShopifyProdIDMn_Nextpage;        
         end;
+      end;
       if (DOLShopifyBl.APIEnable2==1 and apinum==1) then begin
         apinum = 2;
         logtext(0,"DOLGetShopifyProdIDMn set api 2");
