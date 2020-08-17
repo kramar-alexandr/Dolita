@@ -981,13 +981,16 @@ return;
 end;
 
 global
-updating procedure ReadAllProductIDs(json jdata)
+updating procedure ReadAllProductIDs(area a_reply)
 begin
   Integer i,j;
   string 255 data,since_id,pub_stat,nextlink,link;
   integer pos;
   record ShopifyProductsVc SPr;
-  
+  json jdata;
+
+  jdata = ParseJSONArea(a_reply);
+
   while (JSONNodeExists(jdata,"products/[" & i & "]/id")) begin
     if (JSONNodeExists(jdata,"products/[" & i & "]/variants/[0]/sku")) then begin
       data = JSONGet(jdata,"products/[" & i & "]/variants/[0]/sku");
@@ -1069,7 +1072,7 @@ LDOLGetShopifyProdIDMn_Nextpage:;
       if (JSONNodeExists(jdata,"products/[0]/id")) then begin
         //logtext(0,"Begin to parse " & JSONNodeExists(jdata,"products/[" & i & "]/id"));
         logtext(0,"DOLGetShopifyProdIDMn read one page with nextlink=" & nextlink);
-        qupdating.ReadAllProductIDs(jdata);
+        qupdating.ReadAllProductIDs(a_reply);
         logtext(0,"DOLGetShopifyProdIDMn end read page");
         if (nonblank(nextlink)) then begin
           setareazerosize(a_reply);
