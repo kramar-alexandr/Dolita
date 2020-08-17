@@ -3,6 +3,7 @@ external function boolean IsNumeric(string);
 external procedure FindNextIVCashVcOfficialSerialNr2(var record IVCashVc);
 external updating procedure SetAgreementPrntdf(LongInt);
 external updating procedure SetStockMovPrntdf(record StockMovVc);
+external procedure FindNextIVCashVcOfficialSerialNrExt(var record IVCashVc, boolean);
 
 global
 function Boolean RecidAction_rlIVCashLPrint(var record IVCashVc IVCashp,string repname,string arg1)
@@ -70,6 +71,19 @@ begin
     if (ReadFirstMain(IVCashp,0,true)) then begin end;  
   end;
   RecordCopy(oldIVCashr,IVCashp);
+
+  //CUST-BEGIN
+  if (blank(IVCashp.OfficialSerNr)) then begin
+    FindNextIVCashVcOfficialSerialNrExt(IVCashp,true);
+    if (IVCashp.OfficialSerNr != "") then begin
+      RecordUpdate(oldIVCashr,IVCashp,false);
+      UpdateOffSerNr(IVCashp.SerNr,"IVCashVc",0,IVCashp.OfficialSerNr,true);
+      RecordCopy(oldIVCashr,IVCashp);
+    end;
+  end;
+  //CUST-END
+
+
   if (RecidAction_rlIVCashLPrint(IVCashp,docname,arg1)) then begin
     if (nonblank(IVCashp.OfficialSerNr2)) then begin
       if (RecordUpdate(oldIVCashr,IVCashp,false)==0) then begin
