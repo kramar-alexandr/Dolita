@@ -1784,10 +1784,13 @@ begin
   if (DOLShopifyBl.UpdItems == 1) then begin
 LDOLUpsertItemShopify:;
     logtext(0,"INFO: Sending Item data to Shopify (DOLUpsertItemShopify), Item code " & INr.Code);
+    /*
     shopifyid = INr.ShopifyID;
     if (apinum==2) then begin
       shopifyid = INr.ShopifyID2;
     end;
+    */
+    shopifyid = GetShopifyId(INr.Code,apinum);
     if (blank(shopifyid)) then begin
       NewProductJSON(INr,a_req);
       DOLMakeWebRequest("POST","/admin/products.json",a_req,a_reply,apinum);
