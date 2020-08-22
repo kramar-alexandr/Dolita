@@ -24,10 +24,14 @@ begin
   EditField(h,v += vs,-20,"API Password",Normal,APIPass2,false,0);
   EditField(h,v += vs,200,"Shopify URL",Normal,ShopifyURL2,false,0);
   EditField(h,v += vs,80,"Shopify Port",Normal,ShopifyPort2,true,0);
+
+  RecordField(UpdPriceAlways2,M4Int,0,0);
+  RecordField(ShpifyLocId2,M4Code,60,0);
+
   Tile(2,120,true,"",UpdStockInertval);
   h=h+50;
   CheckBox(h,v=20,0,"Update Items (!for testing only!) (restart required)",UpdItems);
-  ButtonFrame(h,v+=30,270,5,"");
+  ButtonFrame(h,v+=30,320,5,"");
   CheckBox(h,v+=1,0,"Update Stock Levels",UpdStock);
   EditField(h+100,v+=vs,60,"Every",Normal,UpdStockInertval,false,0);
   StaticText(h+155,v+10,"minutes",false);
@@ -35,6 +39,7 @@ begin
   EditField(h+100,v+=vs,60,"Inch variety group",Normal,InchVARGCode,false,VARGSClass);
   CheckBox(h,v+=vs,0,"Update Stock Levels when Stock level Changes",UpdStockAlways);
   CheckBox(h,v+=20,0,"Update Price When Item is Updated",UpdPriceAlways); 
+  CheckBox(h,v+=20,0,"Update Price When Item is Updated for Second Account",UpdPriceAlways2); 
   EndFrame;
   EditField(h,v += 40,200,"Full Price Item Tag",Normal,FullPriceItemTag,false,0);
   EditField(h,v += vs,200,"Discounted Item Tag",Normal,DiscItemTag,false,0);
@@ -42,11 +47,13 @@ begin
   EditField(h,v = 10,80,"Def. customer",Normal,DefWebUserCode,false,CUSClass);
   CheckBox(h+150,v,0,"Import Orders",GetOrdersFlag); 
   EditField(h,v += vs,80,"Def. SalesMan",Normal,DefWebSalesMan,false,UserSClass);
+  CheckBox(h+150,v,0,"Import Orders for Second Account",GetOrdersFlag2); 
   EditField(h,v += vs,80,"Def. Location",Normal,DefWebLocation,false,LocationSClass);
   EditField(h,v += vs,80,"Def. Order Class 1",Normal,DefWebOrdClass,false,OrderClassSClass);
   EditField(h,v += vs,80,"Def. Order Class 2",Normal,DefWebOrdClass2,false,OrderClassSClass);
   EditField(h,v += vs,80,"Header Object",Normal,HeaderObject,false,ObjSClass);
   EditField(h,v += vs,80,"Shopify Location Id",Normal,ShpifyLocId,false,ShopifyLocSClass);
+  EditField(h,v += vs,80,"Shopify Location Id 2",Normal,ShpifyLocId2,false,ShopifyLocSClass);
   EditField(h,v += vs,80,"Get Orders every minutes",Normal,GetOrdFrq,false,0);
   EditField(h,v += vs,80,"Get Orders since",Normal,GetOrdersFrom,false,PasteCurDate);
   EditField(h,v += vs,80,"Deliver after",Normal,DeliveryAfter,false,0);

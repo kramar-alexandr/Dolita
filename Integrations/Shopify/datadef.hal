@@ -38,6 +38,9 @@ begin
   RecordField(ShopifyPort2,M4Int,0,0);
   RecordField(DefWebOrdClass2,M4Code,60,0);
   RecordField(APIEnable2,M4Int,0,0);
+  RecordField(UpdPriceAlways2,M4Int,0,0);
+  RecordField(ShpifyLocId2,M4Code,60,0);
+  RecordField(GetOrdersFlag2,M4Int,0,0);
   EndBlock;
 
 	RecordBegin(ShopifyLocVc,-,"");
@@ -60,6 +63,7 @@ begin
   RecordField(SKU,M4Str,200,0);
   RecordField(HansaArtCode,M4Str,200,0);
   RecordField(HansaVarCodes,M4Str,200,0);
+  RecordField(APINum,M4Int,0,0);
   MainKeyBegin(Id,0);
   KeySegment(Id);  
   KeySegment(VariantId); 
