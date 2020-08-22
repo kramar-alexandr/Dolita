@@ -920,6 +920,57 @@ LDOLUpdShopifyStock:;
 end;
 */
 
+global
+procedure SendShopifyStockData(Integer arcnt,array string invar,vector val invarqty,Integer apinum)
+begin
+  Integer i;
+  record ShopifyProductsVc SPr;
+  string 255 sku,varname,locid;
+  Longint pos2;
+  Boolean TrHs;
+  val sqty;
+  Integer cntesend;
+  area request;
+  record DOLShopifyBlock DOLShopifyBl;
+
+  BlockLoad(DOLShopifyBl);
+  for (i=0;i<arcnt;i=i+1) begin            
+    if (nonblank(invar[i]))then begin
+      pos2 = -1;
+      GetNextSubString(invar[i],pos2,":",sku);
+      GetNextSubString(invar[i],pos2,":",varname);
+      ResetLoop(SPr);
+      setareazerosize(request);
+      TrHs = true;
+      ResetLoop(SPr);
+      SPr.SKU = sku;
+      while (LoopKey("SKU",SPr,1,TrHs)) begin
+        if (SPr.SKU!=sku) then begin
+          TrHs = false;
+        end else begin
+          if (varname==SPr.VarName and apinum==SPr.APINum) then begin
+            cntesend = cntesend + 1;
+            sqty = invarqty[invar[i]];
+            SetAreaZeroSize(request);
+            if (apinum==1) then begin
+              locid = DOLShopifyBl.ShpifyLocId;
+            end else begin
+              locid = DOLShopifyBl.ShpifyLocId2;                      
+            end;
+            addtexttoarea("{\"location_id\":" & locid & "," & chr(13) & chr(10),request);
+            addtexttoarea("\"inventory_item_id\":" & SPr.Vinvent_id & "," & chr(13) & chr(10),request);
+            addtexttoarea("\"available\":" & sqty & "}" & chr(13) & chr(10),request);
+            DOLMakeWebRequestAsync("POST","/admin/inventory_levels/set.json",request,apinum);
+            MilliSleep(700);
+          end;
+        end;
+      end;
+    end;
+  end;
+
+  return;
+end;
+
 
 global procedure DOLUpdShopifyStock(string items)
 begin
@@ -1029,40 +1080,8 @@ LDOLUpdShopifyStock:;
             end;
           end;
         end;    
-        if(arcnt>0)then begin            
-          For(i=0;i<arcnt;i=i+1) begin            
-            if(nonblank(invar[i]))then begin
-              pos2 = -1;
-              GetNextSubString(invar[i],pos2,":",sku);
-              GetNextSubString(invar[i],pos2,":",varname);
-              ResetLoop(SPr);
-              setareazerosize(request);
-              TrHs = true;
-              ResetLoop(SPr);
-              SPr.SKU = sku;
-              while (LoopKey("SKU",SPr,1,TrHs)) begin
-                if (SPr.SKU!=sku) then begin
-                  TrHs = false;
-                end else begin
-                  if (varname==SPr.VarName and apinum==SPr.APINum) then begin
-                    cntesend = cntesend + 1;
-                    sqty = invarqty[invar[i]];
-                    SetAreaZeroSize(request);
-                    if (apinum==1) then begin
-                      locid = DOLShopifyBl.ShpifyLocId;
-                    end else begin
-                      locid = DOLShopifyBl.ShpifyLocId2;                      
-                    end;
-                    addtexttoarea("{\"location_id\":" & locid & "," & chr(13) & chr(10),request);
-                    addtexttoarea("\"inventory_item_id\":" & SPr.Vinvent_id & "," & chr(13) & chr(10),request);
-                    addtexttoarea("\"available\":" & sqty & "}" & chr(13) & chr(10),request);
-                    DOLMakeWebRequestAsync("POST","/admin/inventory_levels/set.json",request,apinum);
-                    MilliSleep(700);
-                  end;
-                end;
-              end;
-            end;
-          end;
+        if(arcnt>0)then begin  
+          threadasync.SendShopifyStockData(arcnt,invar,invarqty,apinum);       
         end;
       end;
       //check for structured items;
