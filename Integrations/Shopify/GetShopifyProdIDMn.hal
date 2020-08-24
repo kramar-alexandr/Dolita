@@ -928,7 +928,7 @@ begin
   string 255 sku,varname,locid;
   Longint pos2;
   Boolean TrHs;
-  val sqty;
+  Integer sqty;
   Integer cntesend;
   area request;
   record DOLShopifyBlock DOLShopifyBl;
@@ -957,9 +957,9 @@ begin
             end else begin
               locid = DOLShopifyBl.ShpifyLocId2;                      
             end;
-            addtexttoarea("{\"location_id\":" & locid & "," & chr(13) & chr(10),request);
-            addtexttoarea("\"inventory_item_id\":" & SPr.Vinvent_id & "," & chr(13) & chr(10),request);
-            addtexttoarea("\"available\":" & sqty & "}" & chr(13) & chr(10),request);
+            addtexttoarea("{\"location_id\":" & locid & "," & chr(10),request);
+            addtexttoarea("\"inventory_item_id\":" & SPr.Vinvent_id & "," & chr(10),request);
+            addtexttoarea("\"available\":" & sqty & "}" & chr(10),request);
             DOLMakeWebRequestAsync("POST","/admin/inventory_levels/set.json",request,apinum);
             MilliSleep(700);
           end;
@@ -1193,7 +1193,7 @@ return;
 end;
 
 global
-updating procedure ReadAllProductIDs(area a_reply)
+updating procedure ReadAllProductIDs(area a_reply,Integer apinum)
 begin
   Integer i,j;
   string 255 data,since_id,pub_stat,nextlink,link;
@@ -1220,6 +1220,7 @@ begin
         SPr.Name = JSONGet(jdata,"products/[" & i & "]/title");
         SPr.VarName = JSONGet(jdata,"products/[" & i & "]/variants/[" & j & "]/option1");
         SPr.SKU = JSONGet(jdata,"products/[" & i & "]/variants/[" & j & "]/sku");
+        SPr.APINum = apinum;
         if(nonblank(SPr.Id))then begin
           recordstore(SPr,true);
         end;
@@ -1284,7 +1285,7 @@ LDOLGetShopifyProdIDMn_Nextpage:;
       if (JSONNodeExists(jdata,"products/[0]/id")) then begin
         //logtext(0,"Begin to parse " & JSONNodeExists(jdata,"products/[" & i & "]/id"));
         logtext(0,"DOLGetShopifyProdIDMn read one page with nextlink=" & nextlink);
-        qupdating.ReadAllProductIDs(a_reply);
+        qupdating.ReadAllProductIDs(a_reply,apinum);
         logtext(0,"DOLGetShopifyProdIDMn end read page");
         if (nonblank(nextlink)) then begin
           setareazerosize(a_reply);
