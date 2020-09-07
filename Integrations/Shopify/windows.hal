@@ -39,7 +39,10 @@ begin
   EditField(h+100,v+=vs,60,"Inch variety group",Normal,InchVARGCode,false,VARGSClass);
   CheckBox(h,v+=vs,0,"Update Stock Levels when Stock level Changes",UpdStockAlways);
   CheckBox(h,v+=20,0,"Update Price When Item is Updated",UpdPriceAlways); 
+  CheckBox(h,v+=20,0,"Update all Locations",UpdateAllLocations); 
   CheckBox(h,v+=20,0,"Update Price When Item is Updated for Second Account",UpdPriceAlways2); 
+  CheckBox(h,v+=20,0,"Update all Locations for Second Account",UpdateAllLocations2); 
+  
   EndFrame;
   EditField(h,v += 40,200,"Full Price Item Tag",Normal,FullPriceItemTag,false,0);
   EditField(h,v += vs,200,"Discounted Item Tag",Normal,DiscItemTag,false,0);
