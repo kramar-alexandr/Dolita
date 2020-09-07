@@ -274,7 +274,7 @@ begin
     case 2: tstr = USetStr(1000046);//Funkcijos: Perï¿½iï¿½ra
     case 0: tstr = USetStr(1000115);//Funkcijos: Perï¿½iï¿½ra su ï¿½vairoves
     case 1: tstr = USetStr(1000047);//Funkcijos: Detaliai
-    case 3: tstr = USetStr(1000152);//Funkcijos: Tiek˜j÷ apìvalga
+    case 3: tstr = USetStr(1000152);//Funkcijos: Tiekï¿½jï¿½ apï¿½valga
   end;
   Header(rw,tstr,1);
   rw = rw + 1;
@@ -682,13 +682,14 @@ begin
 return;
 end;
 
-function val GetSupplierTotalBalance(string supplier,string location)
+function val GetSupplierTotalBalance(string supplier,string location,var val indefstock)
 begin
   val res;
   record PIVc PIr;
   Boolean TrHs;
   record ItemStatusVc ISr;
 
+  indefstock = 0;
   PIr.VECode = supplier;
   TrHs = true;
   while (LoopKey("Vendor",PIr,1,TrHs)) begin
@@ -698,6 +699,7 @@ begin
       if (PIr.DefaultChoice==1) then begin
         FindStockValue(PIr.ItemCode,location,ISr);
         res = res + ISr.Instock;
+        indefstock = indefstock + DOL_FindDefStockValue(PIr.ItemCode,location);
       end;
     end;
   end;
@@ -869,8 +871,8 @@ begin
             totrecvd = totrecvd + recvd;
           end;
           if (RepSpec.ArtMode == 3) then begin
-            indefstock = v_artindefstock[a_art[i]];
-            instock = v_artinvinstock[a_art[i]];//GetSupplierTotalBalance(a_art[i],RepSpec.f4);
+            //indefstock = v_artindefstock[a_art[i]];
+            instock = GetSupplierTotalBalance(a_art[i],RepSpec.f4,indefstock);//v_artinvinstock[a_art[i]];//
             totindefstock = totindefstock + indefstock;
             totinstock = totinstock + instock;
             recvd = instock+indefstock+qty;
