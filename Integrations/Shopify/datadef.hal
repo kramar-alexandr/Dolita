@@ -41,6 +41,8 @@ begin
   RecordField(UpdPriceAlways2,M4Int,0,0);
   RecordField(ShpifyLocId2,M4Code,60,0);
   RecordField(GetOrdersFlag2,M4Int,0,0);
+  RecordField(UpdateAllLocations,M4Int,0,0);
+  RecordField(UpdateAllLocations2,M4Int,0,0);
   EndBlock;
 
 	RecordBegin(ShopifyLocVc,-,"");
@@ -49,6 +51,8 @@ begin
   RecordField(address1,M4Str,200,0);
   RecordField(address2,M4Str,200,0);
   RecordField(city,M4Str,200,0);
+  RecordField(StockClass,M4Str,200,0);
+  RecordField(APINum,M4Int,0,0);
   MainKeyBegin(Id,0);
   KeySegment(Id);  	
 	EndRecord;

@@ -126,6 +126,8 @@ begin
   EditField(h=100,v+=vs,150,"address1",ViewOnly,address1,false,0);
   EditField(h=100,v+=vs,150,"address2",ViewOnly,address2,false,0);
   EditField(h=100,v+=vs,150,"city",ViewOnly,city,false,0);
+  EditField(h=100,v+=vs,150,"API",ViewOnly,APINum,false,0);
+  EditField(h=100,v+=vs,150,"Location Class",Normal,StockClass,false,LocClSClass);
  
   
   SearchField("Search");

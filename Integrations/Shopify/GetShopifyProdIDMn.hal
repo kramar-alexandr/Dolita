@@ -921,11 +921,11 @@ end;
 */
 
 global
-procedure SendShopifyStockData(Integer arcnt,array string invar,vector Boolean vshopify_id,vector val invarqty,Integer apinum)
+procedure SendShopifyStockData(Integer arcnt,array string invar,vector Boolean vshopify_id,vector val invarqty,Integer apinum,string locid)
 begin
   Integer i,j;
   record ShopifyProductsVc SPr;
-  string 255 sku,varname,locid;
+  string 255 sku,varname;
   Longint pos;
   Boolean TrHs;
   Integer sqty;
@@ -964,7 +964,7 @@ begin
       var_id = JSONGet(jdata,"products/[" & i & "]/variants/[" & j & "]/id");
       sku = JSONGet(jdata,"products/[" & i & "]/variants/[" & j & "]/sku");
       
-      var_instock = invarqty[sku & ":" & option1];//GetItemstat(product_id & ":" & option1,a_itemstat,a_itemstat_index);
+      var_instock = invarqty[sku & ":" & option1 & ":" & locid];//GetItemstat(product_id & ":" & option1,a_itemstat,a_itemstat_index);
       var_old_instock = StringToVal(JSONGet(jdata,"products/[" & i & "]/variants/[" & j & "]/inventory_quantity"),M40Val);
       if (var_instock!=var_old_instock) then begin
         vstock[var_id & ":" & product_id] = var_instock;
@@ -984,11 +984,6 @@ begin
     SPr.Id = product_id;
     SPr.VariantId = var_id;
     if (ReadFirstMain(SPr,2,true)) then begin
-      if (apinum==1) then begin
-        locid = DOLShopifyBl.ShpifyLocId;
-      end else begin
-        locid = DOLShopifyBl.ShpifyLocId2;                      
-      end;
       sqty = vstock[astock[i]];
 logtext(0,"sending to shopify " & SPr.Vinvent_id & ":" & sqty & ":" & GetCurTick);
       addtexttoarea("{\"location_id\":" & locid & "," & chr(10),request);
@@ -1004,6 +999,112 @@ logtext(0,"sending to shopify " & SPr.Vinvent_id & ":" & sqty & ":" & GetCurTick
   return;
 end;
 
+
+global
+procedure SendShopifyStockData2(Integer arcnt,array string invar,vector Boolean vshopify_id,vector val invarqty,Integer apinum,vector string vlocid)
+begin
+  Integer i,j;
+  record ShopifyProductsVc SPr;
+  string 255 sku,varname,locid;
+  Longint pos;
+  Boolean TrHs;
+  Integer sqty;
+  Integer cntesend,s;
+  area request,reply,a_req,a_reply;
+  record DOLShopifyBlock DOLShopifyBl;
+  val var_instock,var_old_instock;
+  string 255 var_id,inventory_id,product_id,prodlist,option1;
+  array string 255 arr_shopify_id;
+  JSON jdata;
+  vector val vstock;
+  array string 255 astock;
+  array string 255 alocid;
+
+  GetVectorTags(vshopify_id,arr_shopify_id);
+  for (i = 0; i < arr_shopify_id.length; i = i + 1) begin
+    if (nonblank(prodlist)) then begin
+      prodlist = prodlist & ",";
+    end;
+    prodlist = prodlist & arr_shopify_id[i];
+  end;
+
+  GetVectorTags(vlocid,alocid);
+  for (s=0;s<alocid.length;s=s+1) begin
+    DOLMakeWebRequest("GET","/admin/locations/" & alocid[s] & "/inventory_levels.json",a_req,a_reply,apinum);
+    logtext(0,"INFO: Shopify update stock requested prodlist " & prodlist & ":api=" & apinum);
+    // 2. Get existing varieties and prime the instock to be set
+    jdata = ParseJSONArea(a_reply);
+    i = 0;
+    while (JSONNodeExists(jdata,"products/[" & i & "]/id")) begin
+      product_id = JSONGet(jdata,"products/[" & i & "]/id");
+      if (SetInSet(product_id,prodlist)) then begin
+        j = 0;
+        while (JSONNodeExists(jdata,"products/[" & i & "]/variants/[" & j & "]/id") and
+              JSONNodeExists(jdata,"products/[" & i & "]/variants/[" & j & "]/option1")) begin
+          
+          option1 = JSONGet(jdata,"products/[" & i & "]/variants/[" & j & "]/option1");
+
+          inventory_id = JSONGet(jdata,"products/[" & i & "]/variants/[" & j & "]/inventory_item_id");
+          var_id = JSONGet(jdata,"products/[" & i & "]/variants/[" & j & "]/id");
+          sku = JSONGet(jdata,"products/[" & i & "]/variants/[" & j & "]/sku");
+          
+          var_instock = invarqty[sku & ":" & option1 & ":" & alocid[s]];//GetItemstat(product_id & ":" & option1,a_itemstat,a_itemstat_index);
+          var_old_instock = StringToVal(JSONGet(jdata,"products/[" & i & "]/variants/[" & j & "]/inventory_quantity"),M40Val);
+          if (var_instock!=var_old_instock) then begin
+            vstock[var_id & ":" & product_id] = var_instock;
+          end;
+
+          j = j + 1;
+        end;
+      end;
+      i = i + 1;
+    end;
+
+    GetVectorTags(vstock,astock);
+    for (i=0;i<astock.length;i=i+1) begin
+      pos = -1;
+      GetNextSubstring(astock[i],pos,":",var_id);
+      GetNextSubstring(astock[i],pos,":",product_id);
+      locid = alocid[s];
+      SPr.Id = product_id;
+      SPr.VariantId = var_id;
+      if (ReadFirstMain(SPr,2,true)) then begin
+        sqty = vstock[astock[s]];
+  logtext(0,"sending to shopify " & SPr.Vinvent_id & ":" & sqty & ":" & GetCurTick);
+        addtexttoarea("{\"location_id\":" & locid & "," & chr(10),request);
+        addtexttoarea("\"inventory_item_id\":" & SPr.Vinvent_id & "," & chr(10),request);
+        addtexttoarea("\"available\":" & sqty & "}" & chr(10),request);
+        if (Mod(i,2)!=0) then begin
+          MilliSleep(250);
+        end;
+        DOLMakeWebRequestAsync("POST","/admin/inventory_levels/set.json",request,apinum);
+      end;
+    end;
+  end;
+
+  return;
+end;
+
+procedure LoadShopifyLocations(var vector Boolean locfl,var vector string vlocid,Integer apinum)
+begin
+  record ShopifyLocVc SHLocr;
+  record LocationVc Locr;
+
+  while (LoopMain(SHLocr,1,true)) begin
+    if (SHLocr.APINum==apinum) then begin
+      ResetLoop(Locr);
+      Locr.Code = "";
+      while(loopmain(Locr,1,true))begin
+        if(setinset(SHLocr.StockClass,Locr.Classification))then begin
+          locfl[Locr.Code] = true;
+          vlocid[Locr.Code] = SHLocr.Id;
+        end;
+      end;
+    end;
+  end;
+
+  return;
+end;
 
 global procedure DOLUpdShopifyStock(string items)
 begin
@@ -1028,6 +1129,8 @@ begin
   Boolean convf;
   vector Boolean vshopify_id;
   string 255 shopifyid;
+  Boolean all_locf;
+  vector string 255 vlocid;
   
   blockload(DOLShopifyBl);
   
@@ -1036,15 +1139,26 @@ begin
   curcm = currentcompany & ";";
   rqs = right(items,len(items)-len(curcm));
   apinum = 1;
+  all_locf = DOLShopifyBl.UpdateAllLocations==1;
+  locid = DOLShopifyBl.ShpifyLocId;
   if(nonblank(items) and (DOLShopifyBl.UpdStockAlways==1 or DOLShopifyBl.UpdStock==1))then begin
     if(nonblank(DOLShopifyBl.ShpifyLocId))then begin
-      while(loopmain(Locr,1,true))begin
-        if(setinset(DOLShopifyBl.StockClass,Locr.Classification))then begin
-          locfl[Locr.Code] = true;
+LDOLUpdShopifyStock:;   
+      ResetLoop(Locr);
+      Locr.Code = "";
+      ClearVector(locfl);
+      ClearVector(vlocid);
+      if (all_locf) then begin   
+        LoadShopifyLocations(locfl,vlocid,apinum);
+      end else begin
+        while(loopmain(Locr,1,true))begin
+          if(setinset(DOLShopifyBl.StockClass,Locr.Classification))then begin
+            locfl[Locr.Code] = true;
+            vlocid[Locr.Code] = DOLShopifyBl.ShpifyLocId;
+          end;
         end;
       end;
 
-LDOLUpdShopifyStock:;      
       ResetLoop(INr);
       RecordClear(INr);
       if(nonblank(rqs))then begin
@@ -1089,7 +1203,7 @@ LDOLUpdShopifyStock:;
                     if(TrHs)then begin                    
                       if(locfl[ISr.Location])then begin
                         if (nonblank(ISr.Variety)) then begin
-                          id = ISr.Code & ":" & ConvertSERPVarCodeToShopifyVarCode(ISr.Variety,convf);
+                          id = ISr.Code & ":" & ConvertSERPVarCodeToShopifyVarCode(ISr.Variety,convf) & ":" & vlocid[ISr.Location];
                         end else begin
                           id = ISr.Code;
                         end;
@@ -1110,13 +1224,19 @@ LDOLUpdShopifyStock:;
             end;
           end;
         end;    
-        if(arcnt>0)then begin  
-          threadasync.SendShopifyStockData(arcnt,invar,vshopify_id,invarqty,apinum);       
+        if(arcnt>0)then begin 
+          if (all_locf) then begin
+            threadasync.SendShopifyStockData2(arcnt,invar,vshopify_id,invarqty,apinum,vlocid);  
+          end else begin
+            threadasync.SendShopifyStockData(arcnt,invar,vshopify_id,invarqty,apinum,locid);  
+          end;     
         end;
       end;
       //check for structured items;
       if (DOLShopifyBl.APIEnable2==1 and apinum==1) then begin
         apinum = 2;
+        locid = DOLShopifyBl.ShpifyLocId2;
+        all_locf = DOLShopifyBl.UpdateAllLocations2==1;
         goto LDOLUpdShopifyStock;
       end;
 
@@ -1170,7 +1290,7 @@ begin
   val price;
   area a_req,a_reply;
   integer pos,apinum;
-  record ShopifyLocVc SHLocr;
+  record ShopifyLocVc SHLocr,oldSHLocr;
 
   BlockLoad(DOLShopifyBl);
   apinum = 1;
@@ -1188,11 +1308,13 @@ LDOLGetShopifyLocationsIDMn_API:;
         data = JSONGet(jdata,"locations/[" & i & "]/id");
         SHLocr.Id = data;
         if(readfirstmain(SHLocr,1,true))then begin
+          RecordCopy(oldSHLocr,SHLocr);
           SHLocr.Name = JSONGet(jdata,"locations/[" & i & "]/name");
           SHLocr.address1 = JSONGet(jdata,"locations/[" & i & "]/address1");
           SHLocr.address2 = JSONGet(jdata,"locations/[" & i & "]/address2");
           SHLocr.city = JSONGet(jdata,"locations/[" & i & "]/city");
-          recordstore(SHLocr,true);
+          SHLocr.APINum = apinum;
+          RecordUpdate(oldSHLocr,SHLocr,true);
         end else begin
           recordnew(SHLocr);
           SHLocr.Id = JSONGet(jdata,"locations/[" & i & "]/id");
@@ -1200,6 +1322,7 @@ LDOLGetShopifyLocationsIDMn_API:;
           SHLocr.address1 = JSONGet(jdata,"locations/[" & i & "]/address1");
           SHLocr.address2 = JSONGet(jdata,"locations/[" & i & "]/address2");
           SHLocr.city = JSONGet(jdata,"locations/[" & i & "]/city");
+          SHLocr.APINum = apinum;
           recordstore(SHLocr,true);
         end;
         
