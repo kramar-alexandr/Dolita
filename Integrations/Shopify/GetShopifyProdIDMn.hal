@@ -263,6 +263,7 @@ begin
   SendAsyncWebRequest(apiurl,apiport,-1,true,method,apipath,"application/json; charset=""utf-8""" & chr(10) & auth,"",areq,"DOLMakeWebRequestReply",20);
 
   logtext(0,"************************DOLShopifyBl.SaveReqResp=" & DOLShopifyBl.SaveReqResp);
+
   if(DOLShopifyBl.SaveReqResp>0)then begin
     if (!DirExists("ShopifyRQS")) then begin
       CreateFolder("ShopifyRQS");
@@ -273,7 +274,8 @@ begin
 return;
 end;
 
-global updating procedure DOLMakeWebRequestReply(Area a_reply,Area a_replyheader,boolean timeout)
+global updating
+procedure DOLMakeWebRequestReply(Area a_reply,Area a_replyheader,boolean timeout)
 begin
   record DOLShopifyBlock DOLShopifyBl;
   
@@ -287,6 +289,7 @@ begin
     end;
     WriteAreaToFile(a_reply,"ShopifyRQS/ShopifyReply_" & DateToString(currentdate,"YYYY-MM-DD") & TimeToString(currenttime,"HHMMSS",false) & ".txt",0);
   end;  
+  logtext(0,"shopify reply " & GetCurTick);
 return;
 end;
 
@@ -871,10 +874,7 @@ LDOLUpdShopifyStock:;
       end;
       if (found) then begin
         testf = true;
-        shopifyid = INr.ShopifyID;
-        if (apinum==2) then begin
-          shopifyid = INr.ShopifyID2;
-        end;
+        shopifyid = GetShopifyId(INr.Code,apinum);
         if (INr.NotForSales!=0) then begin testf = false; end;
         if (blank(shopifyid)) then begin testf = false; end;
         if (testf) then begin
@@ -921,50 +921,83 @@ end;
 */
 
 global
-procedure SendShopifyStockData(Integer arcnt,array string invar,vector val invarqty,Integer apinum)
+procedure SendShopifyStockData(Integer arcnt,array string invar,vector Boolean vshopify_id,vector val invarqty,Integer apinum)
 begin
-  Integer i;
+  Integer i,j;
   record ShopifyProductsVc SPr;
   string 255 sku,varname,locid;
-  Longint pos2;
+  Longint pos;
   Boolean TrHs;
   Integer sqty;
   Integer cntesend;
-  area request;
+  area request,reply,a_req,a_reply;
   record DOLShopifyBlock DOLShopifyBl;
+  val var_instock,var_old_instock;
+  string 255 var_id,inventory_id,product_id,prodlist,option1;
+  array string 255 arr_shopify_id;
+  JSON jdata;
+  vector val vstock;
+  array string 255 astock;
+
+  GetVectorTags(vshopify_id,arr_shopify_id);
+  for (i = 0; i < arr_shopify_id.length; i = i + 1) begin
+    if (nonblank(prodlist)) then begin
+      prodlist = prodlist & ",";
+    end;
+    prodlist = prodlist & arr_shopify_id[i];
+  end;
+
+  DOLMakeWebRequest("GET","/admin/products.json?fields=id,variants&ids=" & prodlist,a_req,a_reply,apinum);
+  logtext(0,"INFO: Shopify update stock requested prodlist " & prodlist & ":api=" & apinum);
+  // 2. Get existing varieties and prime the instock to be set
+  jdata = ParseJSONArea(a_reply);
+  i = 0;
+  while (JSONNodeExists(jdata,"products/[" & i & "]/id")) begin
+    product_id = JSONGet(jdata,"products/[" & i & "]/id");
+    j = 0;
+    while (JSONNodeExists(jdata,"products/[" & i & "]/variants/[" & j & "]/id") and
+           JSONNodeExists(jdata,"products/[" & i & "]/variants/[" & j & "]/option1")) begin
+      
+      option1 = JSONGet(jdata,"products/[" & i & "]/variants/[" & j & "]/option1");
+
+      inventory_id = JSONGet(jdata,"products/[" & i & "]/variants/[" & j & "]/inventory_item_id");
+      var_id = JSONGet(jdata,"products/[" & i & "]/variants/[" & j & "]/id");
+      sku = JSONGet(jdata,"products/[" & i & "]/variants/[" & j & "]/sku");
+      
+      var_instock = invarqty[sku & ":" & option1];//GetItemstat(product_id & ":" & option1,a_itemstat,a_itemstat_index);
+      var_old_instock = StringToVal(JSONGet(jdata,"products/[" & i & "]/variants/[" & j & "]/inventory_quantity"),M40Val);
+      if (var_instock!=var_old_instock) then begin
+        vstock[var_id & ":" & product_id] = var_instock;
+      end;
+
+      j = j + 1;
+    end;
+    i = i + 1;
+  end;
 
   BlockLoad(DOLShopifyBl);
-  for (i=0;i<arcnt;i=i+1) begin            
-    if (nonblank(invar[i]))then begin
-      pos2 = -1;
-      GetNextSubString(invar[i],pos2,":",sku);
-      GetNextSubString(invar[i],pos2,":",varname);
-      ResetLoop(SPr);
-      setareazerosize(request);
-      TrHs = true;
-      ResetLoop(SPr);
-      SPr.SKU = sku;
-      while (LoopKey("SKU",SPr,1,TrHs)) begin
-        if (SPr.SKU!=sku) then begin
-          TrHs = false;
-        end else begin
-          if (varname==SPr.VarName and apinum==SPr.APINum) then begin
-            cntesend = cntesend + 1;
-            sqty = invarqty[invar[i]];
-            SetAreaZeroSize(request);
-            if (apinum==1) then begin
-              locid = DOLShopifyBl.ShpifyLocId;
-            end else begin
-              locid = DOLShopifyBl.ShpifyLocId2;                      
-            end;
-            addtexttoarea("{\"location_id\":" & locid & "," & chr(10),request);
-            addtexttoarea("\"inventory_item_id\":" & SPr.Vinvent_id & "," & chr(10),request);
-            addtexttoarea("\"available\":" & sqty & "}" & chr(10),request);
-            DOLMakeWebRequestAsync("POST","/admin/inventory_levels/set.json",request,apinum);
-            MilliSleep(700);
-          end;
-        end;
+  GetVectorTags(vstock,astock);
+  for (i=0;i<astock.length;i=i+1) begin
+    pos = -1;
+    GetNextSubstring(astock[i],pos,":",var_id);
+    GetNextSubstring(astock[i],pos,":",product_id);
+    SPr.Id = product_id;
+    SPr.VariantId = var_id;
+    if (ReadFirstMain(SPr,2,true)) then begin
+      if (apinum==1) then begin
+        locid = DOLShopifyBl.ShpifyLocId;
+      end else begin
+        locid = DOLShopifyBl.ShpifyLocId2;                      
       end;
+      sqty = vstock[astock[i]];
+logtext(0,"sending to shopify " & SPr.Vinvent_id & ":" & sqty & ":" & GetCurTick);
+      addtexttoarea("{\"location_id\":" & locid & "," & chr(10),request);
+      addtexttoarea("\"inventory_item_id\":" & SPr.Vinvent_id & "," & chr(10),request);
+      addtexttoarea("\"available\":" & sqty & "}" & chr(10),request);
+      if (Mod(i,2)!=0) then begin
+        MilliSleep(250);
+      end;
+      DOLMakeWebRequestAsync("POST","/admin/inventory_levels/set.json",request,apinum);
     end;
   end;
 
@@ -993,6 +1026,8 @@ begin
   Integer apinum;
   string 255 id,sku,varname,locid;
   Boolean convf;
+  vector Boolean vshopify_id;
+  string 255 shopifyid;
   
   blockload(DOLShopifyBl);
   
@@ -1029,6 +1064,7 @@ LDOLUpdShopifyStock:;
         ClearArray(invar);
         ClearVector(invarb);
         ClearVector(invarqty);
+        ClearVector(vshopify_id);
         while(loopmain(INr,1,inTrHs))begin
           //arcnt = 0;
           if(rqs!="*")then begin
@@ -1036,42 +1072,36 @@ LDOLUpdShopifyStock:;
               inTrHs = false;
             end;
           end;
-          resetloop(ISr);
-          ISr.Code = INr.Code;
-          TrHs = inTrHs;
-          qty = blankval;
-          if(inTrHs)then begin
-            while(loopmain(ISr,1,TrHs))begin
-              testf = true;
-              if(ISr.Code!=INr.Code)then begin TrHs = false; testf = false; end;
-              if(nonblank(varstr) and varstr!=ISr.Variety)then begin testf = false; end;
-              
-              if(testf)then begin
-                if(ISr.Location!=";;;")then begin              
-                  if(TrHs)then begin                    
-                    if(locfl[ISr.Location])then begin
-                      if (nonblank(ISr.Variety)) then begin
-                        id = ISr.Code & ":" & ConvertSERPVarCodeToShopifyVarCode(ISr.Variety,convf);
-                      end else begin
-                        id = ISr.Code;
-                      end;
-                      if(invarb[id])then begin
-                        invarqty[id] = invarqty[id] + ISr.Instock;
-                        /*
-                        if (DOLShopifyBl.IncludeOpenOrders==1) then begin
-                          invarqty[ISr.Code & ISr.Variety] = invarqty[ISr.Code & ISr.Variety] - ISr.OrddOut;
+          shopifyid = GetShopifyId(INr.Code,apinum);
+          if (nonblank(shopifyid)) then begin
+            resetloop(ISr);
+            ISr.Code = INr.Code;
+            TrHs = inTrHs;
+            qty = blankval;
+            if(inTrHs)then begin
+              while(loopmain(ISr,1,TrHs))begin
+                testf = true;
+                if(ISr.Code!=INr.Code)then begin TrHs = false; testf = false; end;
+                if(nonblank(varstr) and varstr!=ISr.Variety)then begin testf = false; end;
+                
+                if(testf)then begin
+                  if(ISr.Location!=";;;")then begin              
+                    if(TrHs)then begin                    
+                      if(locfl[ISr.Location])then begin
+                        if (nonblank(ISr.Variety)) then begin
+                          id = ISr.Code & ":" & ConvertSERPVarCodeToShopifyVarCode(ISr.Variety,convf);
+                        end else begin
+                          id = ISr.Code;
                         end;
-                        */
-                      end else begin
-                        invar[arcnt] = id;
-                        invarb[invar[arcnt]] = true;
-                        invarqty[invar[arcnt]] = ISr.Instock;
-                        /*
-                        if (DOLShopifyBl.IncludeOpenOrders==1) then begin
-                          invarqty[invar[arcnt]] = invarqty[invar[arcnt]] - ISr.OrddOut;
+                        if(invarb[id])then begin
+                          invarqty[id] = invarqty[id] + ISr.Instock;
+                        end else begin
+                          invar[arcnt] = id;
+                          invarb[invar[arcnt]] = true;
+                          vshopify_id[shopifyid] = true;
+                          invarqty[invar[arcnt]] = ISr.Instock;
+                          arcnt = arcnt + 1;
                         end;
-                        */
-                        arcnt = arcnt + 1;
                       end;
                     end;
                   end;
@@ -1081,7 +1111,7 @@ LDOLUpdShopifyStock:;
           end;
         end;    
         if(arcnt>0)then begin  
-          threadasync.SendShopifyStockData(arcnt,invar,invarqty,apinum);       
+          threadasync.SendShopifyStockData(arcnt,invar,vshopify_id,invarqty,apinum);       
         end;
       end;
       //check for structured items;
@@ -1095,7 +1125,6 @@ LDOLUpdShopifyStock:;
 
 return;
 end;
-
 
 procedure PreparePostArea(var area atarget) //Cut HTTP Header From raw reply
 begin
