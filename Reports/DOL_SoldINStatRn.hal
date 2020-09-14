@@ -397,6 +397,32 @@ begin
 end;
 // :EVS
 
+function val GetSupplierTotalBalance(string supplier,string location,var val indefstock)
+begin
+  val res;
+  record PIVc PIr;
+  Boolean TrHs;
+  record ItemStatusVc ISr;
+
+  indefstock = 0;
+  PIr.VECode = supplier;
+  TrHs = true;
+  while (LoopKey("Vendor",PIr,1,TrHs)) begin
+    if (PIr.VECode!=supplier) then begin
+      TrHs = false;
+    end else begin
+      if (PIr.DefaultChoice==1) then begin
+        FindStockValue(PIr.ItemCode,location,ISr);
+        res = res + ISr.Instock;
+        indefstock = indefstock + DOL_FindDefStockValue(PIr.ItemCode,location);
+      end;
+    end;
+  end;
+
+  GetSupplierTotalBalance = res;
+  return;
+end;
+
 procedure SplitIndex(string index,var string art,var string inv)
 begin
   Longint cnt;
@@ -542,8 +568,10 @@ begin
     end;
     if (artmode == 3) then begin
       instock = v_artinvinstock[a_art[i]];
+
       //qty = v_artinvqty[a_art[i] & "|0"];
       indefstock = v_artindefstock[a_art[i]];
+      instock = GetSupplierTotalBalance(a_art[i],location,indefstock);//v_artinvinstock[a_art[i]];//
       recvd = instock+indefstock+qty;
       prc = (qty/recvd) * 100;
     end else begin
@@ -680,32 +708,6 @@ begin
 
   ZeroString = res;
 return;
-end;
-
-function val GetSupplierTotalBalance(string supplier,string location,var val indefstock)
-begin
-  val res;
-  record PIVc PIr;
-  Boolean TrHs;
-  record ItemStatusVc ISr;
-
-  indefstock = 0;
-  PIr.VECode = supplier;
-  TrHs = true;
-  while (LoopKey("Vendor",PIr,1,TrHs)) begin
-    if (PIr.VECode!=supplier) then begin
-      TrHs = false;
-    end else begin
-      if (PIr.DefaultChoice==1) then begin
-        FindStockValue(PIr.ItemCode,location,ISr);
-        res = res + ISr.Instock;
-        indefstock = indefstock + DOL_FindDefStockValue(PIr.ItemCode,location);
-      end;
-    end;
-  end;
-
-  GetSupplierTotalBalance = res;
-  return;
 end;
 
 procedure PrintVector(record RcVc RepSpec,array string a_art,vector string v_artname,array string a_inv,
