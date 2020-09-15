@@ -50,6 +50,40 @@ LDOL_FindDefStockValue:
   return;
 end;
 
+function Boolean TestItemSpec(string item,record RcVc RepSpec)
+begin
+  record INVc INr;
+  Boolean testf,res;
+  
+  INr.Code = item;
+  if (ReadFirstItem(item,INr,false,false)) then begin
+    testf = true;
+    if (testf and nonblank(RepSpec.f2)) then begin
+      if (INr.Group != RepSpec.f2) then begin
+        testf = false;
+      end;
+    end;
+
+    if (testf and nonblank(RepSpec.f3)) then begin
+      if (SetInSet2(RepSpec.f3,INr.DispGroups) == false) then begin
+        testf = false;
+      end;
+    end;
+
+    if (testf and nonblank(RepSpec.f9)) then begin
+      if (INr.Unittext != RepSpec.f9) then begin
+        testf = false;
+      end;
+    end;
+    if (testf) then begin
+      res = true;
+    end;
+  end;
+
+  TestItemSpec = res;
+  return;
+end;
+
 function val FindReceivedValue(string item, string loc)
 begin
   val res;
@@ -95,7 +129,7 @@ begin
 return;
 end;
 
-function val FindReceivedValuePeriod(string loc,string supplier,Date sd,Date ed)
+function val FindReceivedValuePeriod(record RcVc RepSpec,string supplier,Date sd,Date ed)
 begin
   val res;
   record PUVc PUr;
@@ -112,11 +146,13 @@ begin
     if (PUr.VECode!=supplier or PUr.TransDate>ed) then begin
       TrHs = false;
     end else begin
-      if (PUr.OKFlag==1) then begin
+      if (PUr.OKFlag==1 and (blank(RepSpec.f4) or REpSpec.f4==PUr.Location)) then begin
         rwcnt = MatRowCnt(PUr);
         for (i=0;i<rwcnt;i=i+1) begin
           MatRowGet(PUr,i,PUrw);
-          res = res + PUrw.Quant;
+          if (TestItemSpec(PUrw.ArtCode,RepSpec)) then begin
+            res = res + PUrw.Quant;
+          end;
         end;
         if (PUr.PONr>-1) then begin
           TrHs2 = true;
@@ -131,7 +167,9 @@ begin
                 rwcnt = MatRowCnt(RetPUr);
                 for (i=0;i<rwcnt;i=i+1) begin
                   MatRowGet(RetPUr,i,RetPUrw);
-                  res = res - RetPUrw.Quant;
+                  if (TestItemSpec(RetPUrw.ArtCode,RepSpec)) then begin
+                    res = res - RetPUrw.Quant;
+                  end;
                 end;
               end;
             end;
@@ -397,12 +435,13 @@ begin
 end;
 // :EVS
 
-function val GetSupplierTotalBalance(string supplier,string location,var val indefstock)
+function val GetSupplierTotalBalance(string supplier,record RcVc RepSpec,var val indefstock)
 begin
   val res;
   record PIVc PIr;
-  Boolean TrHs;
+  Boolean TrHs,testf;
   record ItemStatusVc ISr;
+  record INVc INr;
 
   indefstock = 0;
   PIr.VECode = supplier;
@@ -412,9 +451,19 @@ begin
       TrHs = false;
     end else begin
       if (PIr.DefaultChoice==1) then begin
-        FindStockValue(PIr.ItemCode,location,ISr);
-        res = res + ISr.Instock;
-        indefstock = indefstock + DOL_FindDefStockValue(PIr.ItemCode,location);
+        if (TestItemSpec(PIr.ItemCode,RepSpec)) then begin
+
+          FindStockValue(PIr.ItemCode,RepSpec.f4,ISr);
+          if (supplier=="100046") then begin
+            logtext(0,"dd " & PIr.ItemCode & ":" & ISr.Instock & ":" & RepSpec.f4 & ":");
+          end;
+          res = res + ISr.Instock;
+          indefstock = indefstock + DOL_FindDefStockValue(PIr.ItemCode,RepSpec.f4);
+        end else begin
+          if (supplier=="100046") then begin
+            logtext(0,"failed " & PIr.ItemCode & ":" & RepSpec.f4 & ":");
+          end;
+        end;
       end;
     end;
   end;
@@ -517,7 +566,7 @@ begin
 end;
 
 
-procedure SortStringArray_AscDesc(integer sortmode,string location,integer artmode,var array string a_art,vector val v_artinvqty,vector val v_artinvinstock,vector val v_artrecvd,vector val v_artindefstock,array string a_inv,array string a_slinv)
+procedure SortStringArray_AscDesc(integer sortmode,string location,integer artmode,var array string a_art,vector val v_artinvqty,vector val v_artinvinstock,vector val v_artrecvd,vector val v_artindefstock,array string a_inv,array string a_slinv,record RcVc RepSpec)
 begin
   record ItemStatusVc ISr;
   record SMVc SMr,negSMr;
@@ -571,8 +620,10 @@ begin
 
       //qty = v_artinvqty[a_art[i] & "|0"];
       indefstock = v_artindefstock[a_art[i]];
-      instock = GetSupplierTotalBalance(a_art[i],location,indefstock);//v_artinvinstock[a_art[i]];//
-      recvd = instock+indefstock+qty;
+      instock = GetSupplierTotalBalance(a_art[i],RepSpec,indefstock);//v_artinvinstock[a_art[i]];//
+      //recvd = instock+indefstock+qty;
+      recvd = FindReceivedValuePeriod(RepSpec,a_art[i],RepSpec.sStartDate,RepSpec.sEndDate);
+
       prc = (qty/recvd) * 100;
     end else begin
       prc = (1 - (instock/recvd)) * 100;
@@ -874,12 +925,13 @@ begin
           end;
           if (RepSpec.ArtMode == 3) then begin
             //indefstock = v_artindefstock[a_art[i]];
-            instock = GetSupplierTotalBalance(a_art[i],RepSpec.f4,indefstock);//v_artinvinstock[a_art[i]];//
+            instock = GetSupplierTotalBalance(a_art[i],RepSpec,indefstock);//v_artinvinstock[a_art[i]];//
             totindefstock = totindefstock + indefstock;
             totinstock = totinstock + instock;
             recvd = instock+indefstock+qty;
-            //recvd2 = FindReceivedValuePeriod(RepSpec.f4,a_art[i],RepSpec.sStartDate,RepSpec.sEndDate);//v_artrecvd[a_art[i]];
+            //recvd2 = FindReceivedValuePeriod(RepSpec,a_art[i],RepSpec.sStartDate,RepSpec.sEndDate);//v_artrecvd[a_art[i]];
             //recvd = FindReceivedValue(a_art[i],RepSpec.f4);
+            recvd = FindReceivedValuePeriod(RepSpec,a_art[i],RepSpec.sStartDate,RepSpec.sEndDate);
 
             totrecvd = totrecvd + recvd;
           end;
@@ -1829,7 +1881,7 @@ begin
 
   if (artcnt > 0) then begin
     if (RepSpec.Comparison > 0) then begin
-      SortStringArray_AscDesc(RepSpec.Comparison,RepSpec.f4,RepSpec.ArtMode,a_art,v_artinvqty,v_artinvinstock,v_artrecvd,v_artindefstock,a_inv,a_slinv);
+      SortStringArray_AscDesc(RepSpec.Comparison,RepSpec.f4,RepSpec.ArtMode,a_art,v_artinvqty,v_artinvinstock,v_artrecvd,v_artindefstock,a_inv,a_slinv,RepSpec);
     end else begin
       SortStringArray(a_art);
     end;
