@@ -442,6 +442,7 @@ begin
   Boolean TrHs,testf;
   record ItemStatusVc ISr;
   record INVc INr;
+  val defstock;
 
   indefstock = 0;
   PIr.VECode = supplier;
@@ -454,15 +455,10 @@ begin
         if (TestItemSpec(PIr.ItemCode,RepSpec)) then begin
 
           FindStockValue(PIr.ItemCode,RepSpec.f4,ISr);
-          if (supplier=="100046") then begin
-            logtext(0,"dd " & PIr.ItemCode & ":" & ISr.Instock & ":" & RepSpec.f4 & ":");
-          end;
-          res = res + ISr.Instock;
-          indefstock = indefstock + DOL_FindDefStockValue(PIr.ItemCode,RepSpec.f4);
+          defstock = DOL_FindDefStockValue(PIr.ItemCode,RepSpec.f4);
+          res = res + ISr.Instock - defstock;
+          indefstock = indefstock + defstock;
         end else begin
-          if (supplier=="100046") then begin
-            logtext(0,"failed " & PIr.ItemCode & ":" & RepSpec.f4 & ":");
-          end;
         end;
       end;
     end;
