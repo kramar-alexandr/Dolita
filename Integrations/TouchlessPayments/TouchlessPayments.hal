@@ -67,7 +67,7 @@ begin
 
   SetWebHeaders("X-EPSLT-ProjectId:" & TPb.ProjectID);
 
-  if (SendWebRequest(url,port,-1,true,"POST",path,GetAuthatizationHeader(TPb),"",false,request,reply,200)) then begin
+  if (SendWebRequest(url,port,-1,true,"POST",path,GetAuthatizationHeader(TPb),"",false,request,reply,30)) then begin
     js = ParseJSONArea(reply);
     if (JSONGet(js,"result")=="Ok") then begin
       //if (JSONGet(js,"text")=="Approved") then begin      
@@ -76,6 +76,7 @@ begin
         paymentstat = JSONGet(js,"text");
     end;
   end;
+  logtext(0,"ConfirmTouchlessPayment " & res & ":" & GetStringFromArea(reply,0,255));
     logrequest(request,reply,"touchless");
 
   ConfirmTouchlessPayment = res;
@@ -389,6 +390,7 @@ begin
         sleep(1);
         tries = tries + 1;
       end;
+      logtext(0,"ConfirmLastTouchlessPayment " & tries & ":" & paymentstat);
       if (paymentstat=="Approved" or paymentstat=="Patvirtinta" or paymentstat=="Autorizuota") then begin
         res = true;
         qupdating.StoreLastTouchlessPayment("",-1,"");
