@@ -1031,7 +1031,7 @@ begin
   GetVectorTags(vlocid,alocid);
   for (s=0;s<alocid.length;s=s+1) begin
     DOLMakeWebRequest("GET","/admin/locations/" & alocid[s] & "/inventory_levels.json",a_req,a_reply,apinum);
-    logtext(0,"INFO: Shopify update stock requested prodlist " & prodlist & ":api=" & apinum);
+    logtext(0,"INFO: Shopify update stock requested prodlist2 " & prodlist & ":api=" & apinum);
     // 2. Get existing varieties and prime the instock to be set
     jdata = ParseJSONArea(a_reply);
     i = 0;
@@ -1070,7 +1070,7 @@ begin
       SPr.VariantId = var_id;
       if (ReadFirstMain(SPr,2,true)) then begin
         sqty = vstock[astock[s]];
-  logtext(0,"sending to shopify " & SPr.Vinvent_id & ":" & sqty & ":" & GetCurTick);
+  logtext(0,"sending to shopify with locations2 " & SPr.Vinvent_id & ":" & sqty & ":" & GetCurTick 7 ":" & locid);
         addtexttoarea("{\"location_id\":" & locid & "," & chr(10),request);
         addtexttoarea("\"inventory_item_id\":" & SPr.Vinvent_id & "," & chr(10),request);
         addtexttoarea("\"available\":" & sqty & "}" & chr(10),request);
