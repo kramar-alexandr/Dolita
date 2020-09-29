@@ -999,6 +999,28 @@ logtext(0,"sending to shopify " & SPr.Vinvent_id & ":" & sqty & ":" & GetCurTick
   return;
 end;
 
+function Boolean FindShopifyProduct(string sku,string option1,var record ShopifyProductsVc tSPr)
+begin
+  Boolean TrHs,res;
+  record ShopifyProductsVc SPr;
+
+  TrHs = true;
+  SPr.SKU = sku;
+  while (LoopKey("SKU",SPr,1,TrHs)) begin
+    if (SPr.SKU!=sku) then begin
+      TrHs = false;
+    end else begin
+      if (SPr.VarName==option1) then begin
+        res = true;
+        RecordCopy(tSPr,SPr);
+        TrHs = false;
+      end;
+    end;
+  end;
+  
+  FindShopifyProduct = res;
+  return;
+end;
 
 global
 procedure SendShopifyStockData2(Integer arcnt,array string invar,vector Boolean vshopify_id,vector val invarqty,Integer apinum,vector string vlocid)
@@ -1017,8 +1039,9 @@ begin
   array string 255 arr_shopify_id;
   JSON jdata;
   vector val vstock;
-  array string 255 astock;
-  array string 255 alocid;
+  array string 255 astock,alocid,ainvarqty;
+  string 255 tlocid;
+  vector Boolean vcheckf;
 
   GetVectorTags(vshopify_id,arr_shopify_id);
   for (i = 0; i < arr_shopify_id.length; i = i + 1) begin
@@ -1030,11 +1053,13 @@ begin
 
   GetVectorTags(vlocid,alocid);
   for (s=0;s<alocid.length;s=s+1) begin
-    DOLMakeWebRequest("GET","/admin/locations/" & alocid[s] & "/inventory_levels.json",a_req,a_reply,apinum);
-    logtext(0,"INFO: Shopify update stock requested prodlist2 " & prodlist & ":api=" & apinum);
+    locid = vlocid[alocid[s]];
+    DOLMakeWebRequest("GET","/admin/locations/" & locid & "/inventory_levels.json",a_req,a_reply,apinum);
+    logtext(0,"INFO: Shopify update stock requested prodlist2 " & prodlist & ":api=" & apinum & ":locid=" & locid);
     // 2. Get existing varieties and prime the instock to be set
     jdata = ParseJSONArea(a_reply);
     i = 0;
+    ClearVector(vcheckf);
     while (JSONNodeExists(jdata,"products/[" & i & "]/id")) begin
       product_id = JSONGet(jdata,"products/[" & i & "]/id");
       if (SetInSet(product_id,prodlist)) then begin
@@ -1048,7 +1073,8 @@ begin
           var_id = JSONGet(jdata,"products/[" & i & "]/variants/[" & j & "]/id");
           sku = JSONGet(jdata,"products/[" & i & "]/variants/[" & j & "]/sku");
           
-          var_instock = invarqty[sku & ":" & option1 & ":" & alocid[s]];//GetItemstat(product_id & ":" & option1,a_itemstat,a_itemstat_index);
+          var_instock = invarqty[sku & ":" & option1 & ":" & locid];//GetItemstat(product_id & ":" & option1,a_itemstat,a_itemstat_index);
+          vcheckf[sku & ":" & option1 & ":" & locid] = true;
           var_old_instock = StringToVal(JSONGet(jdata,"products/[" & i & "]/variants/[" & j & "]/inventory_quantity"),M40Val);
           if (var_instock!=var_old_instock) then begin
             vstock[var_id & ":" & product_id] = var_instock;
@@ -1060,17 +1086,33 @@ begin
       i = i + 1;
     end;
 
+    GetVectorTags(invarqty,ainvarqty);
+    for (i=0;i<ainvarqty.length;i=i+1) begin
+      pos = -1;
+      GetNextSubstring(ainvarqty[i],pos,":",sku);
+      GetNextSubstring(ainvarqty[i],pos,":",option1);
+      GetNextSubstring(ainvarqty[i],pos,":",tlocid);
+      if (locid==tlocid) then begin
+        if (invarqty[ainvarqty[i]]>=0 and FindShopifyProduct(sku,option1,SPr)) then begin
+          if (vcheckf[SPr.Id & ":" & SPr.VariantId & ":" & tlocid]==false) then begin
+            vstock[SPr.VariantId & ":" & SPr.Id] = invarqty[sku & ":" & option1 & ":" & tlocid];
+          end;
+        end;
+      end;
+      
+    end;
+
     GetVectorTags(vstock,astock);
     for (i=0;i<astock.length;i=i+1) begin
       pos = -1;
       GetNextSubstring(astock[i],pos,":",var_id);
       GetNextSubstring(astock[i],pos,":",product_id);
-      locid = alocid[s];
       SPr.Id = product_id;
       SPr.VariantId = var_id;
+      SetAreaZeroSize(request);
       if (ReadFirstMain(SPr,2,true)) then begin
-        sqty = vstock[astock[s]];
-  logtext(0,"sending to shopify with locations2 " & SPr.Vinvent_id & ":" & sqty & ":" & GetCurTick 7 ":" & locid);
+        sqty = vstock[astock[i]];
+  logtext(0,"sending to shopify with locations2 " & SPr.Vinvent_id & ":" & sqty & ":" & GetCurTick & ":" & locid);
         addtexttoarea("{\"location_id\":" & locid & "," & chr(10),request);
         addtexttoarea("\"inventory_item_id\":" & SPr.Vinvent_id & "," & chr(10),request);
         addtexttoarea("\"available\":" & sqty & "}" & chr(10),request);
