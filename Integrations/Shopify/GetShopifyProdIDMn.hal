@@ -1040,47 +1040,61 @@ begin
   JSON jdata;
   vector val vstock;
   array string 255 astock,alocid,ainvarqty;
-  string 255 tlocid;
+  string 255 tlocid,locidlist,vinvent_id;
   vector Boolean vcheckf;
+  vector string 255 vProdId,vSKU,vVarName,vVarID;
 
   GetVectorTags(vshopify_id,arr_shopify_id);
   for (i = 0; i < arr_shopify_id.length; i = i + 1) begin
-    if (nonblank(prodlist)) then begin
-      prodlist = prodlist & ",";
+    SPr.Id = arr_shopify_id[i];
+    TrHs = true;
+    ResetLoop(SPr);
+    while (LoopMain(SPr,1,TrHs)) begin
+      if (SPr.Id!=arr_shopify_id[i]) then begin
+        TrHs = false;
+      end else begin
+        if (nonblank(prodlist)) then begin
+          prodlist = prodlist & ",";
+        end;
+        prodlist = prodlist & SPr.Vinvent_id;
+        vProdId[SPr.Vinvent_id] = SPr.Id; 
+        vSKU[SPr.Vinvent_id] = SPr.SKU; 
+        vVarName[SPr.Vinvent_id] = SPr.VarName; 
+        vVarID[SPr.Vinvent_id] = SPr.VariantId; 
+      end;
     end;
-    prodlist = prodlist & arr_shopify_id[i];
   end;
 
   GetVectorTags(vlocid,alocid);
   for (s=0;s<alocid.length;s=s+1) begin
+    if (nonblank(locidlist)) then begin
+      locidlist = locidlist & ",";
+    end;
+    locidlist = locidlist & vlocid[alocid[s]];
+  end;
+
+  DOLMakeWebRequest("GET","/admin/api/2019-10/inventory_levels.json?inventory_item_ids=" & prodlist & "&location_ids=" & locidlist,a_req,a_reply,apinum);
+
+  jdata = ParseJSONArea(a_reply);
+  for (s=0;s<alocid.length;s=s+1) begin
     locid = vlocid[alocid[s]];
-    DOLMakeWebRequest("GET","/admin/locations/" & locid & "/inventory_levels.json",a_req,a_reply,apinum);
-    logtext(0,"INFO: Shopify update stock requested prodlist2 " & prodlist & ":api=" & apinum & ":locid=" & locid);
     // 2. Get existing varieties and prime the instock to be set
-    jdata = ParseJSONArea(a_reply);
     i = 0;
     ClearVector(vcheckf);
-    while (JSONNodeExists(jdata,"products/[" & i & "]/id")) begin
-      product_id = JSONGet(jdata,"products/[" & i & "]/id");
-      if (SetInSet(product_id,prodlist)) then begin
-        j = 0;
-        while (JSONNodeExists(jdata,"products/[" & i & "]/variants/[" & j & "]/id") and
-              JSONNodeExists(jdata,"products/[" & i & "]/variants/[" & j & "]/option1")) begin
-          
-          option1 = JSONGet(jdata,"products/[" & i & "]/variants/[" & j & "]/option1");
-
-          inventory_id = JSONGet(jdata,"products/[" & i & "]/variants/[" & j & "]/inventory_item_id");
-          var_id = JSONGet(jdata,"products/[" & i & "]/variants/[" & j & "]/id");
-          sku = JSONGet(jdata,"products/[" & i & "]/variants/[" & j & "]/sku");
-          
-          var_instock = invarqty[sku & ":" & option1 & ":" & locid];//GetItemstat(product_id & ":" & option1,a_itemstat,a_itemstat_index);
-          vcheckf[sku & ":" & option1 & ":" & locid] = true;
-          var_old_instock = StringToVal(JSONGet(jdata,"products/[" & i & "]/variants/[" & j & "]/inventory_quantity"),M40Val);
+    ClearVector(vstock);
+    while (JSONNodeExists(jdata,"inventory_levels/[" & i & "]/inventory_item_id")) begin
+      tlocid = JSONGet(jdata,"inventory_levels/[" & i & "]/location_id");
+      if (tlocid==locid) then begin
+        vinvent_id = JSONGet(jdata,"inventory_levels/[" & i & "]/inventory_item_id");
+        product_id = vProdId[vinvent_id];
+        var_id = vVarID[vinvent_id];
+        if (nonblank(product_id)) then begin
+          var_instock = invarqty[vSKU[vinvent_id] & ":" & vVarName[vinvent_id] & ":" & locid];
+          vcheckf[vSKU[vinvent_id] & ":" & vVarName[vinvent_id] & ":" & locid] = true;
+          var_old_instock = StringToVal(JSONGet(jdata,"inventory_levels/[" & i & "]/available"),M40Val);
           if (var_instock!=var_old_instock) then begin
             vstock[var_id & ":" & product_id] = var_instock;
           end;
-
-          j = j + 1;
         end;
       end;
       i = i + 1;
@@ -1094,7 +1108,7 @@ begin
       GetNextSubstring(ainvarqty[i],pos,":",tlocid);
       if (locid==tlocid) then begin
         if (invarqty[ainvarqty[i]]>=0 and FindShopifyProduct(sku,option1,SPr)) then begin
-          if (vcheckf[SPr.Id & ":" & SPr.VariantId & ":" & tlocid]==false) then begin
+          if (vcheckf[sku & ":" & option1 & ":" & tlocid]==false) then begin
             vstock[SPr.VariantId & ":" & SPr.Id] = invarqty[sku & ":" & option1 & ":" & tlocid];
           end;
         end;
@@ -1112,7 +1126,7 @@ begin
       SetAreaZeroSize(request);
       if (ReadFirstMain(SPr,2,true)) then begin
         sqty = vstock[astock[i]];
-  logtext(0,"sending to shopify with locations2 " & SPr.Vinvent_id & ":" & sqty & ":" & GetCurTick & ":" & locid);
+  logtext(0,"sending to shopify with locations2 " & SPr.SKU & ":" & SPr.VarName & ":" & SPr.Vinvent_id & ":" & sqty & ":" & GetCurTick & ":" & locid & ":" & alocid[s]);
         addtexttoarea("{\"location_id\":" & locid & "," & chr(10),request);
         addtexttoarea("\"inventory_item_id\":" & SPr.Vinvent_id & "," & chr(10),request);
         addtexttoarea("\"available\":" & sqty & "}" & chr(10),request);
