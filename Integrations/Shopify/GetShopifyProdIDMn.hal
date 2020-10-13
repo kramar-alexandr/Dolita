@@ -1072,12 +1072,14 @@ begin
     end;
     locidlist = locidlist & vlocid[alocid[s]];
   end;
+logtext(0,"SendShopifyStockData2 start api=" & apinum);
 
   DOLMakeWebRequest("GET","/admin/api/2019-10/inventory_levels.json?inventory_item_ids=" & prodlist & "&location_ids=" & locidlist,a_req,a_reply,apinum);
 
   jdata = ParseJSONArea(a_reply);
   for (s=0;s<alocid.length;s=s+1) begin
     locid = vlocid[alocid[s]];
+logtext(0,"SendShopifyStockData2 in location " & alocid[s] & ":" & locid);
     // 2. Get existing varieties and prime the instock to be set
     i = 0;
     ClearVector(vcheckf);
@@ -1107,15 +1109,14 @@ begin
       GetNextSubstring(ainvarqty[i],pos,":",option1);
       GetNextSubstring(ainvarqty[i],pos,":",tlocid);
       if (locid==tlocid) then begin
-        if (invarqty[ainvarqty[i]]>=0 and FindShopifyProduct(sku,option1,SPr)) then begin
-          if (vcheckf[sku & ":" & option1 & ":" & tlocid]==false) then begin
+        if (vcheckf[sku & ":" & option1 & ":" & tlocid]==false) then begin
+          if (invarqty[ainvarqty[i]]>=0 and FindShopifyProduct(sku,option1,SPr)) then begin
             vstock[SPr.VariantId & ":" & SPr.Id] = invarqty[sku & ":" & option1 & ":" & tlocid];
           end;
         end;
       end;
       
     end;
-
     GetVectorTags(vstock,astock);
     for (i=0;i<astock.length;i=i+1) begin
       pos = -1;
