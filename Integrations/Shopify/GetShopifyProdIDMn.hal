@@ -921,7 +921,7 @@ end;
 */
 
 global
-procedure SendShopifyStockData(Integer arcnt,array string invar,vector Boolean vshopify_id,vector val invarqty,Integer apinum,string locid)
+procedure SendShopifyStockData(Integer arcnt,array string invar,vector Boolean vshopify_id,vector val invarqty,Integer apinum,string locid,string item)
 begin
   Integer i,j;
   record ShopifyProductsVc SPr;
@@ -983,6 +983,7 @@ begin
     GetNextSubstring(astock[i],pos,":",product_id);
     SPr.Id = product_id;
     SPr.VariantId = var_id;
+    SetAreaZeroSize(request);
     if (ReadFirstMain(SPr,2,true)) then begin
       sqty = vstock[astock[i]];
 logtext(0,"sending to shopify " & SPr.Vinvent_id & ":" & sqty & ":" & GetCurTick);
@@ -995,6 +996,7 @@ logtext(0,"sending to shopify " & SPr.Vinvent_id & ":" & sqty & ":" & GetCurTick
       DOLMakeWebRequestAsync("POST","/admin/inventory_levels/set.json",request,apinum);
     end;
   end;
+  SetGlobalBoolean("ShopifyUpdate " & item,false);
 
   return;
 end;
@@ -1023,7 +1025,7 @@ begin
 end;
 
 global
-procedure SendShopifyStockData2(Integer arcnt,array string invar,vector Boolean vshopify_id,vector val invarqty,Integer apinum,vector string vlocid)
+procedure SendShopifyStockData2(Integer arcnt,array string invar,vector Boolean vshopify_id,vector val invarqty,Integer apinum,vector string vlocid,Boolean initf,string item)
 begin
   Integer i,j;
   record ShopifyProductsVc SPr;
@@ -1043,6 +1045,7 @@ begin
   string 255 tlocid,locidlist,vinvent_id;
   vector Boolean vcheckf;
   vector string 255 vProdId,vSKU,vVarName,vVarID;
+  Integer cnt;
 
   GetVectorTags(vshopify_id,arr_shopify_id);
   for (i = 0; i < arr_shopify_id.length; i = i + 1) begin
@@ -1072,10 +1075,12 @@ begin
     end;
     locidlist = locidlist & vlocid[alocid[s]];
   end;
-logtext(0,"SendShopifyStockData2 start api=" & apinum);
+logtext(0,"SendShopifyStockData2 start api=" & apinum & ":loclist" & locidlist);
+logtext(0,"SendShopifyStockData2 start api=" & apinum & ":prodlist" & prodlist);
+  MilliSleep(441);
 
-  DOLMakeWebRequest("GET","/admin/api/2019-10/inventory_levels.json?inventory_item_ids=" & prodlist & "&location_ids=" & locidlist,a_req,a_reply,apinum);
-
+  DOLMakeWebRequest("GET","/admin/api/2019-10/inventory_levels.json?inventory_item_ids=" & prodlist & "&location_ids=" & locidlist & "&limit=200",a_req,a_reply,apinum);
+logtext(0,"inv levels " & GetStringFromArea(a_reply,0,255));
   jdata = ParseJSONArea(a_reply);
   for (s=0;s<alocid.length;s=s+1) begin
     locid = vlocid[alocid[s]];
@@ -1110,7 +1115,7 @@ logtext(0,"SendShopifyStockData2 in location " & alocid[s] & ":" & locid);
       GetNextSubstring(ainvarqty[i],pos,":",tlocid);
       if (locid==tlocid) then begin
         if (vcheckf[sku & ":" & option1 & ":" & tlocid]==false) then begin
-          if (invarqty[ainvarqty[i]]>=0 and FindShopifyProduct(sku,option1,SPr)) then begin
+          if ((invarqty[ainvarqty[i]]>0 or (invarqty[ainvarqty[i]]==0 and initf)) and FindShopifyProduct(sku,option1,SPr)) then begin
             vstock[SPr.VariantId & ":" & SPr.Id] = invarqty[sku & ":" & option1 & ":" & tlocid];
           end;
         end;
@@ -1131,13 +1136,12 @@ logtext(0,"SendShopifyStockData2 in location " & alocid[s] & ":" & locid);
         addtexttoarea("{\"location_id\":" & locid & "," & chr(10),request);
         addtexttoarea("\"inventory_item_id\":" & SPr.Vinvent_id & "," & chr(10),request);
         addtexttoarea("\"available\":" & sqty & "}" & chr(10),request);
-        if (Mod(i,2)!=0) then begin
-          MilliSleep(250);
-        end;
+        MilliSleep(500);
         DOLMakeWebRequestAsync("POST","/admin/inventory_levels/set.json",request,apinum);
       end;
     end;
   end;
+  SetGlobalBoolean("ShopifyUpdate " & item,false);
 
   return;
 end;
@@ -1148,7 +1152,7 @@ begin
   record LocationVc Locr;
 
   while (LoopMain(SHLocr,1,true)) begin
-    if (SHLocr.APINum==apinum) then begin
+    if (SHLocr.APINum==apinum and nonblank(SHLocr.StockClass)) then begin
       ResetLoop(Locr);
       Locr.Code = "";
       while(loopmain(Locr,1,true))begin
@@ -1192,9 +1196,14 @@ begin
   blockload(DOLShopifyBl);
   
   logtext(0,"DOLUpdShopifyStock");
-  
   curcm = currentcompany & ";";
   rqs = right(items,len(items)-len(curcm));
+  if (rqs!="*" and GetGlobalBoolean("ShopifyUpdate " & rqs)) then begin
+    Logtext(0,"Shopify:: Already Updating item " & rqs & ". Exiting...");
+    goto LDOLUpdShopifyStock;
+  end;
+  SetGlobalBoolean("ShopifyUpdate " & rqs,true);
+
   apinum = 1;
   all_locf = DOLShopifyBl.UpdateAllLocations==1;
   locid = DOLShopifyBl.ShpifyLocId;
@@ -1205,6 +1214,8 @@ LDOLUpdShopifyStock:;
       Locr.Code = "";
       ClearVector(locfl);
       ClearVector(vlocid);
+  logtext(0,"DOLUpdShopifyStock all_locf=" & all_locf);
+
       if (all_locf) then begin   
         LoadShopifyLocations(locfl,vlocid,apinum);
       end else begin
@@ -1283,9 +1294,9 @@ LDOLUpdShopifyStock:;
         end;    
         if(arcnt>0)then begin 
           if (all_locf) then begin
-            threadasync.SendShopifyStockData2(arcnt,invar,vshopify_id,invarqty,apinum,vlocid);  
+            threadasync.SendShopifyStockData2(arcnt,invar,vshopify_id,invarqty,apinum,vlocid,rqs=="*",rqs);  
           end else begin
-            threadasync.SendShopifyStockData(arcnt,invar,vshopify_id,invarqty,apinum,locid);  
+            threadasync.SendShopifyStockData(arcnt,invar,vshopify_id,invarqty,apinum,locid,rqs);  
           end;     
         end;
       end;
@@ -1300,6 +1311,7 @@ LDOLUpdShopifyStock:;
     end;
   end;
 
+LDOLUpdShopifyStock:;
 return;
 end;
 
