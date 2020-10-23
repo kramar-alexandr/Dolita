@@ -1190,7 +1190,7 @@ begin
   Boolean convf;
   vector Boolean vshopify_id;
   string 255 shopifyid;
-  Boolean all_locf;
+  Boolean all_locf,updf;
   vector string 255 vlocid;
   
   blockload(DOLShopifyBl);
@@ -1293,6 +1293,7 @@ LDOLUpdShopifyStock:;
           end;
         end;    
         if(arcnt>0)then begin 
+          updf = true;
           if (all_locf) then begin
             threadasync.SendShopifyStockData2(arcnt,invar,vshopify_id,invarqty,apinum,vlocid,rqs=="*",rqs);  
           end else begin
@@ -1312,6 +1313,10 @@ LDOLUpdShopifyStock:;
   end;
 
 LDOLUpdShopifyStock:;
+  if (!updf) then begin
+    SetGlobalBoolean("ShopifyUpdate " & rqs,false);
+  end;
+
 return;
 end;
 
