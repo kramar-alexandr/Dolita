@@ -2121,13 +2121,15 @@ begin
     end;
     if (init_price != shopify_price) then begin
       send_updf = true;
-      SetSingleKeyValue(DOLShopifyBl.DiscItemTag,"",false,a_keys,a_values,a_isstrf);
+      SetSingleKeyValue(DOLShopifyBl.DiscItemTag,"true",false,a_keys,a_values,a_isstrf);
+      SetSingleKeyValue(DOLShopifyBl.FullPriceItemTag,"false",false,a_keys,a_values,a_isstrf);
       if (init_price != v_varcompprice[a_var_id[j]]) then begin
         SetSingleKeyValue("compare_at_price",ValToString(init_price,M4Val,"",".",0),false,a_keys,a_values,a_isstrf);
       end;
     end else begin
       send_updf = true;
-      SetSingleKeyValue(DOLShopifyBl.FullPriceItemTag,"",false,a_keys,a_values,a_isstrf);
+      SetSingleKeyValue(DOLShopifyBl.FullPriceItemTag,"true",false,a_keys,a_values,a_isstrf);
+      SetSingleKeyValue(DOLShopifyBl.DiscItemTag,"false",false,a_keys,a_values,a_isstrf);
     end;
     
     OpenRootJSON(a_req);
