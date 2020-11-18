@@ -142,17 +142,18 @@ window ShopifyProductsLClass:1
   wtag("language","ENG"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
 begin
   WindowBegin("Shopify Products",ShopifyProductsLClass,CGmlist,-);
-  SetWRect(20,80,700,355);
+  SetWRect(20,80,800,355);
   Sizeable(-1,-1,0,0);
   SpawnClass(ShopifyProductsDClass);
   UseView(ShopifyProductsVc);
   RecordList(4,17,-21,-39);
   RlColKey(4,1,"Id",Id,false,Id);
-  RlCol(80,80,"VariantId",VariantId,false);
-  RlCol(160,160,"Vproduct_id",Vproduct_id,false);
+  RlCol(110,110,"VariantId",VariantId,false);
+  RlCol(210,210,"Vproduct_id",Vproduct_id,false);
   RlCol(340,340,"Vinvent_id",Vinvent_id,false);
-  RlCol(420,420,"Name",Name,false);
-  RlCol(500,500,"VarName",VarName,false);
+  RlCol(450,450,"Name",Name,false);
+  RlCol(540,540,"VarName",VarName,false);
+  RlCol(-130,-130,"API",APINum,false);
   RlCol(-100,-100,"SKU",SKU,false);
   
   SearchField("Search");
