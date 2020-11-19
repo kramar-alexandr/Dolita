@@ -1477,6 +1477,15 @@ begin
 end;
 
 global
+updating procedure RemoveAllShopifyProducts()
+begin
+  
+  RemoveAllRecords("ShopifyProductsVc"); 
+
+  return;
+end;
+
+global
 procedure DOLGetShopifyProdIDMn(record RcVc RepSpec)
 begin
   record DOLShopifyBlock DOLShopifyBl;
@@ -1489,6 +1498,8 @@ begin
   integer pos,apinum;
   
   BlockLoad(DOLShopifyBl);
+
+  qupdating.RemoveAllShopifyProducts;
 
   pub_stat = "published";
   if (RepSpec.flags[0] == 1) then begin
