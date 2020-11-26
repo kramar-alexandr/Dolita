@@ -154,6 +154,7 @@ begin
             res = res + PUrw.Quant;
           end;
         end;
+        /*
         if (PUr.PONr>-1) then begin
           TrHs2 = true;
           ResetLoop(RetPUr);
@@ -175,13 +176,63 @@ begin
             end;
           end;
         end;
+        */
       end;
     end;
   end;
 
   FindReceivedValuePeriod = res;
-return;
+  return;
 end;
+
+
+function string 255 GetDefaultSupplier(string artcode,string location)
+begin
+  record PIVc PIr;
+  string 255 res;
+  
+  PIr.ItemCode = artcode;
+  PIr.Location = location;
+  PIr.DefaultChoice = 1;
+  if (ReadFirstKey("DefaultChoice",PIr,3,true)) then begin
+    res = PIr.VECode;
+  end;
+
+  GetDefaultSupplier = res;
+  return;
+end;
+
+function val FindReturnedValuePeriod(record RcVc RepSpec,string supplier,Date sd,Date ed)
+begin
+  val res;
+  record RetPUVc RetPUr;
+  row RetPUVc RetPUrw;
+  boolean TrHs,TrHs2;
+  Integer i,rwcnt;
+
+  TrHs = true;
+  RetPUr.TransDate = sd;
+  RetPUr.VECode = supplier;
+  while (LoopKey("VECodeTransDate",RetPUr,1,TrHs)) begin
+    if (RetPUr.TransDate>ed or RetPUr.VECode!=supplier) then begin
+      TrHs = false;
+    end else begin
+      if (RetPUr.OKFlag==1) then begin
+        rwcnt = MatRowCnt(RetPUr);
+        for (i=0;i<rwcnt;i=i+1) begin
+          MatRowGet(RetPUr,i,RetPUrw);
+          if (TestItemSpec(RetPUrw.ArtCode,RepSpec)) then begin
+            res = res + RetPUrw.Quant;
+          end;
+        end;
+      end;
+    end;
+  end;
+
+  FindReturnedValuePeriod = res;
+  return;
+end;
+
 
 function Boolean GetItemNameStr(Integer tnr,var string tstr,string langcod2,string deftext,string itemname)
 begin
@@ -347,9 +398,15 @@ begin
   	SetRepCol(3,190);// Edit ************************** BPI Ukraine - KramarAlexandr - Wednesday, 28 November 2018 11:01:44
     SetRepCol(4,260);
   end else begin
-    SetRepCol(4,195);
-    SetRepCol(8,225);
-    SetRepCol(9,260);
+    if (RepSpec.ArtMode==3) then begin
+      SetRepCol(4,195);
+      SetRepCol(8,220);
+      SetRepCol(9,265);
+    end else begin
+      SetRepCol(4,195);
+      SetRepCol(8,225);
+      SetRepCol(9,260);
+    end;
   end;
   SetRepCol(5,290);
   SetRepCol(6,330);
@@ -386,6 +443,9 @@ begin
       end;
       OutString(4,0,USetStr(1000130),true); // likutis
       OutString(8,0,USetStr(1000141),true); // Brokas
+      if (RepSpec.ArtMode==3) then begin
+        OutString(240,0,USetStr(1000164),true); // grazinta
+      end;
       OutString(9,0,USetStr(1000142),true); // Brokas %
       OutString(5,0,USetStr(1000131),true); // %
     end;
@@ -771,6 +831,7 @@ begin
   val iv_indefstock,ivcash_indefstock;
   val indefstock,totindefstock;
   val ih_instock,ih_recvd,ih_indefstock,recvd2;
+  val returned;
   record CUVc CUr;
 
   qtytotal = 0;
@@ -922,6 +983,8 @@ begin
           if (RepSpec.ArtMode == 3) then begin
             //indefstock = v_artindefstock[a_art[i]];
             instock = GetSupplierTotalBalance(a_art[i],RepSpec,indefstock);//v_artinvinstock[a_art[i]];//
+            returned = FindReturnedValuePeriod(RepSpec,a_art[i],RepSpec.sStartDate,RepSpec.sEndDate);
+            qty = qty - returned;
             totindefstock = totindefstock + indefstock;
             totinstock = totinstock + instock;
             recvd = instock+indefstock+qty;
@@ -936,6 +999,7 @@ begin
           end;
           OutString(4,0,ZeroString(instock),true);
           OutString(8,0,ZeroString(indefstock),true);
+          OutString(240,0,ZeroString(returned),true);
           toint = round(((indefstock / (instock + qty + indefstock))) * 100,SetRoundModed(0));
           OutString(9,0,ZeroString(toint) & "%",true);
 //          outstring(0,0,instock & " " & recvd,false);
@@ -1045,22 +1109,6 @@ begin
 
   ItemFromDefaultVendor = res;
 
-  return;
-end;
-
-function string 255 GetDefaultSupplier(string artcode,string location)
-begin
-  record PIVc PIr;
-  string 255 res;
-  
-  PIr.ItemCode = artcode;
-  PIr.Location = location;
-  PIr.DefaultChoice = 1;
-  if (ReadFirstKey("DefaultChoice",PIr,3,true)) then begin
-    res = PIr.VECode;
-  end;
-
-  GetDefaultSupplier = res;
   return;
 end;
 

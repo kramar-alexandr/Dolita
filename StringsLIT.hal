@@ -587,5 +587,7 @@ begin
 	SString(1000162,"Clock-out");
 	SString(1000163,"Total Time");
 
+	SString(1000164,"GrƒÖ≈æinta");
+
   return;
 end;
