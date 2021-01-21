@@ -727,6 +727,8 @@ begin
                 SetSingleKeyValue("price",v_prod_price[a_shopifyid[i]],false,a_keys,a_values,a_isstrf);
                 if (v_prod_compprice[a_shopifyid[i]]>v_prod_price[a_shopifyid[i]]) then begin
                   SetSingleKeyValue("compare_at_price",v_prod_compprice[a_shopifyid[i]],false,a_keys,a_values,a_isstrf);
+                end else begin
+                  SetSingleKeyValue("compare_at_price","",false,a_keys,a_values,a_isstrf);
                 end;
               end else begin
                 SetSingleKeyValue("price",ValToString(GetItemPrice(a_items[i],option1,a_serpvar,a_shopvar,a_inch_itemf[i]),M4Val,"",".",0),false,a_keys,a_values,a_isstrf);
@@ -2136,8 +2138,12 @@ begin
       send_updf = true;
       SetSingleKeyValue(DOLShopifyBl.DiscItemTag,"",false,a_keys,a_values,a_isstrf);
       //SetSingleKeyValue(DOLShopifyBl.FullPriceItemTag,"false",false,a_keys,a_values,a_isstrf);
-      if (init_price != v_varcompprice[a_var_id[j]] and v_varcompprice[a_var_id[j]]>init_price) then begin//v_varcompprice[a_var_id[j]]>init_price shopify apy doesn't allow compare_at_price to be lower than price
-        SetSingleKeyValue("compare_at_price",ValToString(init_price,M4Val,"",".",0),false,a_keys,a_values,a_isstrf);
+      if (init_price != v_varcompprice[a_var_id[j]]) then begin
+        if (v_varcompprice[a_var_id[j]]>init_price) then begin//v_varcompprice[a_var_id[j]]>init_price shopify apy doesn't allow compare_at_price to be lower than price
+          SetSingleKeyValue("compare_at_price",ValToString(init_price,M4Val,"",".",0),false,a_keys,a_values,a_isstrf);
+        end else begin
+          SetSingleKeyValue("compare_at_price","",false,a_keys,a_values,a_isstrf);          
+        end;
       end;
     end else begin
       send_updf = true;
