@@ -1426,7 +1426,7 @@ global
 updating procedure ReadAllProductIDs(area a_reply,Integer apinum)
 begin
   Integer i,j;
-  string 255 data,since_id,pub_stat,nextlink,link;
+  string 255 data,since_id,pub_stat,nextlink,link,id;
   integer pos;
   record ShopifyProductsVc SPr;
   json jdata;
@@ -1439,13 +1439,13 @@ begin
       pos = 0;
       ExtractObj(data,pos,data);
       since_id = JSONGet(jdata,"products/[" & i & "]/id");
-    
       j=0;
       while (JSONNodeExists(jdata,"products/[" & i & "]/variants/[" & j & "]/id")) begin
         recordnew(SPr);
-        SPr.Id = JSONGet(jdata,"products/[" & i & "]/id");
+        id = JSONGet(jdata,"products/[" & i & "]/variants/[" & j & "]/product_id");
+        SPr.Id = id;
         SPr.VariantId = JSONGet(jdata,"products/[" & i & "]/variants/[" & j & "]/id");
-        SPr.Vproduct_id = JSONGet(jdata,"products/[" & i & "]/variants/[" & j & "]/product_id");
+        SPr.Vproduct_id = id;
         SPr.Vinvent_id = JSONGet(jdata,"products/[" & i & "]/variants/[" & j & "]/inventory_item_id");
         SPr.Name = JSONGet(jdata,"products/[" & i & "]/title");
         SPr.VarName = JSONGet(jdata,"products/[" & i & "]/variants/[" & j & "]/option1");
