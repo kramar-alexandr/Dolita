@@ -999,7 +999,7 @@ begin
   end;
   return;
 end;
-
+/*
 global
 updating procedure RestAccDClassTouchScreenPrint()
 begin
@@ -1054,6 +1054,7 @@ begin
   end;
   return;
 end;
+*/
 
 global
 updating procedure RestAccPrintInvoice()
