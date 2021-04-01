@@ -93,7 +93,7 @@ global
 updating procedure DOLShopifySendStockSm()
 begin
   
-  DOLUpdShopifyStock(CurrentCompany & ";*");
+  threadremoteasync.DOLUpdShopifyStock(CurrentCompany & ";*");
 
   return;
 end;

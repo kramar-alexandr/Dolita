@@ -1247,11 +1247,11 @@ LDOLUpdShopifyStock:;
         end;
         inTrHs = true;
         arcnt = 0;
-        ClearArray(invar);
-        ClearVector(invarb);
-        ClearVector(invarqty);
-        ClearVector(vshopify_id);
         while(loopmain(INr,1,inTrHs))begin
+          ClearArray(invar);
+          ClearVector(invarb);
+          ClearVector(invarqty);
+          ClearVector(vshopify_id);
           //arcnt = 0;
           if(rqs!="*")then begin
             if(INr.Code!=itcod)then begin
@@ -1295,15 +1295,16 @@ LDOLUpdShopifyStock:;
               end;
             end;
           end;
+          if(arcnt>0)then begin 
+            updf = true;
+            if (all_locf) then begin
+              threadasync.SendShopifyStockData2(arcnt,invar,vshopify_id,invarqty,apinum,vlocid,rqs=="*",rqs);  
+            end else begin
+              threadasync.SendShopifyStockData(arcnt,invar,vshopify_id,invarqty,apinum,locid,rqs);  
+            end;     
+          end;
+
         end;    
-        if(arcnt>0)then begin 
-          updf = true;
-          if (all_locf) then begin
-            threadasync.SendShopifyStockData2(arcnt,invar,vshopify_id,invarqty,apinum,vlocid,rqs=="*",rqs);  
-          end else begin
-            threadasync.SendShopifyStockData(arcnt,invar,vshopify_id,invarqty,apinum,locid,rqs);  
-          end;     
-        end;
       end;
       //check for structured items;
       if (DOLShopifyBl.APIEnable2==1 and apinum==1) then begin
