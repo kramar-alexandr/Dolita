@@ -925,9 +925,9 @@ end;
 */
 
 global
-procedure SendShopifyStockData(Integer arcnt,array string invar,vector Boolean vshopify_id,vector val invarqty,Integer apinum,string locid,string item)
+procedure SendShopifyStockData(Longint arcnt,array string invar,vector Boolean vshopify_id,vector val invarqty,Integer apinum,string locid,string item)
 begin
-  Integer i,j;
+  Longint i,j;
   record ShopifyProductsVc SPr;
   string 255 sku,varname;
   Longint pos;
@@ -1029,9 +1029,9 @@ begin
 end;
 
 global
-procedure SendShopifyStockData2(Integer arcnt,array string invar,vector Boolean vshopify_id,vector val invarqty,Integer apinum,vector string vlocid,Boolean initf,string item)
+procedure SendShopifyStockData2(Longint arcnt,array string invar,vector Boolean vshopify_id,vector val invarqty,Integer apinum,vector string vlocid,Boolean initf,string item)
 begin
-  Integer i,j;
+  Longint i,j;
   record ShopifyProductsVc SPr;
   string 255 sku,varname,locid;
   Longint pos;
@@ -1186,7 +1186,7 @@ begin
   integer pos;
   Longint pos2;
   array string 200 invar;
-  integer arcnt,i,sqty;
+  Longint arcnt,i,sqty;
   record ShopifyProductsVc SPr;
   longint cntesend;
   Integer apinum;
