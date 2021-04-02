@@ -1246,12 +1246,12 @@ LDOLUpdShopifyStock:;
           end;
         end;
         inTrHs = true;
-        arcnt = 0;
         while(loopmain(INr,1,inTrHs))begin
           ClearArray(invar);
           ClearVector(invarb);
           ClearVector(invarqty);
           ClearVector(vshopify_id);
+          arcnt = 0;
           //arcnt = 0;
           if(rqs!="*")then begin
             if(INr.Code!=itcod)then begin
