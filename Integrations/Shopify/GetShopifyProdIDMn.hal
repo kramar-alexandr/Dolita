@@ -1297,11 +1297,19 @@ LDOLUpdShopifyStock:;
           end;
           if(arcnt>0)then begin 
             updf = true;
-            if (all_locf) then begin
-              threadasync.SendShopifyStockData2(arcnt,invar,vshopify_id,invarqty,apinum,vlocid,rqs=="*",rqs);  
+            if (ThisIsMainThread) then begin
+              if (all_locf) then begin
+                threadasync.SendShopifyStockData2(arcnt,invar,vshopify_id,invarqty,apinum,vlocid,rqs=="*",rqs);  
+              end else begin
+                threadasync.SendShopifyStockData(arcnt,invar,vshopify_id,invarqty,apinum,locid,rqs);  
+              end;    
             end else begin
-              threadasync.SendShopifyStockData(arcnt,invar,vshopify_id,invarqty,apinum,locid,rqs);  
-            end;     
+              if (all_locf) then begin
+                SendShopifyStockData2(arcnt,invar,vshopify_id,invarqty,apinum,vlocid,rqs=="*",rqs);  
+              end else begin
+                SendShopifyStockData(arcnt,invar,vshopify_id,invarqty,apinum,locid,rqs);  
+              end;    
+            end; 
           end;
 
         end;    
