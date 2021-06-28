@@ -10224,3 +10224,70 @@ BEGIN
   RETURN;
 END;
 
+window CountryDClass:2
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,h2,hx,v,vs;
+  WindowBegin("Šalis",CountryDClass,CGview,CountryView);
+  SetWRect(64,80,509,380);
+  UseView(CountryVc);
+  v = 10; vs = 20; h = 120; h2 = 290;
+  Tile(0,160,false,"",Code);
+  EditField(h,v, 55,"Kodas",Normal,Code,false,0);
+  EditField(h,v+=vs,240,"Tekstas",Normal,Comment,false,0);
+  if (IsEnterprise) then begin
+  	EditField(h,v+=vs,240,"Muitų kodai",Normal,DutiesCodes,false,ChargesSClass);
+    EditField(h,v+=vs,70,"Regionas",Normal,Region,false,CountryRegionSClass);
+    hx = h2;
+  end else begin  
+    hx = h;
+    v = v + vs;
+  end;
+  EditField(hx,v,70,"Tautybė",Normal,Nationality,false,0); 
+  if (HasMultiCurrency or HasBase2) then begin
+  EditField(h,v+=vs,70,"Valiuta",Normal,CurncyCode,false,CurncyCodeSClass);
+  EditField(h2,v,70,"ISO kodas",Normal,ISOCode,false,0); 
+  end;
+  if (IsEnterprise) then begin
+    EditField(h,v+=vs,70,"Mok. kd.",Normal,TaxOfficeCode,false,0); 
+    EditField(h2,v,70,"PVM Reg. Nr.",Normal,DefaultVATNr,false,0);
+  end;
+  //CUST-BEGIN
+  EditField(h,v+=vs,70,"Siunt. būdas",Normal,ShipMode,false,DMSClass);
+  EditField(h2,v,70,"Pard. PVM kodas",Normal,SalesVATCode,false,VATCodeSClass);
+  //CUST-END
+  if (HasFreightAdvanced or HasPriceLists or HasObjects) and (StandardHansa==false) then begin
+  TileButton(1,"Tekstas");
+  TileButton(2,"Web");
+  Tile(1,200,true,"1",Math);
+  end;
+  if (HasLanguages) then begin
+  MatrixBegin(4,v=10,-25,-10,INTextRowType,99);
+  MatCol(1,24,"Kalba",0,LangCode,false,LangSClass);
+  MatCol(1,84,"Tekstas",0,Text,false,0);
+  EndMatrix;
+  end;
+  if (HasFreightAdvanced or HasPriceLists or HasObjects) and (StandardHansa==false) then begin
+  Tile(2,120,false,"2",FreightCode);
+    v = 6;
+    if (HasFreightAdvanced) then begin
+      EditField(h,v,50,"Frachto kodas",Normal,FreightCode,false,WebFreightSClass); 
+      v = v + vs;
+    end;      
+    if (HasPriceLists) then begin    
+      EditField(h,v,50,"Kainoraštis",Normal,PLCode,false,PLDefSClass); 
+  EditField(h,v+=vs,50,"Nuolaidų lentelė",Normal,RebCode,false,RebSClass);
+      v = v + vs;
+    end;
+    if (HasObjects) then begin    
+      EditField(h,v,120,"Pardavimų objektas",Normal,Objects,false,ObjSClass); 
+    end;
+    if (IsEnterprise) then begin
+  CheckBox(h,v+=30,0,"Rodyti web",ShowOnWeb);
+    end;
+    if (HasVATZone) then begin
+      v = VATZoneButtonsLabelsLIT(270,20,170,16);
+    end;
+  end;
+  EndWindow;
+end;

@@ -278,6 +278,7 @@ begin
   
   RecordAddBegin(CountryVc,"DOLCountryVc");
   RecordField(ShipMode,M4Code,5,0); // ARA: HAL-1145
+  RecordField(SalesVATCode,M4Code,10,0);
   EndRecordAdd;
   
 
