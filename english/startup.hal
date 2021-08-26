@@ -33,6 +33,8 @@ begin
 
   Setting("Cashup Hist",CashupHistLClass,modDBMain);
   Setting("POS Check In-Outs",POSClockInOutLClass,modDBMain);
+  
+  Setting("Returned Items",ReturnedItemsLClass,modIN);
 
   Report("DOL - Employee Time",DOL_EmpTimeRClass,DOL_EmpTimeRn,0,modPOS);
   Report("DOL - Sales Statistics",DOL_SoldINStatRClass,DOL_SoldINStatRn,0,modPOS);

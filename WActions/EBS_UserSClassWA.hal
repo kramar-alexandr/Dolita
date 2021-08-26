@@ -1,5 +1,6 @@
 external inner procedure PasteFromSysList(Integer,Integer);
 remote procedure EBS_UserSClassOnOpenRemote(record LocalMachineBlock,var array string,var array string,var integer);
+remote inner function Boolean ReadFirstItem(string,var record INVc,Boolean,Boolean); // ARA: HAL-1145
 
 global
 function boolean EBS_UserSClassOnOpenWindow(integer wn) begin
@@ -24,5 +25,34 @@ begin
 
   PasteFromSysList(wn,-2);
   EBS_UserSClassOnOKWindow = false;
+  return;
+end;
+
+
+global
+function Boolean ReturnedItemsDClassAfterEditField(Integer wn,string fieldname,Integer fn,Integer rownr,Integer changed)
+begin
+  Boolean res;
+  record RcVc RepSpec;
+  Date d1,d2;
+  string 255 tstr;
+  record ReturnedItemsVc RIr;
+  record INVc INr;
+  
+  res = false;
+  if(changed==1)then begin
+    switch (fieldname) begin
+      case "ArtCode":
+        GetWindowRecord(wn,RIr);
+        if (ReadFirstItem(RIr.ArtCode,INr,true,true)) then begin
+          RIr.Spec = INr.Name;
+        end else begin
+          RIr.Spec = "";
+        end;
+      
+        PutWindowRecord(wn,RIr);
+    end;
+  end;
+  ReturnedItemsDClassAfterEditField = res;
   return;
 end;

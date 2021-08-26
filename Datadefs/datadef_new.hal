@@ -108,6 +108,39 @@ begin
   KeySegment(TransTime);
   KeySegment(UUID);
   EndRecord;
+  
+  RecordBegin(ReturnedItemsVc,-,"");
+  RecordField(SerNr,M4Long,0,0);
+  RecordField(Location,M4Code,20,0);
+  RecordField(SalesMan,M4Code,20,0);
+  RecordField(TransDate,M4Date,0,0);
+  RecordField(TransTime,M4Time,0,0);
+  RecordField(OrderNr,M4Long,0,0);
+  RecordField(ArtCode,M4Code,60,0);
+  RecordField(Spec,M4Str,255,0);
+
+  MainKeyBegin(SerNr,0);
+    KeySegment(SerNr);
+  KeyBegin(Location);
+    KeySegment(Location);
+    KeySegment(SerNr);
+  KeyBegin(SalesMan);
+    KeySegment(SalesMan);
+    KeySegment(SerNr);
+  KeyBegin(TransDate);
+    KeySegment(TransDate);
+    KeySegment(SerNr);
+  KeyBegin(OrderNr);
+    KeySegment(OrderNr);
+    KeySegment(SerNr);
+  KeyBegin(ArtCode);
+    KeySegment(ArtCode);
+    KeySegment(SerNr);
+  KeyBegin(Spec);
+    KeySegment(Spec);
+    KeySegment(SerNr);
+  
+  EndRecord;
 
 return;
 end;
