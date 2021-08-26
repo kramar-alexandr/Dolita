@@ -20,3 +20,20 @@ LEBS_AddUserFieldVcRecordCheck:;
   EBS_AddUserFieldVcRecordCheck = res;
   return;
 end;
+
+global
+updating function LongInt ReturnedItemsVcRecordCheck(record ReturnedItemsVc RIr,record ReturnedItemsVc RI2r,LongInt stat,LongInt long4)
+begin
+  LongInt res;
+  
+  res = 0;
+  if(RIr.SerNr==-1)then begin
+    RIr.SerNr = NextSerNr("ReturnedItemsVc",currentdate,-1,false,"");
+  end;
+  
+LReturnedItemsVcRecordCheck:;
+  ReturnedItemsVcRecordCheck = res;
+  return;
+end;
+
+
