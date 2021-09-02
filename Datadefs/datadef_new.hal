@@ -116,6 +116,7 @@ begin
   RecordField(TransDate,M4Date,0,0);
   RecordField(TransTime,M4Time,0,0);
   RecordField(OrderNr,M4Long,0,0);
+  RecordField(Row,M4Int,0,0);
   RecordField(ArtCode,M4Code,60,0);
   RecordField(Spec,M4Str,255,0);
 
@@ -132,6 +133,7 @@ begin
     KeySegment(SerNr);
   KeyBegin(OrderNr);
     KeySegment(OrderNr);
+    KeySegment(Row);
     KeySegment(SerNr);
   KeyBegin(ArtCode);
     KeySegment(ArtCode);

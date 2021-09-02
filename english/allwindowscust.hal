@@ -302,7 +302,8 @@ begin
   RlColKey(200,200,"Date",TransDate,false,TransDate);
   RlCol(260,260,"Time",TransTime,false);
   RlColKey(320,320,"Order #",OrderNr,false,OrderNr);
-  RlColKey(380,380,"Item Code",ArtCode,false,ArtCode);
+  RlCol(350,350,"Row",Row,false);
+  RlColKey(390,390,"Item Code",ArtCode,false,ArtCode);
   RlColKey(470,470,"Item Spec",Spec,false,Spec);
   SearchField("Search");
   EndWindow;
@@ -329,3 +330,59 @@ begin
   EndWindow;
 end;
 
+
+window EBS_POSCreateReturnedItemWClass:1
+  wtag("language","ENG"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,h2,hm,v,v2,v3,vs,l;
+  integer wn;
+  longint bm,lt,rt,tp;
+  record RcVc RepSpec;
+
+  WindowBegin("Add Returned Item",EBS_POSCreateReturnedItemWClass,CGOther,-);
+    //Modality(kModalityGlobal);
+  DynamicWindow;
+  wn = CurWindow;
+
+  SetWRect(64,80,670,410);
+  UseView(ORVc);
+
+  v = 60;
+  vs = 52; h2 = 55; v3 = 48; l = 57;
+  h = 90;
+  EditField(h,40,120,"Order Number",Normal,SerNr,false,0);
+  MatrixBegin(h,80,h+310,183,-,15);
+  MatCol(1,24,"Item",0,ArtCode,false,INSClass);
+  MatCol(1,24,"Name",0,Spec,false,INSClass);
+  //MatCol(1,-50,"Qty",0,Quant,true,0);
+  EndMatrix;
+
+  ColourPushButton(h,v+=150,h+230,v+v3,"EBS_POSCreateReturnedItemOKBtn","Create",2);//EBS_ChooseSalesManVClassOKBtn//Patvirtinti
+  ColourPushButton(h,v+=v3+10,h+230,v+v3,"VoidBankPaymentWClassCancel","Cancel",2);//EBS_ChooseSalesManVClassOKBtn//Patvirtinti
+
+  h = 420;
+  hm = h;
+  v=6+v3;
+ // h = hm; ColourPushButton(h,v,h+h2*3,v+v3,"EBS_POSCreateStockMovWClassItemList","Items",2);
+ // v = v+vs;
+  h = hm-2; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad1","1_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad2","2_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad3","3_",2);
+  v = v+vs;
+  h = hm-2; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad4","4_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad5","5_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad6","6_",2);
+  v = v+vs;
+  h = hm-2; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad7","7_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad8","8_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad9","9_",2);
+  v = v+vs;
+  h = hm-2; ColourPushButton(h,v,h+h2,v+v3,"EBS_POSCreateReturnedItemWClassEnter","Enter",2);
+  h = hm-2+l; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad0","0_",2);
+  h = h+l; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyDel","Del",2);
+  v = v + vs;
+
+  EndWindow;
+
+  return;
+end;

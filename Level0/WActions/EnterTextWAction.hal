@@ -295,11 +295,24 @@ begin
   string 255 tstr;
   string 255 pmfield,numberstr,activefield;
   val sign;
+  record ORVc ORr;
   
   wn = CurWindow;
   
   
   switch (GetWindowClass(wn)) begin
+    case "EBS_POSCreateReturnedItemWClass":
+      DeselectWindow(wn,true);
+      GetWindowRecord(wn,ORr);
+      if(ORr.SerNr==-1)then begin
+        tstr = "";
+      end else begin
+        tstr = ORr.SerNr;
+      end;
+      tstr = tstr & anumberstr;
+      ORr.SerNr = stringtolongint(tstr);
+      PutWindowRecord(wn,ORr);
+      WindowFieldGoto(wn,ORr,-1,"SerNr",false);				
 		case "EBS_ChooseSalesManVClass":
 			activefield = WindowActiveField(wn);
 			switch (activefield) begin

@@ -423,6 +423,103 @@ begin
   return;
 end;
 
+global updating procedure EBS_POSCreateReturnedItemOKBtn()
+begin
+  record VarMatrxEntryVc VMEr;
+  record ORVc ORr,OR2r;
+  row ORVc ORrw;
+  Integer wn,nwn;
+  integer i;
+  record ReturnedItemsVc ReturnedItemsr;
+  longint rw,rw2;
+
+  wn = CurWindow;
+  //deselectwindow(wn,true);
+  GetWindowRecord(wn,ORr);
+  rw = WindowActiveRow(wn);
+  rw2 = WindowActiveRow(wn);
+  deselectwindow(wn,true);
+  if(rw>-1 and matrowcnt(ORr)>0)then begin
+    if(rw<matrowcnt(ORr))then begin
+      matrowget(ORr,rw,ORrw);
+      if(ORrw.Quant>-1 and nonblank(ORrw.ArtCode))then begin
+        rw = ORrw.Quant;
+        if(ORr.SerNr>0)then begin
+          OR2r.SerNr = ORr.SerNr;
+          if(readfirstmain(OR2r,1,true))then begin
+            matrowget(OR2r,rw,ORrw);
+            ReturnedItemsr.OrderNr = OR2r.SerNr;
+            ReturnedItemsr.Row = rw;
+            if(readfirstkey("OrderNr",ReturnedItemsr,2,true)==false)then begin
+              ReturnedItemsr.SerNr = NextSerNr("ReturnedItemsVc",currentdate,-1,false,"");
+              ReturnedItemsr.Location = OR2r.Location;
+              ReturnedItemsr.SalesMan = CurrentUser;;
+              ReturnedItemsr.TransDate = currentdate;
+              ReturnedItemsr.TransTime = currenttime;
+              ReturnedItemsr.OrderNr = ORr.SerNr;
+              ReturnedItemsr.Row = rw;
+              ReturnedItemsr.ArtCode = ORrw.ArtCode;
+              ReturnedItemsr.Spec = ORrw.Spec;
+              recordstore(ReturnedItemsr,true);
+              matrowdelete(ORr,rw2);
+            end;
+            putwindowrecord(wn,ORr);
+          end else begin
+            messagebox(1000165,"");
+          end;
+        end;
+      end;
+    end;
+  end;
+
+return;
+end;
+
+
+global
+procedure EBS_POSCreateReturnedItemWClassEnter()
+begin
+  record VarMatrxEntryVc VMEr;
+  record ORVc ORr;
+  row ORVc ORrw;
+  Integer wn,rw,nwn;
+  integer i;
+  record ReturnedItemsVc ReturnedItemsr;
+
+  wn = CurWindow;
+  deselectwindow(wn,true);
+  GetWindowRecord(wn,ORr)
+  if(ORr.SerNr>0)then begin
+    if(readfirstmain(ORr,1,true))then begin
+      for(i=0;i<matrowcnt(ORr);i=i+1)begin
+        matrowget(ORr,i,ORrw);
+          ORrw.Quant = i;
+        matrowput(ORr,i,ORrw);
+      end;
+      for(i=0;i<matrowcnt(ORr);i=i+1)begin
+        matrowget(ORr,i,ORrw);
+        if(ORrw.Shipd2==0 or blank(ORrw.ArtCode) or ORrw.stp!=1)then begin
+          matrowdelete(ORr,i);
+          i=i-1;
+        end else begin
+          ReturnedItemsr.OrderNr = ORr.SerNr;
+          ReturnedItemsr.Row = ORrw.Quant;
+          if(readfirstkey("OrderNr",ReturnedItemsr,2,true))then begin
+            matrowdelete(ORr,i);
+            i=i-1;
+          end;
+        end;
+      end;
+      putwindowrecord(wn,ORr);
+    end else begin
+      messagebox(1000165,"");
+    end;
+  end;
+  
+  
+  return;
+end;
+
 global
 procedure EBS_POSCreateStockMovWClassVarietiesTask(string args)
 begin

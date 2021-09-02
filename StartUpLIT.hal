@@ -31,6 +31,7 @@ begin
   Maintenance("Close Loyalty Cards (EBS)",EBS_ClosedLoyaltyCardsVClass,EBS_ClosedLoyaltyCardsMn,modPOS);//CHN
 
   //modIN
+  Setting("Returned Items",ReturnedItemsLClass,modIN);// Edit ************************** BPI Ukraine - KramarAlexandr - 04, 26 08 2021 y. at 2:06:41 PM
   Report("DOL - Parduotų prekių likučiai",DOLSoldINBalRClass,DOLSoldINBalRn,0,modIN); // EVS: DOL-79
   Maintenance("Kurti bar kodus",EBS_GenBarCodesVClass,EBS_GenBarCodesMn,modIN);
   Maintenance("Dydžio keitimas",EBS_ChangeINVarVClass,EBS_ChangeINVarMn,modIN);

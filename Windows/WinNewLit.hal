@@ -1484,3 +1484,50 @@ begin
 
   return;
 end;
+
+
+
+
+window ReturnedItemsLClass:1
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  WindowBegin("Returned Items",ReturnedItemsLClass,CGmlist,-);
+  SetWRect(20,80,760,398);
+  Sizeable(-1,-1,0,0);
+  SpawnClass(ReturnedItemsDClass);
+  UseView(ReturnedItemsVc);
+  RecordList(4,17,-21,-39);
+  RlColKey(4,4,"#",SerNr,false,SerNr);
+  RlColKey(60,60,"Location",Location,false,Location);
+  RlColKey(130,130,"Sales Man",SalesMan,false,SalesMan);
+  RlColKey(200,200,"Date",TransDate,false,TransDate);
+  RlCol(260,260,"Time",TransTime,false);
+  RlColKey(320,320,"Order #",OrderNr,false,OrderNr);
+  RlCol(370,370,"Row",Row,false);
+  RlColKey(420,420,"Item Code",ArtCode,false,ArtCode);
+  RlColKey(480,480,"Item Spec",Spec,false,Spec);
+  SearchField("Search");
+  EndWindow;
+end;
+
+window ReturnedItemsDClass:1
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vs,v2,vs2,hm;
+  WindowBegin("Returned Items",ReturnedItemsDClass,CGview,-);
+  SetWRect(20,80,400,339);
+  //Sizeable(-1,-1,0,0);
+  UseView(ReturnedItemsVc);
+  v = -14; h = 80;
+  EditField(h,v+=20,80,"#",Normal,SerNr,false,0);
+  EditField(h,v+=20,80,"Location",Normal,Location,false,LocationSClass);
+  EditField(h,v+=20,80,"SalesMan",Normal,SalesMan,false,UserSClass);
+  EditField(h,v+=20,80,"TransDate",Normal,TransDate,false,PasteCurDate);
+  EditField(h,v+=20,80,"TransTime",Normal,TransTime,false,PasteCurTime);
+  EditField(h,v+=20,80,"OrderNr",Normal,OrderNr,false,0);
+  EditField(h,v+=20,80,"ArtCode",Normal,ArtCode,false,INSClass);
+  EditField(h,v+=20,-40,"Spec",Normal,Spec,false,0);
+
+  EndWindow;
+end;
+

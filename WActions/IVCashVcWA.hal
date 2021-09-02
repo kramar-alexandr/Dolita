@@ -1740,3 +1740,14 @@ begin
 
   return;
 end;
+
+global
+procedure IVCashDClassDOLReturnedItems()
+begin
+  record ORVc ORr;
+  Integer nwn;
+    
+  nwn = OpenWindow("EBS_POSCreateReturnedItemWClass",0,0,"","",ORr);
+
+  return;
+end;

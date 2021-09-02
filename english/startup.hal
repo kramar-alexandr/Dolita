@@ -23,6 +23,7 @@ enum begin
   kPOSButtonTypeClockIn = 221,
   kPOSButtonTypeClockOut = 222,
   kPOSButtonTypeStockMovement = 223,
+  kPOSButtonTypeAddReturnedItem = 224,
 
 end;
 
@@ -233,6 +234,7 @@ begin
   SetText(kPOSButtonTypeClockIn,"Clock-in");//CHN
   SetText(kPOSButtonTypeClockOut,"Clock-out");//CHN
   SetText(kPOSButtonTypeStockMovement,"Stock Movement");//CHN
+  SetText(kPOSButtonTypeAddReturnedItem,"Add Returned Item");// Edit ************************** BPI Ukraine - KramarAlexandr - 04, 02 09 2021 y. at 10:00:48 AM
   
   EndSet;
 
