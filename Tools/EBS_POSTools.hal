@@ -22,6 +22,9 @@ external function boolean VerifyUserPassword(string,string);
 remote updating procedure EBSRegisterClock(string,record LocalMachineBlock,Integer);
 remote updating procedure EBS_POSCreateStockMoveRemote(string,record ORVc,var Longint,var string);
 external inner function Boolean MATVARINSClassOnOpenPaste(Integer,string);
+external inner function Boolean FindItemVAR(string,var string,var string,var string,var string);
+external inner procedure SplitVars(string,Array string,Array string,Array string);
+
 
 procedure EBS_POSPOSMoney2Insm(string tag)
 begin
@@ -485,6 +488,9 @@ begin
   Integer wn,rw,nwn;
   integer i;
   record ReturnedItemsVc ReturnedItemsr;
+  record VARVc VARr;
+  string 255 tstr,mask,itemsize,varsubset,mskrep;
+  Array string 255 maskvar,maskvarsz,amsk;
 
   wn = CurWindow;
   deselectwindow(wn,true);
@@ -494,6 +500,21 @@ begin
       for(i=0;i<matrowcnt(ORr);i=i+1)begin
         matrowget(ORr,i,ORrw);
           ORrw.Quant = i;
+          
+          if(nonblank(ORrw.ArtCode))then begin
+            if (FindItemVAR(ORrw.ArtCode,itemsize,mask,mskrep,varsubset)) then begin
+              SplitVars(ORrw.ArtCode,maskvar,maskvarsz,amsk);
+          //    amsk[0]; // item code
+              VARr.Code = amsk[1];
+              if (!ReadFirstMain(VARr,1,true)) then begin
+                VARr.Comment = amsk[1];
+              end;
+            end else begin
+              RecordClear(VARr);
+            end;
+            ORrw.SerialNr = VARr.Comment;
+          end;
+          
         matrowput(ORr,i,ORrw);
       end;
       for(i=0;i<matrowcnt(ORr);i=i+1)begin
