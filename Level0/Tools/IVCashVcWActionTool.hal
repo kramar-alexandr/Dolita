@@ -73,6 +73,20 @@ external function Boolean GetItemPriceDiscount3Ext(string,val,var record INVc,st
                                                 string,Boolean,var Boolean,string,var string,var val,string,string,var string,val,val);
 external outer function string 60 EBS_AddPersObject(string,string); //EBS
 external outer function boolean HALMatchPricingWithLoyaltyCard(record IVCashVc);
+
+global function string 20 GetForceVATCode()
+begin
+record DolitaPOSSettingBlock DSb;
+string 20 res;
+  blockload(DSb);
+  
+  if(nonblank(DSb.VATCode))then begin
+    res = DSb.VATCode;
+  end;
+  GetForceVATCode = res;
+return;
+end;
+
 global
 procedure CalculateIVCashVcPoints(var record IVCashVc IVCashr)
 begin 
@@ -298,6 +312,10 @@ BEGIN
       if (nonblank(IVCashp.CustVATCode)) then begin
         IVCashrw.VATCode = IVCashp.CustVATCode;
       end;
+      if(nonblank(GetForceVATCode))then begin// Edit ************************** BPI Ukraine - KramarAlexandr - 04, 02 09 2021 y. at 12:41:18 PM
+        IVCashrw.VATCode = GetForceVATCode;
+      end;
+      
       MatRowPut(IVCashp,i,IVCashrw);
       if orgprice!=IVCashrw.Price or orgrebate!=stringtoval(IVCashrw.vRebate,m423val) or orgsum!=IVCashrw.Sum then begin //EBS if nothing is changed do not call IVCashDchrsum, as it messes with sums sometimes
         if (IVCashDchrsum(IVCashp,i,GenOptRec.UseDiscount)) then begin
@@ -822,6 +840,9 @@ BEGIN
     IVCashrw.BasePrice = baseprice;
     IVCashrw.ArtCode   = INr.Code;
     IVCashrw.VATCode = vatcode;
+    if(nonblank(GetForceVATCode))then begin// Edit ************************** BPI Ukraine - KramarAlexandr - 04, 02 09 2021 y. at 12:41:18 PM
+      IVCashrw.VATCode = GetForceVATCode;
+    end;
     IVCashrw.SalesAcc = salesacc;
     IVCashrw.Spec = curitemname;
     MatRowPut(IVCashr,rownr,IVCashrw);      
@@ -835,6 +856,9 @@ BEGIN
     MatRowGet(IVCashr,rownr,IVCashrw);
     if (nonblank(IVCashr.CustVATCode)) then begin
       IVCashrw.VATCode = IVCashr.CustVATCode;
+    end;
+    if(nonblank(GetForceVATCode))then begin// Edit ************************** BPI Ukraine - KramarAlexandr - 04, 02 09 2021 y. at 12:41:18 PM
+      IVCashrw.VATCode = GetForceVATCode;
     end;
     if ((INr.ItemType==2) and (nonblank(INr.Recepy))) then begin
       IVCashrw.Recepy = INr.Recepy;
@@ -959,6 +983,9 @@ BEGIN
 //    IVCashrw.vRebate = vreb;
     IVCashrw.ArtCode = INr.Code;
     IVCashrw.VATCode = vatcode;
+    if(nonblank(GetForceVATCode))then begin// Edit ************************** BPI Ukraine - KramarAlexandr - 04, 02 09 2021 y. at 12:41:18 PM
+      IVCashrw.VATCode = GetForceVATCode;
+    end;
     IVCashrw.SalesAcc = salesacc;
     IVCashrw.Spec = curitemname;
     //EBS --> paste item name without variety name
@@ -979,6 +1006,9 @@ BEGIN
     MatRowGet(IVCashr,rownr,IVCashrw);
     if (nonblank(IVCashr.CustVATCode)) then begin
       IVCashrw.VATCode = IVCashr.CustVATCode;
+    end;
+    if(nonblank(GetForceVATCode))then begin// Edit ************************** BPI Ukraine - KramarAlexandr - 04, 02 09 2021 y. at 12:41:18 PM
+      IVCashrw.VATCode = GetForceVATCode;
     end;
     if (INr.ExplodeRec==0) then begin
       if ((INr.ItemType==2) and (nonblank(INr.Recepy))) then begin
@@ -1761,7 +1791,10 @@ begin
         if (blank(IVCashrw.PayMode)) then begin
           IVCashrw.PayMode = DefCashRec.DefGCSPayMode;
         end;
-        IVCashrw.VATCode = DefCashRec.DefGCSVATCode;          
+        IVCashrw.VATCode = DefCashRec.DefGCSVATCode;   
+        if(nonblank(GetForceVATCode))then begin// Edit ************************** BPI Ukraine - KramarAlexandr - 04, 02 09 2021 y. at 12:41:18 PM
+          IVCashrw.VATCode = GetForceVATCode;
+        end;       
         if (GetPMRow(IVCashrw.PayMode,PMrw)) then begin end;
         IVCashrw.SalesAcc = PMrw.AccNr;
         MatRowPut(IVCashr,rownr,IVCashrw);  
@@ -1784,7 +1817,10 @@ begin
         end;
         BlockLoad(DefCashRec);
         IVCashrw.PayMode = DefCashRec.DefGCRPayMode;
-        IVCashrw.VATCode = DefCashRec.DefGCRVATCode;          
+        IVCashrw.VATCode = DefCashRec.DefGCRVATCode;    
+        if(nonblank(GetForceVATCode))then begin// Edit ************************** BPI Ukraine - KramarAlexandr - 04, 02 09 2021 y. at 12:41:18 PM
+          IVCashrw.VATCode = GetForceVATCode;
+        end;      
         IVCashrw.Spec = GCSr.Comment;
         if (GetPMRow(IVCashrw.PayMode,PMrw)) then begin end;
         IVCashrw.SalesAcc = PMrw.AccNr;

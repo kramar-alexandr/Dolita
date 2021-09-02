@@ -143,6 +143,11 @@ begin
     KeySegment(SerNr);
   
   EndRecord;
-
+  
+  
+  BlockBegin(DolitaPOSSettingBlock,-,"");
+		RecordField(VATCode,M4Code,20,0);
+  EndBlock;
+  
 return;
 end;

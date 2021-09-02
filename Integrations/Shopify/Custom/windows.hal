@@ -114,3 +114,19 @@ begin
 
   EndWindow;
 end;
+
+window DolitaPOSSettingTlass:1
+  wtag("language","LIT"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
+begin
+  real h,v,vs,v2,vs2,hm;
+  WindowBegin("Dolita POS Settings",DolitaPOSSettingTlass,CGSbl,-);
+  SetWRect(20,80,600,339);
+  Sizeable(-1,-1,0,0);
+  UseView(DolitaPOSSettingBlock);
+  SetWRect(20,80,350,150);
+  h = 150; vs = 20;
+  EditField(h,v=16,70,"Force VAT Code",Normal,VATCode,false,VATCodeSClass);
+  
+  
+  EndWindow;
+end;

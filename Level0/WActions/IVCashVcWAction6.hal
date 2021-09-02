@@ -102,6 +102,7 @@ external outer procedure SetPOSWindowDisplay_EBS(integer);
 external outer function boolean DOL_FindLoyaltyCardByPhone(var record RcVc); //EBS
 //CUST-BEGIN::TOUCHLESS PAYMENTS
 external outer function Boolean InitTouchlessPayment(val,string,string,var string,Longint,string,Integer,string,string);
+external function string 20 GetForceVATCode();
 //CUST-END::TOUCHLESS PAYMENTS
 
 
@@ -2857,6 +2858,9 @@ begin
         IVCashrw.vRebate = RepSpec.vals2;
         IVCashrw.Sum = RepSpec.vals3;
         IVCashrw.VATCode = RepSpec.f2;
+        if(nonblank(GetForceVATCode))then begin// Edit ************************** BPI Ukraine - KramarAlexandr - 04, 02 09 2021 y. at 12:41:18 PM
+          IVCashrw.VATCode = GetForceVATCode;
+        end;
         IVCashrw.Spec = RepSpec.f1;
         MatRowPut(IVCashr,rownr,IVCashrw);      
 
