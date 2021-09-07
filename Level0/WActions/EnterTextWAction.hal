@@ -304,15 +304,15 @@ begin
     case "EBS_POSCreateReturnedItemWClass":
       DeselectWindow(wn,true);
       GetWindowRecord(wn,ORr);
-      if(ORr.SerNr==-1)then begin
+      if(blank(ORr.CustOrdNr))then begin
         tstr = "";
       end else begin
-        tstr = ORr.SerNr;
+        tstr = ORr.CustOrdNr;
       end;
       tstr = tstr & anumberstr;
-      ORr.SerNr = stringtolongint(tstr);
+      ORr.CustOrdNr = stringtolongint(tstr);
       PutWindowRecord(wn,ORr);
-      WindowFieldGoto(wn,ORr,-1,"SerNr",false);				
+      WindowFieldGoto(wn,ORr,-1,"CustOrdNr",false);				
 		case "EBS_ChooseSalesManVClass":
 			activefield = WindowActiveField(wn);
 			switch (activefield) begin

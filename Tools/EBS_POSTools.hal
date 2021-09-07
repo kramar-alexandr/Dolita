@@ -495,8 +495,11 @@ begin
   wn = CurWindow;
   deselectwindow(wn,true);
   GetWindowRecord(wn,ORr)
-  if(ORr.SerNr>0)then begin
-    if(readfirstmain(ORr,1,true))then begin
+  if(nonblank(ORr.CustOrdNr))then begin
+    if(left(ORr.CustOrdNr,1)!="#")then begin
+      ORr.CustOrdNr = "#" & ORr.CustOrdNr;
+    end;
+    if(readfirstkey("CustOrdNr",ORr,1,true))then begin
       for(i=0;i<matrowcnt(ORr);i=i+1)begin
         matrowget(ORr,i,ORrw);
           ORrw.Quant = i;

@@ -350,7 +350,7 @@ begin
   v = 60;
   vs = 52; h2 = 55; v3 = 48; l = 57;
   h = 90;
-  EditField(h,40,120,"Order Number",Normal,SerNr,false,0);
+  EditField(h,40,120,"Order Number",Normal,CustOrdNr,false,0);
   MatrixBegin(10,80,h+310,183,-,15);
   MatCol(1,24,"Item",0,ArtCode,false,0);
   MatCol(1,104,"Size",0,SerialNr,false,0);
