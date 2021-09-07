@@ -459,7 +459,7 @@ begin
             if(readfirstkey("OrderNr",ReturnedItemsr,2,true)==false)then begin
               ReturnedItemsr.SerNr = NextSerNr("ReturnedItemsVc",currentdate,-1,false,"");
               ReturnedItemsr.Location = LMb.DefLocation;
-              ReturnedItemsr.SalesMan = CurrentUser;
+              ReturnedItemsr.SalesMan = ORr.SalesMan;
               ReturnedItemsr.TransDate = currentdate;
               ReturnedItemsr.TransTime = currenttime;
               ReturnedItemsr.OrderNr = ORr.SerNr;
@@ -489,13 +489,16 @@ begin
   record ORVc ORr;
   row ORVc ORrw;
   Integer wn,rw,nwn;
-  integer i;
+  integer i,mwn;
   record ReturnedItemsVc ReturnedItemsr;
   record VARVc VARr;
   string 255 tstr,mask,itemsize,varsubset,mskrep;
   Array string 255 maskvar,maskvarsz,amsk;
+  record IVCashVc IVCashr;
 
   wn = CurWindow;
+  mwn = motherwindow(wn);
+  getwindowrecord(mwn,IVCashr);
   deselectwindow(wn,true);
   GetWindowRecord(wn,ORr)
   if(nonblank(ORr.CustOrdNr))then begin
@@ -537,6 +540,7 @@ begin
           end;
         end;
       end;
+      ORr.SalesMan = IVCashr.SalesMan;
       putwindowrecord(wn,ORr);
     end else begin
       messagebox(1000165,"");
