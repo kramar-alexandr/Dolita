@@ -378,7 +378,7 @@ begin
   h = h+l; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad8","8_",2);
   h = h+l; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad9","9_",2);
   v = v+vs;
-  h = hm-2; ColourPushButton(h,v,h+h2,v+v3,"EBS_POSCreateReturnedItemWClassEnter","Enter",2);
+  h = hm-2; ColourPushButton(h,v,h+h2,v+v3,"EBS_POSCreateReturnedItemWClassEnter","Enter",15);
   h = hm-2+l; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyPad0","0_",2);
   h = h+l; ColourPushButton(h,v,h+h2,v+v3,"NPTSPaymentToolKeyDel","Del",2);
   v = v + vs;
