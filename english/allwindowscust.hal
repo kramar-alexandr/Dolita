@@ -291,7 +291,7 @@ window ReturnedItemsLClass:1
   wtag("language","ENG"), wtag("product","*"), wtag("productcode","*"), wtag("device","computer")
 begin
   WindowBegin("Returned Items",ReturnedItemsLClass,CGmlist,-);
-  SetWRect(20,80,760,398);
+  SetWRect(20,80,860,398);
   Sizeable(-1,-1,0,0);
   SpawnClass(ReturnedItemsDClass);
   UseView(ReturnedItemsVc);
@@ -301,10 +301,11 @@ begin
   RlColKey(130,130,"Sales Man",SalesMan,false,SalesMan);
   RlColKey(200,200,"Date",TransDate,false,TransDate);
   RlCol(260,260,"Time",TransTime,false);
-  RlColKey(320,320,"Order #",OrderNr,false,OrderNr);
-  RlCol(350,350,"Row",Row,false);
-  RlColKey(390,390,"Item Code",ArtCode,false,ArtCode);
-  RlColKey(470,470,"Item Spec",Spec,false,Spec);
+  RlColKey(320,320,"SerNr",OrderNr,false,OrderNr);
+  RlColKey(370,370,"Order #",CustOrdNr,false,CustOrdNr);
+  RlCol(400,400,"Row",Row,false);
+  RlColKey(440,440,"Item Code",ArtCode,false,ArtCode);
+  RlColKey(-200,-200,"Item Spec",Spec,false,Spec);
   SearchField("Search");
   EndWindow;
 end;
@@ -326,6 +327,7 @@ begin
   EditField(h,v+=20,80,"OrderNr",Normal,OrderNr,false,0);
   EditField(h,v+=20,80,"ArtCode",Normal,ArtCode,false,INSClass);
   EditField(h,v+=20,-40,"Spec",Normal,Spec,false,0);
+  EditField(h,v+=20,-40,"CustOrdNr",Normal,CustOrdNr,false,0);
 
   EndWindow;
 end;

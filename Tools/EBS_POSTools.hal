@@ -436,6 +436,7 @@ begin
   record ReturnedItemsVc ReturnedItemsr;
   longint rw,rw2;
   record LocalMachineBlock LMb;
+  record INVc INr;
   
   blockload(LMb);
 
@@ -463,6 +464,7 @@ begin
               ReturnedItemsr.TransDate = currentdate;
               ReturnedItemsr.TransTime = currenttime;
               ReturnedItemsr.OrderNr = ORr.SerNr;
+              ReturnedItemsr.CustOrdNr = ORr.CustOrdNr;
               ReturnedItemsr.Row = rw;
               ReturnedItemsr.ArtCode = ORrw.ArtCode;
               ReturnedItemsr.Spec = ORrw.Spec;
@@ -470,13 +472,19 @@ begin
               matrowdelete(ORr,rw2);
             end;
             putwindowrecord(wn,ORr);
+            selectwindow(wn);
+            WindowFieldGoto(wn,ORr,-1,"CustOrdNr",true);
           end else begin
+            selectwindow(wn);
+            WindowFieldGoto(wn,ORr,-1,"CustOrdNr",true);
             messagebox(1000165,"");
           end;
         end;
       end;
     end;
   end;
+  selectwindow(wn);
+  WindowFieldGoto(wn,ORr,-1,"CustOrdNr",true);
 
 return;
 end;
@@ -495,7 +503,8 @@ begin
   string 255 tstr,mask,itemsize,varsubset,mskrep;
   Array string 255 maskvar,maskvarsz,amsk;
   record IVCashVc IVCashr;
-
+  record INVc INr;
+  
   wn = CurWindow;
   mwn = motherwindow(wn);
   getwindowrecord(mwn,IVCashr);
@@ -509,7 +518,10 @@ begin
       for(i=0;i<matrowcnt(ORr);i=i+1)begin
         matrowget(ORr,i,ORrw);
           ORrw.Quant = i;
-          
+          INr.Code = ORrw.ArtCode;
+          readfirstmain(INr,1,true);
+          ORrw.ShipNote = INr.BarCode; 
+          ORrw.UnitComment = INr.AlternativeCode;
           if(nonblank(ORrw.ArtCode))then begin
             if (FindItemVAR(ORrw.ArtCode,itemsize,mask,mskrep,varsubset)) then begin
               SplitVars(ORrw.ArtCode,maskvar,maskvarsz,amsk);
@@ -542,6 +554,7 @@ begin
       end;
       ORr.SalesMan = IVCashr.SalesMan;
       putwindowrecord(wn,ORr);
+      WindowFieldGoto(wn,ORr,-1,"CustOrdNr",true);
     end else begin
       messagebox(1000165,"");
     end;
@@ -550,6 +563,56 @@ begin
   
   return;
 end;
+
+
+global
+updating function Boolean EBS_POSCreateReturnedItemWClassAfterEditField(Integer wn,string fieldname,Integer fn,Integer rownr,Integer changed)
+begin
+  Boolean res;
+  Date d1,d2;
+  string 30 tstr;
+  record ORVc ORr,OR2r;
+  row ORVc ORrw;
+  integer i;
+  
+  res = false;
+    
+  switch (fieldname) begin
+    case"CustOrdNr": getwindowrecord(wn,ORr);
+                      recordcopy(OR2r,ORr);
+                      readfirstmain(OR2r,1,true);
+                      for(i=0;i<matrowcnt(ORr);i=i+1)begin
+                        matrowget(ORr,i,ORrw);
+                        if(ORrw.ArtCode==ORr.CustOrdNr)then begin
+                          ORr.CustOrdNr = OR2r.CustOrdNr;
+                          putwindowrecord(wn,ORr);
+                          WindowFieldGoto(wn,ORr,i,"ArtCode",true);
+                          EBS_POSCreateReturnedItemOKBtn;
+                          goto lEndThisFind;
+                        end;
+                        if(ORrw.ShipNote==ORr.CustOrdNr)then begin
+                          ORr.CustOrdNr = OR2r.CustOrdNr;
+                          putwindowrecord(wn,ORr);
+                          WindowFieldGoto(wn,ORr,i,"ArtCode",true);
+                          EBS_POSCreateReturnedItemOKBtn;
+                          goto lEndThisFind;
+                        end;
+                        if(ORrw.UnitComment==ORr.CustOrdNr)then begin
+                          ORr.CustOrdNr = OR2r.CustOrdNr;
+                          putwindowrecord(wn,ORr);
+                          WindowFieldGoto(wn,ORr,i,"ArtCode",true);
+                          EBS_POSCreateReturnedItemOKBtn;
+                          goto lEndThisFind;
+                        end;
+                      end;
+                      lEndThisFind:;
+  
+  end;
+  
+
+return;
+end;
+
 
 global
 procedure EBS_POSCreateStockMovWClassVarietiesTask(string args)
