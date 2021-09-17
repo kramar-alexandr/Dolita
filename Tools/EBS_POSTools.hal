@@ -24,6 +24,7 @@ remote updating procedure EBS_POSCreateStockMoveRemote(string,record ORVc,var Lo
 external inner function Boolean MATVARINSClassOnOpenPaste(Integer,string);
 external inner function Boolean FindItemVAR(string,var string,var string,var string,var string);
 external inner procedure SplitVars(string,Array string,Array string,Array string);
+remote inner function Boolean GetFirstItem(var string,var record INVc);
 
 
 procedure EBS_POSPOSMoney2Insm(string tag)
@@ -567,6 +568,9 @@ begin
   record ORVc ORr,OR2r;
   row ORVc ORrw;
   integer i;
+  record IVCashVc IVCashr;
+  row IVCashVc IVCashrw;
+  record INVc INr;
   
   res = false;
   
@@ -575,6 +579,9 @@ begin
       case"CustOrdNr": getwindowrecord(wn,ORr);
                         recordcopy(OR2r,ORr);
                         readfirstmain(OR2r,1,true);
+                        if (GetFirstItem(ORr.CustOrdNr,INr)) then begin
+                        end;
+                        
                         for(i=0;i<matrowcnt(ORr);i=i+1)begin
                           matrowget(ORr,i,ORrw);
                           if(ORrw.ArtCode==ORr.CustOrdNr)then begin
@@ -584,7 +591,7 @@ begin
                             EBS_POSCreateReturnedItemOKBtn;
                             goto lEndThisFind;
                           end;
-                          if(ORrw.ShipNote==ORr.CustOrdNr)then begin
+                          /*if(ORrw.ShipNote==ORr.CustOrdNr)then begin
                             ORr.CustOrdNr = OR2r.CustOrdNr;
                             putwindowrecord(wn,ORr);
                             WindowFieldGoto(wn,ORr,i,"ArtCode",true);
@@ -597,7 +604,7 @@ begin
                             WindowFieldGoto(wn,ORr,i,"ArtCode",true);
                             EBS_POSCreateReturnedItemOKBtn;
                             goto lEndThisFind;
-                          end;
+                          end;*/
                         end;
                         ORr.CustOrdNr = OR2r.CustOrdNr;
                         putwindowrecord(wn,ORr);
