@@ -297,6 +297,7 @@ begin
   UseView(ReturnedItemsVc);
   RecordList(4,17,-21,-39);
   RlColKey(4,4,"#",SerNr,false,SerNr);
+  RlColKey(36,36,"Fin.",Finished,false,Finished);
   RlColKey(60,60,"Location",Location,false,Location);
   RlColKey(130,130,"Sales Man",SalesMan,false,SalesMan);
   RlColKey(200,200,"Date",TransDate,false,TransDate);
@@ -320,6 +321,7 @@ begin
   UseView(ReturnedItemsVc);
   v = -14; h = 80;
   EditField(h,v+=20,80,"#",Normal,SerNr,false,0);
+  CheckBox(h+200,v,0,"Finished",Finished);
   EditField(h,v+=20,80,"Location",Normal,Location,false,LocationSClass);
   EditField(h,v+=20,80,"SalesMan",Normal,SalesMan,false,UserSClass);
   EditField(h,v+=20,80,"TransDate",Normal,TransDate,false,PasteCurDate);
@@ -328,7 +330,6 @@ begin
   EditField(h,v+=20,80,"ArtCode",Normal,ArtCode,false,INSClass);
   EditField(h,v+=20,-40,"Spec",Normal,Spec,false,0);
   EditField(h,v+=20,-40,"CustOrdNr",Normal,CustOrdNr,false,0);
-
   EndWindow;
 end;
 

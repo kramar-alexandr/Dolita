@@ -120,6 +120,7 @@ begin
   RecordField(ArtCode,M4Code,60,0);
   RecordField(Spec,M4Str,255,0);
   RecordField(CustOrdNr,M4Str,255,0);
+  RecordField(Finished,M4Mark,0,0);
 
   MainKeyBegin(SerNr,0);
     KeySegment(SerNr);
@@ -144,6 +145,9 @@ begin
     KeySegment(SerNr);
   KeyBegin(CustOrdNr);
     KeySegment(CustOrdNr);
+    KeySegment(SerNr);
+  KeyBegin(Finished);
+    KeySegment(Finished);
     KeySegment(SerNr);
   
   EndRecord;
